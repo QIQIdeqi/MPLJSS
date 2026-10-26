@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "checkedAt": "2026-10-26T14:18:35.338Z",
+  "checkedAt": "2026-10-26T14:44:30.935Z",
   "results": [
     {
       "profile": "ue",
@@ -30,7 +30,7 @@
     "300/310/360 time events",
     "play/pause",
     "four tabs",
-    "rule filters",
+    "rule filters 14/10/4",
     "JSON download",
     "source link targets",
     "mobile width",

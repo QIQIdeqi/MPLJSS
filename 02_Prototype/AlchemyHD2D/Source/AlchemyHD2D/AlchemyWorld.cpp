@@ -48,6 +48,14 @@ const float TuneContact[]={5,6,7,5,9,6,9};
 const int32 Prices[4][5]={{60,90,130,180,240},{80,120,170,230,300},{70,100,140,190,250},{50,80,120,170,230}};
 const TCHAR* TalentNames[]={TEXT("生命强化"),TEXT("伤害强化"),TEXT("移动强化"),TEXT("吸引范围")};
 const FLinearColor Gold(0.82f,0.58f,0.25f), Teal(0.18f,0.75f,0.65f), Ink(0.025f,0.045f,0.06f), Muted(0.5f,0.62f,0.63f);
+// Layout A: design X is screen-right, design Y is screen-down; default camera yaw is 90.
+// Rows: design left/top/width/height in units (1 unit = 100 cm).
+const FVector4 LayoutRects[]={
+    FVector4(-42,-22,14,3),FVector4(-39,-12,4,7),FVector4(26,-23,14,3),FVector4(36,-13,4,8),
+    FVector4(-42,19,14,3),FVector4(-39,28,4,6),FVector4(26,19,14,3),FVector4(36,28,4,6)
+};
+FVector DesignPosition(float X,float Y) { return FVector(-100*X,-100*Y,0); }
+float EnemyRadius(int Type) { return Type==10?110.f:Type>=7?70.f:35.f; }
 }
 
 AAlchemyMode::AAlchemyMode() { DefaultPawnClass=nullptr; HUDClass=AAlchemyHUD::StaticClass(); }
@@ -57,7 +65,7 @@ AAlchemyWorld::AAlchemyWorld() { PrimaryActorTick.bCanEverTick=true; }
 void AAlchemyWorld::BeginPlay() {
     Super::BeginPlay();
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
-    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture"));
+    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture"));
     Progress=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_v1"),0));
     if (!Progress) Progress=NewObject<UAlchemyProgress>(this);
     if (Progress->Talents.Num()!=4) Progress->Talents={0,0,0,0};
@@ -130,7 +138,7 @@ void AAlchemyWorld::House(FVector P,FLinearColor Roof) {
 void AAlchemyWorld::BuildScene(bool Combat) {
     for(auto A:Scene) if(IsValid(A)) A->Destroy();
     Scene.Empty(); Obstacles.Empty(); Enemies.Empty(); Shots.Empty(); Drops.Empty(); Effects.Empty();
-    bCombat=Combat; bRunEnded=false; PlayerPos=FVector(0,-200,0); Panel.Empty();
+    bCombat=Combat; bRunEnded=false; PlayerPos=Combat?FVector::ZeroVector:FVector(0,-200,0); Panel.Empty();
     const float X=Combat?14222:4800, Y=Combat?10760:3800;
     auto Floor=Mesh(TEXT("Cube"),FVector(0,0,0),FVector(X/100,Y/100,1),FLinearColor::White);
     Floor->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_Grass")));
@@ -142,7 +150,9 @@ void AAlchemyWorld::BuildScene(bool Combat) {
     for(int i=0;i<(Combat?240:60);i++) {
         FVector P(Decor.FRandRange(-X*0.48f,X*0.48f),Decor.FRandRange(-Y*0.48f,Y*0.48f),0);
         if(FMath::Abs(P.X)<550 || (!Combat && P.Y>-700 && P.Y<900)) continue;
-        Tree(P,Decor.FRandRange(0.65f,1.2f));
+        // Combat trees are perimeter decoration only: the eight layout rectangles own collision.
+        if(Combat && FMath::Abs(P.X)<6500 && FMath::Abs(P.Y)<4800) continue;
+        Tree(P,Decor.FRandRange(0.65f,1.2f),!Combat);
     }
     for(int i=0;i<(Combat?250:100);i++) {
         FVector P(Decor.FRandRange(-X*0.48f,X*0.48f),Decor.FRandRange(-Y*0.48f,Y*0.48f),10);
@@ -166,10 +176,14 @@ void AAlchemyWorld::BuildScene(bool Combat) {
             L->PointLightComponent->SetIntensity(1800); L->PointLightComponent->SetAttenuationRadius(500); L->PointLightComponent->SetLightColor(Teal); Scene.Add(L);
         }
     } else {
-        for(int i=0;i<24;i++) {
-            const FVector P((i%2?1:-1)*(900+(i/4)*700),500+(i%3)*1000,0);
-            Sheet(TEXT("Rock"),P,230,180); Obstacles.Add({FVector2D(P),FVector2D(75,45)});
+        auto Clearing=Mesh(TEXT("Cube"),FVector(0,0,3),FVector(48,32,1),FLinearColor(0.14f,0.23f,0.19f));
+        Clearing->GetStaticMeshComponent()->SetCastShadow(false);
+        for(const auto& R:LayoutRects) {
+            const FVector P=DesignPosition(R.X+R.Z/2,R.Y+R.W/2);
+            auto Block=Mesh(TEXT("Cube"),P+FVector(0,0,5),FVector(R.Z,R.W,1),FLinearColor(0.28f,0.36f,0.34f),true);
+            Block->GetStaticMeshComponent()->SetCastShadow(false);
         }
+        UE_LOG(LogTemp,Display,TEXT("ALCHEMY_LAYOUT_A obstacles=%d spawn=(0,0) design_to_world=(-100x,-100y)"),Obstacles.Num());
     }
     // A row of painted rock sheets communicates the map boundary.
     for(int Side:{-1,1}) {
@@ -194,6 +208,82 @@ FVector AAlchemyWorld::Move(FVector P,FVector Delta,float Radius) const {
         if(Walkable(P+FVector(0,Delta.Y,0),Radius)) P.Y+=Delta.Y;
     }
     return P;
+}
+bool AAlchemyWorld::SegmentClear(FVector A,FVector B,float Radius) const {
+    if(!Walkable(A,Radius) || !Walkable(B,Radius)) return false;
+    for(const auto& O:Obstacles) {
+        float Near=0,Far=1;
+        bool Hit=true;
+        for(int Axis=0;Axis<2;Axis++) {
+            const float Start=Axis==0?A.X:A.Y, D=(Axis==0?B.X:B.Y)-Start;
+            const float C=Axis==0?O.Center.X:O.Center.Y,H=(Axis==0?O.Half.X:O.Half.Y)+Radius;
+            if(FMath::Abs(D)<KINDA_SMALL_NUMBER) {if(Start<=C-H || Start>=C+H) {Hit=false;break;}}
+            else {
+                float T0=(C-H-Start)/D,T1=(C+H-Start)/D;
+                if(T0>T1) Swap(T0,T1);
+                Near=FMath::Max(Near,T0); Far=FMath::Min(Far,T1);
+                if(Near>Far) {Hit=false;break;}
+            }
+        }
+        if(Hit) return false;
+    }
+    return true;
+}
+bool AAlchemyWorld::FindPath(FVector From,FVector To,float Radius,TArray<FVector>& Path) const {
+    Path.Empty();
+    if(!Walkable(From,Radius) || !Walkable(To,Radius)) return false;
+    if(SegmentClear(From,To,Radius)) {Path.Add(To);return true;}
+    TArray<FVector> Nodes={From,To};
+    for(const auto& O:Obstacles) for(int X:{-1,1}) for(int Y:{-1,1}) {
+        FVector P(O.Center.X+X*(O.Half.X+Radius+20),O.Center.Y+Y*(O.Half.Y+Radius+20),0);
+        if(Walkable(P,Radius)) Nodes.Add(P);
+    }
+    // Small authored visibility graph; recompute only on obstruction and a one-second timer.
+    TArray<float> Cost; Cost.Init(TNumericLimits<float>::Max(),Nodes.Num()); Cost[0]=0;
+    TArray<int32> Prev; Prev.Init(INDEX_NONE,Nodes.Num());
+    TArray<bool> Done; Done.Init(false,Nodes.Num());
+    for(int Step=0;Step<Nodes.Num();Step++) {
+        int U=INDEX_NONE;
+        for(int I=0;I<Nodes.Num();I++) if(!Done[I] && Cost[I]<TNumericLimits<float>::Max() && (U==INDEX_NONE || Cost[I]<Cost[U])) U=I;
+        if(U==INDEX_NONE) break;
+        if(U==1) {for(int I=1;I!=0;I=Prev[I]) Path.Insert(Nodes[I],0);return true;}
+        Done[U]=true;
+        for(int V=1;V<Nodes.Num();V++) if(!Done[V]) {
+            const float C=Cost[U]+FVector::Dist2D(Nodes[U],Nodes[V]);
+            if(C<Cost[V] && SegmentClear(Nodes[U],Nodes[V],Radius)) {Cost[V]=C;Prev[V]=U;}
+        }
+    }
+    return false;
+}
+void AAlchemyWorld::Chase(FAlchemyEnemy& E,float Dt) {
+    const float Radius=EnemyRadius(E.Type);
+    E.RepathCD-=Dt;
+    FVector Goal=PlayerPos;
+    // A player may fit closer to an obstacle than a larger enemy. Approach a legal nearby point.
+    if(!Walkable(Goal,Radius)) {
+        float Best=TNumericLimits<float>::Max(); bool Found=false;
+        for(float R:{150.f,250.f,400.f}) {
+            for(int I=0;I<16;I++) {
+                const float A=I*2*PI/16;
+                const FVector P=PlayerPos+FVector(FMath::Cos(A)*R,FMath::Sin(A)*R,0);
+                const float D=FVector::DistSquared2D(P,E.Pos);
+                if(Walkable(P,Radius) && D<Best) {Goal=P;Best=D;Found=true;}
+            }
+            if(Found) break;
+        }
+        if(!Found) return;
+    }
+    FVector Target=Goal;
+    if(SegmentClear(E.Pos,Goal,Radius)) E.Path.Empty();
+    else {
+        if(E.RepathCD<=0) {FindPath(E.Pos,Goal,Radius,E.Path);E.RepathCD=1.f;}
+        while(!E.Path.IsEmpty() && FVector::Dist2D(E.Pos,E.Path[0])<25) E.Path.RemoveAt(0);
+        if(E.Path.IsEmpty()) return;
+        Target=E.Path[0];
+    }
+    const FVector To=Target-E.Pos;
+    const float Step=FMath::Min(To.Size2D(),E.Speed*(E.Slow>0?0.65f:1)*Dt);
+    E.Pos=Move(E.Pos,To.GetSafeNormal2D()*Step,Radius);
 }
 void AAlchemyWorld::UpdateCamera(float Delta) {
     auto C=Camera->GetCameraComponent();
@@ -232,6 +322,7 @@ void AAlchemyWorld::StartRun() {
     for(float& T:SkillCD) T=0;
     ChainCD[0]=12; ChainCD[1]=10;
     BuildScene(true);
+    UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
     Message(TEXT("腐化林地 · 技能自动释放；Tab 打开炼金台。"));
 }
@@ -257,18 +348,34 @@ bool AAlchemyWorld::Craft() {
     Message(FString::Printf(TEXT("炼制成功：%s · Lv.%d"),SkillNames[Match],Levels[Match])); return true;
 }
 
-void AAlchemyWorld::SpawnEnemy(int Type) {
-    FVector P; bool Found=false;
+bool AAlchemyWorld::FindSpawnPoint(int Type,FVector& P) {
     // Candidate rectangle lies outside the current orthographic viewport, not merely a player-radius circle.
     int VX=1280,VY=720; GetWorld()->GetFirstPlayerController()->GetViewportSize(VX,VY);
     const float HH=ViewWidth/(2*FMath::Max(0.5f,float(VX)/FMath::Max(1,VY))*FMath::Sin(FMath::DegreesToRadians(CameraPitch)));
     const FVector Focus=Camera->GetActorLocation()+Camera->GetActorForwardVector()*(ViewWidth/2/FMath::Tan(FMath::DegreesToRadians(25.f)));
+    const auto Accept=[&](FVector Candidate) {
+        Candidate.Z=0;
+        if(!Walkable(Candidate,EnemyRadius(Type)) || (Type==10 && FVector::Dist2D(Candidate,PlayerPos)<800)) return false;
+        P=Candidate;return true;
+    };
     for(int i=0;i<40;i++) {
         if(i%2) P=Focus+FVector((Random.RandRange(0,1)?1:-1)*(ViewWidth/2+220),Random.FRandRange(-HH-200,HH+200),0);
         else P=Focus+FVector(Random.FRandRange(-ViewWidth/2-200,ViewWidth/2+200),(Random.RandRange(0,1)?1:-1)*(HH+220),0);
-        P.Z=0; if(Walkable(P,Type>=7?70:35)) {Found=true; break;}
+        if(Accept(P)) return true;
     }
-    if(!Found) return;
+    // Deterministic perimeter sweep avoids a scheduled event depending only on random retries.
+    for(int I=0;I<=24;I++) {
+        const float T=I/24.f;
+        for(int Side:{-1,1}) {
+            if(Accept(Focus+FVector(Side*(ViewWidth/2+220),FMath::Lerp(-HH-200,HH+200,T),0))) return true;
+            if(Accept(Focus+FVector(FMath::Lerp(-ViewWidth/2-200,ViewWidth/2+200,T),Side*(HH+220),0))) return true;
+        }
+    }
+    return false;
+}
+void AAlchemyWorld::SpawnEnemy(int Type) {
+    FVector P;
+    if(!FindSpawnPoint(Type,P)) {UE_LOG(LogTemp,Warning,TEXT("ALCHEMY_SPAWN_NO_LEGAL_POINT type=%d time=%.2f"),Type,RunTime);return;}
     FAlchemyEnemy E; E.Type=Type; E.Pos=P;
     const int Minute=FMath::Min(6,int(RunTime/60));
     E.HP=E.MaxHP=Type==10?6000:FMath::RoundToFloat((Type<7&&bTune001B?TuneHP[Type]:EnemyHP[Type])*(1+0.12f*Minute));
@@ -410,6 +517,15 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) Panel=Panel==TEXT("skills")?TEXT(""):TEXT("skills");
     if(bSmoke) SmokeCheck(Dt);
+    if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture"))) {
+        if(CaptureStep==0 && VisualTime>2) {BuildScene(true);CameraPitch=90;ViewWidth=20000;bPerspective=false;CaptureStep++;}
+        UpdateCamera(Dt);
+        if(CaptureStep==1 && VisualTime>4) {FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence/LayoutA_Top.png"),false,false);CaptureStep++;}
+        else if(CaptureStep==2 && VisualTime>5) {CameraPitch=48;ViewWidth=2844;PlayerPos=DesignPosition(-35,-28);UpdateSprite(Player,TEXT("Hero0_0"),PlayerPos,120,160);PlayerShadow->SetActorLocation(PlayerPos);CaptureStep++;}
+        else if(CaptureStep==3 && VisualTime>7) {FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence/LayoutA_Local.png"),false,false);CaptureStep++;}
+        else if(CaptureStep==4 && VisualTime>9) {UE_LOG(LogTemp,Display,TEXT("ALCHEMY_LAYOUT_CAPTURE_DONE"));FPlatformMisc::RequestExit(false);CaptureStep++;}
+        return;
+    }
     if(bCapture) {
         const auto Capture=[this](const TCHAR* Name) {
             FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence")/Name,false,false);
@@ -488,11 +604,8 @@ void AAlchemyWorld::Tick(float Dt) {
                 Fire(E.Pos,PlayerPos,E.Type==3?(bTune001B?9:10):E.Type==5?(bTune001B?10:12):16,FLinearColor(0.7f,0.22f,0.5f),true,E.Type==3?650:580); E.AttackCD=E.Type==5?3.2f:2.8f;
             }
             if(!Ranged || Dist>550 || Dist<200) {
-                FVector Dir=To.GetSafeNormal2D()*(Ranged && Dist<200?-1:1);
-                const FVector New=Move(E.Pos,Dir*E.Speed*(E.Slow>0?0.65f:1)*Dt,32);
-                if(FVector::DistSquared2D(New,E.Pos)<1 && Dist>80) {
-                    const FVector Side(-Dir.Y,Dir.X,0); E.Pos=Move(E.Pos,Side*E.Speed*Dt*(int(E.Pos.X+E.Pos.Y)%2?1:-1),32);
-                } else E.Pos=New;
+                if(Ranged && Dist<200) E.Pos=Move(E.Pos,-To.GetSafeNormal2D()*E.Speed*Dt,EnemyRadius(E.Type));
+                else Chase(E,Dt);
             }
             if(Dist<(E.Type>=7?110:75) && E.AttackCD<=0) { Hurt(E.Contact); E.AttackCD=1; }
         }
@@ -529,9 +642,10 @@ void AAlchemyWorld::Tick(float Dt) {
         auto& D=Drops[i]; float Dist=FVector::Dist2D(D.Pos,PlayerPos);
         if(Dist>(D.Kind>=6?220:250*(1+0.1f*Progress->Talents[3]))) continue;
         if(D.Kind>=6) {
-            int Special=D.Kind-3; Inventory[Special]=FMath::Min(10,Inventory[Special]+1);
-            for(int j=0;j<4;j++) {float R=Random.FRand();int Kind=R<0.4f?0:R<0.75f?1:2; Inventory[Kind]=FMath::Min(10,Inventory[Kind]+1);}
-            Message(TEXT("精英宝箱：专属素材 ×1，普通素材 ×4"));
+            int Special=D.Kind-3,SpecialAdded=Inventory[Special]<10?1:0,CommonAdded=0;
+            Inventory[Special]=FMath::Min(10,Inventory[Special]+1);
+            for(int j=0;j<4;j++) {float R=Random.FRand();int Kind=R<0.4f?0:R<0.75f?1:2; if(Inventory[Kind]<10) {Inventory[Kind]++;CommonAdded++;}}
+            Message(FString::Printf(TEXT("精英宝箱实际入库：专属 ×%d，普通 ×%d%s"),SpecialAdded,CommonAdded,SpecialAdded+CommonAdded<5?TEXT("；素材已满，超额不入库"):TEXT("")));
         } else if(D.Kind<0) RunCoins+=D.Count;
         else if(Inventory[D.Kind]>=10) Message(TEXT("素材已满"));
         else Inventory[D.Kind]=FMath::Min(10,Inventory[D.Kind]+D.Count);
@@ -545,11 +659,47 @@ void AAlchemyWorld::Tick(float Dt) {
     Scene.RemoveAll([](const TObjectPtr<AActor>& A){return !IsValid(A);});
 }
 
+void AAlchemyWorld::LayoutCheck() {
+    bool OK=Obstacles.Num()==8 && PlayerPos.IsNearlyZero();
+    const FVector Saved=PlayerPos;
+    const FVector PlanRight=DesignPosition(1,0).GetSafeNormal(),PlanUp=DesignPosition(0,-1).GetSafeNormal();
+    OK &= FVector::DotProduct(PlanRight,Camera->GetActorRightVector())>0.99f;
+    OK &= FVector::DotProduct(PlanUp,Camera->GetActorForwardVector().GetSafeNormal2D())>0.99f;
+    int Paths=0,Spawns=0;
+    for(float Radius:{35.f,70.f,110.f}) for(int X:{-1,0,1}) for(int Y:{-1,0,1}) {
+        const FVector Target(X*6800.f,Y*5000.f,0);
+        TArray<FVector> Path;
+        bool Reachable=FindPath(FVector::ZeroVector,Target,Radius,Path);
+        FVector Previous=FVector::ZeroVector;
+        for(const auto& P:Path) {Reachable &= SegmentClear(Previous,P,Radius);Previous=P;}
+        OK &= Reachable; Paths+=Reachable?1:0;
+    }
+    for(int X:{-1,0,1}) for(int Y:{-1,0,1}) {
+        PlayerPos=FVector(X*6800.f,Y*5000.f,0);UpdateCamera(0);
+        for(int Type:{0,7,10}) {
+            FVector P; const bool Found=FindSpawnPoint(Type,P);
+            OK &= Found && Walkable(P,EnemyRadius(Type));Spawns+=Found?1:0;
+        }
+    }
+    PlayerPos=DesignPosition(-35,-14);
+    for(int Type:{0,7,10}) {
+        FAlchemyEnemy Agent; Agent.Type=Type;Agent.Pos=DesignPosition(-35,-28);Agent.Speed=240;
+        OK &= !SegmentClear(Agent.Pos,PlayerPos,EnemyRadius(Type));
+        for(int Step=0;Step<1500 && FVector::Dist2D(Agent.Pos,PlayerPos)>30;Step++) {
+            Chase(Agent,.02f);OK &= Walkable(Agent.Pos,EnemyRadius(Type));
+        }
+        OK &= FVector::Dist2D(Agent.Pos,PlayerPos)<=30;
+    }
+    PlayerPos=Saved;UpdateCamera(0);
+    UE_LOG(LogTemp,Display,TEXT("ALCHEMY_LAYOUT_CHECK obstacles=%d paths=%d/27 spawns=%d/27 pursuit=3 radii=35,70,110 result=%s"),Obstacles.Num(),Paths,Spawns,OK?TEXT("PASS"):TEXT("FAIL"));
+    if(!OK) {UE_LOG(LogTemp,Error,TEXT("ALCHEMY_SMOKE_FAIL layout_A"));FPlatformMisc::RequestExitWithStatus(false,1);}
+}
 void AAlchemyWorld::SmokeCheck(float Dt) {
     SmokeTime+=Dt;
     auto Require=[](bool OK,const TCHAR* Label){if(!OK) {UE_LOG(LogTemp,Error,TEXT("ALCHEMY_SMOKE_FAIL %s"),Label); FPlatformMisc::RequestExitWithStatus(false,1);} else UE_LOG(LogTemp,Display,TEXT("ALCHEMY_CHECK_OK %s"),Label);};
     if(SmokeStep==0 && SmokeTime>1) {
         Progress=NewObject<UAlchemyProgress>(this); StartRun();
+        LayoutCheck();
         Require(Enemies.Num()==8,TEXT("initial_8")); Require(HP==120,TEXT("TUNE001B_HP120"));
         Inventory={3,3,3,0,0,0}; Selected={1,0,0,0,0,0}; auto Before=Inventory;
         Require(!Craft() && Before==Inventory,TEXT("invalid_craft_no_cost"));
@@ -577,9 +727,12 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
         RunTime=309.98f; SmokeTime=0; SmokeStep=4;
     } else if(SmokeStep==4 && SmokeTime>0.3f) {
         Require(bBossSpawned,TEXT("boss_at_310"));
+        NextElite=360;EliteIndex=3;RunTime=359.98f;SmokeTime=0;SmokeStep=5;
+    } else if(SmokeStep==5 && SmokeTime>0.3f) {
+        Require(RunTime>=360 && NextElite==450 && EliteIndex==4,TEXT("elite_at_360_during_boss"));
         UE_LOG(LogTemp,Display,TEXT("ALCHEMY_SMOKE_PASS"));
-        FFileHelper::SaveStringToFile(TEXT("PASS: initial spawn, tuning, recipes, material cap, pause, bounds, camera, boss timeline\n"),*(FPaths::ProjectDir()/TEXT("Evidence/smoke-result.txt")));
-        FPlatformMisc::RequestExit(false); SmokeStep=5;
+        FFileHelper::SaveStringToFile(TEXT("PASS: Layout A geometry, coordinates, paths and pursuit at three radii; spawn coverage; initial spawn, tuning, recipes, material cap, pause, camera, boss timeline, elite at 360\n"),*(FPaths::ProjectDir()/TEXT("Evidence/smoke-result.txt")));
+        FPlatformMisc::RequestExit(false); SmokeStep=6;
     }
 }
 

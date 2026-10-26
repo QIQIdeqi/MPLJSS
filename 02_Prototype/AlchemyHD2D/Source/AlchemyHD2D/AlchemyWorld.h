@@ -28,6 +28,8 @@ struct FAlchemyEnemy {
     float HP=1, MaxHP=1, Speed=1, Contact=0, AttackCD=1, Windup=0, Slow=0, Transition=0;
     FVector Aim=FVector::ZeroVector;
     bool Phase2=false;
+    TArray<FVector> Path;
+    float RepathCD=0;
 };
 struct FAlchemyShot {
     AStaticMeshActor* Body=nullptr;
@@ -93,6 +95,10 @@ public:
     void Ring(FVector Pos,float Radius,FLinearColor Color,float Duration=0.35);
     bool Walkable(FVector Pos, float Radius=45) const;
     FVector Move(FVector Pos,FVector Delta,float Radius=45) const;
+    bool SegmentClear(FVector From,FVector To,float Radius) const;
+    bool FindPath(FVector From,FVector To,float Radius,TArray<FVector>& Path) const;
+    void Chase(FAlchemyEnemy& Enemy,float Delta);
+    void LayoutCheck();
     void UpdateCamera(float Delta);
     void StartRun();
     void EndRun(bool Won);
@@ -101,6 +107,7 @@ public:
     bool SaveProgress();
     bool Craft();
     void SpawnEnemy(int32 Type);
+    bool FindSpawnPoint(int32 Type,FVector& Position);
     void SpawnWave();
     int32 Nearest(FVector Pos,float Range,const TArray<int32>& Exclude={}) const;
     void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000);
