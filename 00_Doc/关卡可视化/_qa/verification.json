@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "checkedAt": "2026-10-26T14:18:35.338Z",
+  "results": [
+    {
+      "profile": "ue",
+      "obstaclesInBounds": true,
+      "clearanceComponents": 1,
+      "samples": 9,
+      "spawnCoverage": true,
+      "passed": true
+    },
+    {
+      "profile": "legacy",
+      "obstaclesInBounds": true,
+      "clearanceComponents": 1,
+      "samples": 9,
+      "spawnCoverage": true,
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "checks": [
+    "both layout scales",
+    "all nine location presets spawn coverage",
+    "collision and boundaries",
+    "keyboard movement",
+    "camera clamping",
+    "obstacle selection",
+    "300/310/360 time events",
+    "play/pause",
+    "four tabs",
+    "rule filters",
+    "JSON download",
+    "source link targets",
+    "mobile width",
+    "offline file URL"
+  ]
+}

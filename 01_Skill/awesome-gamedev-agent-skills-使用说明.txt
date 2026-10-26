@@ -1,0 +1,25 @@
+awesome-gamedev-agent-skills 使用说明（2026-10-26）
+来源：https://github.com/gamedev-skills/awesome-gamedev-agent-skills
+固定提交：184b72be02884f782a0058f2eeae2ce4277453e4
+已安装 76 个专用技能 + router，共 77 个，保留完整 references/scripts/assets。
+实体文件：D:\06_独立游戏\00_冒牌炼金术士\01_Skill\installed\awesome-gamedev-agent-skills
+来源副本：01_Skill/sources/awesome-gamedev-agent-skills
+调用入口：C:\Users\60550\.codex\skills\<技能名>，Junction 指向 D 盘实体文件。
+已确认 D 盘位于 Samsung NVMe SSD。
+
+下一轮消息应能发现新技能。输入 $ 并选择 router，或说“使用 router 技能”，然后描述任务。
+如果技能列表没有刷新，重新打开聊天或重启应用后再试。
+自然语言也可按描述匹配；显式指定便于确认。
+router 根据工程与请求选择技能，不需要一次加载全部 77 个。
+重点技能：level-design（关卡空间/动线/节奏/遭遇），game-feel（反馈），game-ai（AI），prototype-fast（原型），performance-optimization（性能定位），unreal-blueprints（蓝图），unreal-niagara（特效），create-game-assets（美术资源流程）。
+这些是 AI 工作指南；安装不等于具备引擎编辑器控制能力。现有项目应先确认实际引擎版本。
+
+可直接发送的三个提示：
+1. $router 读取冒牌炼金术士现有资料，选择必要技能，找出最影响 Demo 体验的三个问题。先只分析，不改文件。
+2. $level-design 检查现有关卡的空间布局、玩家动线、波次和 Boss 转场，给出最小白盒验证方案，不改现有配置。
+3. $unreal-niagara 按我提供的 UE 版本检查 Niagara 生命周期设置，区分已验证的问题与待实测的性能假设。
+
+验证：官方 validate-skills.py 全部通过；所有安装文件与 Git 原始文件 SHA256 一致；77 个 Junction 均可读取。
+说明：源码 Git 检出有自动 CRLF 转换，故哈希对比使用 Git 原始 blob，避免把换行差异误报为安装损坏。
+待验证：下一轮技能目录展示与实际触发。未进行引擎实测。
+更新：固定提交快照，未配置自动更新；仅更新 sources 不会更新 installed。

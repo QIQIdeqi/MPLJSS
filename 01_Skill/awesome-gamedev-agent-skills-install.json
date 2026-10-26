@@ -1,0 +1,395 @@
+{
+  "repository": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills",
+  "commit": "184b72be02884f782a0058f2eeae2ce4277453e4",
+  "date": "2026-10-26",
+  "skills": [
+    {
+      "name": "game-jam",
+      "source": "skills/workflows/game-jam",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\game-jam"
+    },
+    {
+      "name": "itch-publish",
+      "source": "skills/workflows/itch-publish",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\itch-publish"
+    },
+    {
+      "name": "prototype-fast",
+      "source": "skills/workflows/prototype-fast",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\prototype-fast"
+    },
+    {
+      "name": "steam-publish",
+      "source": "skills/workflows/steam-publish",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\steam-publish"
+    },
+    {
+      "name": "phaser-arcade-physics",
+      "source": "skills/web-engines/phaser-arcade-physics",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\phaser-arcade-physics"
+    },
+    {
+      "name": "phaser-core",
+      "source": "skills/web-engines/phaser-core",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\phaser-core"
+    },
+    {
+      "name": "pixijs-rendering",
+      "source": "skills/web-engines/pixijs-rendering",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\pixijs-rendering"
+    },
+    {
+      "name": "threejs-gltf-loading",
+      "source": "skills/web-engines/threejs-gltf-loading",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\threejs-gltf-loading"
+    },
+    {
+      "name": "threejs-materials-lighting",
+      "source": "skills/web-engines/threejs-materials-lighting",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\threejs-materials-lighting"
+    },
+    {
+      "name": "threejs-scene-setup",
+      "source": "skills/web-engines/threejs-scene-setup",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\threejs-scene-setup"
+    },
+    {
+      "name": "unreal-behavior-trees",
+      "source": "skills/unreal/unreal-behavior-trees",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unreal-behavior-trees"
+    },
+    {
+      "name": "unreal-blueprints",
+      "source": "skills/unreal/unreal-blueprints",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unreal-blueprints"
+    },
+    {
+      "name": "unreal-cpp-gameplay",
+      "source": "skills/unreal/unreal-cpp-gameplay",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unreal-cpp-gameplay"
+    },
+    {
+      "name": "unreal-enhanced-input",
+      "source": "skills/unreal/unreal-enhanced-input",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unreal-enhanced-input"
+    },
+    {
+      "name": "unreal-niagara",
+      "source": "skills/unreal/unreal-niagara",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unreal-niagara"
+    },
+    {
+      "name": "unreal-packaging",
+      "source": "skills/unreal/unreal-packaging",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unreal-packaging"
+    },
+    {
+      "name": "unity-animation",
+      "source": "skills/unity/unity-animation",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-animation"
+    },
+    {
+      "name": "unity-build-pipeline",
+      "source": "skills/unity/unity-build-pipeline",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-build-pipeline"
+    },
+    {
+      "name": "unity-csharp-scripting",
+      "source": "skills/unity/unity-csharp-scripting",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-csharp-scripting"
+    },
+    {
+      "name": "unity-input-system",
+      "source": "skills/unity/unity-input-system",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-input-system"
+    },
+    {
+      "name": "unity-navmesh",
+      "source": "skills/unity/unity-navmesh",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-navmesh"
+    },
+    {
+      "name": "unity-physics",
+      "source": "skills/unity/unity-physics",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-physics"
+    },
+    {
+      "name": "unity-scriptableobjects",
+      "source": "skills/unity/unity-scriptableobjects",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-scriptableobjects"
+    },
+    {
+      "name": "unity-tilemap-2d",
+      "source": "skills/unity/unity-tilemap-2d",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\unity-tilemap-2d"
+    },
+    {
+      "name": "bevy-ecs",
+      "source": "skills/other-engines/bevy-ecs",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\bevy-ecs"
+    },
+    {
+      "name": "defold-core",
+      "source": "skills/other-engines/defold-core",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\defold-core"
+    },
+    {
+      "name": "love2d-core",
+      "source": "skills/other-engines/love2d-core",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\love2d-core"
+    },
+    {
+      "name": "pygame-core",
+      "source": "skills/other-engines/pygame-core",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\pygame-core"
+    },
+    {
+      "name": "roblox-characters",
+      "source": "skills/other-engines/roblox-characters",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roblox-characters"
+    },
+    {
+      "name": "roblox-datastores",
+      "source": "skills/other-engines/roblox-datastores",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roblox-datastores"
+    },
+    {
+      "name": "roblox-luau",
+      "source": "skills/other-engines/roblox-luau",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roblox-luau"
+    },
+    {
+      "name": "roblox-networking",
+      "source": "skills/other-engines/roblox-networking",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roblox-networking"
+    },
+    {
+      "name": "roblox-physics",
+      "source": "skills/other-engines/roblox-physics",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roblox-physics"
+    },
+    {
+      "name": "roblox-studio-workflow",
+      "source": "skills/other-engines/roblox-studio-workflow",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roblox-studio-workflow"
+    },
+    {
+      "name": "roblox-ui",
+      "source": "skills/other-engines/roblox-ui",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roblox-ui"
+    },
+    {
+      "name": "godot-2d-movement",
+      "source": "skills/godot/godot-2d-movement",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-2d-movement"
+    },
+    {
+      "name": "godot-3d-essentials",
+      "source": "skills/godot/godot-3d-essentials",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-3d-essentials"
+    },
+    {
+      "name": "godot-animation",
+      "source": "skills/godot/godot-animation",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-animation"
+    },
+    {
+      "name": "godot-audio",
+      "source": "skills/godot/godot-audio",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-audio"
+    },
+    {
+      "name": "godot-csharp",
+      "source": "skills/godot/godot-csharp",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-csharp"
+    },
+    {
+      "name": "godot-export",
+      "source": "skills/godot/godot-export",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-export"
+    },
+    {
+      "name": "godot-gdscript",
+      "source": "skills/godot/godot-gdscript",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-gdscript"
+    },
+    {
+      "name": "godot-gdscript-headless-testing",
+      "source": "skills/godot/godot-gdscript-headless-testing",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-gdscript-headless-testing"
+    },
+    {
+      "name": "godot-multiplayer",
+      "source": "skills/godot/godot-multiplayer",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-multiplayer"
+    },
+    {
+      "name": "godot-nodes-scenes",
+      "source": "skills/godot/godot-nodes-scenes",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-nodes-scenes"
+    },
+    {
+      "name": "godot-physics",
+      "source": "skills/godot/godot-physics",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-physics"
+    },
+    {
+      "name": "godot-resources",
+      "source": "skills/godot/godot-resources",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-resources"
+    },
+    {
+      "name": "godot-shaders",
+      "source": "skills/godot/godot-shaders",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-shaders"
+    },
+    {
+      "name": "godot-signals-groups",
+      "source": "skills/godot/godot-signals-groups",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-signals-groups"
+    },
+    {
+      "name": "godot-tilemap",
+      "source": "skills/godot/godot-tilemap",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-tilemap"
+    },
+    {
+      "name": "godot-ui-control",
+      "source": "skills/godot/godot-ui-control",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\godot-ui-control"
+    },
+    {
+      "name": "card-game",
+      "source": "skills/genres/card-game",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\card-game"
+    },
+    {
+      "name": "fps-shooter",
+      "source": "skills/genres/fps-shooter",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\fps-shooter"
+    },
+    {
+      "name": "platformer",
+      "source": "skills/genres/platformer",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\platformer"
+    },
+    {
+      "name": "puzzle",
+      "source": "skills/genres/puzzle",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\puzzle"
+    },
+    {
+      "name": "roguelike",
+      "source": "skills/genres/roguelike",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\roguelike"
+    },
+    {
+      "name": "rpg",
+      "source": "skills/genres/rpg",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\rpg"
+    },
+    {
+      "name": "survival-crafting",
+      "source": "skills/genres/survival-crafting",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\survival-crafting"
+    },
+    {
+      "name": "tower-defense",
+      "source": "skills/genres/tower-defense",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\tower-defense"
+    },
+    {
+      "name": "visual-novel",
+      "source": "skills/genres/visual-novel",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\visual-novel"
+    },
+    {
+      "name": "ebitengine-game",
+      "source": "skills/ebitengine/ebitengine-game",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\ebitengine-game"
+    },
+    {
+      "name": "ai-behavior-trees-utility-ai",
+      "source": "skills/disciplines/ai-behavior-trees-utility-ai",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\ai-behavior-trees-utility-ai"
+    },
+    {
+      "name": "audio-design",
+      "source": "skills/disciplines/audio-design",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\audio-design"
+    },
+    {
+      "name": "camera-systems",
+      "source": "skills/disciplines/camera-systems",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\camera-systems"
+    },
+    {
+      "name": "create-game-assets",
+      "source": "skills/disciplines/create-game-assets",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\create-game-assets"
+    },
+    {
+      "name": "dialogue-systems",
+      "source": "skills/disciplines/dialogue-systems",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\dialogue-systems"
+    },
+    {
+      "name": "game-ai",
+      "source": "skills/disciplines/game-ai",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\game-ai"
+    },
+    {
+      "name": "game-feel",
+      "source": "skills/disciplines/game-feel",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\game-feel"
+    },
+    {
+      "name": "game-ui-ux",
+      "source": "skills/disciplines/game-ui-ux",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\game-ui-ux"
+    },
+    {
+      "name": "input-systems",
+      "source": "skills/disciplines/input-systems",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\input-systems"
+    },
+    {
+      "name": "level-design",
+      "source": "skills/disciplines/level-design",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\level-design"
+    },
+    {
+      "name": "performance-optimization",
+      "source": "skills/disciplines/performance-optimization",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\performance-optimization"
+    },
+    {
+      "name": "physics-tuning",
+      "source": "skills/disciplines/physics-tuning",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\physics-tuning"
+    },
+    {
+      "name": "procedural-gen",
+      "source": "skills/disciplines/procedural-gen",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\procedural-gen"
+    },
+    {
+      "name": "save-systems",
+      "source": "skills/disciplines/save-systems",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\save-systems"
+    },
+    {
+      "name": "shader-programming",
+      "source": "skills/disciplines/shader-programming",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\shader-programming"
+    },
+    {
+      "name": "router",
+      "source": "router",
+      "installed": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\awesome-gamedev-agent-skills\\router"
+    }
+  ],
+  "hashed_files": 207,
+  "verification": "SHA256 matches original Git blobs; 77 junctions readable; official validator passed",
+  "runtime_discovery": "pending next turn"
+}

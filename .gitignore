@@ -18,3 +18,8 @@
 !.env.example
 *.pem
 *.key
+# Browser QA state; retain screenshots and verification reports
+00_Doc/关卡可视化/_qa/browser-profile/
+00_Doc/关卡可视化/_qa/temp/
+# Reproducible upstream clone; installed snapshots and pinned manifest are tracked
+01_Skill/sources/
