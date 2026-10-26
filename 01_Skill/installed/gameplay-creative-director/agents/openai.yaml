@@ -1,0 +1,4 @@
+interface:
+  display_name: "玩法创意导演"
+  short_description: "从玩家体验出发，设计原创核心机制、比较创意方向并制定最小原型验证方案"
+  default_prompt: "使用 $gameplay-creative-director，结合我的目标和开发限制，提出有差异的玩法创意并设计最小验证原型。"

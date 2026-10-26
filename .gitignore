@@ -1,0 +1,20 @@
+# Unreal-generated caches, intermediate compilation products and local session state
+**/Intermediate/
+**/Intermediate_UnicodeAttempt/
+**/DerivedDataCache/
+02_Prototype/**/Binaries/
+02_Prototype/**/Saved/
+.vs/
+*.sln
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+# Local run state inside the distributable; keep the executable and its dependencies
+03_Build/**/Saved/
+# Machine credentials and editor-local environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key

@@ -1,0 +1,4 @@
+interface:
+  display_name: "资深系统策划"
+  short_description: "设计核心循环、成长和资源经济，明确系统规则与参数依据并验证数值边界"
+  default_prompt: "使用 $senior-game-systems-designer，围绕我的体验目标设计系统规则、成长和资源经济，并给出数值假设与验证方案。"
