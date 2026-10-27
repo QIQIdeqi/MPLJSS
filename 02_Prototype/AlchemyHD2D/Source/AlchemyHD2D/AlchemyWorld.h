@@ -4,6 +4,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/HUD.h"
 #include "GameFramework/SaveGame.h"
+#include "AlchemyDesignTools.h"
 #include "AlchemyWorld.generated.h"
 
 class AStaticMeshActor;
@@ -50,6 +51,8 @@ struct FAlchemyShot {
     bool Hostile=false;
     FLinearColor Color=FLinearColor::White;
     TWeakObjectPtr<UNiagaraComponent> Trail;
+    TWeakObjectPtr<UNiagaraSystem> HitEffect;
+    float Slow=0,SlowFactor=1,EffectScale=1,HitLife=.7f;
 };
 struct FAlchemyDrop {
     AStaticMeshActor* Body=nullptr;
@@ -112,11 +115,33 @@ public:
     UPROPERTY() TObjectPtr<UAlchemyProgress> Progress;
     UPROPERTY() TMap<FString,TObjectPtr<UMaterialInterface>> Mats;
     UPROPERTY() TObjectPtr<UFont> UIFont;
+    UPROPERTY() TObjectPtr<AAlchemyLevelDesigner> Designer;
+    UPROPERTY() TObjectPtr<UDataTable> SkillTable;
+    UPROPERTY() TObjectPtr<UDataTable> RecipeTable;
+    UPROPERTY() TObjectPtr<UDataTable> ChainTable;
+    UPROPERTY() TObjectPtr<UDataTable> QualityTable;
+    UPROPERTY() TArray<FAlchemySkillRow> RuntimeSkills;
+    UPROPERTY() TArray<FAlchemyRecipeRow> RuntimeRecipes;
+    UPROPERTY() TArray<FAlchemyChainRow> RuntimeChains;
+    UPROPERTY() TArray<FAlchemyQualityRow> RuntimeQuality;
+    bool LoadDesignConfig();
+    static bool CreateDesignTables();
+    const FAlchemySkillRow& SkillConfig(int32 I) const {return RuntimeSkills[I];}
+    const FAlchemyChainRow& ChainConfig(int32 I) const {return RuntimeChains[I];}
+    const TCHAR* SkillName(int32 I) const {return RuntimeSkills.IsValidIndex(I)?*RuntimeSkills[I].Name:TEXT("无效技能");}
+    const TCHAR* CombinationName(int32 I) const {return *RuntimeRecipes[I].Name;}
+    int32 CombinationSkill(int32 I,int32 Q) const {const auto& R=RuntimeRecipes[I];return Q==0?R.LowSkill:Q==1?R.MidSkill:R.HighSkill;}
+    float QualityWeight(int32 I,int32 Q) const {const auto& R=RuntimeQuality[I];return Q==0?R.Low:Q==1?R.Mid:R.High;}
+    int32 RecipeCost(int32 Skill,int32 Material) const;
+    int32 NumSkills() const {return RuntimeSkills.Num();}
+    int32 NumChains() const {return RuntimeChains.Num();}
+    FVector2D CombatHalfSize=FVector2D(7060,5330);
     ACameraActor* Camera=nullptr;
     AStaticMeshActor* Player=nullptr;
     AStaticMeshActor* PlayerShadow=nullptr;
     UPROPERTY() TArray<TObjectPtr<AActor>> Scene;
-    float SpawnCD=2.6f, NextElite=90, SkillCD[25]={}, ChainCD[10]={}, ContactCD=0, VisualTime=0;
+    float SpawnCD=2.6f, NextElite=90, ContactCD=0, VisualTime=0;
+    TArray<float> SkillCD,ChainCD;
     int32 EliteIndex=0, SmokeStep=0, CaptureStep=0;
     float SmokeTime=0;
     FRandomStream Random{77};
@@ -146,11 +171,12 @@ public:
     bool FindSpawnPoint(int32 Type,FVector& Position);
     void SpawnWave();
     int32 Nearest(FVector Pos,float Range,const TArray<int32>& Exclude={}) const;
-    void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000);
-    void DamageEnemy(int32 Index,float Damage,FLinearColor Color=FLinearColor(1,.8f,.3f));
+    void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000,UNiagaraSystem* TrailSystem=nullptr,UNiagaraSystem* HitSystem=nullptr,float Lifetime=4,float EffectScale=1,float HitLife=.7f);
+    void DamageEnemy(int32 Index,float Damage,FLinearColor Color=FLinearColor(1,.8f,.3f),UNiagaraSystem* HitSystem=nullptr,float EffectScale=1,float HitLife=.7f);
+    void SlowEnemy(int32 Index,float Duration,float Factor);
     UNiagaraComponent* SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life);
     void UpdateFeedback(float Delta);
-    int32 Area(FVector Pos,float Radius,float Damage,FLinearColor Color,float Slow=0,float SlowFactor=0.65f);
+    int32 Area(FVector Pos,float Radius,float Damage,FLinearColor Color,float Slow=0,float SlowFactor=0.65f,UNiagaraSystem* CastSystem=nullptr,UNiagaraSystem* HitSystem=nullptr,float EffectScale=1,float CastLife=1.25f,float HitLife=.7f);
     void Hurt(float Damage);
     void Drop(FVector Pos,int32 Kind,int32 Count=1);
     void CastSkills(float Delta);
@@ -159,6 +185,9 @@ public:
     int32 FeedbackParticles() const;
     float FeedbackAge() const;
     bool CaptureFeedback(float Delta);
+    bool CheckDesignRuntime();
+    void CaptureTools(float Delta);
+    int32 RenderedEliteBars=0,RenderedBossBarY=-1;
     int32 FeedbackPeak=0;
     float FeedbackPauseAge=0;
 };

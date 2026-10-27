@@ -6,7 +6,7 @@
 
 优先双击工作区 `03_Build/HD2D_PC_UI/启动Demo.cmd`，可运行本次PC字体及HUD更新的独立Windows版，无需打开编辑器。请保留同目录的完整Windows文件夹。03_Build仅保留本最新版；旧运行包已移除，历史验证记录保留在工程Evidence中。
 
-本机也可以右键 `LaunchDemo.ps1`，选择使用PowerShell运行。脚本优先启动上述打包版；没有打包版时，调用已安装的 `D:\02_UnrealEngine\UE_5.8`，直接进入可移动村庄。本轮2026-10-27核对Build.version及真实进程日志为5.8.4（CL58902052）；此前5.8.2为历史验证环境。
+本机也可以右键 `LaunchDemo.ps1`，选择使用PowerShell运行。脚本运行上述完整打包版；编辑工作使用“打开关卡与技能编辑器.cmd”。本轮2026-10-27核对Build.version及真实进程日志为5.8.4（CL58902052）；此前5.8.2为历史验证环境。
 
 为避开 MSVC/UBA 在中文路径下的编译问题，工具通过 `D:\03_UEProject\AlchemyHD2DResearch` 目录链接访问本工程。链接与工作区里的工程是同一份文件，不是副本。源码、贴图源文件、UE资源、证据与说明均在本 SSD 工程内。
 
@@ -100,3 +100,6 @@ PC界面：按F7或面板右上入口打开字体调试：小号固定，中号/
 
 
 战斗反馈：普通怪受伤血条、精英常驻血条、实际伤害飘字，以及Niagara命中/范围爆发/弹丸尾迹，规则与边界见[Docs/CombatFeedback.md](Docs/CombatFeedback.md)。
+
+## UE原生关卡与技能工具
+双击工程根目录的打开关卡与技能编辑器.cmd，选中Alchemy_Level_Designer。关卡支持全图片素材面板、确定性随机格子、锁格与单格材质/图片/碰撞微调；技能、配方、连锁、品质权重由/Game/Design四张DataTable驱动。详见工作区00_Doc/工具/UE关卡与技能编辑器使用说明.md。编辑工具使用完整UE工程，Windows ZIP用于试玩。

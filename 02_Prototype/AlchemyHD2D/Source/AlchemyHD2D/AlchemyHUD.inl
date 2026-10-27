@@ -59,7 +59,7 @@ void AAlchemyHUD::NotifyHitBoxClick(FName Name) {
 void AAlchemyHUD::DrawHUD() {
     Super::DrawHUD();
     if(!World) for(TActorIterator<AAlchemyWorld> I(GetWorld());I;++I) {World=*I;break;}
-    if(!World || !Canvas) return;
+    if(!World || !World->Progress || !Canvas) return;
     S=FMath::Min(Canvas->SizeX/1280.f,Canvas->SizeY/720.f);OX=(Canvas->SizeX-1280*S)/2;OY=(Canvas->SizeY-720*S)/2;
     auto PC=GetOwningPlayerController();
     if(LastPanel!=World->Panel) {FocusIndex=2;DetailPage=0;LastPanel=World->Panel;}
@@ -87,12 +87,14 @@ void AAlchemyHUD::DrawHUD() {
     if(World->Panel.IsEmpty()) Button(TEXT("research"),TEXT("F6 画面"),1070,20,185);
     Box(-OX/S,668,Canvas->SizeX/S,52+OY/S,Surface);
     Paragraph(TEXT("WASD 移动    Space 闪避    F 交互    Tab 炼金    C 图鉴    B 技能    Esc 返回"),24,680,1232,16,Dim);
+    World->RenderedEliteBars=0;World->RenderedBossBarY=-1;
     if(World->bCombat && World->Panel.IsEmpty()) {
-        for(const auto& E:World->Enemies) if(E.HP>0 && E.Type!=10 && (E.HP<E.MaxHP || E.Type>=7)) {
+        for(const auto& E:World->Enemies) if(E.HP>0 && E.Type>=7 && E.Type!=10) {
             FVector2D Screen;
             if(!PC->ProjectWorldLocationToScreen(E.Pos+FVector(0,0,E.Type>=7?225:120),Screen)) continue;
             float X=(Screen.X-OX)/S,Y=(Screen.Y-OY)/S,W=E.Type>=7?100:72;
             if(X<W/2 || X>1280-W/2 || Y<100 || Y>560) continue;
+            World->RenderedEliteBars++;
             Box(X-W/2-2,Y-2,W+4,11,Ink);Box(X-W/2,Y,W*FMath::Clamp(E.HP/E.MaxHP,0.f,1.f),7,E.Type>=7?Gold:Teal);
         }
         for(const auto& Number:World->DamageNumbers) {
@@ -111,17 +113,19 @@ void AAlchemyHUD::DrawHUD() {
         float Start=(1280-World->Equipped.Num()*146)/2.f;
         for(int I=0;I<World->Equipped.Num();I++) {
             int K=World->Equipped[I];float X=Start+I*146;Box(X,578,138,76,Surface);
-            Text(SkillNames[K],X+10,587,17,White);Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),X+10,621,18,Gold);
+            Text(World->SkillName(K),X+10,587,17,White);Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),X+10,621,18,Gold);
         }
         if(World->TutorialActive()) {
             bool Ready=World->Inventory[0]>0 && World->Inventory[1]>0 && World->Inventory[2]>0;
-            Box(350,108,650,118,Surface);
-            Paragraph(World->TutorialSkill>=0?TEXT("让新技能一次命中至少2个敌人，完成首次教学。"):Ready?TEXT("材料已齐！按 Tab，尝试第一次炼金。"):TEXT("战斗收集三类材料，准备第一次炼金。"),370,122,610,20,Gold);
-            if(Ready && World->TutorialSkill<0) Button(TEXT("alchemy"),TEXT("Tab 开始炼金"),370,171,340);
+            const float TY=World->RunTime>=300?186:108;
+            Box(350,TY,650,118,Surface);
+            Paragraph(World->TutorialSkill>=0?TEXT("让新技能一次命中至少2个敌人，完成首次教学。"):Ready?TEXT("材料已齐！按 Tab，尝试第一次炼金。"):TEXT("战斗收集三类材料，准备第一次炼金。"),370,TY+14,610,20,Gold);
+            if(Ready && World->TutorialSkill<0) Button(TEXT("alchemy"),TEXT("Tab 开始炼金"),370,TY+63,340);
         }
-        if(World->RunTime>=300 && !World->bBossSpawned) {Box(380,242,630,66,Surface);Text(FString::Printf(TEXT("BOSS 即将出现：%.1f秒"),310-World->RunTime),404,258,26,Gold);}
+        if(World->RunTime>=300 && !World->bBossSpawned) {Box(340,102,600,68,Surface);Text(FString::Printf(TEXT("BOSS 即将出现：%.1f秒"),310-World->RunTime),360,120,26,Gold);}
         for(const auto& E:World->Enemies) if(E.Type==10) {
-            Box(380,242,630,70,Surface);Text(TEXT("腐化之源"),400,250,24,Gold);Box(400,290,590,12,Ink);Box(400,290,590*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);break;
+            World->RenderedBossBarY=102;
+            Box(340,102,600,68,Surface);Text(TEXT("腐化之源"),360,112,24,Gold);Box(360,152,560,12,Ink);Box(360,152,560*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);break;
         }
     } else if(!World->bCombat && World->Panel.IsEmpty()) {
         for(int I=0;I<3;I++) {
@@ -149,7 +153,7 @@ void AAlchemyHUD::DrawHUD() {
                 Button(FString::Printf(TEXT("material%d"),I),FString::Printf(TEXT("%s%s  %d"),Next==I?TEXT("→ "):TEXT(""),MaterialNames[I],World->Inventory[I]-World->Selected[I]),756,282+I*58,422,World->Inventory[I]>World->Selected[I] && (!World->TutorialActive() || (World->TutorialSkill<0 && World->Selected[I]<1)));
             }
             TArray<int32> Options;TArray<float> Chances;FString Reason;int Combination;bool Valid=World->CraftOptions(Options,Chances,Reason,Combination);FString Probability;
-            if(Valid && Combination>=0) for(int Q=0;Q<3;Q++) {int I=Options.Find(CombinationSkills[Combination][Q]);Probability+=FString::Printf(TEXT("%s %.1f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
+            if(Valid && Combination>=0) for(int Q=0;Q<3;Q++) {int I=Options.Find(World->CombinationSkill(Combination,Q));Probability+=FString::Printf(TEXT("%s %.1f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
             else Probability=Valid?TEXT("精英专属配方 · 固定产出"):TEXT("满足投料条件后显示实际品质概率");
             Text(Probability,124,456,18,Teal);
             if(!World->TutorialActive()) for(int I=3;I<6;I++) {
@@ -163,21 +167,21 @@ void AAlchemyHUD::DrawHUD() {
         } else if(P==TEXT("codex")) {
             Button(TEXT("codexprev"),TEXT("上一类"),104,181,185);Button(TEXT("codexnext"),TEXT("下一类"),993,181,185);
             const TCHAR* Tabs[]={TEXT("材料组合"),TEXT("已发现技能"),TEXT("技能连锁"),TEXT("精英配方")};Text(Tabs[World->CodexPage],430,191,22,White);
-            int Count=World->CodexPage==2?10:World->CodexPage==3?3:7,PerPage=World->CodexPage==2?4:World->CodexPage==3?3:5;
+            int Count=World->CodexPage==2?World->NumChains():World->CodexPage==3?World->RuntimeRecipes.Num()-7:7,PerPage=World->CodexPage==2?4:World->CodexPage==3?3:5;
             int Pages=(Count+PerPage-1)/PerPage;DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
             for(int Row=0;Row<PerPage;Row++) {
                 int I=DetailPage*PerPage+Row;if(I>=Count) break;float Y=248+Row*(World->CodexPage==2?72:World->CodexPage==3?96:58);
                 Box(104,Y,1074,World->CodexPage==2?66:World->CodexPage==3?88:52,FLinearColor(.055f,.095f,.11f));
-                if(World->CodexPage==0) {bool Known=World->Progress->Combinations.Contains(I);Text(Known?CombinationNames[I]:TEXT("未发现的组合"),120,Y+13,20,Known?Gold:Dim);Text(Known?TEXT("三种品质；材料比例不改变组合"):TEXT("尝试不同材料种类"),450,Y+15,18,Dim);}
-                if(World->CodexPage==1) for(int Q=0;Q<3;Q++) {int K=CombinationSkills[I][Q];bool Known=World->Progress->Recipes.Contains(K);Text(Known?FString::Printf(TEXT("%s %s"),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),SkillNames[K]):TEXT("未发现技能"),120+Q*352,Y+14,19,Known?Gold:Dim);}
+                if(World->CodexPage==0) {bool Known=World->Progress->Combinations.Contains(I);Text(Known?World->CombinationName(I):TEXT("未发现的组合"),120,Y+13,20,Known?Gold:Dim);Text(Known?TEXT("三种品质；材料比例不改变组合"):TEXT("尝试不同材料种类"),450,Y+15,18,Dim);}
+                if(World->CodexPage==1) for(int Q=0;Q<3;Q++) {int K=World->CombinationSkill(I,Q);bool Known=World->Progress->Recipes.Contains(K);Text(Known?FString::Printf(TEXT("%s %s"),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),World->SkillName(K)):TEXT("未发现技能"),120+Q*352,Y+14,19,Known?Gold:Dim);}
                 if(World->CodexPage==2) {
-                    const auto& K=Chains[I];bool Known=World->Progress->ChainsV2.Contains(I);Text(K.Name,120,Y+10,21,Gold);
-                    Text(Known?FString::Printf(TEXT("%s + %s  /  冷却%.0f秒"),SkillNames[K.A],SkillNames[K.B],K.CD):TEXT("装备互补技能，实际触发后揭示条件"),370,Y+10,18,Known?White:Dim);
+                    const auto& K=World->ChainConfig(I);bool Known=World->Progress->ChainsV2.Contains(I);Text(K.Name,120,Y+10,21,Gold);
+                    Text(Known?FString::Printf(TEXT("%s + %s  /  冷却%.0f秒"),World->SkillName(K.A),World->SkillName(K.B),K.CD):TEXT("装备互补技能，实际触发后揭示条件"),370,Y+10,18,Known?White:Dim);
                     if(Known) Text(FString::Printf(TEXT("基础伤害%.0f  %s%.1f  减速%.0f%%，持续%.1f秒"),K.Damage,K.Targets?TEXT("目标数"):TEXT("半径"),K.Targets?float(K.Targets):K.Radius/100,(1-K.Factor)*100,K.Slow),370,Y+39,16,Dim);
                 }
                 if(World->CodexPage==3) {
-                    int K=7+I;bool Known=World->Progress->Recipes.Contains(K);Text(Known?SkillNames[K]:TEXT("未发现的精英配方"),120,Y+10,21,Known?Gold:Dim);
-                    if(Known) {FString Cost;for(int M=0;M<6;M++) if(Recipes[K][M]) Cost+=FString::Printf(TEXT("%s×%d "),MaterialNames[M],Recipes[K][M]);Text(Cost,120,Y+48,18,Dim);Button(FString::Printf(TEXT("recipe%d"),K),TEXT("填入素材"),923,Y+18,235,World->bCombat&&!World->TutorialActive());}
+                    int K=World->RuntimeRecipes[7+I].LowSkill;bool Known=World->Progress->Recipes.Contains(K);Text(Known?World->SkillName(K):TEXT("未发现的精英配方"),120,Y+10,21,Known?Gold:Dim);
+                    if(Known) {FString Cost;for(int M=0;M<6;M++) if(World->RecipeCost(K,M)) Cost+=FString::Printf(TEXT("%s×%d "),MaterialNames[M],World->RecipeCost(K,M));Text(Cost,120,Y+48,18,Dim);Button(FString::Printf(TEXT("recipe%d"),K),TEXT("填入素材"),923,Y+18,235,World->bCombat&&!World->TutorialActive());}
                 }
             }
             Button(TEXT("detailprev"),TEXT("上一页"),104,570,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,570,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,580,20,Dim);
@@ -186,8 +190,8 @@ void AAlchemyHUD::DrawHUD() {
             Text(TEXT("装备 6"),104,220,22,Gold);Text(TEXT("储备 6"),654,220,22,Gold);
             for(int I=0;I<6;I++) {
                 bool Has=World->Equipped.IsValidIndex(I),HasBag=World->Bag.IsValidIndex(I);int K=Has?World->Equipped[I]:0;
-                Button(FString::Printf(TEXT("equip%d"),I),Has?FString::Printf(TEXT("%d  %s  Lv.%d"),I+1,SkillNames[K],World->Levels[K]):TEXT("空装备位"),104,260+I*56,524,World->SelectedBag>=0&&I!=0);
-                Button(FString::Printf(TEXT("bag%d"),I),HasBag?FString::Printf(TEXT("%s%s"),World->SelectedBag==I?TEXT("→ "):TEXT(""),SkillNames[World->Bag[I]]):TEXT("空储备位"),654,260+I*56,524,HasBag);
+                Button(FString::Printf(TEXT("equip%d"),I),Has?FString::Printf(TEXT("%d  %s  Lv.%d"),I+1,World->SkillName(K),World->Levels[K]):TEXT("空装备位"),104,260+I*56,524,World->SelectedBag>=0&&I!=0);
+                Button(FString::Printf(TEXT("bag%d"),I),HasBag?FString::Printf(TEXT("%s%s"),World->SelectedBag==I?TEXT("→ "):TEXT(""),World->SkillName(World->Bag[I])):TEXT("空储备位"),654,260+I*56,524,HasBag);
             }
         } else if(P==TEXT("fonts")) {
             Text(TEXT("小号固定100%（16–18）；中号19–25，大号26及以上。调节即时生效并保存。"),104,185,18,Dim);

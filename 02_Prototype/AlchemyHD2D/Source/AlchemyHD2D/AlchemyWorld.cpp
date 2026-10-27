@@ -48,7 +48,8 @@ const int32 CombinationSkills[7][3]={{10,1,5},{13,14,15},{16,3,17},{19,6,12},{11
 const int32 CombinationMasks[]={1,2,4,3,5,6,7};
 const TCHAR* CombinationNames[]={TEXT("火粉反应"),TEXT("露水反应"),TEXT("魔法反应"),TEXT("火露混合"),TEXT("火魔混合"),TEXT("露魔混合"),TEXT("三料混合")};
 const float QualityWeights[8][3]={{70,20,10},{65,22,13},{60,25,15},{50,30,20},{45,32,23},{40,33,27},{35,34,31},{30,35,35}};
-enum ECast { Bolt, Direct, SelfArea, TargetArea, Bounce };
+using ECast=EAlchemyCast;
+constexpr auto Bolt=ECast::Bolt,Direct=ECast::Direct,SelfArea=ECast::SelfArea,TargetArea=ECast::TargetArea,Bounce=ECast::Bounce;
 struct FSkillConfig {float Damage,CD,Range,Radius,Slow,Factor; ECast Cast; int32 Targets;};
 // Distances are cm. Provisional tuning: stone CD 2s, shard 2 targets, frost needle slow.
 const FSkillConfig Skills[]={
@@ -91,6 +92,8 @@ FVector DesignPosition(float X,float Y) { return FVector(-100*X,-100*Y,0); }
 float EnemyRadius(int Type) { return Type==10?110.f:Type>=7?70.f:35.f; }
 }
 
+#include "AlchemyDesignRuntime.inl"
+
 AAlchemyMode::AAlchemyMode() { DefaultPawnClass=nullptr; HUDClass=AAlchemyHUD::StaticClass(); }
 void AAlchemyMode::StartPlay() { Super::StartPlay(); GetWorld()->SpawnActor<AAlchemyWorld>(); }
 AAlchemyWorld::AAlchemyWorld() { PrimaryActorTick.bCanEverTick=true; }
@@ -103,7 +106,14 @@ void AAlchemyWorld::BeginPlay() {
     }
 #endif
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
-    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture"));
+    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture"));
+    if(!LoadDesignConfig()) {
+        SetActorTickEnabled(false);
+#if WITH_EDITOR
+        if(GetWorld()->WorldType==EWorldType::PIE && GEditor) {GEditor->RequestEndPlayMap();return;}
+#endif
+        FPlatformMisc::RequestExitWithStatus(false,1);return;
+    }
     Progress=(bSmoke || bCapture)?nullptr:Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_v1"),0));
     const bool HadSave=Progress!=nullptr;
     if(!Progress && !bSmoke && !bCapture) Progress=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_backup"),0));
@@ -127,7 +137,7 @@ void AAlchemyWorld::BeginPlay() {
         }
         MigrateProgress(Played);
     }
-    Levels.Init(0,UE_ARRAY_COUNT(Skills));Levels[0]=1;
+    Levels.Init(0,NumSkills());Levels[0]=1;
     ImpactFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyImpact.NS_AlchemyImpact"));
     BlastFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyBlast.NS_AlchemyBlast"));
     TrailFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyTrail.NS_AlchemyTrail"));
@@ -204,9 +214,12 @@ void AAlchemyWorld::BuildScene(bool Combat) {
     for(auto A:Scene) if(IsValid(A)) A->Destroy();
     Scene.Empty(); Obstacles.Empty(); Enemies.Empty(); Shots.Empty(); Drops.Empty(); Effects.Empty();
     bCombat=Combat; bRunEnded=false; PlayerPos=Combat?FVector::ZeroVector:FVector(0,-200,0); Panel.Empty();
-    const float X=Combat?14222:4800, Y=Combat?10760:3800;
+    const bool Authored=Designer && Designer->bUseInGame;
+    if(Designer) Designer->SetRuntimeVisible(Combat && Authored);
+    const float X=Combat?(Authored?(CombatHalfSize.X+51)*2:14222):4800, Y=Combat?(Authored?(CombatHalfSize.Y+50)*2:10760):3800;
     auto Floor=Mesh(TEXT("Cube"),FVector(0,0,0),FVector(X/100,Y/100,1),FLinearColor::White);
     Floor->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_Grass")));
+    if(!Combat || !Authored) {
     auto Road=Mesh(TEXT("Cube"),FVector(0,0,1),FVector(Combat?9:25,Y/100,0.02f),FLinearColor::White);
     Road->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_Dirt")));
     auto Across=Mesh(TEXT("Cube"),FVector(0,Combat?800:100,2),FVector(X/100,4,0.02f),FLinearColor::White);
@@ -225,6 +238,7 @@ void AAlchemyWorld::BuildScene(bool Combat) {
         Sheet(TEXT("Rock"),P,Decor.FRandRange(35.f,70.f),50);
         
     }
+    }
     if(!Combat) {
         House(FVector(-1150,650,0),FLinearColor(0.2f,0.29f,0.28f));
         House(FVector(1100,700,0),FLinearColor(0.3f,0.16f,0.12f));
@@ -240,6 +254,9 @@ void AAlchemyWorld::BuildScene(bool Combat) {
             auto L=GetWorld()->SpawnActor<APointLight>(P,FRotator::ZeroRotator);
             L->PointLightComponent->SetIntensity(1800); L->PointLightComponent->SetAttenuationRadius(500); L->PointLightComponent->SetLightColor(Teal); Scene.Add(L);
         }
+    } else if(Authored) {
+        for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It) if(It->GetOwner()==Designer && It->bBlocksMovement) Obstacles.Add({FVector2D(It->GetActorLocation()),It->WorldHalfSize()});
+        UE_LOG(LogTemp,Display,TEXT("ALCHEMY_AUTHORED_LAYOUT obstacles=%d seed=%d"),Obstacles.Num(),Designer->Seed);
     } else {
         auto Clearing=Mesh(TEXT("Cube"),FVector(0,0,3),FVector(48,32,1),FLinearColor(0.14f,0.23f,0.19f));
         Clearing->GetStaticMeshComponent()->SetCastShadow(false);
@@ -260,7 +277,7 @@ void AAlchemyWorld::BuildScene(bool Combat) {
 }
 
 bool AAlchemyWorld::Walkable(FVector P,float Radius) const {
-    const float X=bCombat?7060:2350,Y=bCombat?5330:1850;
+    const float X=bCombat?CombatHalfSize.X:2350,Y=bCombat?CombatHalfSize.Y:1850;
     if(FMath::Abs(P.X)>X-Radius || FMath::Abs(P.Y)>Y-Radius) return false;
     for(const auto& O:Obstacles) if(FMath::Abs(P.X-O.Center.X)<O.Half.X+Radius && FMath::Abs(P.Y-O.Center.Y)<O.Half.Y+Radius) return false;
     return true;
@@ -415,12 +432,12 @@ void AAlchemyWorld::AddMaterial(int32 I) {
 }
 void AAlchemyWorld::StartRun() {
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
-    Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,UE_ARRAY_COUNT(Skills));Levels[0]=1; Equipped={0}; Bag.Empty();
+    Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
     TutorialSkill=-1;bTutorialSupplyDone=false;
     MaxHP=(bTune001B?120:100)+Progress->Talents[0]*10; HP=MaxHP;
     DodgeCD=DodgeTime=HurtInv=DodgeInv=0; SpawnCD=2.6f; NextElite=90; EliteIndex=0;
     for(float& T:SkillCD) T=0;
-    for(int C=0;C<UE_ARRAY_COUNT(Chains);C++) ChainCD[C]=Chains[C].CD;
+    for(int C=0;C<NumChains();C++) ChainCD[C]=ChainConfig(C).CD;
     BuildScene(true);
     UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
@@ -448,20 +465,20 @@ bool AAlchemyWorld::CraftOptions(TArray<int32>& Options,TArray<float>& WeightsOu
     }
     if(Total<3 || Total>10) {Reason=TEXT("单次需要3–10个材料");return false;}
     if(Special) {
-        for(int S=7;S<=9;S++) {bool Match=true;for(int I=0;I<6;I++) Match &= Selected[I]==Recipes[S][I];if(Match) Options.Add(S);}
+        for(int R=7;R<RuntimeRecipes.Num();R++) {const auto& K=RuntimeRecipes[R];bool Match=true;for(int I=0;I<6;I++) Match &= Selected[I]==K.Costs[I];if(Match) {Options.Add(K.LowSkill);WeightsOut.Add(100);}}
         if(Options.IsEmpty()) {Reason=TEXT("精英材料使用专属固定配方");return false;}
-        WeightsOut.Add(100);
+
     } else {
-        for(int C=0;C<7;C++) if(Mask==CombinationMasks[C]) Combination=C;
+        for(int C=0;C<7;C++) if(Mask==RuntimeRecipes[C].Mask) Combination=C;
         if(Combination<0) {Reason=TEXT("请选择有效材料组合");return false;}
-        for(int Q=0;Q<3;Q++) {Options.Add(CombinationSkills[Combination][Q]);WeightsOut.Add(QualityWeights[Total-3][Q]);}
+        for(int Q=0;Q<3;Q++) {Options.Add(CombinationSkill(Combination,Q));WeightsOut.Add(QualityWeight(Total-3,Q));}
     }
     bool Excluded=false;
     for(int I=Options.Num()-1;I>=0;I--) {
         int S=Options[I];
-        if(Levels[S]>=5 || (Levels[S]==0 && Equipped.Num()>=6 && Bag.Num()>=6)) {Options.RemoveAt(I);WeightsOut.RemoveAt(I);Excluded=true;}
+        if(WeightsOut[I]<=0 || Levels[S]>=5 || (Levels[S]==0 && Equipped.Num()>=6 && Bag.Num()>=6)) {Options.RemoveAt(I);WeightsOut.RemoveAt(I);Excluded=true;}
     }
-    if(Options.IsEmpty()) {Reason=TEXT("全部结果已满级或无存放空间，材料不消耗");return false;}
+    if(Options.IsEmpty()) {Reason=TEXT("全部有效概率结果已满级或无存放空间，材料不消耗");return false;}
     float Sum=0;for(float W:WeightsOut) Sum+=W;for(float& W:WeightsOut) W=W*100/Sum;
     if(Excluded) Reason=TEXT("已排除满级/无法存放结果，显示本次实际概率");
     return true;
@@ -477,7 +494,7 @@ bool AAlchemyWorld::Craft() {
     if(Combination>=0) Progress->Combinations.AddUnique(Combination);
     if(TutorialActive()) {TutorialSkill=Match;bTutorialSupplyDone=true;}
     Progress->Recipes.AddUnique(Match); SaveProgress();
-    Message(FString::Printf(TEXT("炼制成功：%s · Lv.%d"),SkillNames[Match],Levels[Match])); return true;
+    Message(FString::Printf(TEXT("炼制成功：%s · Lv.%d"),SkillName(Match),Levels[Match])); return true;
 }
 
 bool AAlchemyWorld::FindSpawnPoint(int Type,FVector& P) {
@@ -531,14 +548,14 @@ int32 AAlchemyWorld::Nearest(FVector P,float Range,const TArray<int32>& Exclude)
     }
     return Result;
 }
-void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile,float Speed) {
+void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile,float Speed,UNiagaraSystem* TrailSystem,UNiagaraSystem* HitSystem,float Lifetime,float EffectScale,float HitLife) {
     FAlchemyShot S; S.Pos=From; S.Velocity=(Target-From).GetSafeNormal2D()*Speed; S.Damage=Damage; S.Hostile=Hostile;
-    S.Color=Color;
-    S.Trail=SpawnVFX(TrailFX,From+FVector(0,0,65),Color,.6f,1.1f);
+    S.Life=Lifetime;S.EffectScale=EffectScale;S.HitLife=HitLife;S.Color=Color;S.HitEffect=HitSystem?HitSystem:ImpactFX.Get();
+    S.Trail=SpawnVFX(TrailSystem?TrailSystem:TrailFX.Get(),From+FVector(0,0,65),Color,.6f*EffectScale,Lifetime+.1f);
     S.Body=Mesh(TEXT("Sphere"),From+FVector(0,0,65),FVector(0.22f),Color); Shots.Add(S);
 }
 UNiagaraComponent* AAlchemyWorld::SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life) {
-    if(bSmoke || !System || !ParticleMaterial || NiagaraFX.Num()>=48) return nullptr;
+    if(bSmoke || Scale<=0 || !System || !ParticleMaterial || NiagaraFX.Num()>=48) return nullptr;
     auto* C=UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),System,Position,FRotator::ZeroRotator,FVector(Scale),false,false,ENCPoolMethod::None,false);
     if(!C) return nullptr;
     auto* MaterialInstance=UMaterialInstanceDynamic::Create(ParticleMaterial,C);MaterialInstance->SetVectorParameterValue(TEXT("Tint"),Color);
@@ -559,18 +576,22 @@ void AAlchemyWorld::UpdateFeedback(float Dt) {
     }
     for(int I=DamageNumbers.Num()-1;I>=0;I--) {DamageNumbers[I].Life-=Dt;if(DamageNumbers[I].Life<=0) DamageNumbers.RemoveAtSwap(I);}
 }
-void AAlchemyWorld::DamageEnemy(int Index,float Damage,FLinearColor Color) {
+void AAlchemyWorld::DamageEnemy(int Index,float Damage,FLinearColor Color,UNiagaraSystem* HitSystem,float EffectScale,float HitLife) {
     if(!Enemies.IsValidIndex(Index) || Damage<=0 || Enemies[Index].HP<=0) return;
     auto& E=Enemies[Index];const float Actual=FMath::Min(E.HP,Damage);E.HP-=Actual;E.HitFlash=.1f;
     if(DamageNumbers.Num()>=96) DamageNumbers.RemoveAt(0);
     FAlchemyDamageNumber Number;Number.Position=E.Pos+FVector(0,0,(E.Type>=7?210:120));Number.Value=Actual;Number.Lane=DamageSerial++%3-1;DamageNumbers.Add(Number);
-    if(HitFXThisFrame++<6) SpawnVFX(ImpactFX,E.Pos+FVector(0,0,65),Color,E.Type>=7?.5f:.3f,.7f);
+    if(EffectScale>0 && HitFXThisFrame++<6) SpawnVFX(HitSystem?HitSystem:ImpactFX.Get(),E.Pos+FVector(0,0,65),Color,(E.Type>=7?.5f:.3f)*EffectScale,HitLife);
 }
-int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color,float Slow,float Factor) {
-    Ring(P,Radius,Color);int Hits=0;
+void AAlchemyWorld::SlowEnemy(int32 Index,float Duration,float Factor) {
+    if(Duration<=0 || !Enemies.IsValidIndex(Index)) return;
+    auto& E=Enemies[Index];E.SlowFactor=E.Slow>0?FMath::Min(E.SlowFactor,Factor):Factor;E.Slow=FMath::Max(E.Slow,Duration);
+}
+int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color,float Slow,float Factor,UNiagaraSystem* CastSystem,UNiagaraSystem* HitSystem,float EffectScale,float CastLife,float HitLife) {
+    if(EffectScale>0) {if(CastSystem) SpawnVFX(CastSystem,P+FVector(0,0,35),Color,FMath::Clamp(Radius/180,.25f,1.6f)*EffectScale,CastLife);else Ring(P,Radius,Color);}int Hits=0;
     for(int I=0;I<Enemies.Num();I++) if(Enemies[I].HP>0 && FVector::Dist2D(P,Enemies[I].Pos)<=Radius) {
-        auto& E=Enemies[I];Hits++;DamageEnemy(I,Damage,Color);
-        if(Slow>0) {if(E.Slow<=0) E.SlowFactor=Factor;else E.SlowFactor=FMath::Min(E.SlowFactor,Factor);E.Slow=FMath::Max(E.Slow,Slow);}
+        auto& E=Enemies[I];Hits++;DamageEnemy(I,Damage,Color,HitSystem,EffectScale,HitLife);
+        SlowEnemy(I,Slow,Factor);
     }
     return Hits;
 }
@@ -581,46 +602,47 @@ void AAlchemyWorld::Hurt(float Damage) {
 }
 void AAlchemyWorld::Drop(FVector P,int Kind,int Count) {
     FAlchemyDrop D; D.Pos=P; D.Kind=Kind; D.Count=Count;
-    if(Kind>=6) D.Body=Sheet(TEXT("Chest"),P,75,75);
-    else if(Kind>=0) D.Body=Sheet(TEXT("Bottle"),P,45,45);
-    else D.Body=Mesh(TEXT("Sphere"),P+FVector(0,0,8),FVector(0.25f),Gold);
+    const TCHAR* Icons[]={TEXT("FirePowder"),TEXT("Dew"),TEXT("MagicShard"),TEXT("BeastCore"),TEXT("VoidCrystal"),TEXT("RootHeart")};
+    if(Kind>=6) D.Body=Sprite(TEXT("Chest"),P,160,160);
+    else if(Kind>=0 && Kind<6) D.Body=Sprite(Icons[Kind],P,105,105);
+    else D.Body=Sprite(TEXT("Coin"),P,95,95);
     Drops.Add(D);
 }
 
 void AAlchemyWorld::CastSkills(float Dt) {
     for(int S:Equipped) {
-        const auto& K=Skills[S];SkillCD[S]-=Dt;if(SkillCD[S]>0) continue;
+        const auto& K=SkillConfig(S);SkillCD[S]-=Dt;if(SkillCD[S]>0) continue;
         int N=Nearest(PlayerPos,K.Range);if(N<0) continue;
         SkillCD[S]=K.CD;
         float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]));
         int Hits=0;
-        const FLinearColor Color=(S==1||S==6||S==10||S==11||S==12||S==19||S==20)?FLinearColor(1,.25f,.035f):(S==2||S==13||S==14||S==15||S==21||S==22)?FLinearColor(.15f,.65f,1):(S==4||S==23||S==24)?FLinearColor(.3f,1,.2f):FLinearColor(.65f,.3f,1);
-        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color);Shots.Last().Life=K.Range/1000;}
-        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,K.Radius,Damage,Color,K.Slow,K.Factor);
+        const FLinearColor Color=K.Color;
+        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,K.Range/K.ProjectileSpeed,K.EffectScale,K.HitLife);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
+        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,K.Radius,Damage,Color,K.Slow,K.Factor,K.CastEffect,K.HitEffect,K.EffectScale,K.CastLife,K.HitLife);
         else {
             TArray<int32> Used;
             for(int J=0;J<K.Targets && N>=0;J++) {
-                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,Color);Hits++;
-                if(K.Slow>0) {E.SlowFactor=E.Slow>0?FMath::Min(E.SlowFactor,K.Factor):K.Factor;E.Slow=FMath::Max(E.Slow,K.Slow);}
+                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,Color,K.HitEffect,K.EffectScale,K.HitLife);Hits++;
+                SlowEnemy(N,K.Slow,K.Factor);
                 N=K.Cast==Bounce?Nearest(E.Pos,K.Range,Used):-1;
             }
         }
         TutorialHit(S,Hits);
     }
-    for(int C=0;C<UE_ARRAY_COUNT(Chains);C++) {
-        const auto& K=Chains[C];
+    for(int C=0;C<NumChains();C++) {
+        const auto& K=ChainConfig(C);
         if(!Equipped.Contains(K.A) || !Equipped.Contains(K.B)) continue;
         ChainCD[C]-=Dt;if(ChainCD[C]>0) continue;ChainCD[C]=K.CD;
-        int N=Nearest(PlayerPos,1000);if(N<0) continue;
+        int N=Nearest(PlayerPos,K.Range);if(N<0) continue;
         const float Damage=FMath::RoundToFloat(K.Damage*(1+.05f*Progress->Talents[1]));
         if(K.Targets>0) {
             TArray<int32> Used;
             for(int J=0;J<K.Targets && N>=0;J++) {
-                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,Gold);
-                E.SlowFactor=E.Slow>0?FMath::Min(E.SlowFactor,K.Factor):K.Factor;E.Slow=FMath::Max(E.Slow,K.Slow);
-                N=Nearest(E.Pos,1000,Used);
+                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,K.Color,K.HitEffect,K.EffectScale,K.HitLife);
+                SlowEnemy(N,K.Slow,K.Factor);
+                N=Nearest(E.Pos,K.Range,Used);
             }
-        } else Area(Enemies[N].Pos,K.Radius,Damage,Gold,K.Slow,K.Factor);
+        } else Area(Enemies[N].Pos,K.Radius,Damage,K.Color,K.Slow,K.Factor,K.CastEffect,K.HitEffect,K.EffectScale,K.CastLife,K.HitLife);
         ChainCount++;
         if(!Progress->ChainsV2.Contains(C)) {Progress->ChainsV2.Add(C);SaveProgress();Message(FString(TEXT("连锁发现："))+K.Name);}
     }
@@ -651,7 +673,7 @@ void AAlchemyWorld::Action(FString Id) {
     if(Id==TEXT("start")) { StartRun(); return; }
     if(Id==TEXT("village")) {
         if(bCombat && Panel!=TEXT("victory") && Panel!=TEXT("defeat")) { EndRun(false); if(Panel==TEXT("savefailed")) return; }
-        Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,UE_ARRAY_COUNT(Skills));Levels[0]=1; Equipped={0}; Bag.Empty(); BuildScene(false); return;
+        Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty(); BuildScene(false); return;
     }
     if(Id==TEXT("return")) { Panel=TEXT("confirmreturn"); return; }
     if(Id==TEXT("craft")) { Craft(); return; }
@@ -670,7 +692,7 @@ void AAlchemyWorld::Action(FString Id) {
     if(Id==TEXT("codexnext")) {CodexPage=FMath::Min(3,CodexPage+1);return;}
     if(Id.StartsWith(TEXT("recipe")) && bCombat && !TutorialActive()) {
         int S=FCString::Atoi(*Id.Mid(6));
-        if(S>=7 && S<=9 && Progress->Recipes.Contains(S)) {for(int I=0;I<6;I++) Selected[I]=Recipes[S][I];Panel=TEXT("alchemy");}
+        if(S>=0 && S<NumSkills() && Progress->Recipes.Contains(S)) {for(int I=0;I<6;I++) Selected[I]=RecipeCost(S,I);Panel=TEXT("alchemy");}
         return;
     }
     if(Id.StartsWith(TEXT("bag"))) { SelectedBag=FCString::Atoi(*Id.Mid(3)); return; }
@@ -718,6 +740,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) Panel=Panel==TEXT("skills")?TEXT(""):TEXT("skills");
     if(bSmoke) SmokeCheck(Dt);
+    if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture"))) {CaptureTools(Dt);return;}
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture"))) {CaptureFeedback(Dt);return;}
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture"))) {
         if(VisualTime>2+CaptureStep*1.2f) {
@@ -856,12 +879,12 @@ void AAlchemyWorld::Tick(float Dt) {
             S.Pos+=S.Velocity*Dt/Steps;
             if(!Walkable(S.Pos,18)) {S.Life=0; break;}
             if(S.Hostile) {if(FVector::Dist2D(S.Pos,PlayerPos)<63) {Hurt(S.Damage); S.Life=0;}}
-            else {int N=Nearest(S.Pos,55); if(N>=0) {DamageEnemy(N,S.Damage,S.Color);S.Life=0;}}
+            else {int N=Nearest(S.Pos,55); if(N>=0) {DamageEnemy(N,S.Damage,S.Color,S.HitEffect.Get(),S.EffectScale,S.HitLife);SlowEnemy(N,S.Slow,S.SlowFactor);S.Life=0;}}
         }
         if(!Panel.IsEmpty()) return;
         S.Body->SetActorLocation(S.Pos+FVector(0,0,65));
         if(S.Trail.IsValid()) S.Trail->SetWorldLocation(S.Pos+FVector(0,0,65));
-        if(S.Life<=0) {if(S.Trail.IsValid()) S.Trail->Deactivate();S.Body->Destroy(); Shots.RemoveAtSwap(i);}
+        if(S.Life<=0) {if(S.Trail.IsValid()) S.Trail->DestroyComponent();S.Body->Destroy(); Shots.RemoveAtSwap(i);}
     }
     for(int i=Enemies.Num()-1;i>=0;i--) if(Enemies[i].HP<=0) {
         auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
@@ -985,21 +1008,21 @@ void AAlchemyWorld::AlchemyCheck() {
     Progress->TutorialComplete=true;StartRun();ClearEnemies();SpawnEnemy(0);Enemies[0].Pos=FVector(200,0,0);Enemies[0].HP=100000;
     bool ChainOK=true;
     for(int I=0;I<10;I++) {
-        Equipped={Chains[I].A,Chains[I].B};for(float& CD:SkillCD) CD=100;
-        ChainCD[I]=Chains[I].CD;int Count=ChainCount;CastSkills(5);float Left=ChainCD[I];
-        ChainOK &= Count==ChainCount && FMath::IsNearlyEqual(Left,Chains[I].CD-5);
-        Equipped={Chains[I].A};CastSkills(3);ChainOK &= FMath::IsNearlyEqual(ChainCD[I],Left);
-        Equipped={Chains[I].A,Chains[I].B};CastSkills(Left+.01f);ChainOK &= ChainCount==Count+1 && Progress->ChainsV2.Contains(I);
+        Equipped={ChainConfig(I).A,ChainConfig(I).B};for(float& CD:SkillCD) CD=100;
+        ChainCD[I]=ChainConfig(I).CD;int Count=ChainCount;CastSkills(5);float Left=ChainCD[I];
+        ChainOK &= Count==ChainCount && FMath::IsNearlyEqual(Left,ChainConfig(I).CD-5);
+        Equipped={ChainConfig(I).A};CastSkills(3);ChainOK &= FMath::IsNearlyEqual(ChainCD[I],Left);
+        Equipped={ChainConfig(I).A,ChainConfig(I).B};CastSkills(Left+.01f);ChainOK &= ChainCount==Count+1 && Progress->ChainsV2.Contains(I);
     }
-    ClearEnemies();Equipped={Chains[0].A,Chains[0].B};ChainCD[0]=.1f;int Count=ChainCount;CastSkills(1);
-    ChainOK &= ChainCount==Count && ChainCD[0]==Chains[0].CD;
+    ClearEnemies();Equipped={ChainConfig(0).A,ChainConfig(0).B};ChainCD[0]=.1f;int Count=ChainCount;CastSkills(1);
+    ChainOK &= ChainCount==Count && ChainCD[0]==ChainConfig(0).CD;
     Check(ChainOK,TEXT("10_chains_full_initial_CD_unequip_freeze_resume_and_no_target"));
     bool EffectsOK=true;
     for(int S=0;S<25;S++) {
         ClearEnemies();SpawnEnemy(0);SpawnEnemy(0);
         for(int I=0;I<2;I++) {Enemies[I].Pos=FVector(100+I*40,0,0);Enemies[I].HP=10000;}
         Equipped={S};Levels[S]=1;SkillCD[S]=0;int ShotsBefore=Shots.Num();CastSkills(.01f);
-        EffectsOK &= Skills[S].Cast==Bolt?Shots.Num()>ShotsBefore:Enemies[0].HP<10000;
+        EffectsOK &= SkillConfig(S).Cast==Bolt?Shots.Num()>ShotsBefore:Enemies[0].HP<10000;
     }
     Check(EffectsOK,TEXT("all_25_skill_cast_paths"));
     ClearEnemies();SpawnEnemy(0);SpawnEnemy(0);DamageNumbers.Empty();
@@ -1019,6 +1042,7 @@ void AAlchemyWorld::AlchemyCheck() {
     UE_LOG(LogTemp,Display,TEXT("FONT_DEBUG_SAVE valid=%d medium=%.9f large=%.9f"),FontSave!=nullptr,FontSave?FontSave->MediumTextScale:0,FontSave?FontSave->LargeTextScale:0);
     Font &= FontSave && FMath::IsNearlyEqual(FontSave->MediumTextScale,.9f,.0001f) && FMath::IsNearlyEqual(FontSave->LargeTextScale,.72f,.0001f);
     Check(Font,TEXT("font_debug_independent_groups_fixed_small_limits_save"));
+    Check(CheckDesignRuntime(),TEXT("authored_map_skill_recipe_chain_VFX_and_large_drops"));
     if(!OK) {UE_LOG(LogTemp,Error,TEXT("ALCH002_TEST_FAIL"));FPlatformMisc::RequestExitWithStatus(false,1);}
     else UE_LOG(LogTemp,Display,TEXT("ALCH002_TEST_PASS"));
 }
@@ -1068,3 +1092,4 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
 
 #include "AlchemyHUD.inl"
 #include "AlchemyFeedback.inl"
+#include "AlchemyToolsChecks.inl"

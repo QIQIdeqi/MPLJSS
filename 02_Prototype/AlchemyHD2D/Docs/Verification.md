@@ -114,3 +114,16 @@ F7或面板右上入口打开字体调试。小号固定100%，中号/大号默�
 
 ## 用户确认中号90%、大号72%（2026-10-28，当前）
 默认值、恢复推荐值、保存回读检查与说明文档统一90/72，小号不变。UAT Build/Cook/Stage/Archive成功，最终独立包15组ALCH002检查及ALCHEMY_SMOKE_PASS通过；1280×720共11帧PC UI真实RHI检查PASS，无越界标记，直接查看Evidence/Font_90_72.png确认90%/72%及恢复按钮标签。现有存档个人设置保留，可按F7恢复推荐值应用新预设。完整包为03_Build/HD2D_PC_UI/冒牌炼金术士_Demo_Win64_字体90_72.zip；旧85/80 ZIP移至本地04_Archive，03_Build内只保留当前ZIP。哈希见Evidence/font-9072-verification.json。
+
+## 关卡/技能编辑工具、血条与掉落（2026-10-28，当前）
+
+- 用户明确确认：普通小怪不显示血条；精英常驻，Boss条移至顶部参考Y=102（1080p下Y=153）。已直接查看最终独立包Tools_Packaged_HUD_Drops.png：包含受伤普通怪、精英、Boss和10个掉落示例，计数elite_bars=1、boss_y=102、drops=10，ALCHEMY_TOOL_CAPTURE_PASS。
+- 原生UE关卡工具：Research保存24×18个600cm地格和8个手工碰撞块，共440个可编辑Actor；素材面板预置40张工程贴图；种子随机、锁格、光标涂格、图片/材质/变换及碰撞微调。运行直接读取编辑后地图；未减少波次、怪物上限或改Boss时间轴。
+- 四张原生DataTable：DT_Skills(25)、DT_Recipes(10)、DT_Chains(10)、DT_Quality(8)，包含技能/配方/权重/连锁、施法、Niagara、颜色、倍率、保留时间、弹丸速度和减速参数；运行与HUD已读表。可追加连续技能/连锁/精英配方ID。CPP旧表仅用于首次种子和历史基线校验。
+- 编辑器8项测试通过：确定性种子、锁格、涂格、地图保存重开材质/位置、技能CSV数值回读、坏数值拒绝、原始数据恢复、11个按钮声明符合UE的CallInEditor且ParmsSize==0条件。校验功能改为void ValidateDesign按钮，bool ValidateLibrary保留作API，避免按钮被UE隐藏。TestDesignTools-final.log、designer-tests.txt记录。
+- 原生编辑器API已实际打开4个DataTable编辑器，有对应Opening Asset editor事件；窗口列表确认DataTable窗口。Windows处于锁屏，无法完成真实鼠标点击和按钮视觉布局检查，已明确记录，不以锁屏图充当UE截图。designer-ui-api.json与designer-ui-api-final.log为API证据。
+- 金币使用Coin专用图标，六种材料各有独立像素图标，宝箱沿用工程素材；显示尺寸金币95、材料105、宝箱160cm，替代原25/45/75量级。掉落概率、数量、拾取规则沿用原逻辑。
+- 最终Editor与Win64 Build/Cook/Stage/Archive成功，独立包16组ALCH002_CHECK、ALCH002_TEST_PASS和ALCHEMY_SMOKE_PASS通过。新增组检查改技能/追加技能映射、权重、零概率过滤、连锁、特效引用、大掉落及减速叠加；修正弹丸初次减速直接使用配置Factor，已有减速才取更强倍率。
+- 打开编辑器入口：工程根目录打开关卡与技能编辑器.cmd；默认先编译模块，支持-EngineRoot/UE_ENGINE_ROOT/已知安装位置。ExecCmds启动Focus脚本，不使用会自动退出的ExecutePythonScript。脚本已做语法检查；Windows PowerShell入口实际编译和打开编辑器通过。编辑完整UE工程，不在试玩EXE里提供编辑界面。
+- 使用说明：00_Doc/工具/UE关卡与技能编辑器使用说明.md；默认表CSV快照：Docs/DesignerCSV。试玩ZIP保持字体90_72文件名，维持已分享的GitHub链接；ExportDemo先写新包，再把旧包可恢复归档并替换，避免截断正在使用的旧ZIP。归档、缓存和个人存档保持Git忽略。
+- 最终EXE/ZIP哈希见Evidence/designer-final-verification.json。未完成物理解锁后的UI点击、正常五分钟人工体验、满场性能或技能平衡验收。

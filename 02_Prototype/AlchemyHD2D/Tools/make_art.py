@@ -25,6 +25,28 @@ class Canvas:
         raw=b''.join(b'\0'+bytes(v for p in row for v in p) for row in self.p)
         (OUT/(name+'.png')).write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('!2I5B',self.w,self.h,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b''))
 
+def create_drop_icons():
+    a=Canvas(32,32)
+    for y in range(32):
+        for x in range(32):
+            r=(x-15.5)**2+(y-15.5)**2
+            if r<=196: a.rect(x,y,x,y,'493019' if r>156 else 'd38a22' if r>112 else 'f6c75b')
+    a.rect(9,6,20,7,'fff2ac'); a.rect(6,9,7,18,'ffe69a')
+    a.rect(13,9,18,11,'805020'); a.rect(14,11,17,15,'805020')
+    a.poly([(14,15),(17,15),(22,23),(10,23)],'805020'); a.rect(12,21,20,22,'ffdf7a'); a.save('Coin')
+    a=Canvas(32,32); a.poly([(9,13),(23,13),(26,26),(6,26)],'62362c');a.rect(11,11,21,14,'d8a65a')
+    a.poly([(11,22),(15,15),(15,6),(21,12),(23,20),(18,25)],'f16d32');a.poly([(14,22),(18,15),(20,22)],'ffdc75');a.save('FirePowder')
+    a=Canvas(32,32); a.poly([(16,3),(27,18),(25,25),(20,29),(11,29),(5,23),(6,17)],'264d6e');a.poly([(16,6),(24,19),(22,25),(12,26),(8,22),(9,17)],'5bd2ea');a.rect(11,16,13,22,'d0faff');a.save('Dew')
+    a=Canvas(32,32);a.poly([(13,3),(25,10),(21,26),(9,29),(4,19)],'493971');a.poly([(13,6),(21,11),(15,25),(7,19)],'b698ee');a.poly([(13,6),(15,25),(17,12)],'eee1ff');a.save('MagicShard')
+    a=Canvas(32,32);a.poly([(15,3),(27,12),(26,24),(16,29),(5,22),(5,11)],'54392c');a.poly([(15,7),(23,14),(20,24),(10,23),(8,13)],'d99553');a.rect(12,12,19,19,'fbdf9e');a.save('BeastCore')
+    a=Canvas(32,32);a.poly([(17,2),(27,14),(21,28),(8,27),(4,14)],'27284f');a.poly([(17,5),(23,14),(16,25),(8,22)],'8151c6');a.poly([(17,5),(16,25),(13,13)],'d1a4ff');a.save('VoidCrystal')
+    a=Canvas(32,32);a.poly([(6,10),(12,7),(16,12),(21,7),(27,11),(25,20),(16,28),(6,20)],'30644b');a.poly([(8,12),(12,10),(16,15),(21,10),(24,13),(21,21),(16,24),(10,19)],'83c56b');a.rect(15,16,17,26,'c1df88');a.save('RootHeart')
+
+if '--drops-only' in __import__('sys').argv:
+    create_drop_icons()
+    raise SystemExit(0)
+
+create_drop_icons()
 for back in range(2):
     for f in range(4):
         a=Canvas(48,64); dy=1 if f%2 else 0; foot=2 if f==1 else -2 if f==3 else 0
