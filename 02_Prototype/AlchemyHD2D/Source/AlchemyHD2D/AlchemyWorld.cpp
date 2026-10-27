@@ -29,14 +29,35 @@
 IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, AlchemyHD2D, "AlchemyHD2D");
 
 namespace {
-const TCHAR* SkillNames[]={TEXT("试作魔弹"),TEXT("炎弹"),TEXT("寒霜环"),TEXT("雷链"),TEXT("酸蚀瓶"),TEXT("石刺"),TEXT("炽焰波"),TEXT("兽核脉冲"),TEXT("虚空噬弹"),TEXT("根须脉冲")};
-const TCHAR* MaterialNames[]={TEXT("赤硫粉"),TEXT("凝露"),TEXT("以太屑"),TEXT("兽核"),TEXT("虚空晶"),TEXT("根须心")};
-const TCHAR* ChainNames[]={TEXT("炽焰爆裂"),TEXT("冰雷共鸣")};
-const TCHAR* ChainHints[]={TEXT("试着让火焰与酸蚀共同作用。"),TEXT("试着让冰霜与雷电共同作用。")};
-const TCHAR* ChainDetails[]={TEXT("炎弹 + 酸蚀瓶：每12秒尝试范围爆炸。"),TEXT("寒霜环 + 雷链：每10秒尝试范围冲击和减速。")};
+const TCHAR* SkillNames[]={TEXT("试作魔弹"),TEXT("炎弹"),TEXT("寒霜环"),TEXT("雷链"),TEXT("酸蚀瓶"),TEXT("石刺"),TEXT("炽焰波"),TEXT("兽核脉冲"),TEXT("虚空噬弹"),TEXT("根须脉冲"),TEXT("灰烬弹"),TEXT("灼热旋流"),TEXT("炎陨药瓶"),TEXT("凝露针"),TEXT("寒霜花"),TEXT("冰潮涌动"),TEXT("以太碎片"),TEXT("奥术脉冲"),TEXT("星坠裂隙"),TEXT("蒸汽爆裂"),TEXT("雷焰爆裂"),TEXT("霜刃"),TEXT("霜雷风暴"),TEXT("混融酸滴"),TEXT("原初催化弹")};
+const TCHAR* MaterialNames[]={TEXT("火粉"),TEXT("露水"),TEXT("魔法碎片"),TEXT("兽核"),TEXT("虚空晶"),TEXT("根须心")};
+// Configuration tables: stable skill IDs 0..9 retained, new skills append at 10..24.
+const int32 CombinationSkills[7][3]={{10,1,5},{13,14,15},{16,3,17},{19,6,12},{11,20,18},{21,2,22},{23,4,24}};
+const int32 CombinationMasks[]={1,2,4,3,5,6,7};
+const TCHAR* CombinationNames[]={TEXT("火粉反应"),TEXT("露水反应"),TEXT("魔法反应"),TEXT("火露混合"),TEXT("火魔混合"),TEXT("露魔混合"),TEXT("三料混合")};
+const float QualityWeights[8][3]={{70,20,10},{65,22,13},{60,25,15},{50,30,20},{45,32,23},{40,33,27},{35,34,31},{30,35,35}};
+enum ECast { Bolt, Direct, SelfArea, TargetArea, Bounce };
+struct FSkillConfig {float Damage,CD,Range,Radius,Slow,Factor; ECast Cast; int32 Targets;};
+// Distances are cm. Provisional tuning: stone CD 2s, shard 2 targets, frost needle slow.
+const FSkillConfig Skills[]={
+ {18,1,900,0,0,1,Bolt,1},{26,1.8f,900,0,0,1,Bolt,1},{14,3.2f,1000,220,1,.75f,SelfArea,1},
+ {20,2.8f,900,0,0,1,Bounce,3},{28,3.8f,1000,180,0,1,TargetArea,1},{38,2,800,0,0,1,Direct,1},
+ {30,4.4f,1000,240,0,1,TargetArea,1},{44,4.5f,900,240,0,1,TargetArea,1},{58,4.8f,900,0,0,1,Bolt,1},{32,4,1000,240,1.2f,.65f,SelfArea,1},
+ {18,1.5f,900,0,0,1,Bolt,1},{20,4,1000,160,0,1,TargetArea,1},{44,5,1000,260,0,1,TargetArea,1},
+ {18,1.6f,600,0,.8f,.9f,Direct,1},{25,3,1000,200,1,.85f,SelfArea,1},{36,4.5f,1000,300,1.5f,.65f,SelfArea,1},
+ {12,2.8f,900,0,0,1,Bounce,2},{30,2.5f,900,0,0,1,Bounce,5},{44,4.5f,1000,250,0,1,TargetArea,1},
+ {20,2.5f,1000,160,0,1,TargetArea,1},{46,4.8f,1000,220,0,1,TargetArea,1},{20,2.3f,600,0,.8f,.9f,Direct,1},
+ {42,4.5f,1000,280,1.2f,.7f,SelfArea,1},{22,2.6f,1000,160,0,1,TargetArea,1},{48,5.2f,1000,280,0,1,TargetArea,1}
+};
+struct FChainConfig {const TCHAR* Name; int32 A,B; float CD,Damage,Radius,Slow,Factor; int32 Targets;};
+const FChainConfig Chains[]={
+ {TEXT("火花余烬"),10,6,12,36,240,0,1,0},{TEXT("沸腾腐蚀"),11,4,13,40,250,0,1,0},
+ {TEXT("天火坠雷"),12,20,16,54,300,0,1,0},{TEXT("寒露封结"),13,2,12,30,250,1.5f,.65f,0},
+ {TEXT("冰潮共振"),14,15,14,42,320,1.5f,.6f,0},{TEXT("冻电跃击"),21,3,12,34,0,1,.8f,3},
+ {TEXT("奥术共鸣"),16,17,13,38,260,0,1,0},{TEXT("星裂石刺"),18,5,14,46,280,0,1,0},
+ {TEXT("原初蒸爆"),19,24,14,44,280,0,1,0},{TEXT("元素过载"),22,1,15,48,280,0,1,0}
+};
 const int32 Recipes[10][6]={{0,0,0,0,0,0},{2,0,1,0,0,0},{0,2,1,0,0,0},{1,0,2,0,0,0},{1,1,1,0,0,0},{1,2,0,0,0,0},{2,1,0,0,0,0},{1,0,1,1,0,0},{0,1,1,0,1,0},{1,1,0,0,0,1}};
-const float SkillDamage[]={18,26,14,20,28,38,30,44,58,32};
-const float SkillCooldown[]={1,1.8f,3.2f,2.8f,3.8f,3.4f,4.4f,4.5f,4.8f,4};
 const int32 Minimum[]={18,30,45,60,75,90}, Batch[]={2,3,4,5,6,6}, Refill[]={8,8,10,10,12,12};
 const float Interval[]={2.6f,2.2f,1.9f,1.6f,1.4f,1.35f};
 const int32 Weights[6][7]={{70,30,0,0,0,0,0},{35,45,20,0,0,0,0},{0,25,35,40,0,0,0},{0,0,25,35,20,20,0},{0,0,0,25,30,25,20},{0,0,0,20,25,30,25}};
@@ -65,10 +86,26 @@ AAlchemyWorld::AAlchemyWorld() { PrimaryActorTick.bCanEverTick=true; }
 void AAlchemyWorld::BeginPlay() {
     Super::BeginPlay();
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
-    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture"));
-    Progress=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_v1"),0));
+    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI"));
+    Progress=(bSmoke || bCapture)?nullptr:Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_v1"),0));
+    const bool HadSave=Progress!=nullptr;
+    if(!Progress && !bSmoke && !bCapture) Progress=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_backup"),0));
+    if(!Progress && !bSmoke && !bCapture && UGameplayStatics::DoesSaveGameExist(TEXT("AlchemyResearch_v1"),0)) {
+        UE_LOG(LogTemp,Error,TEXT("ALCH002 cannot load primary or backup save; refusing to overwrite player progress"));
+        FPlatformMisc::RequestExitWithStatus(false,1);return;
+    }
     if (!Progress) Progress=NewObject<UAlchemyProgress>(this);
     if (Progress->Talents.Num()!=4) Progress->Talents={0,0,0,0};
+    if(Progress->SchemaVersion<2) {
+        const bool Played=Progress->Coins>0 || !Progress->Recipes.IsEmpty() || !Progress->Chains.IsEmpty() || Progress->Talents.ContainsByPredicate([](int32 L){return L>0;});
+        // Back up the old object before adding new semantic records; isolated QA never writes player saves.
+        if(HadSave && !bSmoke && !bCapture && !UGameplayStatics::SaveGameToSlot(Progress,TEXT("AlchemyResearch_backup"),0)) {
+            UE_LOG(LogTemp,Error,TEXT("ALCH002 migration backup failed; primary save left unchanged"));
+            FPlatformMisc::RequestExitWithStatus(false,1);return;
+        }
+        MigrateProgress(Played);
+    }
+    Levels.Init(0,UE_ARRAY_COUNT(Skills));Levels[0]=1;
     UIFont=NewObject<UFont>(this); UIFont->FontCacheType=EFontCacheType::Runtime;
     FTypefaceEntry Face; Face.Name=FName("Regular");
     Face.Font=FFontData(FPaths::EngineContentDir()/TEXT("Slate/Fonts/DroidSansFallback.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
@@ -282,7 +319,7 @@ void AAlchemyWorld::Chase(FAlchemyEnemy& E,float Dt) {
         Target=E.Path[0];
     }
     const FVector To=Target-E.Pos;
-    const float Step=FMath::Min(To.Size2D(),E.Speed*(E.Slow>0?0.65f:1)*Dt);
+    const float Step=FMath::Min(To.Size2D(),E.Speed*(E.Slow>0?E.SlowFactor:1)*Dt);
     E.Pos=Move(E.Pos,To.GetSafeNormal2D()*Step,Radius);
 }
 void AAlchemyWorld::UpdateCamera(float Delta) {
@@ -314,13 +351,44 @@ bool AAlchemyWorld::SaveProgress() {
     if(!OK) Message(TEXT("保存失败，进度仍在内存中。请重试。"));
     return OK;
 }
+void AAlchemyWorld::MigrateProgress(bool Played) {
+    if(Progress->SchemaVersion>=2) return;
+    Progress->TutorialComplete=Played; Progress->Combinations.Empty(); Progress->ChainsV2.Empty();
+    Progress->SchemaVersion=2;
+}
+bool AAlchemyWorld::TutorialActive() const {return bCombat && !Progress->TutorialComplete;}
+void AAlchemyWorld::TutorialSupply(FVector Position) {
+    if(!TutorialActive() || TutorialSkill>=0 || bTutorialSupplyDone || RunTime<35) return;
+    for(int M=0;M<3;M++) {
+        bool Available=Inventory[M]>0;
+        for(const auto& D:Drops) if(D.Kind==M && D.Count>0 && Walkable(D.Pos,18)) Available=true;
+        if(!Available) {Drop(Position,M);return;}
+    }
+    bTutorialSupplyDone=true;
+}
+void AAlchemyWorld::TutorialHit(int32 Skill,int32 Hits) {
+    if(TutorialActive() && Skill==TutorialSkill && Hits>=2) {
+        Progress->TutorialComplete=true;SaveProgress();
+        Message(TEXT("首次教学完成！自由投料已开放，可尝试更多材料组合。"));
+    }
+}
+void AAlchemyWorld::AddMaterial(int32 I) {
+    if(!bCombat || !Selected.IsValidIndex(I)) return;
+    int Total=0;for(int V:Selected) Total+=V;
+    if(Total>=10 || Selected[I]>=Inventory[I]) return;
+    if(TutorialActive() && (TutorialSkill>=0 || I>=3 || Selected[I]>=1)) {
+        Message(TutorialSkill>=0?TEXT("先关闭界面，让新技能一次命中至少2个敌人。"):TEXT("首次教学：三种普通材料各投入1个。"));return;
+    }
+    Selected[I]++;
+}
 void AAlchemyWorld::StartRun() {
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
-    Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels={1,0,0,0,0,0,0,0,0,0}; Equipped={0}; Bag.Empty();
+    Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,UE_ARRAY_COUNT(Skills));Levels[0]=1; Equipped={0}; Bag.Empty();
+    TutorialSkill=-1;bTutorialSupplyDone=false;
     MaxHP=(bTune001B?120:100)+Progress->Talents[0]*10; HP=MaxHP;
     DodgeCD=DodgeTime=HurtInv=DodgeInv=0; SpawnCD=2.6f; NextElite=90; EliteIndex=0;
     for(float& T:SkillCD) T=0;
-    ChainCD[0]=12; ChainCD[1]=10;
+    for(int C=0;C<UE_ARRAY_COUNT(Chains);C++) ChainCD[C]=Chains[C].CD;
     BuildScene(true);
     UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
@@ -334,16 +402,48 @@ void AAlchemyWorld::EndRun(bool Won) {
     ResultCoins=RunCoins; RunCoins=0; Panel=Won?TEXT("victory"):TEXT("defeat");
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_RESULT won=%d time=%.2f kills=%d coins=%d crafts=%d chains=%d"),Won,RunTime,Kills,ResultCoins,CraftCount,ChainCount);
 }
+bool AAlchemyWorld::CraftOptions(TArray<int32>& Options,TArray<float>& WeightsOut,FString& Reason,int32& Combination) const {
+    Options.Empty();WeightsOut.Empty();Reason.Empty();Combination=-1;
+    if(!bCombat || bRunEnded) {Reason=TEXT("请在战斗中炼金");return false;}
+    int Total=0,Mask=0;bool Special=false;
+    for(int I=0;I<6;I++) {
+        if(Selected[I]<0 || Selected[I]>Inventory[I]) {Reason=TEXT("材料库存不足");return false;}
+        Total+=Selected[I];if(I<3 && Selected[I]) Mask|=1<<I;if(I>=3 && Selected[I]) Special=true;
+    }
+    if(TutorialActive()) {
+        if(TutorialSkill>=0) {Reason=TEXT("关闭界面，让新技能一次命中至少2个敌人");return false;}
+        if(Special || Selected[0]!=1 || Selected[1]!=1 || Selected[2]!=1) {Reason=TEXT("首次教学：三种普通材料各投入1个");return false;}
+    }
+    if(Total<3 || Total>10) {Reason=TEXT("单次需要3–10个材料");return false;}
+    if(Special) {
+        for(int S=7;S<=9;S++) {bool Match=true;for(int I=0;I<6;I++) Match &= Selected[I]==Recipes[S][I];if(Match) Options.Add(S);}
+        if(Options.IsEmpty()) {Reason=TEXT("精英材料使用专属固定配方");return false;}
+        WeightsOut.Add(100);
+    } else {
+        for(int C=0;C<7;C++) if(Mask==CombinationMasks[C]) Combination=C;
+        if(Combination<0) {Reason=TEXT("请选择有效材料组合");return false;}
+        for(int Q=0;Q<3;Q++) {Options.Add(CombinationSkills[Combination][Q]);WeightsOut.Add(QualityWeights[Total-3][Q]);}
+    }
+    bool Excluded=false;
+    for(int I=Options.Num()-1;I>=0;I--) {
+        int S=Options[I];
+        if(Levels[S]>=5 || (Levels[S]==0 && Equipped.Num()>=6 && Bag.Num()>=6)) {Options.RemoveAt(I);WeightsOut.RemoveAt(I);Excluded=true;}
+    }
+    if(Options.IsEmpty()) {Reason=TEXT("全部结果已满级或无存放空间，材料不消耗");return false;}
+    float Sum=0;for(float W:WeightsOut) Sum+=W;for(float& W:WeightsOut) W=W*100/Sum;
+    if(Excluded) Reason=TEXT("已排除满级/无法存放结果，显示本次实际概率");
+    return true;
+}
 bool AAlchemyWorld::Craft() {
-    for(int i=0;i<6;i++) if(Selected[i]>Inventory[i]) { Message(TEXT("素材不足")); return false; }
-    int Match=-1;
-    for(int S=1;S<10;S++) { bool Equal=true; for(int i=0;i<6;i++) Equal &= Selected[i]==Recipes[S][i]; if(Equal) Match=S; }
-    if(Match<0) { Message(TEXT("无效组合，材料未消耗。")); return false; }
-    if(Levels[Match]>=5) { Message(TEXT("技能已满级，材料未消耗。")); return false; }
-    if(Levels[Match]==0 && Equipped.Num()>=6 && Bag.Num()>=6) { Message(TEXT("装备栏及储备栏均已满。")); return false; }
+    TArray<int32> Options;TArray<float> WeightsOut;FString Reason;int Combination;
+    if(!CraftOptions(Options,WeightsOut,Reason,Combination)) {Message(Reason);return false;}
+    float Roll=Random.FRand()*100;int Match=Options.Last();
+    for(int I=0;I<Options.Num();I++) {Roll-=WeightsOut[I];if(Roll<0) {Match=Options[I];break;}}
     for(int i=0;i<6;i++) Inventory[i]-=Selected[i];
     if(Levels[Match]==0) { if(Equipped.Num()<6) Equipped.Add(Match); else Bag.Add(Match); }
     Levels[Match]++; CraftCount++; Selected={0,0,0,0,0,0};
+    if(Combination>=0) Progress->Combinations.AddUnique(Combination);
+    if(TutorialActive()) {TutorialSkill=Match;bTutorialSupplyDone=true;}
     Progress->Recipes.AddUnique(Match); SaveProgress();
     Message(FString::Printf(TEXT("炼制成功：%s · Lv.%d"),SkillNames[Match],Levels[Match])); return true;
 }
@@ -404,9 +504,13 @@ void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor C
     S.Body=Mesh(TEXT("Sphere"),From+FVector(0,0,65),FVector(0.22f),Color); Shots.Add(S);
 }
 void AAlchemyWorld::DamageEnemy(int Index,float Damage) { if(Enemies.IsValidIndex(Index)) Enemies[Index].HP-=Damage; }
-void AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color,float Slow) {
-    Ring(P,Radius,Color);
-    for(auto& E:Enemies) if(FVector::Dist2D(P,E.Pos)<=Radius) { E.HP-=Damage; E.Slow=FMath::Max(E.Slow,Slow); }
+int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color,float Slow,float Factor) {
+    Ring(P,Radius,Color);int Hits=0;
+    for(auto& E:Enemies) if(E.HP>0 && FVector::Dist2D(P,E.Pos)<=Radius) {
+        Hits++;E.HP-=Damage;
+        if(Slow>0) {if(E.Slow<=0) E.SlowFactor=Factor;else E.SlowFactor=FMath::Min(E.SlowFactor,Factor);E.Slow=FMath::Max(E.Slow,Slow);}
+    }
+    return Hits;
 }
 void AAlchemyWorld::Hurt(float Damage) {
     if(HurtInv>0 || DodgeInv>0 || HP<=0) return;
@@ -423,25 +527,39 @@ void AAlchemyWorld::Drop(FVector P,int Kind,int Count) {
 
 void AAlchemyWorld::CastSkills(float Dt) {
     for(int S:Equipped) {
-        SkillCD[S]-=Dt; if(SkillCD[S]>0) continue;
-        int N=Nearest(PlayerPos,S==5?800:900); if(N<0 && S!=2 && S!=9) continue;
-        SkillCD[S]=SkillCooldown[S];
-        const float Damage=FMath::RoundToFloat(SkillDamage[S]*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]));
-        if(S==0 || S==1 || S==8) Fire(PlayerPos,Enemies[N].Pos,Damage,S==1?FLinearColor(0.95f,0.3f,0.08f):Teal);
-        else if(S==2 || S==9) Area(PlayerPos,S==2?220:240,Damage,FLinearColor(0.22f,0.48f,0.65f),S==2?1:1.2f);
-        else if(S==3) {
-            TArray<int32> Used; FVector From=PlayerPos;
-            for(int j=0;j<3 && N>=0;j++) { Used.Add(N); DamageEnemy(N,Damage); Ring(Enemies[N].Pos,40,Gold,0.2f); From=Enemies[N].Pos; N=Nearest(From,900,Used); }
-        } else if(S==5) { DamageEnemy(N,Damage); Ring(Enemies[N].Pos,55,Gold); }
-        else Area(Enemies[N].Pos,S==4?180:240,Damage,S==4?Teal:FLinearColor(0.75f,0.3f,0.12f));
+        const auto& K=Skills[S];SkillCD[S]-=Dt;if(SkillCD[S]>0) continue;
+        int N=Nearest(PlayerPos,K.Range);if(N<0) continue;
+        SkillCD[S]=K.CD;
+        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]));
+        int Hits=0;
+        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,S==1?FLinearColor(.95f,.3f,.08f):Teal);Shots.Last().Life=K.Range/1000;}
+        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,K.Radius,Damage,Teal,K.Slow,K.Factor);
+        else {
+            TArray<int32> Used;
+            for(int J=0;J<K.Targets && N>=0;J++) {
+                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage);Hits++;Ring(E.Pos,45,Gold,.2f);
+                if(K.Slow>0) {E.SlowFactor=E.Slow>0?FMath::Min(E.SlowFactor,K.Factor):K.Factor;E.Slow=FMath::Max(E.Slow,K.Slow);}
+                N=K.Cast==Bounce?Nearest(E.Pos,K.Range,Used):-1;
+            }
+        }
+        TutorialHit(S,Hits);
     }
-    for(int C=0;C<2;C++) {
-        const bool Active=C==0?(Equipped.Contains(1)&&Equipped.Contains(4)):(Equipped.Contains(2)&&Equipped.Contains(3));
-        if(!Active) continue;
-        ChainCD[C]-=Dt; if(ChainCD[C]>0) continue; ChainCD[C]=C==0?12:10;
-        int N=Nearest(PlayerPos,C==0?800:1000); if(N<0) continue;
-        Area(Enemies[N].Pos,C==0?250:300,FMath::RoundToFloat((C==0?40:32)*(1+0.05f*Progress->Talents[1])),C==0?Gold:Teal,C==0?0:1.2f);
-        ChainCount++; Progress->Chains.AddUnique(C); SaveProgress(); Message(FString(TEXT("连锁触发："))+ChainNames[C]);
+    for(int C=0;C<UE_ARRAY_COUNT(Chains);C++) {
+        const auto& K=Chains[C];
+        if(!Equipped.Contains(K.A) || !Equipped.Contains(K.B)) continue;
+        ChainCD[C]-=Dt;if(ChainCD[C]>0) continue;ChainCD[C]=K.CD;
+        int N=Nearest(PlayerPos,1000);if(N<0) continue;
+        const float Damage=FMath::RoundToFloat(K.Damage*(1+.05f*Progress->Talents[1]));
+        if(K.Targets>0) {
+            TArray<int32> Used;
+            for(int J=0;J<K.Targets && N>=0;J++) {
+                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage);Ring(E.Pos,45,Gold,.2f);
+                E.SlowFactor=E.Slow>0?FMath::Min(E.SlowFactor,K.Factor):K.Factor;E.Slow=FMath::Max(E.Slow,K.Slow);
+                N=Nearest(E.Pos,1000,Used);
+            }
+        } else Area(Enemies[N].Pos,K.Radius,Damage,Gold,K.Slow,K.Factor);
+        ChainCount++;
+        if(!Progress->ChainsV2.Contains(C)) {Progress->ChainsV2.Add(C);SaveProgress();Message(FString(TEXT("连锁发现："))+K.Name);}
     }
 }
 
@@ -457,7 +575,7 @@ void AAlchemyWorld::Action(FString Id) {
     if(Id==TEXT("start")) { StartRun(); return; }
     if(Id==TEXT("village")) {
         if(bCombat && Panel!=TEXT("victory") && Panel!=TEXT("defeat")) { EndRun(false); if(Panel==TEXT("savefailed")) return; }
-        Inventory={0,0,0,0,0,0}; Levels={1,0,0,0,0,0,0,0,0,0}; Equipped={0}; Bag.Empty(); BuildScene(false); return;
+        Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,UE_ARRAY_COUNT(Skills));Levels[0]=1; Equipped={0}; Bag.Empty(); BuildScene(false); return;
     }
     if(Id==TEXT("return")) { Panel=TEXT("confirmreturn"); return; }
     if(Id==TEXT("craft")) { Craft(); return; }
@@ -470,14 +588,19 @@ void AAlchemyWorld::Action(FString Id) {
     if(Id==TEXT("tilt")) CameraPitch=CameraPitch==48?35:48;
     if(Id==TEXT("tune") && !bCombat) bTune001B=!bTune001B;
     if(Id==TEXT("drop") && !bCombat) bDrop001=!bDrop001;
-    if(Id.StartsWith(TEXT("add"))) { int I=FCString::Atoi(*Id.Mid(3)); if(Selected.IsValidIndex(I) && Selected[I]<Inventory[I]) Selected[I]++; return; }
+    if(Id.StartsWith(TEXT("add"))) {AddMaterial(FCString::Atoi(*Id.Mid(3)));return;}
     if(Id.StartsWith(TEXT("sub"))) { int I=FCString::Atoi(*Id.Mid(3)); if(Selected.IsValidIndex(I)) Selected[I]=FMath::Max(0,Selected[I]-1); return; }
-    if(Id.StartsWith(TEXT("recipe")) && bCombat) {
-        int S=FCString::Atoi(*Id.Mid(6)); if(S>0 && S<10 && Progress->Recipes.Contains(S)) { for(int i=0;i<6;i++) Selected[i]=Recipes[S][i]; Panel=TEXT("alchemy"); } return;
+    if(Id==TEXT("codexprev")) {CodexPage=FMath::Max(0,CodexPage-1);return;}
+    if(Id==TEXT("codexnext")) {CodexPage=FMath::Min(3,CodexPage+1);return;}
+    if(Id.StartsWith(TEXT("recipe")) && bCombat && !TutorialActive()) {
+        int S=FCString::Atoi(*Id.Mid(6));
+        if(S>=7 && S<=9 && Progress->Recipes.Contains(S)) {for(int I=0;I<6;I++) Selected[I]=Recipes[S][I];Panel=TEXT("alchemy");}
+        return;
     }
     if(Id.StartsWith(TEXT("bag"))) { SelectedBag=FCString::Atoi(*Id.Mid(3)); return; }
     if(Id.StartsWith(TEXT("equip"))) {
         int I=FCString::Atoi(*Id.Mid(5)); if(!Bag.IsValidIndex(SelectedBag)) return;
+        if(TutorialActive()) {Message(TEXT("先用新范围技能命中至少2个敌人，再管理技能。"));return;}
         if(Equipped.Num()<6) { Equipped.Add(Bag[SelectedBag]); Bag.RemoveAt(SelectedBag); }
         else if(Equipped.IsValidIndex(I) && I!=0) Swap(Equipped[I],Bag[SelectedBag]);
         SelectedBag=-1; return;
@@ -526,7 +649,11 @@ void AAlchemyWorld::Tick(float Dt) {
         else if(CaptureStep==4 && VisualTime>9) {UE_LOG(LogTemp,Display,TEXT("ALCHEMY_LAYOUT_CAPTURE_DONE"));FPlatformMisc::RequestExit(false);CaptureStep++;}
         return;
     }
-    if(bCapture) {
+    if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI"))) {
+        // Isolated interactive UI check: no real save load/write, no cheat path in ordinary play.
+        if(CaptureStep==0 && VisualTime>2) {StartRun();Inventory={10,10,10,1,1,1};Panel=TEXT("alchemy");CaptureStep=1;}
+    }
+    else if(bCapture) {
         const auto Capture=[this](const TCHAR* Name) {
             FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence")/Name,false,false);
         };
@@ -630,6 +757,7 @@ void AAlchemyWorld::Tick(float Dt) {
     }
     for(int i=Enemies.Num()-1;i>=0;i--) if(Enemies[i].HP<=0) {
         auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
+        TutorialSupply(E.Pos);
         if(E.Type==10) {EndRun(true); break;}
         if(E.Type>=7) {Drop(E.Pos,6+E.Type-7); Drop(E.Pos,-1,10);}
         else {
@@ -694,6 +822,79 @@ void AAlchemyWorld::LayoutCheck() {
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_LAYOUT_CHECK obstacles=%d paths=%d/27 spawns=%d/27 pursuit=3 radii=35,70,110 result=%s"),Obstacles.Num(),Paths,Spawns,OK?TEXT("PASS"):TEXT("FAIL"));
     if(!OK) {UE_LOG(LogTemp,Error,TEXT("ALCHEMY_SMOKE_FAIL layout_A"));FPlatformMisc::RequestExitWithStatus(false,1);}
 }
+void AAlchemyWorld::AlchemyCheck() {
+    bool OK=true;
+    const auto Check=[&](bool Pass,const TCHAR* Name) {OK &= Pass;UE_LOG(LogTemp,Display,TEXT("ALCH002_CHECK %s %s"),Name,Pass?TEXT("PASS"):TEXT("FAIL"));};
+    Progress=NewObject<UAlchemyProgress>(this);Progress->Coins=123;Progress->Recipes={1,7};Progress->Chains={0,1};Progress->Talents={1,2,0,0};
+    MigrateProgress(true);
+    Check(Progress->Coins==123 && Progress->Recipes.Contains(1) && Progress->Recipes.Contains(7) && Progress->TutorialComplete && Progress->Combinations.IsEmpty() && Progress->ChainsV2.IsEmpty() && Progress->Talents[1]==2,TEXT("legacy_semantic_migration"));
+    TArray<uint8> Bytes;bool Saved=UGameplayStatics::SaveGameToMemory(Progress,Bytes);
+    auto Loaded=Saved?Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromMemory(Bytes)):nullptr;
+    Check(Loaded && Loaded->Coins==123 && Loaded->SchemaVersion==2 && Loaded->TutorialComplete,TEXT("save_roundtrip"));
+    StartRun();TArray<int32> Options;TArray<float> W;FString Reason;int C;
+    bool Tables=true;TSet<int32> Unique;
+    for(int G=0;G<7;G++) {
+        for(int S:CombinationSkills[G]) Unique.Add(S);
+        for(int Total=3;Total<=10;Total++) {
+            Inventory={10,10,10,0,0,0};Selected={0,0,0,0,0,0};int First=-1;
+            for(int M=0;M<3;M++) if(CombinationMasks[G]&(1<<M)) {Selected[M]=1;if(First<0) First=M;}
+            int Sum=Selected[0]+Selected[1]+Selected[2];Selected[First]+=Total-Sum;
+            Tables &= CraftOptions(Options,W,Reason,C) && C==G && Options.Num()==3;
+            if(W.Num()==3) for(int Q=0;Q<3;Q++) Tables &= FMath::IsNearlyEqual(W[Q],QualityWeights[Total-3][Q],.001f);
+        }
+        Levels.Init(0,25);Levels[0]=1;Equipped={0};Bag.Empty();
+        Tables &= Craft() && Progress->Combinations.Contains(G);
+    }
+    Check(Tables && Unique.Num()==21,TEXT("7_groups_21_skills_8_probability_rows_and_crafting"));
+    Levels.Init(0,25);Levels[0]=1;Equipped={0};Bag.Empty();Inventory={10,10,10,0,0,0};Selected={1,1,1,0,0,0};Levels[23]=5;
+    bool Filter=CraftOptions(Options,W,Reason,C) && Options.Num()==2 && FMath::IsNearlyEqual(W[0],200.f/3,.001f) && FMath::IsNearlyEqual(W[1],100.f/3,.001f);
+    Levels[4]=5;Levels[24]=5;auto Before=Inventory;
+    Check(Filter && !Craft() && Before==Inventory,TEXT("filter_renormalization_and_all_blocked_no_cost"));
+    Levels.Init(0,25);Levels[0]=1;Equipped={0,1,2,3,5,6};Bag={7,8,9,10,11,12};Selected={1,1,1,0,0,0};
+    bool Capacity=!CraftOptions(Options,W,Reason,C);Levels[4]=1;
+    Capacity &= CraftOptions(Options,W,Reason,C) && Options.Num()==1 && Options[0]==4 && W[0]==100 && Craft() && Levels[4]==2;
+    Check(Capacity,TEXT("capacity_filters_new_but_allows_existing_upgrade"));
+    Levels.Init(0,25);Levels[0]=1;Equipped={0};Bag.Empty();Inventory={3,3,3,1,1,1};Selected={1,0,1,1,0,0};
+    Check(Craft() && Levels[7]==1 && Inventory[3]==0,TEXT("elite_fixed_recipe_preserved"));
+    Selected={1,1,1,0,1,0};Before=Inventory;Check(!Craft() && Inventory==Before,TEXT("invalid_special_no_cost"));
+    const auto ClearEnemies=[&]() {for(auto& E:Enemies) {E.Body->Destroy();E.Shadow->Destroy();}Enemies.Empty();};
+    ClearEnemies();SpawnEnemy(0);SpawnEnemy(0);
+    for(int I=0;I<Enemies.Num();I++) {Enemies[I].Pos=FVector(200+I*40,0,0);Enemies[I].HP=10000;Enemies[I].MaxHP=10000;}
+    Progress=NewObject<UAlchemyProgress>(this);MigrateProgress(false);StartRun();ClearEnemies();
+    RunTime=34;TutorialSupply(PlayerPos);bool Supply=Drops.IsEmpty();RunTime=35;
+    TutorialSupply(PlayerPos);Supply &= Drops.Num()==1;TutorialSupply(PlayerPos);Supply &= Drops.Num()==2;TutorialSupply(PlayerPos);Supply &= Drops.Num()==3;TutorialSupply(PlayerPos);Supply &= Drops.Num()==3 && bTutorialSupplyDone;
+    Check(Supply,TEXT("tutorial_35s_one_missing_per_kill_no_duplicate_ground_drop"));
+    Inventory={3,3,3,0,0,0};Selected={0,0,0,0,0,0};AddMaterial(0);AddMaterial(0);AddMaterial(3);
+    bool Tutorial=Selected[0]==1 && Selected[3]==0;AddMaterial(1);AddMaterial(2);Tutorial &= Craft() && TutorialSkill>=0;
+    int TS=TutorialSkill;Before=Inventory;Selected={1,1,1,0,0,0};Tutorial &= !Craft() && Inventory==Before;
+    TutorialHit(TS,1);Tutorial &= !Progress->TutorialComplete;TutorialHit(0,2);Tutorial &= !Progress->TutorialComplete;
+    SpawnEnemy(0);SpawnEnemy(0);for(int I=0;I<Enemies.Num();I++) {Enemies[I].Pos=FVector(200+40*I,0,0);Enemies[I].HP=10000;}
+    Equipped={TS};SkillCD[TS]=0;CastSkills(.01f);Tutorial &= Progress->TutorialComplete;
+    Check(Tutorial,TEXT("tutorial_click_limits_random_AOE_and_actual_two_target_cast"));
+    Progress->TutorialComplete=false;StartRun();Check(TutorialSkill==-1 && !bTutorialSupplyDone && TutorialActive() && CraftCount==0,TEXT("incomplete_tutorial_restarts_next_run"));
+    Progress->TutorialComplete=true;StartRun();ClearEnemies();SpawnEnemy(0);Enemies[0].Pos=FVector(200,0,0);Enemies[0].HP=100000;
+    bool ChainOK=true;
+    for(int I=0;I<10;I++) {
+        Equipped={Chains[I].A,Chains[I].B};for(float& CD:SkillCD) CD=100;
+        ChainCD[I]=Chains[I].CD;int Count=ChainCount;CastSkills(5);float Left=ChainCD[I];
+        ChainOK &= Count==ChainCount && FMath::IsNearlyEqual(Left,Chains[I].CD-5);
+        Equipped={Chains[I].A};CastSkills(3);ChainOK &= FMath::IsNearlyEqual(ChainCD[I],Left);
+        Equipped={Chains[I].A,Chains[I].B};CastSkills(Left+.01f);ChainOK &= ChainCount==Count+1 && Progress->ChainsV2.Contains(I);
+    }
+    ClearEnemies();Equipped={Chains[0].A,Chains[0].B};ChainCD[0]=.1f;int Count=ChainCount;CastSkills(1);
+    ChainOK &= ChainCount==Count && ChainCD[0]==Chains[0].CD;
+    Check(ChainOK,TEXT("10_chains_full_initial_CD_unequip_freeze_resume_and_no_target"));
+    bool EffectsOK=true;
+    for(int S=0;S<25;S++) {
+        ClearEnemies();SpawnEnemy(0);SpawnEnemy(0);
+        for(int I=0;I<2;I++) {Enemies[I].Pos=FVector(100+I*40,0,0);Enemies[I].HP=10000;}
+        Equipped={S};Levels[S]=1;SkillCD[S]=0;int ShotsBefore=Shots.Num();CastSkills(.01f);
+        EffectsOK &= Skills[S].Cast==Bolt?Shots.Num()>ShotsBefore:Enemies[0].HP<10000;
+    }
+    Check(EffectsOK,TEXT("all_25_skill_cast_paths"));
+    if(!OK) {UE_LOG(LogTemp,Error,TEXT("ALCH002_TEST_FAIL"));FPlatformMisc::RequestExitWithStatus(false,1);}
+    else UE_LOG(LogTemp,Display,TEXT("ALCH002_TEST_PASS"));
+}
 void AAlchemyWorld::SmokeCheck(float Dt) {
     SmokeTime+=Dt;
     auto Require=[](bool OK,const TCHAR* Label){if(!OK) {UE_LOG(LogTemp,Error,TEXT("ALCHEMY_SMOKE_FAIL %s"),Label); FPlatformMisc::RequestExitWithStatus(false,1);} else UE_LOG(LogTemp,Display,TEXT("ALCHEMY_CHECK_OK %s"),Label);};
@@ -701,10 +902,12 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
         Progress=NewObject<UAlchemyProgress>(this); StartRun();
         LayoutCheck();
         Require(Enemies.Num()==8,TEXT("initial_8")); Require(HP==120,TEXT("TUNE001B_HP120"));
+        AlchemyCheck();Progress=NewObject<UAlchemyProgress>(this);MigrateProgress(true);StartRun();
         Inventory={3,3,3,0,0,0}; Selected={1,0,0,0,0,0}; auto Before=Inventory;
         Require(!Craft() && Before==Inventory,TEXT("invalid_craft_no_cost"));
-        Selected={2,0,1,0,0,0}; Require(Craft() && Levels[1]==1 && Inventory[0]==1 && Inventory[2]==2,TEXT("valid_flame_recipe"));
-        Levels[1]=5; Inventory={3,3,3,0,0,0}; Selected={2,0,1,0,0,0}; Before=Inventory;
+        Selected={2,0,1,0,0,0}; Require(Craft() && CraftCount==1 && Inventory[0]==1 && Inventory[2]==2,TEXT("valid_random_combination"));
+        for(int S:CombinationSkills[4]) Levels[S]=5;
+        Inventory={3,3,3,0,0,0}; Selected={2,0,1,0,0,0}; Before=Inventory;
         Require(!Craft() && Before==Inventory,TEXT("max_level_no_cost"));
         Require(!Walkable(FVector(9000,0,0)),TEXT("world_bounds"));
         const FVector Right=Camera->GetActorRightVector().GetSafeNormal2D();
@@ -747,13 +950,26 @@ void AAlchemyHUD::Button(const FString& Id,const FString& Label,float X,float Y,
     Box(X,Y,3,34,Enabled?Gold:Muted); Text(Label,X+12,Y+7,15,Enabled?FLinearColor(0.9f,0.88f,0.79f):Muted);
     if(Enabled) AddHitBox(FVector2D(X*S,Y*S),FVector2D(W*S,34*S),FName(*Id),true);
 }
-void AAlchemyHUD::NotifyHitBoxClick(FName Name) { if(World) World->Action(Name.ToString()); }
+void AAlchemyHUD::NotifyHitBoxClick(FName Name) {
+    if(!World) return;
+    FString Id=Name.ToString();
+    if(Id.StartsWith(TEXT("material"))) DragMaterial=FCString::Atoi(*Id.Mid(8));
+    else World->Action(Id);
+}
 
 void AAlchemyHUD::DrawHUD() {
     Super::DrawHUD();
     if(!World) {for(TActorIterator<AAlchemyWorld> I(GetWorld());I;++I) {World=*I;break;}}
     if(!World || !Canvas) return;
     S=FMath::Min(Canvas->SizeX/1280.f,Canvas->SizeY/720.f);
+    if(DragMaterial>=0 && GetOwningPlayerController()->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
+        float MX=0,MY=0;GetOwningPlayerController()->GetMousePosition(MX,MY);MX/=S;MY/=S;
+        int I=DragMaterial;DragMaterial=-1;
+        float SourceY=220+(I%3)*72;
+        bool Source=I<3 ? (MX>=700 && MX<=1000 && MY>=SourceY && MY<=SourceY+34) : (MX>=700 && MX<=1000 && MY>=445 && MY<=479);
+        if(World->Panel==TEXT("alchemy") && (Source || (MX>=265 && MX<=655 && MY>=205 && MY<=455))) World->AddMaterial(I);
+    }
+    if(World->Panel!=TEXT("alchemy")) DragMaterial=-1;
     Box(0,0,1280,80,FLinearColor(0.02f,0.035f,0.045f,0.94f));
     Text(TEXT("冒牌炼金术士"),28,12,26,Gold); Text(TEXT("HD 2.5D / 可玩预研 0.1"),30,49,12,Muted);
     Text(World->bCombat?TEXT("腐化林地"):TEXT("烛苔村 · 据点"),310,20,20);
@@ -768,6 +984,11 @@ void AAlchemyHUD::DrawHUD() {
         for(int i=0;i<World->Equipped.Num();i++) {
             int K=World->Equipped[i]; Box(285+i*116,600,108,46,Ink);
             Text(SkillNames[K],294+i*116,607,13); Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),294+i*116,626,12,Gold);
+        }
+        if(World->TutorialActive()) {
+            const bool Ready=World->Inventory[0]>0 && World->Inventory[1]>0 && World->Inventory[2]>0;
+            Text(World->TutorialSkill>=0?TEXT("关闭界面：新技能一次命中至少2个敌人"):Ready?TEXT("材料已齐！点击入口或按 Tab 开始炼金"):TEXT("战斗收集三类材料，约35秒后补缺"),285,165,15,Gold);
+            if(Ready && World->TutorialSkill<0 && World->Panel.IsEmpty()) Button(TEXT("alchemy"),TEXT("Tab 首次炼金 →"),480,198,280);
         }
         if(World->RunTime>=300 && !World->bBossSpawned) {Box(400,100,480,48,Ink); Text(FString::Printf(TEXT("BOSS 将在 %.1f 秒后出现"),310-World->RunTime),440,112,22,Gold);}
         for(auto& E:World->Enemies) if(E.Type==10) {
@@ -799,25 +1020,57 @@ void AAlchemyHUD::DrawHUD() {
             Button(TEXT("drop"),World->bDrop001?TEXT("随机材料 15.4%"):TEXT("随机材料 22%"),640,470,330,!World->bCombat);
             Text(TEXT("测试值切换仅限据点；正交视角下景深差异可能不明显。"),270,530,13,Muted);
         } else if(P==TEXT("alchemy")) {
-            Text(TEXT("选择素材数量后尝试合成；无效组合不扣材料。"),260,185,14,Muted);
-            for(int i=0;i<6;i++) {
-                const float X=270+(i%3)*250,Y=230+(i/3)*105;
-                Text(FString::Printf(TEXT("%s  %d/10  已选 %d"),MaterialNames[i],World->Inventory[i],World->Selected[i]),X,Y,14);
-                Button(FString::Printf(TEXT("sub%d"),i),TEXT("-"),X,Y+30,60); Button(FString::Printf(TEXT("add%d"),i),TEXT("+"),X+75,Y+30,60);
+            Text(TEXT("左侧炼金炉 · 右侧背包；点击或拖入1个，点击炉内材料取回"),260,180,13,Muted);
+            Box(265,205,390,250,FLinearColor(.06f,.13f,.14f));
+            int Total=0;for(int V:World->Selected) Total+=V;
+            Text(FString::Printf(TEXT("炼金炉  投入 %d / 10"),Total),280,220,19,Gold);
+            int Next=-1;if(World->TutorialActive() && World->TutorialSkill<0) for(int I=0;I<3;I++) if(World->Selected[I]==0) {Next=I;break;}
+            for(int I=0;I<6;I++) {
+                if(I<3) {
+                    Button(FString::Printf(TEXT("sub%d"),I),FString::Printf(TEXT("%s ×%d  点击取回"),MaterialNames[I],World->Selected[I]),280,265+I*48,355,World->Selected[I]>0);
+                    Button(FString::Printf(TEXT("material%d"),I),FString::Printf(TEXT("%s%s  可用%d"),Next==I?TEXT("→ "):TEXT(""),MaterialNames[I],World->Inventory[I]-World->Selected[I]),700,220+I*72,300,World->Inventory[I]>World->Selected[I] && (!World->TutorialActive() || (World->TutorialSkill<0 && World->Selected[I]<1)));
+                } else {
+                    Text(FString::Printf(TEXT("%s %d 已投%d"),MaterialNames[I],World->Inventory[I]-World->Selected[I],World->Selected[I]),270+(I-3)*250,442,12,Muted);
+                    Button(FString::Printf(TEXT("add%d"),I),TEXT("+"),270+(I-3)*250,465,60,!World->TutorialActive());
+                    Button(FString::Printf(TEXT("sub%d"),I),TEXT("-"),340+(I-3)*250,465,60,World->Selected[I]>0);
+                }
             }
-            Button(TEXT("craft"),TEXT("尝试合成"),270,475,200); Button(TEXT("clear"),TEXT("清空选择"),500,475,200); Button(TEXT("codex"),TEXT("查看线索"),730,475,200);
-            Text(TEXT("火焰偏好赤硫，冰霜偏好凝露，雷电偏好以太。"),270,540,14,Teal);
+            TArray<int32> Options;TArray<float> Chances;FString Reason;int Combination;
+            bool Valid=World->CraftOptions(Options,Chances,Reason,Combination);
+            FString Probability;
+            if(Valid && Combination>=0) {
+                for(int Q=0;Q<3;Q++) {int I=Options.Find(CombinationSkills[Combination][Q]);Probability+=FString::Printf(TEXT("%s %.1f%%  "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
+            } else if(Valid) Probability=TEXT("精英专属固定配方 · 100%");
+            else Probability=TEXT("投料后显示本次品质概率");
+            Text(Probability,280,413,13,Teal);
+            if(Valid) Button(TEXT("craft"),TEXT("开始炼金"),270,515,230);
+            Button(TEXT("clear"),TEXT("清空投料"),525,515,230);Button(TEXT("codex"),TEXT("图鉴"),780,515,220);
+            Text(Reason.IsEmpty()?(World->TutorialActive()?TEXT("首次限定三料各1个，品质正常随机；合成后关闭界面体验群攻"):TEXT("材料种类决定组合，总量影响品质；生成结果后扣除材料")):Reason,270,565,12,Gold);
+            if(DragMaterial>=0) {float MX,MY;GetOwningPlayerController()->GetMousePosition(MX,MY);Text(MaterialNames[DragMaterial],MX/S+15,MY/S,16,Gold);}
         } else if(P==TEXT("codex")) {
-            for(int i=1;i<10;i++) {
-                const float X=265+((i-1)%3)*250,Y=200+((i-1)/3)*76;
-                bool Known=World->Progress->Recipes.Contains(i);
-                Text(Known?SkillNames[i]:TEXT("未发现的配方"),X,Y,15,Known?Gold:Muted);
-                if(Known) {
-                    FString Cost; for(int m=0;m<6;m++) if(Recipes[i][m]) Cost+=FString::Printf(TEXT("%s×%d "),MaterialNames[m],Recipes[i][m]);
-                    Text(Cost,X,Y+23,10); Button(FString::Printf(TEXT("recipe%d"),i),TEXT("填入素材"),X,Y+42,150,World->bCombat);
-                } else Text(i<=6?TEXT("尝试组合三类普通素材。 "):TEXT("需要精英怪专属材料。"),X,Y+26,12,Teal);
+            Button(TEXT("codexprev"),TEXT("上一页"),270,178,130);Button(TEXT("codexnext"),TEXT("下一页"),870,178,130);
+            Text(FString::Printf(TEXT("%d/4  组合 / 技能 / 连锁 / 精英"),World->CodexPage+1),430,185,14,Muted);
+            if(World->CodexPage==0) for(int C=0;C<7;C++) {
+                bool Known=World->Progress->Combinations.Contains(C);
+                Text(Known?CombinationNames[C]:TEXT("未发现的材料组合"),270,235+C*43,16,Known?Gold:Muted);
+                Text(Known?TEXT("三个品质结果；材料比例不改变组合"):TEXT("尝试不同普通材料种类"),500,238+C*43,12,Muted);
             }
-            for(int C=0;C<2;C++) {Text(ChainNames[C],270,470+C*48,16,Gold); Text(World->Progress->Chains.Contains(C)?ChainDetails[C]:ChainHints[C],430,473+C*48,13);}
+            if(World->CodexPage==1) for(int C=0;C<7;C++) for(int Q=0;Q<3;Q++) {
+                int K=CombinationSkills[C][Q];bool Known=World->Progress->Recipes.Contains(K);
+                Text(Known?FString::Printf(TEXT("%s  %s"),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),SkillNames[K]):TEXT("未发现的技能"),270+Q*250,235+C*43,14,Known?Gold:Muted);
+            }
+            if(World->CodexPage==2) for(int C=0;C<10;C++) {
+                const auto& K=Chains[C];bool Known=World->Progress->ChainsV2.Contains(C);
+                int X=270+(C%2)*380,Y=235+(C/2)*62;
+                Text(K.Name,X,Y,15,Gold);
+                Text(Known?FString::Printf(TEXT("%s + %s / %.0fs"),SkillNames[K.A],SkillNames[K.B],K.CD):TEXT("同时装备互补技能，触发后揭示条件"),X,Y+25,11,Known?Teal:Muted);
+                if(Known) Text(FString::Printf(TEXT("伤害%.0f  %s%.1f  减速%.0f%%/%.1fs"),K.Damage,K.Targets?TEXT("目标数"):TEXT("半径"),K.Targets?float(K.Targets):K.Radius/100,(1-K.Factor)*100,K.Slow),X,Y+43,10,Muted);
+            }
+            if(World->CodexPage==3) for(int K=7;K<=9;K++) {
+                bool Known=World->Progress->Recipes.Contains(K);int Y=240+(K-7)*95;
+                Text(Known?SkillNames[K]:TEXT("未发现的精英配方"),270,Y,16,Known?Gold:Muted);
+                if(Known) {FString Cost;for(int M=0;M<6;M++) if(Recipes[K][M]) Cost+=FString::Printf(TEXT("%s×%d "),MaterialNames[M],Recipes[K][M]);Text(Cost,270,Y+25,12);Button(FString::Printf(TEXT("recipe%d"),K),TEXT("填入素材"),780,Y,220,World->bCombat && !World->TutorialActive());}
+            }
         } else if(P==TEXT("skills")) {
             Text(TEXT("选中储备技能，再选装备位交换；原技能放回储备。"),260,185,14,Muted);
             for(int i=0;i<6;i++) {
@@ -858,5 +1111,5 @@ void AAlchemyHUD::DrawHUD() {
             else {Button(TEXT("talents"),TEXT("永久成长"),640,230,300); Button(TEXT("level"),TEXT("关卡选择"),640,285,300);}
         }
     }
-    if(World->ToastTime>0) {Box(250,550,780,36,FLinearColor(0.03f,0.07f,0.075f,0.95f));Text(World->Toast,270,559,14,Gold);}
+    if(World->ToastTime>0) {Box(250,610,780,36,FLinearColor(0.03f,0.07f,0.075f,0.95f));Text(World->Toast,270,619,14,Gold);}
 }

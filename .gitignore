@@ -13,6 +13,7 @@
 # Local run state inside the distributable; keep the executable and its dependencies
 03_Build/**/Saved/
 # Machine credentials and editor-local environment files
+.qq-workspaces/
 .env
 .env.*
 !.env.example

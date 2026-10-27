@@ -18,6 +18,10 @@ public:
     UPROPERTY() TArray<int32> Talents={0,0,0,0};
     UPROPERTY() TArray<int32> Recipes;
     UPROPERTY() TArray<int32> Chains;
+    UPROPERTY() int32 SchemaVersion=0;
+    UPROPERTY() bool TutorialComplete=false;
+    UPROPERTY() TArray<int32> Combinations;
+    UPROPERTY() TArray<int32> ChainsV2;
 };
 
 struct FAlchemyEnemy {
@@ -30,6 +34,7 @@ struct FAlchemyEnemy {
     bool Phase2=false;
     TArray<FVector> Path;
     float RepathCD=0;
+    float SlowFactor=0.65f;
 };
 struct FAlchemyShot {
     AStaticMeshActor* Body=nullptr;
@@ -65,7 +70,15 @@ public:
     float ToastTime=0, RunTime=0, HP=120, MaxHP=120, DodgeCD=0, DodgeTime=0, HurtInv=0, DodgeInv=0;
     int32 Kills=0, RunCoins=0, CraftCount=0, ChainCount=0, ResultCoins=0, PendingTalent=-1, SelectedBag=-1;
     TArray<int32> Inventory={0,0,0,0,0,0}, Selected={0,0,0,0,0,0};
-    TArray<int32> Levels={1,0,0,0,0,0,0,0,0,0}, Equipped={0}, Bag;
+    TArray<int32> Levels, Equipped={0}, Bag;
+    bool bTutorialSupplyDone=false;
+    int32 TutorialSkill=-1, CodexPage=0;
+    bool TutorialActive() const;
+    void MigrateProgress(bool HasPlayed);
+    void TutorialSupply(FVector Position);
+    void TutorialHit(int32 Skill,int32 Hits);
+    void AddMaterial(int32 Index);
+    bool CraftOptions(TArray<int32>& Skills,TArray<float>& Weights,FString& Reason,int32& Combination) const;
     FVector PlayerPos=FVector::ZeroVector;
     FVector LastDirection=FVector(0,1,0), DodgeDirection=FVector(0,1,0);
     TArray<FAlchemyEnemy> Enemies;
@@ -80,7 +93,7 @@ public:
     AStaticMeshActor* Player=nullptr;
     AStaticMeshActor* PlayerShadow=nullptr;
     UPROPERTY() TArray<TObjectPtr<AActor>> Scene;
-    float SpawnCD=2.6f, NextElite=90, SkillCD[10]={}, ChainCD[2]={12,10}, ContactCD=0, VisualTime=0;
+    float SpawnCD=2.6f, NextElite=90, SkillCD[25]={}, ChainCD[10]={}, ContactCD=0, VisualTime=0;
     int32 EliteIndex=0, SmokeStep=0, CaptureStep=0;
     float SmokeTime=0;
     FRandomStream Random{77};
@@ -112,11 +125,12 @@ public:
     int32 Nearest(FVector Pos,float Range,const TArray<int32>& Exclude={}) const;
     void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000);
     void DamageEnemy(int32 Index,float Damage);
-    void Area(FVector Pos,float Radius,float Damage,FLinearColor Color,float Slow=0);
+    int32 Area(FVector Pos,float Radius,float Damage,FLinearColor Color,float Slow=0,float SlowFactor=0.65f);
     void Hurt(float Damage);
     void Drop(FVector Pos,int32 Kind,int32 Count=1);
     void CastSkills(float Delta);
     void SmokeCheck(float Delta);
+    void AlchemyCheck();
 };
 
 UCLASS()
@@ -125,6 +139,7 @@ class AAlchemyHUD : public AHUD {
 public:
     virtual void DrawHUD() override;
     virtual void NotifyHitBoxClick(FName BoxName) override;
+    int32 DragMaterial=-1;
     AAlchemyWorld* World=nullptr;
     float S=1;
     void Text(const FString& Value,float X,float Y,float Size=16,FLinearColor Color=FLinearColor::White);

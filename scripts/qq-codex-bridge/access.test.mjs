@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { permitted, bindGroup, messageText } from './access.mjs';
+
+const group = { groupOpenid: 'selected-group', senderId: 'group-owner' };
+const mention = { ...group, kind: 'group', rawEventType: 'GROUP_AT_MESSAGE_CREATE', content: '<@!123> hello' };
+const ticket = { code: 'one-time-code', expiresAt: 2000 };
+const binding = { ...mention, content: '<@!123> /bind-group one-time-code' };
+
+assert.equal(messageText(mention), 'hello');
+assert.equal(messageText({ kind: 'c2c', content: '<@123> keep this' }), '<@123> keep this');
+assert.equal(permitted('private-owner', '', { kind: 'c2c', senderId: 'private-owner' }, group), true);
+assert.equal(permitted('private-owner', '', { kind: 'c2c', senderId: 'outsider' }, group), false);
+assert.equal(permitted(null, 'code', { kind: 'c2c', content: '/bind code' }), true);
+assert.equal(permitted('private-owner', '', mention, group), true);
+assert.equal(permitted('private-owner', '', { ...mention, senderId: 'other-member' }, group), false);
+assert.equal(permitted('private-owner', '', { ...mention, senderId: 'other-member' }, { ...group, allowMembers: true }), true);
+assert.equal(permitted('private-owner', '', { ...mention, senderIsBot: true }, { ...group, allowMembers: true }), false);
+assert.equal(permitted('private-owner', '', { ...mention, groupOpenid: 'other-group' }, { ...group, allowMembers: true }), false);
+assert.equal(permitted('private-owner', '', { ...mention, rawEventType: 'GROUP_MESSAGE_CREATE' }, { ...group, allowMembers: true }), false);
+assert.equal(permitted('private-owner', '', { ...mention, groupOpenid: 'other-group' }, group), false);
+assert.equal(permitted('private-owner', '', { ...mention, rawEventType: 'GROUP_MESSAGE_CREATE' }, group), false);
+assert.equal(permitted('private-owner', '', mention), false);
+assert.equal(permitted(null, '', mention, group), false);
+assert.equal(bindGroup(ticket, { ...binding, content: '/bind-group wrong' }, 1000), null);
+assert.equal(bindGroup(ticket, binding, 2000), null);
+assert.equal(bindGroup(null, binding, 1000), null);
+assert.equal(bindGroup(ticket, { ...binding, kind: 'c2c' }, 1000), null);
+assert.equal(bindGroup(ticket, { ...binding, senderId: '' }, 1000), null);
+assert.equal(bindGroup(ticket, { ...binding, rawEventType: 'GROUP_MESSAGE_CREATE' }, 1000), null);
+assert.deepEqual(bindGroup(ticket, binding, 1000), group);
+console.log('PASS: private owner, selected group/member/mention, binding code, expiry, missing identity, and mention normalization.');
