@@ -96,7 +96,7 @@ try {
         Write-Host 'Privately send this one-time command to your QQ Bot:'
         Get-Content -LiteralPath $pairingPath
     }
-    Write-Host 'Then send /status in QQ. Expected thread: 01a17c3d-1111-7490-97b7-4dfffba95f23; desktop connections must be at least 1.'
+    Write-Host "Then send /status in QQ. Expected thread: $($ready.threadId); desktop connections must be at least 1."
     Write-Host 'Finish verification by sending: Reply with QQ connection successful.'
 } finally {
     $env:QQ_BOT_SECRET = $previousSecret

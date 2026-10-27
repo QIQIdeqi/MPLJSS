@@ -26,3 +26,7 @@
 01_Skill/sources/
 # Unreal rotates these diagnostic duplicates; retain the current evidence logs
 02_Prototype/AlchemyHD2D/Evidence/*-backup-*
+
+# Local recoverable build archives and private save backups
+04_Archive/
+memory/archives/2026-10-27-old-build-saves/

@@ -1,5 +1,17 @@
 # 验证记录
 
+## PC字体与HUD更新（2026-10-27）
+
+- 依据game-ui-ux调整。直接从UE本机Font.cpp核对动态UFont默认LegacyFontSize=9，HUD.cpp确认旧DrawText路径会缩放旧字形。新Canvas文本使用FSlateFontInfo显式字号，增加100%/115%/130%切换、持久化、中文自动换行、对比度、较大按钮、图鉴分页及PC键盘焦点。绘制移至AlchemyHUD.inl，与战斗配置保持同一编译单元。
+- 编辑器1280×720、1920×1080、2560×1080各11帧原生渲染，日志均有ALCHEMY_PC_UI_CAPTURE_PASS，无PC_UI_OVERFLOW或PC_UI_BUTTON_OVERFLOW。帧与日志见Evidence/PC_UI及pc-ui-{1280,1920,2560}.log；覆盖默认及130%字号的主要界面，不代表每种字号每个界面组合都已穷举。
+- Computer Use真实窗口验证100→115→130字号变化；130%下拖拽火粉、↓聚焦露水并Enter投入、点击魔法碎片与确认炼金，实际完成0→1→2→3投料和随机合成。隔离-AlchemyUI不读写玩家存档，测试进程正常退出。
+- 最终Editor/Game编译及UAT Build/Cook/Stage/Archive成功，退出0，完整新包在03_Build/HD2D_PC_UI。保留旧目录，两个旧启动入口与LaunchDemo.ps1均指向新版。旧ALCH002包已有主存档在目标不存在时复制到新包本地Saved/SaveGames，复制前后SHA256一致，源文件保留；运行存档受Git忽略规则保护。
+- 最终独立EXE的Tools/Smoke.ps1 -Packaged退出0；12组ALCH002_CHECK、ALCH002_TEST_PASS及ALCHEMY_SMOKE_PASS通过。存档回读检查包含UITextScale=1.3。最终EXE另用真实RHI运行1080p全11帧界面检查，退出0并有ALCHEMY_PC_UI_CAPTURE_PASS，无文本/按钮超宽标记。
+- 最终SHA256 A6E4D4D10061B31A92DD4AEF5A4E8A92D8AA4D305DA46DAF8CFB625136E2BB96，与编译产物一致。摘要Evidence/pc-ui-final-verification.json；打包日志pc-ui-package.log；独立界面日志pc-ui-packaged-render.log。独立包截图已查看，选取炼金130%保存为Evidence/PC_UI/Packaged_1920x1080_Alchemy130.png。
+- 记录修复：截图辅助代码int参数调用Sin/Cos产生重载歧义，显式转float后编译通过；独立渲染后的PowerShell验收曾写错Select-String位置参数，修正为具名LiteralPath/Pattern后核对真实成功日志，没有为此重复运行渲染。通知改为完整顶栏覆盖，避免只遮一部分标题。
+
+边界：未进行4K、多显示器DPI切换、200%文字缩放、真实手柄或正常五分钟可用性研究。保留Canvas原型架构，没有宣称完成UMG/事件驱动HUD重构。具体设计说明见Docs/PC_UI.md。
+
 ## ALCH-002原型实施（2026-10-27）
 
 本轮实际引擎为UE5.8.4，Build.version与进程日志均为CL58902052；下文5.8.2记录为历史环境。
@@ -77,3 +89,28 @@ UE的FScreenshotRequest直接输出1280×720游戏帧；不是概念效果图。
 最终EXE校验记录见 `Evidence/alch002-packaged-exe-hash.json`；界面证据见 `Evidence/ALCH002_Alchemy.png`。构建、打包与界面检查过程见本日工作区 memory。旧 `HD2D_v0_1` 含本轮中间归档，最终验证以新目录为准。
 
 这些检查不代表平衡通过；尚未完成正常五分钟人工试玩、40–60秒首次教学达成率、满场性能及真实用户旧档的破坏性迁移测试。原型候选数值和老玩家识别边界见规则补充与工程README。
+
+## Router：字号、受击反馈和Niagara（2026-10-27，当前候选）
+
+当前入口仍为03_Build/HD2D_PC_UI/启动Demo.cmd。本轮重新Build/Cook/Stage/Archive成功，UAT退出0，详见Evidence/feedback-package.log。字号标准100%不变，中档103.5%、大档117%，相对旧中/大档均减少10%；实现及边界见Docs/CombatFeedback.md。
+
+- 最终独立包15组ALCH002_CHECK全部PASS，包含单体/范围实际伤害飘字、面板暂停及到期清理、烘焙Niagara资产与字号循环；ALCH002_TEST_PASS和ALCHEMY_SMOKE_PASS均存在。日志Evidence/packaged-layout-smoke.log。
+- 独立包真实RHI在1920×1080隔离反馈场景退出0，ALCHEMY_FEEDBACK_CAPTURE_PASS；真实粒子峰值1470、累计12组件，结束组件与数字均0。暂停时Niagara总Age保持1.650不变。日志Evidence/feedback-packaged-render.log，结果Evidence/Feedback/packaged-result.txt。
+- 已直接查看独立包冰蓝爆发、伤害数字和血条截图Evidence/Feedback/Packaged_Frost_Arcane.png；编辑器命中/爆发截图也已检查。隔离捕获按固定位置和伤害构造场景，不等于正常五分钟玩法自然发生的画面，不读写真实进度。
+- 最终EXE SHA256：74753B24BE71C56E64A749DD5875864A683FBF5EF64EF78A8D149B4C9C32B389。打包前后本地玩家主存档SHA256一致。汇总Evidence/feedback-final-verification.json。
+- 此轮UI旧三分辨率检查为上一版字号的历史证据；本轮主要对更小的字号循环与1080p战斗反馈做检查，未声称重新人工检查全部33帧。未完成正常五分钟试玩、数百敌人性能测试或每个技能独立特效的正式美术验收。
+
+## 分层字体调试与便携包（当前候选）
+
+F7或面板右上入口打开字体调试。小号固定100%，中号/大号默认85%/80%，可±1%/±5%，范围50%–120%，立即保存。分层逻辑共用于测量、绘制、换行和按钮文字居中，点击区域不变。详见PC_UI.md。
+
+- 最终Win64包Build/Cook/Stage/Archive成功；15组ALCH002_CHECK和ALCH002_TEST_PASS、ALCHEMY_SMOKE_PASS通过。覆盖分组步进、小号不变、上下限、面板入口及保存序列化。初次失败来自浮点比较过严，Game实际0.799999952/0.789999962，与显示80/79一致；使用0.0001容差后通过，保留首轮日志。
+- 完整ZIP解压到Evidence下另一条含空格路径，直接用解压出的启动Demo.cmd（937字节，含参数转发和缺文件诊断）启动；原生1280×720全11帧完成，ALCHEMY_PC_UI_CAPTURE_PASS，无文字/按钮越界标记。已直接查看字体调试帧，样例中号75%、大号70%（测试值），小号不变。证据FontDebug_Packaged_720.png、FontDebug_PC_UI/及font-debug-portable-render.log。
+- Tools/LaunchDemo.cmd为启动脚本源，Build.ps1和ExportDemo.ps1均复制它；运行用相对路径Windows bootstrap，无需本机UE。ZIP不含Saved/Evidence/PDB，完整解压后运行；只转发CMD/EXE或LFS指针不构成完整运行包。未声称在朋友机器上测试。
+- ZIP：03_Build/HD2D_PC_UI/冒牌炼金术士_Demo_Win64_字体调试.zip。EXE/ZIP最终SHA256和大小见Evidence/font-debug-final-verification.json。玩家现有主存档哈希不变。
+- 自动审批拒绝递归删除（未返回具体理由），因此改为可恢复归档：旧两个包移至04_Archive/旧版运行包_2026-10-27；过期ZIP和完整解压测试副本也归档到04_Archive，未永久删除。03_Build只剩HD2D_PC_UI。旧存档另有workspace memory/archives备份，归档/私人存档不纳入Git。
+
+本轮没有重新做完整五分钟试玩、满场性能或朋友机器的驱动/运行库兼容性验收。当前字体百分比是可调整起点，最终舒适度由用户试玩确定。
+
+## 用户确认中号90%、大号72%（2026-10-28，当前）
+默认值、恢复推荐值、保存回读检查与说明文档统一90/72，小号不变。UAT Build/Cook/Stage/Archive成功，最终独立包15组ALCH002检查及ALCHEMY_SMOKE_PASS通过；1280×720共11帧PC UI真实RHI检查PASS，无越界标记，直接查看Evidence/Font_90_72.png确认90%/72%及恢复按钮标签。现有存档个人设置保留，可按F7恢复推荐值应用新预设。完整包为03_Build/HD2D_PC_UI/冒牌炼金术士_Demo_Win64_字体90_72.zip；旧85/80 ZIP移至本地04_Archive，03_Build内只保留当前ZIP。哈希见Evidence/font-9072-verification.json。

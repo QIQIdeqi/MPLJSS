@@ -9,13 +9,18 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import WebSocket, { WebSocketServer } from 'ws';
 import { QQBot } from '@tencent-connect/qqbot-nodejs';
-import { same, permitted, messageText, groupMention, bindGroup } from './access.mjs';
+import { same, permitted, messageText, groupMention, groupMessage, bindGroup } from './access.mjs';
 import { memberKey, Sessions, ProjectLock, completedLockedTurn } from './sessions.mjs';
+import { Results, resultPage } from './results.mjs';
+import { GroupContext } from './group-context.mjs';
+import { imageRoots, replyImages, sendImages, testImage } from './images.mjs';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const runtime = path.join(directory, '.runtime');
 const threadId = '01a17d13-31ba-7eb2-9587-05e4f55ec7df';
 const workspace = path.resolve(directory, '../..');
+// Owner chose mention-only mode. Keep passive discussion intake disabled.
+const useGroupContext = false;
 let desktopConnections = 0;
 mkdirSync(runtime, { recursive: true });
 const log = (event, details = {}) => {
@@ -178,6 +183,9 @@ async function runBot(rpc) {
   const seen = new Set();
   const pending = new Map();
   const sessions = new Sessions(rpc, runtime, workspace, threadId);
+  const results = new Results(path.join(runtime, 'results.json'));
+  const context = new GroupContext(path.join(runtime, 'group-context.json'));
+  let fullGroupMessageObserved = false;
   const project = new ProjectLock(path.join(runtime, 'project-lock.json'));
   if (project.current) {
     if (project.current.phase === 'reserved') project.clear();
@@ -187,10 +195,16 @@ async function runBot(rpc) {
     }
   }
   log('member_routing_ready', { groupEnabled: !!group, projectLocked: !!project.current });
-  const reply = (target, text) => {
+  const reply = async (target, text) => {
+    const images = replyImages(text, imageRoots(workspace, target.memberKey || 'owner', target.threadId));
+    text = images.text;
     if (target.memberLabel) text = `【${target.memberLabel}】\n${text}`;
     const points = Array.from(text);
-    return bot.sendText(target, points.length <= 3800 ? text : points.slice(0, 3700).join('') + '\n完整回答请在当前桌面聊天查看。');
+    await bot.sendText(target, points.length <= 3800 ? text : points.slice(0, 3700).join('') + '\n完整回答可发送 /result 分页查询。');
+    if (images.files.length) {
+      await sendImages(bot, target, images.files, target.memberLabel ? `【${target.memberLabel}】` : undefined);
+      log('qq_images_delivered', { count: images.files.length, threadId: target.threadId ?? null });
+    }
   };
   rpc.on('notification', message => {
     const p = message.params;
@@ -198,12 +212,14 @@ async function runBot(rpc) {
     if (!item) return;
     if (message.method === 'turn/started' && !item.turnId) {
       item.turnId = p.turn.id;
+      results.started(item.key, p.threadId, item.turnId);
       project.started(p.threadId, item.turnId);
     }
     if (message.method === 'item/completed' && p.turnId === item.turnId && p.item?.type === 'agentMessage') {
       if (p.item.phase !== 'commentary') item.text = p.item.text;
     }
     if (message.method === 'turn/completed' && p.turn?.id === item.turnId) {
+      results.completed(item.key, p.threadId, p.turn, item.text);
       pending.delete(p.threadId);
       project.complete(p.threadId, p.turn.id);
       clearTimeout(item.timer);
@@ -239,6 +255,12 @@ async function runBot(rpc) {
   rpc.once('disconnected', () => clearInterval(reconcileTimer));
   bot.on('message', async (_context, message) => {
     if (seen.has(message.messageId)) return;
+    if (useGroupContext && !fullGroupMessageObserved && group && message.groupOpenid === group.groupOpenid
+        && groupMessage(message) && !groupMention(message)) {
+      fullGroupMessageObserved = true;
+      log('group_background_observed');
+    }
+    if (useGroupContext) context.record(message, group);
     const text = messageText(message);
     if (owner && groupMention(message) && text.startsWith('/bind-group ')) {
       const selected = bindGroup(groupTicket, message);
@@ -247,6 +269,8 @@ async function runBot(rpc) {
       groupTicket = null;
       writeFileSync(groupFile, JSON.stringify(selected), { mode: 0o600 });
       group = selected;
+      context.clear();
+      fullGroupMessageObserved = false;
       seen.add(message.messageId);
       await reply(message.replyTarget, '本群已绑定。群成员可 @ 使用，各人有独立对话；项目任务会依次执行，文件占用时提示稍等。你的原聊天保留。请 @ 我发送 /status 验证。');
       log('group_bound', { threadId });
@@ -272,6 +296,8 @@ async function runBot(rpc) {
     if (message.kind === 'c2c' && text === '/group-unbind') {
       writeFileSync(groupFile, 'null');
       group = null;
+      context.clear();
+      fullGroupMessageObserved = false;
       groupTicket = null;
       await reply(message.replyTarget, '已关闭群聊接入，原来的私聊连接保留。');
       log('group_unbound');
@@ -279,14 +305,32 @@ async function runBot(rpc) {
     }
     if (!text) return;
     const key = memberKey(message, group);
-    const target = message.kind === 'group'
-      ? { ...message.replyTarget, memberLabel: key === 'owner' ? '原会话' : `成员会话 ${key.slice(0, 8)}` }
-      : message.replyTarget;
+    const target = { ...message.replyTarget, memberKey: key, threadId: sessions.lookup(key),
+      ...(message.kind === 'group' ? { memberLabel: key === 'owner' ? '原会话' : `成员会话 ${key.slice(0, 8)}` } : {}) };
     await reconcileProject();
+    if (text === '/image-test') {
+      try { await reply(target, `炼金小屋测试图\n![炼金小屋](<${path.join(workspace, testImage)}>)`); }
+      catch (error) {
+        const code = typeof error.bizCode === 'number' ? error.bizCode : typeof error.code === 'number' ? error.code : 'network_or_permission';
+        await bot.sendText(target, `图片未确认发送成功（错误码：${code}），请让管理员核查；不要把文字提示当成发图成功。`);
+        log('qq_image_failed', { code });
+      }
+      return;
+    }
+    if (/^\/result(?:\s|$)/.test(text) || ['查询结果', '查询最终结果'].includes(text)) {
+      const match = /^(?:\/result(?:\s+(\d+))?|查询结果|查询最终结果)$/.exec(text);
+      if (!match) { await reply(target, '请发送 /result，或 /result 2 查询指定页。'); return; }
+      try {
+        const record = await results.query(rpc, key, sessions.lookup(key));
+        await reply(target, resultPage(record, match[1] ? Number(match[1]) : 1));
+        log('result_reply_delivered', { threadId: sessions.lookup(key) ?? null });
+      } catch { await reply(target, '暂时无法读取你的任务结果，请稍后重试 /result。'); }
+      return;
+    }
     if (text === '/status') {
       const id = sessions.lookup(key);
       const result = id ? await rpc.request('thread/read', { threadId: id }) : null;
-      await reply(target, `你的聊天：${id || '尚未创建，首次提问时自动创建'}\n状态：${result?.thread.status.type || '未开始'}\n桌面连接数：${desktopConnections}\n项目：${project.current ? '文件正在使用，请稍等' : '空闲'}\n群接入：${group ? '指定群全员 @，各人独立对话' : '未绑定'}`);
+      await reply(target, `你的聊天：${id || '尚未创建，首次提问时自动创建'}\n状态：${result?.thread.status.type || '未开始'}\n桌面连接数：${desktopConnections}\n项目：${project.current ? '文件正在使用，请稍等' : '空闲'}\n群接入：${group ? '指定群全员 @，各人独立对话' : '未绑定'}\n群讨论背景：${useGroupContext ? (fullGroupMessageObserved ? '已收到普通群消息' : '等待普通群消息，需腾讯侧权限') : '关闭；仅处理 @ 消息'}`);
       log('status_reply_delivered', { threadId: id ?? null, scope: message.kind });
       return;
     }
@@ -318,12 +362,15 @@ async function runBot(rpc) {
         }
       }
       id = await sessions.resume(key);
-      const item = { target, text: '', turnId: null, expired: false };
+      target.threadId = id;
+      const item = { key, target, text: '', turnId: null, expired: false };
       pending.set(id, item);
       project.beforeStart(id);
       const { turn } = await rpc.request('turn/start', { threadId: id,
-        input: [{ type: 'text', text, text_elements: [] }], ...sessions.options(key) });
+        input: [{ type: 'text', text: (useGroupContext && message.kind === 'group' ? context.prompt(group, message.messageId) : '') + text
+          + '\n\n[QQ传输提示：若本次有需要发回QQ的图片，请在最终回答写入 ![图片](<本地绝对路径>)。只引用本次真实生成或用户指定的图片，优先保存到共享项目内容目录或自己的工作目录。]', text_elements: [] }], ...sessions.options(key) });
       sessions.markStarted(key);
+      results.started(key, id, turn.id);
       if (pending.get(id) !== item) return;
       item.turnId = turn.id;
       project.started(id, turn.id);
@@ -331,7 +378,7 @@ async function runBot(rpc) {
         // A QQ reply deadline is not proof that file writes finished. Keep the project locked.
         item.expired = true;
         log('qq_reply_window_elapsed', { turnId: turn.id });
-        reply(target, '任务仍在运行，项目文件继续保持占用。请用 /status 查看状态，不要重复提交修改。').catch(() => log('qq_reply_failed'));
+        reply(target, '任务仍在运行，项目文件继续保持占用。可用 /status 查看状态，完成后发送 /result 查询最终结果；不要重复提交修改。').catch(() => log('qq_reply_failed'));
       }, 240000);
       log('qq_message_forwarded', { threadId: id, turnId: turn.id, scope: message.kind });
     } catch (error) {
@@ -385,7 +432,7 @@ async function main() {
     return;
   }
   writeFileSync(path.join(runtime, 'desktop-url.key'), `ws://codex:${shared.token}@127.0.0.1:${desktopPort}`, { mode: 0o600 });
-  writeFileSync(path.join(runtime, 'ready.json'), JSON.stringify({ pid: process.pid, backendPid: shared.child.pid, backendPort: shared.backendPort, desktopPort, threadId, routingVersion: 'members-project-lock-v1' }));
+  writeFileSync(path.join(runtime, 'ready.json'), JSON.stringify({ pid: process.pid, backendPid: shared.child.pid, backendPort: shared.backendPort, desktopPort, threadId, routingVersion: 'members-project-lock-v1', imageReplyVersion: 'local-images-v1' }));
   try { await runBot(rpc); }
   finally { rpc.socket.close(); proxy.close(); shared.child.kill(); }
 }

@@ -7,7 +7,7 @@ UE5.8 全2D片 HD2.5D 可玩原型与项目策划工作区。
 | `00_Doc` | 关卡、战斗、系统、数值策划案，修改意见与商业分析 |
 | `01_Skill` | 本项目使用的策划 Skill 与原始包 |
 | `02_Prototype/AlchemyHD2D` | UE5.8.4 工程、源码、原生资源、原创占位图、工具与验证证据 |
-| `03_Build/HD2D_ALCH002` | 当前ALCH-002 Windows 可运行包；下载完整目录后双击 `启动Demo.cmd` |
+| `03_Build/HD2D_PC_UI` | 当前PC字体/HUD及ALCH-002 Windows可运行包；下载完整目录后双击 `启动Demo.cmd` |
 | `memory` | 项目决策、操作、验证与未完成事项记录 |
 | `logs` / `scripts` | 工作区日志与辅助脚本 |
 
@@ -24,4 +24,8 @@ cd MPLJSS
 git lfs pull
 ```
 
-仅下载网页上的单个LFS文件可能得到指针文本；运行当前Demo需要完整的 `03_Build/HD2D_ALCH002/Windows` 目录。UE缓存、编译中间产物及本机运行存档不纳入版本控制。
+仅下载网页上的单个LFS文件可能得到指针文本；运行当前Demo需要完整的 `03_Build/HD2D_PC_UI/Windows` 目录。UE缓存、编译中间产物及本机运行存档不纳入版本控制。
+
+运行包仅保留最新版HD2D_PC_UI。完整便携ZIP位于该目录内；先全部解压，再双击启动Demo.cmd，无需安装UE。字体调试按F7，小号固定，中号/大号独立调整。
+
+旧包已移至本地04_Archive，未永久删除：自动审批拒绝了递归删除操作。该归档不纳入Git。

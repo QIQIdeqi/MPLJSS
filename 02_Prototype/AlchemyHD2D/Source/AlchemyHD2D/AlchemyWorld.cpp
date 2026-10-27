@@ -1,4 +1,4 @@
-﻿#include "AlchemyWorld.h"
+#include "AlchemyWorld.h"
 #include "Modules/ModuleManager.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/StaticMesh.h"
@@ -25,6 +25,18 @@
 #include "HAL/PlatformFileManager.h"
 #include "Fonts/CompositeFont.h"
 #include "UnrealClient.h"
+#include "CanvasItem.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Fonts/FontMeasure.h"
+#include "Rendering/SlateRenderer.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystemInstanceController.h"
+#include "NiagaraSystemInstance.h"
+#include "NiagaraEmitterInstance.h"
+#include "NiagaraDataSetAccessor.h"
+#include "AlchemyVFXBuilder.inl"
 
 IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, AlchemyHD2D, "AlchemyHD2D");
 
@@ -85,8 +97,13 @@ AAlchemyWorld::AAlchemyWorld() { PrimaryActorTick.bCanEverTick=true; }
 
 void AAlchemyWorld::BeginPlay() {
     Super::BeginPlay();
+#if WITH_EDITOR
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyBuildVFX"))) {
+        bool OK=AlchemyVFXBuilder::Build();FPlatformMisc::RequestExitWithStatus(false,OK?0:1);return;
+    }
+#endif
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
-    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI"));
+    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture"));
     Progress=(bSmoke || bCapture)?nullptr:Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_v1"),0));
     const bool HadSave=Progress!=nullptr;
     if(!Progress && !bSmoke && !bCapture) Progress=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_backup"),0));
@@ -96,6 +113,11 @@ void AAlchemyWorld::BeginPlay() {
     }
     if (!Progress) Progress=NewObject<UAlchemyProgress>(this);
     if (Progress->Talents.Num()!=4) Progress->Talents={0,0,0,0};
+    if(FMath::IsNearlyEqual(Progress->UITextScale,1.15f,.001f)) Progress->UITextScale=1.035f;
+    else if(FMath::IsNearlyEqual(Progress->UITextScale,1.3f,.001f)) Progress->UITextScale=1.17f;
+    Progress->UITextScale=1; // Retained only to read older saves; use independent font groups now.
+    Progress->MediumTextScale=FMath::Clamp(Progress->MediumTextScale,.5f,1.2f);
+    Progress->LargeTextScale=FMath::Clamp(Progress->LargeTextScale,.5f,1.2f);
     if(Progress->SchemaVersion<2) {
         const bool Played=Progress->Coins>0 || !Progress->Recipes.IsEmpty() || !Progress->Chains.IsEmpty() || Progress->Talents.ContainsByPredicate([](int32 L){return L>0;});
         // Back up the old object before adding new semantic records; isolated QA never writes player saves.
@@ -106,6 +128,10 @@ void AAlchemyWorld::BeginPlay() {
         MigrateProgress(Played);
     }
     Levels.Init(0,UE_ARRAY_COUNT(Skills));Levels[0]=1;
+    ImpactFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyImpact.NS_AlchemyImpact"));
+    BlastFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyBlast.NS_AlchemyBlast"));
+    TrailFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyTrail.NS_AlchemyTrail"));
+    ParticleMaterial=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/VFX/M_AlchemyParticle.M_AlchemyParticle"));
     UIFont=NewObject<UFont>(this); UIFont->FontCacheType=EFontCacheType::Runtime;
     FTypefaceEntry Face; Face.Name=FName("Regular");
     Face.Font=FFontData(FPaths::EngineContentDir()/TEXT("Slate/Fonts/DroidSansFallback.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
@@ -173,6 +199,8 @@ void AAlchemyWorld::House(FVector P,FLinearColor Roof) {
 }
 
 void AAlchemyWorld::BuildScene(bool Combat) {
+    for(auto& FX:NiagaraFX) if(IsValid(FX.Component)) FX.Component->DestroyComponent();
+    NiagaraFX.Empty();DamageNumbers.Empty();
     for(auto A:Scene) if(IsValid(A)) A->Destroy();
     Scene.Empty(); Obstacles.Empty(); Enemies.Empty(); Shots.Empty(); Drops.Empty(); Effects.Empty();
     bCombat=Combat; bRunEnded=false; PlayerPos=Combat?FVector::ZeroVector:FVector(0,-200,0); Panel.Empty();
@@ -341,6 +369,10 @@ void AAlchemyWorld::UpdateCamera(float Delta) {
     Camera->SetActorLocation(Target-Camera->GetActorForwardVector()*Distance);
 }
 void AAlchemyWorld::Ring(FVector P,float Radius,FLinearColor Color,float Duration) {
+    // Enemy windup colors stay as readable ground telegraphs, independent of decorative Niagara.
+    if(bCombat && Duration<1 && !(Color.R>.35f && Color.G<.2f) && BlastFX && !bSmoke) {
+        SpawnVFX(Radius>100?BlastFX:ImpactFX,P+FVector(0,0,35),Color,FMath::Clamp(Radius/180,.25f,1.6f),1.25f);return;
+    }
     auto A=Mesh(TEXT("Cylinder"),P+FVector(0,0,4),FVector(Radius/50,Radius/50,0.015f),Color);
     A->GetStaticMeshComponent()->SetCastShadow(false); Effects.Add({A,Duration,Duration,Radius});
 }
@@ -501,13 +533,43 @@ int32 AAlchemyWorld::Nearest(FVector P,float Range,const TArray<int32>& Exclude)
 }
 void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile,float Speed) {
     FAlchemyShot S; S.Pos=From; S.Velocity=(Target-From).GetSafeNormal2D()*Speed; S.Damage=Damage; S.Hostile=Hostile;
+    S.Color=Color;
+    S.Trail=SpawnVFX(TrailFX,From+FVector(0,0,65),Color,.6f,1.1f);
     S.Body=Mesh(TEXT("Sphere"),From+FVector(0,0,65),FVector(0.22f),Color); Shots.Add(S);
 }
-void AAlchemyWorld::DamageEnemy(int Index,float Damage) { if(Enemies.IsValidIndex(Index)) Enemies[Index].HP-=Damage; }
+UNiagaraComponent* AAlchemyWorld::SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life) {
+    if(bSmoke || !System || !ParticleMaterial || NiagaraFX.Num()>=48) return nullptr;
+    auto* C=UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),System,Position,FRotator::ZeroRotator,FVector(Scale),false,false,ENCPoolMethod::None,false);
+    if(!C) return nullptr;
+    auto* MaterialInstance=UMaterialInstanceDynamic::Create(ParticleMaterial,C);MaterialInstance->SetVectorParameterValue(TEXT("Tint"),Color);
+    C->SetVariableMaterial(TEXT("User.FXMaterial"),MaterialInstance);C->AddTickPrerequisiteActor(this);C->Activate(true);
+    FAlchemyNiagaraFX FX;FX.Component=C;FX.Life=Life;NiagaraFX.Add(FX);VFXSpawnCount++;return C;
+}
+void AAlchemyWorld::UpdateFeedback(float Dt) {
+    const bool Paused=!Panel.IsEmpty();
+    for(auto& FX:NiagaraFX) if(IsValid(FX.Component)) {
+        FX.Component->SetPaused(Paused);
+        // SetPaused on the component ignores draining one-shots; pause their live instance as well.
+        auto Controller=FX.Component->GetSystemInstanceController();if(Controller.IsValid()) Controller->SetPaused(Paused);
+    }
+    if(Paused) return;
+    for(int I=NiagaraFX.Num()-1;I>=0;I--) {
+        auto& FX=NiagaraFX[I];FX.Life-=Dt;
+        if(FX.Life<=0 || !IsValid(FX.Component)) {if(IsValid(FX.Component)) FX.Component->DestroyComponent();NiagaraFX.RemoveAtSwap(I);}
+    }
+    for(int I=DamageNumbers.Num()-1;I>=0;I--) {DamageNumbers[I].Life-=Dt;if(DamageNumbers[I].Life<=0) DamageNumbers.RemoveAtSwap(I);}
+}
+void AAlchemyWorld::DamageEnemy(int Index,float Damage,FLinearColor Color) {
+    if(!Enemies.IsValidIndex(Index) || Damage<=0 || Enemies[Index].HP<=0) return;
+    auto& E=Enemies[Index];const float Actual=FMath::Min(E.HP,Damage);E.HP-=Actual;E.HitFlash=.1f;
+    if(DamageNumbers.Num()>=96) DamageNumbers.RemoveAt(0);
+    FAlchemyDamageNumber Number;Number.Position=E.Pos+FVector(0,0,(E.Type>=7?210:120));Number.Value=Actual;Number.Lane=DamageSerial++%3-1;DamageNumbers.Add(Number);
+    if(HitFXThisFrame++<6) SpawnVFX(ImpactFX,E.Pos+FVector(0,0,65),Color,E.Type>=7?.5f:.3f,.7f);
+}
 int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color,float Slow,float Factor) {
     Ring(P,Radius,Color);int Hits=0;
-    for(auto& E:Enemies) if(E.HP>0 && FVector::Dist2D(P,E.Pos)<=Radius) {
-        Hits++;E.HP-=Damage;
+    for(int I=0;I<Enemies.Num();I++) if(Enemies[I].HP>0 && FVector::Dist2D(P,Enemies[I].Pos)<=Radius) {
+        auto& E=Enemies[I];Hits++;DamageEnemy(I,Damage,Color);
         if(Slow>0) {if(E.Slow<=0) E.SlowFactor=Factor;else E.SlowFactor=FMath::Min(E.SlowFactor,Factor);E.Slow=FMath::Max(E.Slow,Slow);}
     }
     return Hits;
@@ -532,12 +594,13 @@ void AAlchemyWorld::CastSkills(float Dt) {
         SkillCD[S]=K.CD;
         float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]));
         int Hits=0;
-        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,S==1?FLinearColor(.95f,.3f,.08f):Teal);Shots.Last().Life=K.Range/1000;}
-        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,K.Radius,Damage,Teal,K.Slow,K.Factor);
+        const FLinearColor Color=(S==1||S==6||S==10||S==11||S==12||S==19||S==20)?FLinearColor(1,.25f,.035f):(S==2||S==13||S==14||S==15||S==21||S==22)?FLinearColor(.15f,.65f,1):(S==4||S==23||S==24)?FLinearColor(.3f,1,.2f):FLinearColor(.65f,.3f,1);
+        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color);Shots.Last().Life=K.Range/1000;}
+        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,K.Radius,Damage,Color,K.Slow,K.Factor);
         else {
             TArray<int32> Used;
             for(int J=0;J<K.Targets && N>=0;J++) {
-                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage);Hits++;Ring(E.Pos,45,Gold,.2f);
+                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,Color);Hits++;
                 if(K.Slow>0) {E.SlowFactor=E.Slow>0?FMath::Min(E.SlowFactor,K.Factor):K.Factor;E.Slow=FMath::Max(E.Slow,K.Slow);}
                 N=K.Cast==Bounce?Nearest(E.Pos,K.Range,Used):-1;
             }
@@ -553,7 +616,7 @@ void AAlchemyWorld::CastSkills(float Dt) {
         if(K.Targets>0) {
             TArray<int32> Used;
             for(int J=0;J<K.Targets && N>=0;J++) {
-                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage);Ring(E.Pos,45,Gold,.2f);
+                Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,Gold);
                 E.SlowFactor=E.Slow>0?FMath::Min(E.SlowFactor,K.Factor):K.Factor;E.Slow=FMath::Max(E.Slow,K.Slow);
                 N=Nearest(E.Pos,1000,Used);
             }
@@ -564,6 +627,19 @@ void AAlchemyWorld::CastSkills(float Dt) {
 }
 
 void AAlchemyWorld::Action(FString Id) {
+    if(Id==TEXT("textsize") || Id==TEXT("fonts")) {Panel=TEXT("fonts");return;}
+    if(Id.StartsWith(TEXT("fontm")) || Id.StartsWith(TEXT("fontl")) || Id==TEXT("fontreset")) {
+        const float OldM=Progress->MediumTextScale,OldL=Progress->LargeTextScale;
+        if(Id==TEXT("fontreset")) {Progress->MediumTextScale=.9f;Progress->LargeTextScale=.72f;}
+        else {
+            const float Steps[]={-.05f,-.01f,.01f,.05f};int I=FCString::Atoi(*Id.Right(1));
+            if(I<0 || I>3) return;
+            float& Value=Id.StartsWith(TEXT("fontm"))?Progress->MediumTextScale:Progress->LargeTextScale;
+            Value=FMath::Clamp(FMath::RoundToFloat((Value+Steps[I])*100)/100,.5f,1.2f);
+        }
+        if(!SaveProgress()) {Progress->MediumTextScale=OldM;Progress->LargeTextScale=OldL;Message(TEXT("字号保存失败，请重试。"));}
+        return;
+    }
     if(bRunEnded) {
         if(Panel==TEXT("savefailed")) {
             if(Id==TEXT("retry")) {bRunEnded=false; EndRun(bWon);} return;
@@ -623,6 +699,7 @@ void AAlchemyWorld::Action(FString Id) {
 
 void AAlchemyWorld::Tick(float Dt) {
     Super::Tick(Dt); Dt=FMath::Min(Dt,0.1f); VisualTime+=Dt; ToastTime-=Dt;
+    HitFXThisFrame=0;
     auto PC=GetWorld()->GetFirstPlayerController(); if(!PC || !Player) return;
     if(PC->WasInputKeyJustPressed(EKeys::F1)) Action(TEXT("ortho"));
     if(PC->WasInputKeyJustPressed(EKeys::F2)) Action(TEXT("lit"));
@@ -631,6 +708,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(PC->WasInputKeyJustPressed(EKeys::F5)) Action(TEXT("dof"));
     if(PC->WasInputKeyJustPressed(EKeys::LeftBracket)) ViewWidth=FMath::Max(1800.f,ViewWidth-200);
     if(PC->WasInputKeyJustPressed(EKeys::RightBracket)) ViewWidth=FMath::Min(3600.f,ViewWidth+200);
+    if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::F7)) Panel=Panel==TEXT("fonts")?TEXT(""):TEXT("fonts");
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::F6)) Panel=Panel==TEXT("research")?TEXT(""):TEXT("research");
     if(PC->WasInputKeyJustPressed(EKeys::Escape)) {
         if(bRunEnded) Action(Panel==TEXT("savefailed")?TEXT("retry"):TEXT("village"));
@@ -640,6 +718,34 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) Panel=Panel==TEXT("skills")?TEXT(""):TEXT("skills");
     if(bSmoke) SmokeCheck(Dt);
+    if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture"))) {CaptureFeedback(Dt);return;}
+    if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture"))) {
+        if(VisualTime>2+CaptureStep*1.2f) {
+            switch(CaptureStep) {
+                case 0: BuildScene(false);ToastTime=0;break;
+                case 1:
+                    StartRun();RunTime=47;Kills=18;RunCoins=12;Inventory={5,4,3,1,1,1};Equipped={0,4,6,1,3,2};for(int K:Equipped) Levels[K]=2;
+                    for(int I=0;I<Enemies.Num();I++) {Enemies[I].Pos=FVector(FMath::Cos(float(I))*650,FMath::Sin(float(I))*650,0);UpdateSprite(Enemies[I].Body,TEXT("Enemy0"),Enemies[I].Pos,100,100);}
+                    ToastTime=0;break;
+                case 2: Panel=TEXT("alchemy");Selected={1,1,1,0,0,0};break;
+                case 3: Progress->MediumTextScale=.9f;Progress->LargeTextScale=.72f;break;
+                case 4: Panel=TEXT("codex");CodexPage=1;for(int K=1;K<25;K++) Progress->Recipes.AddUnique(K);break;
+                case 5: CodexPage=2;for(int C=0;C<10;C++) Progress->ChainsV2.AddUnique(C);break;
+                case 6: Panel=TEXT("skills");Bag={10,11,12,13,14,15};SelectedBag=0;break;
+                case 7: Panel=TEXT("talents");break;
+                case 8: Panel=TEXT("fonts");break;
+                case 9: Panel=TEXT("pause");break;
+                case 10: Panel=TEXT("victory");ResultCoins=12;break;
+                default: UE_LOG(LogTemp,Display,TEXT("ALCHEMY_PC_UI_CAPTURE_PASS"));FPlatformMisc::RequestExit(false);return;
+            }
+            UpdateCamera(0);int X=0,Y=0;PC->GetViewportSize(X,Y);
+            FString Folder=FPaths::ProjectDir()/TEXT("Evidence/PC_UI");IFileManager::Get().MakeDirectory(*Folder,true);
+            FScreenshotRequest::RequestScreenshot(Folder/FString::Printf(TEXT("PC_%dx%d_%02d.png"),X,Y,CaptureStep),false,false);
+            UE_LOG(LogTemp,Display,TEXT("PC_UI_FRAME step=%d viewport=%dx%d scale=%.2f panel=%s"),CaptureStep,X,Y,Progress->UITextScale,*Panel);
+            CaptureStep++;
+        }
+        UpdateCamera(Dt);return;
+    }
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture"))) {
         if(CaptureStep==0 && VisualTime>2) {BuildScene(true);CameraPitch=90;ViewWidth=20000;bPerspective=false;CaptureStep++;}
         UpdateCamera(Dt);
@@ -675,6 +781,7 @@ void AAlchemyWorld::Tick(float Dt) {
         else if(CaptureStep==10 && VisualTime>16) {UE_LOG(LogTemp,Display,TEXT("ALCHEMY_CAPTURE_DONE")); FPlatformMisc::RequestExit(false); CaptureStep++;}
     }
     UpdateCamera(Dt);
+    UpdateFeedback(Dt);
     if(!Panel.IsEmpty()) {
         Player->SetActorHiddenInGame(false);
         UpdateSprite(Player,TEXT("Hero0_0"),PlayerPos,120,160);
@@ -710,7 +817,7 @@ void AAlchemyWorld::Tick(float Dt) {
     CastSkills(Dt);
     for(auto& E:Enemies) {
         if(E.HP<=0) continue;
-        E.AttackCD-=Dt; E.Slow=FMath::Max(0.f,E.Slow-Dt);
+        E.AttackCD-=Dt; E.Slow=FMath::Max(0.f,E.Slow-Dt);E.HitFlash=FMath::Max(0.f,E.HitFlash-Dt);
         if(E.Type==10 && E.HP<=3000 && !E.Phase2) {E.Phase2=true; E.Transition=2; Message(TEXT("BOSS 第二阶段 · 2秒转换，可继续攻击"));}
         if(E.Transition>0) { E.Transition-=Dt; continue; }
         FVector To=(PlayerPos-E.Pos); float Dist=To.Size2D();
@@ -737,7 +844,7 @@ void AAlchemyWorld::Tick(float Dt) {
             if(Dist<(E.Type>=7?110:75) && E.AttackCD<=0) { Hurt(E.Contact); E.AttackCD=1; }
         }
         const float Scale=E.Type==10?3:E.Type>=7?2:1;
-        UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),FMath::Min(E.Type,9)),E.Pos,100*Scale,100*Scale,To.X<0);
+        UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),FMath::Min(E.Type,9)),E.Pos,100*Scale*(1+.08f*E.HitFlash/.1f),100*Scale*(1-.04f*E.HitFlash/.1f),To.X<0);
         E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));
     }
     if(!Panel.IsEmpty()) return;
@@ -749,14 +856,16 @@ void AAlchemyWorld::Tick(float Dt) {
             S.Pos+=S.Velocity*Dt/Steps;
             if(!Walkable(S.Pos,18)) {S.Life=0; break;}
             if(S.Hostile) {if(FVector::Dist2D(S.Pos,PlayerPos)<63) {Hurt(S.Damage); S.Life=0;}}
-            else {int N=Nearest(S.Pos,55); if(N>=0) {DamageEnemy(N,S.Damage); Ring(S.Pos,35,Teal,0.15f); S.Life=0;}}
+            else {int N=Nearest(S.Pos,55); if(N>=0) {DamageEnemy(N,S.Damage,S.Color);S.Life=0;}}
         }
         if(!Panel.IsEmpty()) return;
         S.Body->SetActorLocation(S.Pos+FVector(0,0,65));
-        if(S.Life<=0) {S.Body->Destroy(); Shots.RemoveAtSwap(i);}
+        if(S.Trail.IsValid()) S.Trail->SetWorldLocation(S.Pos+FVector(0,0,65));
+        if(S.Life<=0) {if(S.Trail.IsValid()) S.Trail->Deactivate();S.Body->Destroy(); Shots.RemoveAtSwap(i);}
     }
     for(int i=Enemies.Num()-1;i>=0;i--) if(Enemies[i].HP<=0) {
         auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
+        SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
         TutorialSupply(E.Pos);
         if(E.Type==10) {EndRun(true); break;}
         if(E.Type>=7) {Drop(E.Pos,6+E.Type-7); Drop(E.Pos,-1,10);}
@@ -828,9 +937,10 @@ void AAlchemyWorld::AlchemyCheck() {
     Progress=NewObject<UAlchemyProgress>(this);Progress->Coins=123;Progress->Recipes={1,7};Progress->Chains={0,1};Progress->Talents={1,2,0,0};
     MigrateProgress(true);
     Check(Progress->Coins==123 && Progress->Recipes.Contains(1) && Progress->Recipes.Contains(7) && Progress->TutorialComplete && Progress->Combinations.IsEmpty() && Progress->ChainsV2.IsEmpty() && Progress->Talents[1]==2,TEXT("legacy_semantic_migration"));
+    Progress->UITextScale=1.17f;
     TArray<uint8> Bytes;bool Saved=UGameplayStatics::SaveGameToMemory(Progress,Bytes);
     auto Loaded=Saved?Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromMemory(Bytes)):nullptr;
-    Check(Loaded && Loaded->Coins==123 && Loaded->SchemaVersion==2 && Loaded->TutorialComplete,TEXT("save_roundtrip"));
+    Check(Loaded && Loaded->Coins==123 && Loaded->SchemaVersion==2 && Loaded->TutorialComplete && FMath::IsNearlyEqual(Loaded->UITextScale,1.17f),TEXT("save_roundtrip_including_PC_text_scale"));
     StartRun();TArray<int32> Options;TArray<float> W;FString Reason;int C;
     bool Tables=true;TSet<int32> Unique;
     for(int G=0;G<7;G++) {
@@ -892,6 +1002,23 @@ void AAlchemyWorld::AlchemyCheck() {
         EffectsOK &= Skills[S].Cast==Bolt?Shots.Num()>ShotsBefore:Enemies[0].HP<10000;
     }
     Check(EffectsOK,TEXT("all_25_skill_cast_paths"));
+    ClearEnemies();SpawnEnemy(0);SpawnEnemy(0);DamageNumbers.Empty();
+    for(int I=0;I<2;I++) {Enemies[I].HP=Enemies[I].MaxHP=100;Enemies[I].Pos=FVector(100+I*40,0,0);}
+    DamageEnemy(0,13);bool Feedback=Enemies[0].HP==87 && DamageNumbers.Num()==1 && DamageNumbers[0].Value==13 && Enemies[0].HitFlash>0;
+    Feedback &= Area(FVector(120,0,0),100,11,Teal)==2 && Enemies[0].HP==76 && Enemies[1].HP==89 && DamageNumbers.Num()==3;
+    Panel=TEXT("alchemy");UpdateFeedback(.4f);Feedback &= FMath::IsNearlyEqual(DamageNumbers[0].Life,.85f);Panel.Empty();UpdateFeedback(.9f);Feedback &= DamageNumbers.IsEmpty();
+    Check(Feedback,TEXT("damage_numbers_single_AOE_pause_and_expiry"));
+    Check(ImpactFX && BlastFX && TrailFX && ParticleMaterial && ImpactFX->GetEmitterHandles().Num()>0 && BlastFX->GetEmitterHandles().Num()>0,TEXT("cooked_real_niagara_assets"));
+    Action(TEXT("fontreset"));Action(TEXT("fontm0"));Action(TEXT("fontl1"));
+    UE_LOG(LogTemp,Display,TEXT("FONT_DEBUG_STEPS medium=%.9f large=%.9f small=%.9f"),Progress->MediumTextScale,Progress->LargeTextScale,Progress->FontSize(18));
+    bool Font=FMath::IsNearlyEqual(Progress->MediumTextScale,.85f,.0001f) && FMath::IsNearlyEqual(Progress->LargeTextScale,.71f,.0001f) && Progress->FontSize(18)==18;
+    Progress->MediumTextScale=.5f;Action(TEXT("fontm0"));UE_LOG(LogTemp,Display,TEXT("FONT_DEBUG_MIN %.9f"),Progress->MediumTextScale);Font &= FMath::IsNearlyEqual(Progress->MediumTextScale,.5f,.0001f);
+    Progress->LargeTextScale=1.2f;Action(TEXT("fontl3"));UE_LOG(LogTemp,Display,TEXT("FONT_DEBUG_MAX %.9f"),Progress->LargeTextScale);Font &= FMath::IsNearlyEqual(Progress->LargeTextScale,1.2f,.0001f);
+    Action(TEXT("fontreset"));Action(TEXT("textsize"));UE_LOG(LogTemp,Display,TEXT("FONT_DEBUG_PANEL %s"),*Panel);Font &= Panel==TEXT("fonts");Panel.Empty();
+    TArray<uint8> FontBytes;UGameplayStatics::SaveGameToMemory(Progress,FontBytes);auto* FontSave=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromMemory(FontBytes));
+    UE_LOG(LogTemp,Display,TEXT("FONT_DEBUG_SAVE valid=%d medium=%.9f large=%.9f"),FontSave!=nullptr,FontSave?FontSave->MediumTextScale:0,FontSave?FontSave->LargeTextScale:0);
+    Font &= FontSave && FMath::IsNearlyEqual(FontSave->MediumTextScale,.9f,.0001f) && FMath::IsNearlyEqual(FontSave->LargeTextScale,.72f,.0001f);
+    Check(Font,TEXT("font_debug_independent_groups_fixed_small_limits_save"));
     if(!OK) {UE_LOG(LogTemp,Error,TEXT("ALCH002_TEST_FAIL"));FPlatformMisc::RequestExitWithStatus(false,1);}
     else UE_LOG(LogTemp,Display,TEXT("ALCH002_TEST_PASS"));
 }
@@ -939,177 +1066,5 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
     }
 }
 
-void AAlchemyHUD::Text(const FString& Value,float X,float Y,float Size,FLinearColor Color) {
-    DrawText(Value,Color,X*S,Y*S,World->UIFont,Size/16*S,false);
-}
-void AAlchemyHUD::Box(float X,float Y,float W,float H,FLinearColor Color) {DrawRect(Color,X*S,Y*S,W*S,H*S);}
-void AAlchemyHUD::Button(const FString& Id,const FString& Label,float X,float Y,float W,bool Enabled) {
-    float MX=0,MY=0; GetOwningPlayerController()->GetMousePosition(MX,MY);
-    const bool Hover=MX>=X*S && MX<=(X+W)*S && MY>=Y*S && MY<=(Y+34)*S;
-    Box(X,Y,W,34,Enabled?(Hover?FLinearColor(0.15f,0.29f,0.29f):FLinearColor(0.08f,0.15f,0.18f)):FLinearColor(0.06f,0.08f,0.09f));
-    Box(X,Y,3,34,Enabled?Gold:Muted); Text(Label,X+12,Y+7,15,Enabled?FLinearColor(0.9f,0.88f,0.79f):Muted);
-    if(Enabled) AddHitBox(FVector2D(X*S,Y*S),FVector2D(W*S,34*S),FName(*Id),true);
-}
-void AAlchemyHUD::NotifyHitBoxClick(FName Name) {
-    if(!World) return;
-    FString Id=Name.ToString();
-    if(Id.StartsWith(TEXT("material"))) DragMaterial=FCString::Atoi(*Id.Mid(8));
-    else World->Action(Id);
-}
-
-void AAlchemyHUD::DrawHUD() {
-    Super::DrawHUD();
-    if(!World) {for(TActorIterator<AAlchemyWorld> I(GetWorld());I;++I) {World=*I;break;}}
-    if(!World || !Canvas) return;
-    S=FMath::Min(Canvas->SizeX/1280.f,Canvas->SizeY/720.f);
-    if(DragMaterial>=0 && GetOwningPlayerController()->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
-        float MX=0,MY=0;GetOwningPlayerController()->GetMousePosition(MX,MY);MX/=S;MY/=S;
-        int I=DragMaterial;DragMaterial=-1;
-        float SourceY=220+(I%3)*72;
-        bool Source=I<3 ? (MX>=700 && MX<=1000 && MY>=SourceY && MY<=SourceY+34) : (MX>=700 && MX<=1000 && MY>=445 && MY<=479);
-        if(World->Panel==TEXT("alchemy") && (Source || (MX>=265 && MX<=655 && MY>=205 && MY<=455))) World->AddMaterial(I);
-    }
-    if(World->Panel!=TEXT("alchemy")) DragMaterial=-1;
-    Box(0,0,1280,80,FLinearColor(0.02f,0.035f,0.045f,0.94f));
-    Text(TEXT("冒牌炼金术士"),28,12,26,Gold); Text(TEXT("HD 2.5D / 可玩预研 0.1"),30,49,12,Muted);
-    Text(World->bCombat?TEXT("腐化林地"):TEXT("烛苔村 · 据点"),310,20,20);
-    Text(World->bCombat?FString::Printf(TEXT("%02d:%02d   击败 %d   本局金币 %d"),int(World->RunTime)/60,int(World->RunTime)%60,World->Kills,World->RunCoins):FString::Printf(TEXT("永久金币 %d   /   三座设施可交互"),World->Progress->Coins),310,49,13,Muted);
-    Button(TEXT("research"),TEXT("F6  画面实验"),1050,22,200);
-    Box(0,660,1280,60,FLinearColor(0.02f,0.035f,0.045f,0.94f));
-    Text(TEXT("WASD 移动   Space 闪避   F 设施   Tab 炼金   C 图鉴   B 技能   Esc 暂停"),28,687,13,Muted);
-    if(World->bCombat) {
-        Box(30,102,220,10,Ink); Box(30,102,220*World->HP/World->MaxHP,10,Teal);
-        Text(FString::Printf(TEXT("生命 %.0f / %.0f    闪避 %.1fs"),World->HP,World->MaxHP,World->DodgeCD),30,120,14);
-        for(int i=0;i<3;i++) Text(FString::Printf(TEXT("%s %d/10"),MaterialNames[i],World->Inventory[i]),30,160+i*24,14,i==0?Gold:i==1?FLinearColor(0.4f,0.7f,0.9f):Teal);
-        for(int i=0;i<World->Equipped.Num();i++) {
-            int K=World->Equipped[i]; Box(285+i*116,600,108,46,Ink);
-            Text(SkillNames[K],294+i*116,607,13); Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),294+i*116,626,12,Gold);
-        }
-        if(World->TutorialActive()) {
-            const bool Ready=World->Inventory[0]>0 && World->Inventory[1]>0 && World->Inventory[2]>0;
-            Text(World->TutorialSkill>=0?TEXT("关闭界面：新技能一次命中至少2个敌人"):Ready?TEXT("材料已齐！点击入口或按 Tab 开始炼金"):TEXT("战斗收集三类材料，约35秒后补缺"),285,165,15,Gold);
-            if(Ready && World->TutorialSkill<0 && World->Panel.IsEmpty()) Button(TEXT("alchemy"),TEXT("Tab 首次炼金 →"),480,198,280);
-        }
-        if(World->RunTime>=300 && !World->bBossSpawned) {Box(400,100,480,48,Ink); Text(FString::Printf(TEXT("BOSS 将在 %.1f 秒后出现"),310-World->RunTime),440,112,22,Gold);}
-        for(auto& E:World->Enemies) if(E.Type==10) {
-            Box(420,100,440,12,Ink); Box(420,100,440*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold); Text(TEXT("腐化之源 · 招式简化原型"),500,120,16); break;
-        }
-    } else if(World->Panel.IsEmpty()) {
-        for(int i=0;i<3;i++) {
-            FVector P=i==0?FVector(-600,100,180):i==1?FVector(600,100,180):FVector(0,1050,410);
-            FVector2D Screen; GetOwningPlayerController()->ProjectWorldLocationToScreen(P,Screen);
-            Text(i==0?TEXT("[F] 强化台"):i==1?TEXT("[F] 配方图鉴"):TEXT("[F] 进入腐化林地"),Screen.X/S-65,Screen.Y/S-25,16,Gold);
-        }
-    }
-    if(!World->Panel.IsEmpty()) {
-        Box(0,80,1280,580,FLinearColor(0.01f,0.02f,0.03f,0.58f)); Box(230,110,820,495,Ink);
-        Box(230,110,820,3,Gold); Button(TEXT("close"),TEXT("Esc 关闭"),875,128,145);
-        const FString P=World->Panel;
-        FString Title=P==TEXT("alchemy")?TEXT("炼金台 · 战斗已暂停"):P==TEXT("codex")?TEXT("配方与连锁图鉴"):P==TEXT("skills")?TEXT("装备 6 / 储备 6"):P==TEXT("talents")?TEXT("线性天赋树"):P==TEXT("research")?TEXT("HD2.5D 画面实验"):P==TEXT("level")?TEXT("选择关卡"):P==TEXT("victory")?TEXT("胜利 · 已结算"):P==TEXT("defeat")?TEXT("本局结束 · 已结算"):P==TEXT("confirmbuy")?TEXT("确认购买"):P==TEXT("confirmreturn")?TEXT("返回据点？"):P==TEXT("savefailed")?TEXT("保存失败，货币未到账"):TEXT("暂停");
-        Text(Title,260,135,24,Gold);
-        if(P==TEXT("research")) {
-            Text(TEXT("每次只切换一项，观察像素清晰度、立体感和角色融入。"),260,185,14,Muted);
-            Button(TEXT("ortho"),World->bPerspective?TEXT("F1 透视镜头"):TEXT("F1 正交镜头"),270,230,330);
-            Button(TEXT("lit"),World->bLitSprites?TEXT("F2 角色接受光照"):TEXT("F2 角色自发光"),640,230,330);
-            Button(TEXT("upright"),World->bUprightSprites?TEXT("F3 竖直角色平面"):TEXT("F3 完全面向相机"),270,280,330);
-            Button(TEXT("tilt"),FString::Printf(TEXT("F4 俯角 %.0f°"),World->CameraPitch),640,280,330);
-            Button(TEXT("dof"),World->bDepthOfField?TEXT("F5 景深开启"):TEXT("F5 景深关闭"),270,330,330);
-            Text(TEXT("[ / ] 调整视野宽度；正交默认 2844 cm。"),270,385,15);
-            Text(TEXT("默认：48°斜俯视 + 正交 + 清晰像素 + 3D光影。"),270,420,15,Teal);
-            Button(TEXT("tune"),World->bTune001B?TEXT("TUNE-001B 测试值"):TEXT("原始战斗基线"),270,470,330,!World->bCombat);
-            Button(TEXT("drop"),World->bDrop001?TEXT("随机材料 15.4%"):TEXT("随机材料 22%"),640,470,330,!World->bCombat);
-            Text(TEXT("测试值切换仅限据点；正交视角下景深差异可能不明显。"),270,530,13,Muted);
-        } else if(P==TEXT("alchemy")) {
-            Text(TEXT("左侧炼金炉 · 右侧背包；点击或拖入1个，点击炉内材料取回"),260,180,13,Muted);
-            Box(265,205,390,250,FLinearColor(.06f,.13f,.14f));
-            int Total=0;for(int V:World->Selected) Total+=V;
-            Text(FString::Printf(TEXT("炼金炉  投入 %d / 10"),Total),280,220,19,Gold);
-            int Next=-1;if(World->TutorialActive() && World->TutorialSkill<0) for(int I=0;I<3;I++) if(World->Selected[I]==0) {Next=I;break;}
-            for(int I=0;I<6;I++) {
-                if(I<3) {
-                    Button(FString::Printf(TEXT("sub%d"),I),FString::Printf(TEXT("%s ×%d  点击取回"),MaterialNames[I],World->Selected[I]),280,265+I*48,355,World->Selected[I]>0);
-                    Button(FString::Printf(TEXT("material%d"),I),FString::Printf(TEXT("%s%s  可用%d"),Next==I?TEXT("→ "):TEXT(""),MaterialNames[I],World->Inventory[I]-World->Selected[I]),700,220+I*72,300,World->Inventory[I]>World->Selected[I] && (!World->TutorialActive() || (World->TutorialSkill<0 && World->Selected[I]<1)));
-                } else {
-                    Text(FString::Printf(TEXT("%s %d 已投%d"),MaterialNames[I],World->Inventory[I]-World->Selected[I],World->Selected[I]),270+(I-3)*250,442,12,Muted);
-                    Button(FString::Printf(TEXT("add%d"),I),TEXT("+"),270+(I-3)*250,465,60,!World->TutorialActive());
-                    Button(FString::Printf(TEXT("sub%d"),I),TEXT("-"),340+(I-3)*250,465,60,World->Selected[I]>0);
-                }
-            }
-            TArray<int32> Options;TArray<float> Chances;FString Reason;int Combination;
-            bool Valid=World->CraftOptions(Options,Chances,Reason,Combination);
-            FString Probability;
-            if(Valid && Combination>=0) {
-                for(int Q=0;Q<3;Q++) {int I=Options.Find(CombinationSkills[Combination][Q]);Probability+=FString::Printf(TEXT("%s %.1f%%  "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
-            } else if(Valid) Probability=TEXT("精英专属固定配方 · 100%");
-            else Probability=TEXT("投料后显示本次品质概率");
-            Text(Probability,280,413,13,Teal);
-            if(Valid) Button(TEXT("craft"),TEXT("开始炼金"),270,515,230);
-            Button(TEXT("clear"),TEXT("清空投料"),525,515,230);Button(TEXT("codex"),TEXT("图鉴"),780,515,220);
-            Text(Reason.IsEmpty()?(World->TutorialActive()?TEXT("首次限定三料各1个，品质正常随机；合成后关闭界面体验群攻"):TEXT("材料种类决定组合，总量影响品质；生成结果后扣除材料")):Reason,270,565,12,Gold);
-            if(DragMaterial>=0) {float MX,MY;GetOwningPlayerController()->GetMousePosition(MX,MY);Text(MaterialNames[DragMaterial],MX/S+15,MY/S,16,Gold);}
-        } else if(P==TEXT("codex")) {
-            Button(TEXT("codexprev"),TEXT("上一页"),270,178,130);Button(TEXT("codexnext"),TEXT("下一页"),870,178,130);
-            Text(FString::Printf(TEXT("%d/4  组合 / 技能 / 连锁 / 精英"),World->CodexPage+1),430,185,14,Muted);
-            if(World->CodexPage==0) for(int C=0;C<7;C++) {
-                bool Known=World->Progress->Combinations.Contains(C);
-                Text(Known?CombinationNames[C]:TEXT("未发现的材料组合"),270,235+C*43,16,Known?Gold:Muted);
-                Text(Known?TEXT("三个品质结果；材料比例不改变组合"):TEXT("尝试不同普通材料种类"),500,238+C*43,12,Muted);
-            }
-            if(World->CodexPage==1) for(int C=0;C<7;C++) for(int Q=0;Q<3;Q++) {
-                int K=CombinationSkills[C][Q];bool Known=World->Progress->Recipes.Contains(K);
-                Text(Known?FString::Printf(TEXT("%s  %s"),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),SkillNames[K]):TEXT("未发现的技能"),270+Q*250,235+C*43,14,Known?Gold:Muted);
-            }
-            if(World->CodexPage==2) for(int C=0;C<10;C++) {
-                const auto& K=Chains[C];bool Known=World->Progress->ChainsV2.Contains(C);
-                int X=270+(C%2)*380,Y=235+(C/2)*62;
-                Text(K.Name,X,Y,15,Gold);
-                Text(Known?FString::Printf(TEXT("%s + %s / %.0fs"),SkillNames[K.A],SkillNames[K.B],K.CD):TEXT("同时装备互补技能，触发后揭示条件"),X,Y+25,11,Known?Teal:Muted);
-                if(Known) Text(FString::Printf(TEXT("伤害%.0f  %s%.1f  减速%.0f%%/%.1fs"),K.Damage,K.Targets?TEXT("目标数"):TEXT("半径"),K.Targets?float(K.Targets):K.Radius/100,(1-K.Factor)*100,K.Slow),X,Y+43,10,Muted);
-            }
-            if(World->CodexPage==3) for(int K=7;K<=9;K++) {
-                bool Known=World->Progress->Recipes.Contains(K);int Y=240+(K-7)*95;
-                Text(Known?SkillNames[K]:TEXT("未发现的精英配方"),270,Y,16,Known?Gold:Muted);
-                if(Known) {FString Cost;for(int M=0;M<6;M++) if(Recipes[K][M]) Cost+=FString::Printf(TEXT("%s×%d "),MaterialNames[M],Recipes[K][M]);Text(Cost,270,Y+25,12);Button(FString::Printf(TEXT("recipe%d"),K),TEXT("填入素材"),780,Y,220,World->bCombat && !World->TutorialActive());}
-            }
-        } else if(P==TEXT("skills")) {
-            Text(TEXT("选中储备技能，再选装备位交换；原技能放回储备。"),260,185,14,Muted);
-            for(int i=0;i<6;i++) {
-                bool Has=World->Equipped.IsValidIndex(i); FString Label=Has?FString::Printf(TEXT("%d %s Lv.%d"),i+1,SkillNames[World->Equipped[i]],World->Levels[World->Equipped[i]]):TEXT("空装备位");
-                Button(FString::Printf(TEXT("equip%d"),i),Label,270,225+i*48,330,World->SelectedBag>=0 && i!=0);
-                bool HasBag=World->Bag.IsValidIndex(i);
-                Button(FString::Printf(TEXT("bag%d"),i),HasBag?FString::Printf(TEXT("%s %s"),World->SelectedBag==i?TEXT("> "):TEXT(""),SkillNames[World->Bag[i]]):TEXT("空储备位"),640,225+i*48,330,HasBag);
-            }
-        } else if(P==TEXT("talents")) {
-            Text(FString::Printf(TEXT("永久金币 %d；前一个天赋达到 Lv.1 即解锁下一个。"),World->Progress->Coins),260,185,14,Muted);
-            for(int i=0;i<4;i++) {
-                int L=World->Progress->Talents[i]; bool Open=i==0 || World->Progress->Talents[i-1]>=1;
-                Text(FString::Printf(TEXT("%d  %s  Lv.%d/5 %s"),i+1,TalentNames[i],L,Open?TEXT(""):TEXT("锁定")),275,235+i*72,18);
-                Button(FString::Printf(TEXT("buy%d"),i),L>=5?TEXT("已满级"):FString::Printf(TEXT("购买 %d 金币"),Prices[i][L]),730,225+i*72,230,Open && L<5);
-            }
-        } else if(P==TEXT("level")) {
-            Text(TEXT("腐化林地 · 固定地图 · 自动战斗与炼金"),270,225,22);
-            Text(TEXT("5:00 预警，5:10 最终 BOSS；击败 BOSS 胜利。"),270,280,16,Muted);
-            Text(TEXT("当前敌人表现及 BOSS 招式为可玩原型，详见实现对照。"),270,320,14,Gold);
-            Button(TEXT("start"),TEXT("进入关卡"),270,420,300);
-        } else if(P==TEXT("confirmbuy") && World->PendingTalent>=0) {
-            int I=World->PendingTalent,L=World->Progress->Talents[I];
-            Text(FString::Printf(TEXT("%s：Lv.%d → Lv.%d，花费 %d 金币。"),TalentNames[I],L,L+1,Prices[I][L]),270,250,20);
-            Button(TEXT("confirmbuy"),TEXT("确认购买并保存"),270,350,300); Button(TEXT("talents"),TEXT("取消"),620,350,200);
-        } else if(P==TEXT("confirmreturn")) {
-            Text(TEXT("已拾取金币结算；本局材料与技能清空。"),270,260,20);
-            Button(TEXT("village"),TEXT("确认返回"),270,360,300); Button(TEXT("close"),TEXT("继续战斗"),620,360,200);
-        } else if(P==TEXT("victory") || P==TEXT("defeat")) {
-            Text(FString::Printf(TEXT("生存 %02d:%02d   击败 %d   炼制 %d   连锁 %d"),int(World->RunTime)/60,int(World->RunTime)%60,World->Kills,World->CraftCount,World->ChainCount),270,250,20);
-            Text(FString::Printf(TEXT("本局到账 %d 金币；配方与连锁发现永久保留。"),World->ResultCoins),270,300,18,Teal);
-            Button(TEXT("village"),TEXT("返回据点"),270,420,300);
-        } else if(P==TEXT("savefailed")) {
-            Text(TEXT("本局金币仍待结算。重试成功后才能离开。"),270,250,20,Gold);
-            Button(TEXT("retry"),TEXT("重试保存"),270,350,300);
-        } else {
-            Button(TEXT("close"),TEXT("继续"),270,230,300); Button(TEXT("codex"),TEXT("配方图鉴"),270,285,300);
-            if(World->bCombat) {Button(TEXT("alchemy"),TEXT("炼金台"),640,230,300); Button(TEXT("return"),TEXT("返回据点"),640,285,300);}
-            else {Button(TEXT("talents"),TEXT("永久成长"),640,230,300); Button(TEXT("level"),TEXT("关卡选择"),640,285,300);}
-        }
-    }
-    if(World->ToastTime>0) {Box(250,610,780,36,FLinearColor(0.03f,0.07f,0.075f,0.95f));Text(World->Toast,270,619,14,Gold);}
-}
+#include "AlchemyHUD.inl"
+#include "AlchemyFeedback.inl"

@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, writeFileSync, realpathSync } from 'node:fs';
+import path from 'node:path';
+import { checkedImage, replyImages, sendImages, imageRoots } from './images.mjs';
+
+mkdirSync(new URL('./.runtime/', import.meta.url), { recursive: true });
+const base = mkdtempSync(new URL('./.runtime/images-test-', import.meta.url));
+const alice = path.join(base, '.qq-workspaces', 'alice'), bob = path.join(base, '.qq-workspaces', 'bob');
+mkdirSync(alice, { recursive: true }); mkdirSync(bob, { recursive: true });
+const header = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
+const file = path.join(alice, 'test image.png'), other = path.join(bob, 'other.png');
+writeFileSync(file, header); writeFileSync(other, header);
+const roots = imageRoots(base, 'alice');
+assert.equal(checkedImage(file, roots), realpathSync(file));
+assert.throws(() => checkedImage(other, roots));
+assert.throws(() => checkedImage('https://example.com/image.png', roots));
+const invalid = path.join(alice, 'fake.png'); writeFileSync(invalid, 'text pretending to be image');
+assert.throws(() => checkedImage(invalid, roots));
+const parsed = replyImages(`Hello\n![picture](<${file}>)\n![duplicate](<${file}>)\n![other](<${other}>)`, roots);
+assert.deepEqual(parsed.files, [realpathSync(file)]);
+assert(!parsed.text.includes(other));
+const targets = [];
+const target = { scope: 'group', targetId: 'selected-group', msgId: 'current-message' };
+const ids = await sendImages({ async sendImage(actualTarget, source) {
+  targets.push(actualTarget);
+  assert.equal(source.localPath, realpathSync(file));
+  return { message: { id: 'image-receipt' } };
+} }, target, parsed.files);
+assert.deepEqual(ids, ['image-receipt']); assert.equal(targets[0], target);
+await assert.rejects(sendImages({ async sendImage() { return { upload: { file_info: 'uploaded-only' } }; } }, target, parsed.files));
+console.log('PASS: member image path isolation, local format checks, dedup, original reply target, and receipt required beyond upload.');

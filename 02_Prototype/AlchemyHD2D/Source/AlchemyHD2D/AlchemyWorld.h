@@ -9,6 +9,8 @@
 class AStaticMeshActor;
 class ACameraActor;
 class UMaterialInterface;
+class UNiagaraSystem;
+class UNiagaraComponent;
 
 UCLASS()
 class UAlchemyProgress : public USaveGame {
@@ -22,6 +24,10 @@ public:
     UPROPERTY() bool TutorialComplete=false;
     UPROPERTY() TArray<int32> Combinations;
     UPROPERTY() TArray<int32> ChainsV2;
+    UPROPERTY() float UITextScale=1;
+    UPROPERTY() float MediumTextScale=.9f;
+    UPROPERTY() float LargeTextScale=.72f;
+    float FontSize(float Size) const { return Size*(Size<=18?1.f:Size<26?MediumTextScale:LargeTextScale); }
 };
 
 struct FAlchemyEnemy {
@@ -35,12 +41,15 @@ struct FAlchemyEnemy {
     TArray<FVector> Path;
     float RepathCD=0;
     float SlowFactor=0.65f;
+    float HitFlash=0;
 };
 struct FAlchemyShot {
     AStaticMeshActor* Body=nullptr;
     FVector Pos=FVector::ZeroVector, Velocity=FVector::ZeroVector;
     float Life=4, Damage=0;
     bool Hostile=false;
+    FLinearColor Color=FLinearColor::White;
+    TWeakObjectPtr<UNiagaraComponent> Trail;
 };
 struct FAlchemyDrop {
     AStaticMeshActor* Body=nullptr;
@@ -49,6 +58,13 @@ struct FAlchemyDrop {
 };
 struct FAlchemyFX { AStaticMeshActor* Body=nullptr; float Life=0, Total=0; float Radius=0; };
 struct FAlchemyObstacle { FVector2D Center; FVector2D Half; };
+struct FAlchemyDamageNumber {FVector Position; float Value=0,Life=.85f; int32 Lane=0;};
+USTRUCT()
+struct FAlchemyNiagaraFX {
+    GENERATED_BODY()
+    UPROPERTY() TObjectPtr<UNiagaraComponent> Component;
+    float Life=0;
+};
 
 UCLASS()
 class AAlchemyWorld : public AActor {
@@ -85,6 +101,13 @@ public:
     TArray<FAlchemyShot> Shots;
     TArray<FAlchemyDrop> Drops;
     TArray<FAlchemyFX> Effects;
+    TArray<FAlchemyDamageNumber> DamageNumbers;
+    UPROPERTY() TArray<FAlchemyNiagaraFX> NiagaraFX;
+    UPROPERTY() TObjectPtr<UNiagaraSystem> ImpactFX;
+    UPROPERTY() TObjectPtr<UNiagaraSystem> BlastFX;
+    UPROPERTY() TObjectPtr<UNiagaraSystem> TrailFX;
+    UPROPERTY() TObjectPtr<UMaterialInterface> ParticleMaterial;
+    int32 HitFXThisFrame=0, DamageSerial=0, VFXSpawnCount=0;
     TArray<FAlchemyObstacle> Obstacles;
     UPROPERTY() TObjectPtr<UAlchemyProgress> Progress;
     UPROPERTY() TMap<FString,TObjectPtr<UMaterialInterface>> Mats;
@@ -124,13 +147,20 @@ public:
     void SpawnWave();
     int32 Nearest(FVector Pos,float Range,const TArray<int32>& Exclude={}) const;
     void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000);
-    void DamageEnemy(int32 Index,float Damage);
+    void DamageEnemy(int32 Index,float Damage,FLinearColor Color=FLinearColor(1,.8f,.3f));
+    UNiagaraComponent* SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life);
+    void UpdateFeedback(float Delta);
     int32 Area(FVector Pos,float Radius,float Damage,FLinearColor Color,float Slow=0,float SlowFactor=0.65f);
     void Hurt(float Damage);
     void Drop(FVector Pos,int32 Kind,int32 Count=1);
     void CastSkills(float Delta);
     void SmokeCheck(float Delta);
     void AlchemyCheck();
+    int32 FeedbackParticles() const;
+    float FeedbackAge() const;
+    bool CaptureFeedback(float Delta);
+    int32 FeedbackPeak=0;
+    float FeedbackPauseAge=0;
 };
 
 UCLASS()
@@ -141,10 +171,18 @@ public:
     virtual void NotifyHitBoxClick(FName BoxName) override;
     int32 DragMaterial=-1;
     AAlchemyWorld* World=nullptr;
-    float S=1;
-    void Text(const FString& Value,float X,float Y,float Size=16,FLinearColor Color=FLinearColor::White);
+    float S=1, OX=0, OY=0;
+    int32 FocusIndex=0, DetailPage=0;
+    FString LastPanel;
+    TArray<FString> FocusOrder;
+    TMap<FString,FBox2D> ButtonRects;
+    FBox2D DragSource, Furnace;
+    float Measure(const FString& Value,float Size) const;
+    void Activate(const FString& Id);
+    void Text(const FString& Value,float X,float Y,float Size=20,FLinearColor Color=FLinearColor::White);
+    void Paragraph(const FString& Value,float X,float Y,float Width,float Size=18,FLinearColor Color=FLinearColor::White);
     void Box(float X,float Y,float W,float H,FLinearColor Color);
-    void Button(const FString& Id,const FString& Label,float X,float Y,float W=180,bool Enabled=true);
+    void Button(const FString& Id,const FString& Label,float X,float Y,float W=180,bool Enabled=true,float Height=48);
 };
 
 UCLASS()

@@ -2,7 +2,7 @@
   "name": "alchemy-qq-codex-bridge",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test access.test.mjs sessions.test.mjs", "test:integration": "node bridge.mjs --test" },
+  "scripts": { "test": "node --test access.test.mjs sessions.test.mjs results.test.mjs group-context.test.mjs images.test.mjs", "test:integration": "node bridge.mjs --test" },
   "dependencies": {
     "@tencent-connect/qqbot-nodejs": "1.0.5",
     "ws": "8.22.0"

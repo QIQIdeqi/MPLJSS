@@ -11,7 +11,14 @@ export function messageText(message) {
 }
 
 export function groupMention(message) {
-  return message.kind === 'group' && message.rawEventType === 'GROUP_AT_MESSAGE_CREATE'
+  return groupMessage(message) && (message.rawEventType === 'GROUP_AT_MESSAGE_CREATE'
+    || (Array.isArray(message.mentions) && message.mentions.some(mention => mention?.is_you === true))
+    || /<@!?1906033435>/.test(message.content ?? ''));
+}
+
+export function groupMessage(message) {
+  return message.kind === 'group'
+    && ['GROUP_MESSAGE_CREATE', 'GROUP_AT_MESSAGE_CREATE'].includes(message.rawEventType)
     && !!message.groupOpenid && !!message.senderId && message.senderIsBot !== true;
 }
 

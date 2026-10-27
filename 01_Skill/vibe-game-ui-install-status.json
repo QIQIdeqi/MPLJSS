@@ -1,0 +1,26 @@
+{
+  "checked_date": "2026-10-27",
+  "article": "https://www.vibeaiskills.com/zh/blogs/best-ai-skills-game-ui-hud-design",
+  "requested_scope": "All five skills named in the article, not all skills on the website",
+  "new_installations": 0,
+  "status": "No downloadable source package or individual installation page found for the five named skills",
+  "skills": [
+    {"name": "Browser Game UI Kit Generator", "status": "source_unavailable"},
+    {"name": "HUD Overlay System", "status": "source_unavailable"},
+    {"name": "Pause + Settings Screen Pack", "status": "source_unavailable"},
+    {"name": "Inventory + Loot Tooltip System", "status": "source_unavailable"},
+    {"name": "Main Menu + End Screen Combo", "status": "source_unavailable"}
+  ],
+  "checks": [
+    {"url": "https://www.vibeaiskills.com/category/3d-games", "result": "HTTP 404 verified with web tool and direct HTTP request"},
+    {"url": "https://www.vibeaiskills.com/zh/category/web-ui", "result": "HTTP 200, coming-soon page; no skill cards or downloadable packages found"},
+    {"result": "Exact-name public searches did not locate matching source repositories; similarly named unrelated results were not installed"}
+  ],
+  "existing_related_skill": {
+    "name": "game-ui-ux",
+    "path": "D:/06_独立游戏/00_冒牌炼金术士/01_Skill/installed/awesome-gamedev-agent-skills/game-ui-ux",
+    "codex_discovery": "Existing Junction C:/Users/60550/.codex/skills/game-ui-ux verified",
+    "is_one_of_requested_five": false
+  },
+  "next_requirement": "Obtain the original SKILL.md packages, GitHub source URLs, or working per-skill download pages"
+}
