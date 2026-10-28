@@ -1,0 +1,20 @@
+﻿{
+    "content_commit":  "d323452f9e4f2c5b103595b3a036208c6999a005",
+    "remote":  "https://github.com/QIQIdeqi/MPLJSS.git",
+    "branch":  "main",
+    "verified_head_origin_live_equal":  true,
+    "working_tree_clean":  true,
+    "lfs_pending":  false,
+    "lfs_uploaded_objects":  2,
+    "lfs_uploaded_bytes_approx":  361000000,
+    "tracked_files":  523,
+    "tracked_ignored_files":  0,
+    "current_lfs_bytes":  381246648,
+    "lfs_prune":  {
+                      "deleted_remote_verified":  326,
+                      "retained_current":  145,
+                      "not_verified_remote_preserved":  65,
+                      "git_directory_after_bytes":  13651589953,
+                      "history_rewritten":  false
+                  }
+}
