@@ -5,6 +5,7 @@
 #include "GameFramework/HUD.h"
 #include "GameFramework/SaveGame.h"
 #include "AlchemyDesignTools.h"
+#include "AlchemistSpriteAnimation.h"
 #include "AlchemyWorld.generated.h"
 
 class AStaticMeshActor;
@@ -48,7 +49,8 @@ struct FAlchemyShot {
     AStaticMeshActor* Body=nullptr;
     FVector Pos=FVector::ZeroVector, Velocity=FVector::ZeroVector;
     float Life=4, Damage=0;
-    bool Hostile=false;
+    bool Hostile=false, Potion=false, NewPotion=false;
+    float ReleaseDelay=0, Age=0;
     FLinearColor Color=FLinearColor::White;
     TWeakObjectPtr<UNiagaraComponent> Trail;
     TWeakObjectPtr<UNiagaraSystem> HitEffect;
@@ -59,7 +61,7 @@ struct FAlchemyDrop {
     FVector Pos=FVector::ZeroVector;
     int32 Kind=0, Count=1; // -1 currency, 0..5 materials, 6..8 elite chests
 };
-struct FAlchemyFX { AStaticMeshActor* Body=nullptr; float Life=0, Total=0; float Radius=0; };
+struct FAlchemyFX { AStaticMeshActor* Body=nullptr; float Life=0, Total=0; float Radius=0; bool PotionBreak=false,New=true; };
 struct FAlchemyObstacle { FVector2D Center; FVector2D Half; };
 struct FAlchemyDamageNumber {FVector Position; float Value=0,Life=.85f; int32 Lane=0;};
 USTRUCT()
@@ -138,6 +140,15 @@ public:
     FVector2D CombatHalfSize=FVector2D(7060,5330);
     ACameraActor* Camera=nullptr;
     AStaticMeshActor* Player=nullptr;
+    UPROPERTY() FAlchemistSpriteAnimation CharacterAnimation;
+    void UpdateCharacterVisual(float Delta,bool Moving);
+    void CharacterSmoke(float Delta);
+    void CharacterV3Smoke(float Delta);
+    void SpawnPotionBreak(FVector Position);
+    UPROPERTY() TObjectPtr<UTexture2D> PotionBreakAtlas;
+    int32 PotionBreakCount=0;
+    bool CharacterWalks[3]={false,false,false}, CharacterPending=false, CharacterReleased=false, CharacterHit=false, CharacterDodge=false;
+    float CharacterInitialHP=0;
     AStaticMeshActor* PlayerShadow=nullptr;
     UPROPERTY() TArray<TObjectPtr<AActor>> Scene;
     float SpawnCD=2.6f, NextElite=90, ContactCD=0, VisualTime=0;
@@ -171,7 +182,7 @@ public:
     bool FindSpawnPoint(int32 Type,FVector& Position);
     void SpawnWave();
     int32 Nearest(FVector Pos,float Range,const TArray<int32>& Exclude={}) const;
-    void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000,UNiagaraSystem* TrailSystem=nullptr,UNiagaraSystem* HitSystem=nullptr,float Lifetime=4,float EffectScale=1,float HitLife=.7f);
+    void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000,UNiagaraSystem* TrailSystem=nullptr,UNiagaraSystem* HitSystem=nullptr,float Lifetime=4,float EffectScale=1,float HitLife=.7f,bool Potion=false);
     void DamageEnemy(int32 Index,float Damage,FLinearColor Color=FLinearColor(1,.8f,.3f),UNiagaraSystem* HitSystem=nullptr,float EffectScale=1,float HitLife=.7f);
     void SlowEnemy(int32 Index,float Duration,float Factor);
     UNiagaraComponent* SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life);

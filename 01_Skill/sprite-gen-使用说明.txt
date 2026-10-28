@@ -1,0 +1,71 @@
+﻿sprite-gen 使用说明（Windows，2026-10-28）
+
+安装版本：3.5.0
+来源：https://github.com/aldegad/sprite-gen
+固定提交：419f02cd54b4181e33689759d4ee9c1ef0006301
+Skill 实体：D:\06_独立游戏\00_冒牌炼金术士\01_Skill\installed\sprite-gen
+源码留存：D:\06_独立游戏\00_冒牌炼金术士\01_Skill\sources\sprite-gen
+Codex 入口：C:\Users\60550\.codex\skills\sprite-gen（目录链接，实际读取 SSD 文件）
+Python 环境：实体目录下 .venv；以 pyproject.toml 的 Python >=3.11 为准，部分翻译版 README 的 3.10+ 已过时。
+
+一、直接在聊天使用
+下一轮输入 $sprite-gen，再描述目标。若技能列表未刷新，重新打开聊天或重启应用。
+可提供角色基准图，说明风格、朝向、动作、每帧尺寸、输出格式和游戏引擎。
+Skill 将选择并执行已有流水线，处理角色一致性、背景清理、逐帧提取、图集打包与运动检查。
+生成结果仍需检查：尤其是行走/奔跑的循环、脚部接地和配饰左右位置。
+
+二、Windows 命令行入口
+在本工作区 PowerShell 使用以下启动脚本，无需激活 venv：
+& '.\01_Skill\sprite-gen.ps1' --help
+& '.\01_Skill\sprite-gen.ps1' workflow --kind sprite
+& '.\01_Skill\sprite-gen.ps1' workflow --kind image
+启动脚本把配置、数据、临时目录设在本工作区 01_Skill 下，并临时提供本机已有 Codex CLI 的搜索路径；不修改系统 PATH。
+若直接运行 CLI，使用：
+& 'D:\06_独立游戏\00_冒牌炼金术士\01_Skill\installed\sprite-gen\.venv\Scripts\sprite-gen.exe' --help
+注意：直接调用 exe 不会自动应用启动脚本中的 SSD 配置位置。后续代理应优先使用启动脚本。
+
+三、常见用途
+1. 已有图片去底（本地处理，无需生成账号）：
+& '.\01_Skill\sprite-gen.ps1' cutout 'D:\素材\icon.png' --out '.\03_Build\sprite-gen\icon-alpha.png' --white-check
+2. 已有规则网格表切帧：
+& '.\01_Skill\sprite-gen.ps1' slice-sheet --sheet 'D:\素材\sheet.png' --chroma-key magenta --grid 3x2
+处理前查看对应 --help，并显式把输出放在工作区 SSD。
+3. 基准图到图集（先用 workflow 确认生成方式与访问）：
+& '.\01_Skill\sprite-gen.ps1' prepare --out-dir '.\03_Build\sprite-gen\alchemist' --character-id alchemist --base-image 'D:\素材\base.png'
+& '.\01_Skill\sprite-gen.ps1' gen-set --run-dir '.\03_Build\sprite-gen\alchemist' --provider codex
+& '.\01_Skill\sprite-gen.ps1' extract --run-dir '.\03_Build\sprite-gen\alchemist'
+& '.\01_Skill\sprite-gen.ps1' compose-atlas --run-dir '.\03_Build\sprite-gen\alchemist'
+& '.\01_Skill\sprite-gen.ps1' curation --run-dir '.\03_Build\sprite-gen\alchemist'
+最终常见产物为 sprite-sheet-alpha.png 与 manifest.json.frame_layout；curation 是可选的网页挑帧/微调工具。
+
+四、账号与视频依赖
+本地抠图、切帧、换色等不需要生成服务。
+图片生成可使用 codex、grok 或显式选择的 openai 提供方。CLI 登录状态与图片额度是两个事实。
+Grok 视频需要自己的登录或 XAI_API_KEY；视频处理还需要 ffmpeg、img2webp。
+RIFE 是循环修复组件，需要时再安装；不要把未安装这些组件说成视频链路已验证。
+OpenAI API/XAI API 可能单独计费；本次安装不调用生成接口、不保存密钥、不改默认提供方。
+访问不足时应询问用户，不能自行切换到计费提供方。
+
+五、三个可直接发送的请求
+1. $sprite-gen 用我提供的炼金术士基准图，规划待机、受击、攻击动画。先确认尺寸和生成方式，再生成透明图集，全部输出到当前 SSD 工作区。
+2. $sprite-gen 把我指定的图标图片去底为透明 PNG，保留边缘并输出白底检查图，不调用生成服务。
+3. $sprite-gen 检查我提供的精灵图集，切出各帧并给出动画预览，检查抖动和脚底对齐，使用已有素材完成。
+
+安装验证结果见同目录 sprite-gen-install.json 与 logs/sprite-gen；未进行实际模型生图/视频生成。
+本次安装是固定提交快照，未配置自动更新。
+
+本次实测结果：
+- Python 3.13.7，sprite-gen 3.5.0，Pillow 12.3.0，NumPy 2.5.4。
+- pip check、CLI --help、Windows 启动脚本 --help 全部通过。
+- 合成测试图 cutout 成功，已断言背景 alpha=0、主体 alpha=255；prepare 初始化通过。
+- Codex CLI 登录探测返回 codex-login（ChatGPT 登录）；图片生成权限和剩余额度未实测。
+- workflow 返回 needs-input：这是等待创作/提供方选择的正常状态，不是安装错误。
+- 当前启动环境 PATH 可找到 Node；找不到 ffmpeg、img2webp、rife-ncnn-vulkan。视频处理/循环修复尚未就绪，本次未安装这些可选组件。
+- SKILL.md 和 pyproject.toml 与固定提交的 Git 原始文件字节一致。
+- 安装验证脚本：scripts/check-sprite-gen-install.py；合成测试产物：03_Build/sprite-gen/_installation-check。
+
+2026-10-28 视频补齐更新：
+FFmpeg、libwebp/img2webp、RIFE 均已安装并验证；工具实体在 01_Skill/tools，RIFE 在 01_Skill/data/sprite-gen/rife。
+FFmpeg + WebP + RIFE 的证据分别见 video-tools-install.json、rife-windows-install.json。
+独立 Codex 会话生图没有工具访问；本次通过当前聊天原生 GPT 生图完成行素材，sprite-gen 完成后续提取/打包。
+已完成测试素材见 03_Build/sprite-gen/alchemist-20261028，实时播放 UI 检查受浏览器 URL 识别限制而未完成；MP4 已完整解码通过。

@@ -135,7 +135,7 @@ void AAlchemyHUD::DrawHUD() {
             Box(X-10,Y-6,280,48,Surface);Text(I==0?TEXT("[F] 强化台"):I==1?TEXT("[F] 配方图鉴"):TEXT("[F] 进入林地"),X,Y,22,Gold);
         }
     }
-    if(!World->Panel.IsEmpty()) {
+    if(!World->Panel.IsEmpty() && (!World->CharacterAnimation.Dead || World->CharacterAnimation.DeathFinished())) {
         Box(-OX/S,88,Canvas->SizeX/S,580,FLinearColor(.005f,.01f,.015f,.8f));Box(72,98,1136,550,Surface);Box(72,98,1136,4,Gold);
         const FString P=World->Panel;
         FString Title=P==TEXT("alchemy")?TEXT("炼金 · 战斗已暂停"):P==TEXT("codex")?TEXT("发现图鉴"):P==TEXT("skills")?TEXT("装备与储备"):P==TEXT("talents")?TEXT("永久强化"):P==TEXT("fonts")?TEXT("字体调试 · 即时预览"):P==TEXT("research")?TEXT("画面与可读性"):P==TEXT("level")?TEXT("选择关卡"):P==TEXT("victory")?TEXT("胜利 · 已结算"):P==TEXT("defeat")?TEXT("本局结束"):P==TEXT("confirmbuy")?TEXT("确认购买"):P==TEXT("confirmreturn")?TEXT("返回据点？"):P==TEXT("savefailed")?TEXT("保存失败"):TEXT("暂停");

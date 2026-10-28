@@ -2,6 +2,7 @@
 #include "Modules/ModuleManager.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/Texture2D.h"
 #include "Engine/Canvas.h"
 #include "Engine/Font.h"
 #include "Components/StaticMeshComponent.h"
@@ -106,7 +107,7 @@ void AAlchemyWorld::BeginPlay() {
     }
 #endif
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
-    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture"));
+    bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"));
     if(!LoadDesignConfig()) {
         SetActorTickEnabled(false);
 #if WITH_EDITOR
@@ -137,6 +138,7 @@ void AAlchemyWorld::BeginPlay() {
         }
         MigrateProgress(Played);
     }
+    PotionBreakAtlas=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Art/T_PotionBreakAtlas.T_PotionBreakAtlas"));
     Levels.Init(0,NumSkills());Levels[0]=1;
     ImpactFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyImpact.NS_AlchemyImpact"));
     BlastFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyBlast.NS_AlchemyBlast"));
@@ -159,6 +161,7 @@ void AAlchemyWorld::BeginPlay() {
     PP->Settings.bOverride_BloomIntensity=true; PP->Settings.BloomIntensity=0.35f;
     BuildScene(false); UpdateCamera(1); Message(TEXT("欢迎来到烛苔村。WASD 移动，靠近设施按 F。"));
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_READY UE5.8 HD2D research; W0 initial=8; cap=300"));
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyStartCombat")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) StartRun();
 }
 
 UMaterialInterface* AAlchemyWorld::Material(const FString& Name) {
@@ -274,6 +277,9 @@ void AAlchemyWorld::BuildScene(bool Combat) {
     }
     PlayerShadow=Mesh(TEXT("Sphere"),PlayerPos+FVector(0,0,5),FVector(0.85f,0.5f,0.04f),FLinearColor(0.015f,0.028f,0.025f));
     Player=Sprite(TEXT("Hero0_0"),PlayerPos,120,160);
+    const bool CharacterReady=CharacterAnimation.Initialize(this,Player->GetStaticMeshComponent());
+    ensureMsgf(CharacterReady,TEXT("Missing imported alchemist character assets"));
+    UpdateCharacterVisual(0,false);
 }
 
 bool AAlchemyWorld::Walkable(FVector P,float Radius) const {
@@ -548,11 +554,19 @@ int32 AAlchemyWorld::Nearest(FVector P,float Range,const TArray<int32>& Exclude)
     }
     return Result;
 }
-void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile,float Speed,UNiagaraSystem* TrailSystem,UNiagaraSystem* HitSystem,float Lifetime,float EffectScale,float HitLife) {
+void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile,float Speed,UNiagaraSystem* TrailSystem,UNiagaraSystem* HitSystem,float Lifetime,float EffectScale,float HitLife,bool Potion) {
     FAlchemyShot S; S.Pos=From; S.Velocity=(Target-From).GetSafeNormal2D()*Speed; S.Damage=Damage; S.Hostile=Hostile;
     S.Life=Lifetime;S.EffectScale=EffectScale;S.HitLife=HitLife;S.Color=Color;S.HitEffect=HitSystem?HitSystem:ImpactFX.Get();
-    S.Trail=SpawnVFX(TrailSystem?TrailSystem:TrailFX.Get(),From+FVector(0,0,65),Color,.6f*EffectScale,Lifetime+.1f);
-    S.Body=Mesh(TEXT("Sphere"),From+FVector(0,0,65),FVector(0.22f),Color); Shots.Add(S);
+    S.Trail=SpawnVFX(TrailSystem?TrailSystem:TrailFX.Get(),From+FVector(0,0,65),Color,.6f*EffectScale,Lifetime+(Potion?.35f:.1f));
+    S.Potion=Potion;S.NewPotion=Potion;S.ReleaseDelay=Potion?.25f:0;
+    if(Potion) {
+        const FVector D=(Target-From).GetSafeNormal2D();
+        CharacterAnimation.Throw(FVector2D(FVector::DotProduct(D,Camera->GetActorRightVector().GetSafeNormal2D()),FVector::DotProduct(D,Camera->GetActorForwardVector().GetSafeNormal2D())));
+        S.Body=Sprite(TEXT("PotionProjectile"),From+FVector(0,0,90),36,44);
+        S.Body->SetActorHiddenInGame(true);
+        if(S.Trail.IsValid()) S.Trail->SetVisibility(false);
+    } else S.Body=Mesh(TEXT("Sphere"),From+FVector(0,0,65),FVector(0.22f),Color);
+    Shots.Add(S);
 }
 UNiagaraComponent* AAlchemyWorld::SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life) {
     if(bSmoke || Scale<=0 || !System || !ParticleMaterial || NiagaraFX.Num()>=48) return nullptr;
@@ -598,7 +612,8 @@ int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color
 void AAlchemyWorld::Hurt(float Damage) {
     if(HurtInv>0 || DodgeInv>0 || HP<=0) return;
     HP=FMath::Max(0.f,HP-Damage); HurtInv=0.65f; Ring(PlayerPos,65,FLinearColor(0.7f,0.12f,0.1f));
-    if(HP<=0) EndRun(false);
+    if(HP<=0) {CharacterAnimation.Die();EndRun(false);}
+    else CharacterAnimation.Hit();
 }
 void AAlchemyWorld::Drop(FVector P,int Kind,int Count) {
     FAlchemyDrop D; D.Pos=P; D.Kind=Kind; D.Count=Count;
@@ -617,7 +632,7 @@ void AAlchemyWorld::CastSkills(float Dt) {
         float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]));
         int Hits=0;
         const FLinearColor Color=K.Color;
-        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,K.Range/K.ProjectileSpeed,K.EffectScale,K.HitLife);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
+        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,K.Range/K.ProjectileSpeed,K.EffectScale,K.HitLife,S==0);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
         else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,K.Radius,Damage,Color,K.Slow,K.Factor,K.CastEffect,K.HitEffect,K.EffectScale,K.CastLife,K.HitLife);
         else {
             TArray<int32> Used;
@@ -740,6 +755,8 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) Panel=Panel==TEXT("skills")?TEXT(""):TEXT("skills");
     if(bSmoke) SmokeCheck(Dt);
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke"))) CharacterSmoke(Dt);
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) CharacterV3Smoke(Dt);
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture"))) {CaptureTools(Dt);return;}
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture"))) {CaptureFeedback(Dt);return;}
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture"))) {
@@ -773,7 +790,7 @@ void AAlchemyWorld::Tick(float Dt) {
         if(CaptureStep==0 && VisualTime>2) {BuildScene(true);CameraPitch=90;ViewWidth=20000;bPerspective=false;CaptureStep++;}
         UpdateCamera(Dt);
         if(CaptureStep==1 && VisualTime>4) {FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence/LayoutA_Top.png"),false,false);CaptureStep++;}
-        else if(CaptureStep==2 && VisualTime>5) {CameraPitch=48;ViewWidth=2844;PlayerPos=DesignPosition(-35,-28);UpdateSprite(Player,TEXT("Hero0_0"),PlayerPos,120,160);PlayerShadow->SetActorLocation(PlayerPos);CaptureStep++;}
+        else if(CaptureStep==2 && VisualTime>5) {CameraPitch=48;ViewWidth=2844;PlayerPos=DesignPosition(-35,-28);UpdateCharacterVisual(0,false);PlayerShadow->SetActorLocation(PlayerPos);CaptureStep++;}
         else if(CaptureStep==3 && VisualTime>7) {FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence/LayoutA_Local.png"),false,false);CaptureStep++;}
         else if(CaptureStep==4 && VisualTime>9) {UE_LOG(LogTemp,Display,TEXT("ALCHEMY_LAYOUT_CAPTURE_DONE"));FPlatformMisc::RequestExit(false);CaptureStep++;}
         return;
@@ -782,7 +799,7 @@ void AAlchemyWorld::Tick(float Dt) {
         // Isolated interactive UI check: no real save load/write, no cheat path in ordinary play.
         if(CaptureStep==0 && VisualTime>2) {StartRun();Inventory={10,10,10,1,1,1};Panel=TEXT("alchemy");CaptureStep=1;}
     }
-    else if(bCapture) {
+    else if(bCapture && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) {
         const auto Capture=[this](const TCHAR* Name) {
             FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence")/Name,false,false);
         };
@@ -807,7 +824,7 @@ void AAlchemyWorld::Tick(float Dt) {
     UpdateFeedback(Dt);
     if(!Panel.IsEmpty()) {
         Player->SetActorHiddenInGame(false);
-        UpdateSprite(Player,TEXT("Hero0_0"),PlayerPos,120,160);
+        UpdateCharacterVisual(CharacterAnimation.Dead?Dt:0,false);
         for(auto& E:Enemies) {float Scale=E.Type==10?3:E.Type>=7?2:1; UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),FMath::Min(E.Type,9)),E.Pos,100*Scale,100*Scale);}
         return;
     }
@@ -819,10 +836,10 @@ void AAlchemyWorld::Tick(float Dt) {
     if(PC->WasInputKeyJustPressed(EKeys::SpaceBar) && DodgeCD<=0) {DodgeCD=2; DodgeTime=0.24f; DodgeInv=0.65f; DodgeDirection=LastDirection;}
     FVector Delta=Direction*500*(1+0.03f*Progress->Talents[2])*Dt;
     if(DodgeTime>0) {float Step=FMath::Min(Dt,DodgeTime); DodgeTime-=Step; Delta=DodgeDirection*(280/0.24f)*Step;}
+    const FVector PreviousPos=PlayerPos;
     PlayerPos=Move(PlayerPos,Delta);
-    const int Frame=Direction.IsNearlyZero()?0:int(VisualTime*9)%4;
-    UpdateSprite(Player,FString::Printf(TEXT("Hero%d_%d"),LastDirection.Y>0?1:0,Frame),PlayerPos+FVector(0,0,Direction.IsNearlyZero()?0:FMath::Sin(VisualTime*18)*2),120,160,FVector::DotProduct(LastDirection,Camera->GetActorRightVector())<0);
-    Player->SetActorHiddenInGame((HurtInv>0 || DodgeInv>0) && int(VisualTime*16)%2==0);
+    UpdateCharacterVisual(Dt,!PlayerPos.Equals(PreviousPos));
+    Player->SetActorHiddenInGame(!CharacterAnimation.Hurting && (HurtInv>0 || DodgeInv>0) && int(VisualTime*16)%2==0);
     PlayerShadow->SetActorLocation(PlayerPos+FVector(0,0,5));
     if(!bCombat) {
         if(PC->WasInputKeyJustPressed(EKeys::F)) {
@@ -872,7 +889,17 @@ void AAlchemyWorld::Tick(float Dt) {
     }
     if(!Panel.IsEmpty()) return;
     for(int i=Shots.Num()-1;i>=0;i--) {
-        auto& S=Shots[i]; S.Life-=Dt;
+        auto& S=Shots[i];
+        if(S.NewPotion) {S.NewPotion=false;continue;}
+        if(S.ReleaseDelay>0) {
+            S.ReleaseDelay-=Dt;
+            if(S.ReleaseDelay>0) continue;
+            S.Pos=PlayerPos;
+            S.Body->SetActorHiddenInGame(false);
+            if(S.Trail.IsValid()) S.Trail->SetVisibility(true);
+            UE_LOG(LogTemp,Display,TEXT("ALCHEMIST_POTION_RELEASE frame=%d time=%.3f"),CharacterAnimation.Frame,CharacterAnimation.Time);
+        }
+        S.Age+=Dt;S.Life-=Dt;
         // Segment substeps also protect fast projectile hits at lower frame rates.
         const int Steps=FMath::Max(1,FMath::CeilToInt(S.Velocity.Size()*Dt/20));
         for(int j=0;j<Steps && S.Life>0;j++) {
@@ -882,9 +909,14 @@ void AAlchemyWorld::Tick(float Dt) {
             else {int N=Nearest(S.Pos,55); if(N>=0) {DamageEnemy(N,S.Damage,S.Color,S.HitEffect.Get(),S.EffectScale,S.HitLife);SlowEnemy(N,S.Slow,S.SlowFactor);S.Life=0;}}
         }
         if(!Panel.IsEmpty()) return;
-        S.Body->SetActorLocation(S.Pos+FVector(0,0,65));
-        if(S.Trail.IsValid()) S.Trail->SetWorldLocation(S.Pos+FVector(0,0,65));
-        if(S.Life<=0) {if(S.Trail.IsValid()) S.Trail->DestroyComponent();S.Body->Destroy(); Shots.RemoveAtSwap(i);}
+        if(S.Potion) {
+            const float Arc=65.f*FMath::Sin(PI*FMath::Min(1.f,S.Age/.6f));
+            S.Body->SetActorLocation(S.Pos+FVector(0,0,90+Arc));
+            const FQuat Billboard=FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),-Camera->GetActorForwardVector()).ToQuat();
+            S.Body->SetActorRotation((Billboard*FQuat(FVector::UpVector,S.Age*8)).Rotator());
+        } else S.Body->SetActorLocation(S.Pos+FVector(0,0,65));
+        if(S.Trail.IsValid()) S.Trail->SetWorldLocation(S.Body->GetActorLocation());
+        if(S.Life<=0) {if(S.Potion) SpawnPotionBreak(S.Pos);if(S.Trail.IsValid()) S.Trail->DestroyComponent();S.Body->Destroy(); Shots.RemoveAtSwap(i);}
     }
     for(int i=Enemies.Num()-1;i>=0;i--) if(Enemies[i].HP<=0) {
         auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
@@ -912,8 +944,15 @@ void AAlchemyWorld::Tick(float Dt) {
         D.Body->Destroy(); Drops.RemoveAtSwap(i);
     }
     for(int i=Effects.Num()-1;i>=0;i--) {
-        auto& E=Effects[i]; E.Life-=Dt;
-        if(E.Total<1) {float Scale=FMath::Lerp(0.8f,1.1f,1-E.Life/E.Total); E.Body->SetActorScale3D(FVector(E.Radius/50*Scale,E.Radius/50*Scale,0.015f));}
+        auto& E=Effects[i];
+        if(E.PotionBreak && E.New) {E.New=false;continue;}
+        E.Life-=Dt;
+        if(E.PotionBreak) {
+            auto M=Cast<UMaterialInstanceDynamic>(E.Body->GetStaticMeshComponent()->GetMaterial(0));
+            M->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(FMath::Min(3,FMath::FloorToInt((E.Total-E.Life)*12))/4.f,0,0,0));
+            E.Body->SetActorRotation(FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),-Camera->GetActorForwardVector()).Rotator());
+        }
+        else if(E.Total<1) {float Scale=FMath::Lerp(0.8f,1.1f,1-E.Life/E.Total); E.Body->SetActorScale3D(FVector(E.Radius/50*Scale,E.Radius/50*Scale,0.015f));}
         if(E.Life<=0) {E.Body->Destroy(); Effects.RemoveAtSwap(i);}
     }
     Scene.RemoveAll([](const TObjectPtr<AActor>& A){return !IsValid(A);});
@@ -1093,3 +1132,33 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
 #include "AlchemyHUD.inl"
 #include "AlchemyFeedback.inl"
 #include "AlchemyToolsChecks.inl"
+
+void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
+    if(!Player || !Camera) return;
+    const FVector Right=Camera->GetActorRightVector(), Forward=Camera->GetActorForwardVector();
+    const FVector2D Direction(FVector::DotProduct(LastDirection,Right.GetSafeNormal2D()),FVector::DotProduct(LastDirection,Forward.GetSafeNormal2D()));
+    CharacterAnimation.Advance(Delta,Direction,Moving);
+    const auto Rotation=FRotationMatrix::MakeFromXZ(Right,bUprightSprites?FVector(0,-1,0):-Forward);
+    const float Size=220;
+    // Plane UV V grows downward: its local Y points opposite the visual up direction.
+    Player->SetActorLocation(PlayerPos-Rotation.GetUnitAxis(EAxis::Y)*(104.f/256*Size));
+    Player->SetActorRotation(Rotation.Rotator());
+    Player->SetActorScale3D(FVector(CharacterAnimation.Mirror?-Size/100:Size/100,Size/100,1));
+}
+
+#include "AlchemistCharacterSmoke.inl"
+
+void AAlchemyWorld::SpawnPotionBreak(FVector Position) {
+    if(!PotionBreakAtlas || !CharacterAnimation.Material) return;
+    auto Body=Mesh(TEXT("Plane"),Position+FVector(0,0,65),FVector(1.6f,1.6f,1),FLinearColor::White);
+    Body->GetStaticMeshComponent()->SetCastShadow(false);
+    Body->SetActorRotation(FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),-Camera->GetActorForwardVector()).Rotator());
+    auto Base=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Characters/Alchemist/M_AlchemistSprite.M_AlchemistSprite"));
+    auto M=UMaterialInstanceDynamic::Create(Base,this);
+    M->SetTextureParameterValue(TEXT("SpriteSheet"),PotionBreakAtlas);
+    M->SetVectorParameterValue(TEXT("UVScale"),FLinearColor(.25f,1,0,0));
+    M->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(0,0,0,0));
+    Body->GetStaticMeshComponent()->SetMaterial(0,M);
+    FAlchemyFX FX;FX.Body=Body;FX.Life=FX.Total=4.f/12;FX.PotionBreak=true;Effects.Add(FX);PotionBreakCount++;
+}
+#include "AlchemistCharacterV3Smoke.inl"

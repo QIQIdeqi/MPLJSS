@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-28",
+  "version": "3.5.0",
+  "commit": "419f02cd54b4181e33689759d4ee9c1ef0006301",
+  "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+  "interpreter": "D:\\06_独立游戏\\00_冒牌炼金术士\\01_Skill\\installed\\sprite-gen\\.venv\\Scripts\\python.exe",
+  "numpy": "2.5.4",
+  "pillow": "12.3.0",
+  "skill_entry_readable": true,
+  "cli_help": "passed",
+  "offline_cutout_alpha": "passed",
+  "offline_prepare": "passed",
+  "workflow_status": "needs-input",
+  "codex_login": {
+    "source": "codex-login",
+    "reason": ""
+  },
+  "optional_binaries": {
+    "ffmpeg": null,
+    "img2webp": null,
+    "node": "C:\\Program Files\\nodejs\\node.EXE",
+    "rife-ncnn-vulkan": null
+  },
+  "upstream_hashes": {
+    "SKILL.md": "5976a922dbe961e01abd67294de68c152817cd3fd8324152de1790e41f4cba21",
+    "pyproject.toml": "c855dc2cdd2d05488755dce2b701f1fdf470e2eafd9a706d8276c2248ddeae7b"
+  },
+  "generation": "not attempted"
+}

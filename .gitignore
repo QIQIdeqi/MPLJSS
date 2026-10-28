@@ -30,3 +30,13 @@
 # Local recoverable build archives and private save backups
 04_Archive/
 memory/archives/2026-10-27-old-build-saves/
+
+# SSD-local sprite-gen runtime; restore from pinned manifests and install scripts
+01_Skill/installed/sprite-gen/
+01_Skill/cache/
+01_Skill/config/
+01_Skill/data/
+01_Skill/tmp/
+01_Skill/tools/
+# Generated editor file-access ordering; not a source asset or required game build input
+02_Prototype/AlchemyHD2D/Build/Windows/FileOpenOrder/EditorOpenOrder.log

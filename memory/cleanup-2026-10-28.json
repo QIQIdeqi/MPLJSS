@@ -1,0 +1,103 @@
+{
+    "time":  "2026-10-28T22:43:09+08:00",
+    "project":  "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D",
+    "result":  "PASS",
+    "mode":  "SendToRecycleBin",
+    "removed_from_project_files":  505,
+    "removed_from_project_bytes":  6133962909,
+    "removed_from_project_GiB":  5.713,
+    "preserved":  [
+                      "Source",
+                      "Config",
+                      "Content",
+                      "ArtSource",
+                      "Binaries",
+                      "Docs",
+                      "Evidence",
+                      "Tools",
+                      "Saved/SaveGames",
+                      "Saved/Autosaves",
+                      "Saved/Config",
+                      "Saved/Screenshots"
+                  ],
+    "targets":  [
+                    {
+                        "path":  "Intermediate",
+                        "files":  201,
+                        "bytes":  5097855999,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Intermediate_UnicodeAttempt",
+                        "files":  68,
+                        "bytes":  14476333,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "DerivedDataCache",
+                        "files":  5,
+                        "bytes":  1627828,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/Cooked",
+                        "files":  30,
+                        "bytes":  40668400,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/StagedBuilds",
+                        "files":  48,
+                        "bytes":  948292206,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/Temp",
+                        "files":  81,
+                        "bytes":  685516,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/Logs",
+                        "files":  38,
+                        "bytes":  7680467,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/Crashes",
+                        "files":  8,
+                        "bytes":  3620038,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/MaterialStats",
+                        "files":  13,
+                        "bytes":  148894,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/ShaderDebugInfo",
+                        "files":  3,
+                        "bytes":  114795,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/Shaders",
+                        "files":  8,
+                        "bytes":  17401088,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Saved/UnrealBuildTool",
+                        "files":  1,
+                        "bytes":  132,
+                        "recycled":  true
+                    },
+                    {
+                        "path":  "Build/Windows/FileOpenOrder/EditorOpenOrder.log",
+                        "files":  1,
+                        "bytes":  1391213,
+                        "recycled":  true
+                    }
+                ]
+}

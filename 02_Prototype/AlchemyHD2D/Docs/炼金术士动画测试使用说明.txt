@@ -1,0 +1,24 @@
+﻿炼金术士三朝向动画测试
+
+工程：当前 AlchemyHD2D / UE 5.8.4。
+关卡：/Game/Tests/AlchemistSpriteLab/L_AlchemistSpriteLab
+角色蓝图：/Game/Tests/AlchemistSpriteLab/BP_TestAlchemist
+
+直接双击工程根目录“启动炼金术士动画测试.cmd”即可进入独立测试窗口。
+也可在编辑器打开上述测试关卡，按 Play，点击视口捕获输入。
+WASD / 方向键：在测试场地移动并切换朝向。
+空格 / 鼠标左键：播放攻击，结束后自动回到待机。
+数字1：正面；2：背面；3：朝右侧面；4：朝左（侧面镜像）。
+
+包含侧面/正面/背面的待机4帧（4fps）、攻击6帧（8fps）。
+移动时暂用待机动画；本次没有生成走路动画、攻击伤害或项目正式战斗接入。
+场地边界限定移动范围。攻击期间停止移动并锁定朝向，便于观察动作。
+原始透明PNG、图集与动画清单在工作区 03_Build/sprite-gen/alchemist-20261028。
+正面素材在 front，背面素材在 back，侧面在 run。
+纹理使用Nearest过滤、关闭MipMap；角色使用不受灯光影响的Alpha 透明材质。
+测试关卡通过独立GameMode启动，原Research关卡和正式角色均未替换。
+
+验证记录在 Evidence/SpriteLab、Evidence/sprite-lab-build.log、sprite-lab-import-final.log、sprite-lab-render.log。
+
+
+素材限制：背面待机的呼吸幅度较小，自动检查给出低运动警告；属于测试素材。

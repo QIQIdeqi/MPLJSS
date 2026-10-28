@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ffmpeg",
+    "source": "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.2-essentials_build.zip",
+    "sha256": "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba",
+    "path": "D:\\06_\u72ec\u7acb\u6e38\u620f\\00_\u5192\u724c\u70bc\u91d1\u672f\u58eb\\01_Skill\\tools\\ffmpeg"
+  },
+  {
+    "name": "libwebp",
+    "source": "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0-windows-x64.zip",
+    "sha256": "48886f506b21f62e4661f0f4cbfca19800897c385128e8902542d29a950c93f1",
+    "path": "D:\\06_\u72ec\u7acb\u6e38\u620f\\00_\u5192\u724c\u70bc\u91d1\u672f\u58eb\\01_Skill\\tools\\libwebp"
+  }
+]

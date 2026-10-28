@@ -130,6 +130,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="操作结果") FString Status;
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="1 读取全部图片素材")) void ImportPalette();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="2 一键随机生成（保留锁定格）")) void Randomize();
+    UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="按当前Seed重新生成（复现布局）")) void GenerateFromSeed();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="3 在光标格子应用笔刷并锁定")) void PaintCell();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="4 刷新全部格子显示")) void RefreshCells();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="技能工具",meta=(DisplayName="打开技能与特效表")) void OpenSkills();

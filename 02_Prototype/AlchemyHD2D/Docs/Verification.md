@@ -130,3 +130,17 @@ F7或面板右上入口打开字体调试。小号固定100%，中号/大号默�
 
 ### 2026-10-28 解锁后原生编辑器点击复核
 实际点击通过：随机生成、视口选择单格与位置修改、四张原生DataTable入口。测试改动已撤销，地图及表资产未修改。首屏镜头错误由Python Rotator位置参数顺序导致，现以pitch/yaw/roll明确命名；预览灯同步修正，重新启动后Lit模式地图可见。此前“桌面锁屏、点击未测”是历史状态，此项现已补验。
+
+### 随机按钮自动换种子
+Randomize每次自动生成不同于上次的Seed；GenerateFromSeed按当前Seed复现。编辑器编译成功，TestDesignTools-reroll.log与designer-tests.txt共9项检查PASS（含new_seed_per_click），锁格与原有数据表检查通过。使用说明已更新。
+
+### 2026-10-28 斜俯视镜头最终验收
+- Editor与Win64完整BuildCookRun成功；最终包camera-packaged-smoke.log包含ALCH002_TEST_PASS、shared_oblique_camera_preset和ALCHEMY_SMOKE_PASS，LayoutCheck涵盖边界27个生成点屏外投影。
+- TestDesignTools-camera.log及designer-tests.txt：10项编辑检查PASS，含camera_settings_save_reload和13按钮元数据校验。
+- 最终包1920x1080实际RHI捕获PASS；已直接查看Camera_Oblique_Combat_1080.png。编辑器恢复预览按钮真实点击通过，Camera_Editor_Preview.png展示参数与视口。
+- 最终参数50°俯角/35°水平FOV/3200cm，透视与竖直角色；原配色保留。源参考画面不构成精确参数测量。现有2D片和地格不会因镜头调整自动获得参考图中的悬崖与完整立体美术。
+- 校验值及边界见Evidence/camera-final-verification.json；ZIP已刷新。未做远端推送。
+
+### 当前生效：用户要求恢复此前视角（2026-10-28）
+本次50°透视/竖直角色与共享镜头预览已撤回。当前游戏48°正交、宽2844cm、角色面向相机；编辑45°布局总览。自动换Seed和复现功能保留，用户地图/技能改动保留。
+Editor与Win64打包成功，最终包Smoke与重新捕获的1080p旧视角画面通过。9项编辑测试最终PASS；最初CSV导出受旧文件写入失败影响，已改用新路径并重跑，通过标记见TestDesignTools-camera-revert-final.log。当前证据camera-revert-final-verification.json；前次镜头验证仅历史记录，不再代表当前版本。

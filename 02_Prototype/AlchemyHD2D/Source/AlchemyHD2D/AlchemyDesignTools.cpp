@@ -13,6 +13,7 @@
 #if WITH_EDITOR
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Editor.h"
+
 #include "FileHelpers.h"
 #include "ScopedTransaction.h"
 #include "Subsystems/AssetEditorSubsystem.h"
@@ -116,6 +117,16 @@ void AAlchemyLevelDesigner::ApplyBrush(AAlchemyTileCell* C,int32 I) {
 void AAlchemyLevelDesigner::Randomize() {
 #if WITH_EDITOR
     if(!GetWorld() || GetWorld()->IsGameWorld()) return;
+    FScopedTransaction Undo(NSLOCTEXT("Alchemy","RerollGrid","Randomize seed and grid"));Modify();
+    const int32 Previous=Seed;
+    Seed=static_cast<int32>(FGuid::NewGuid().A & MAX_int32);
+    if(Seed==Previous) Seed^=1;
+    GenerateFromSeed();
+#endif
+}
+void AAlchemyLevelDesigner::GenerateFromSeed() {
+#if WITH_EDITOR
+    if(!GetWorld() || GetWorld()->IsGameWorld()) return;
     float Sum=0;for(const auto& B:Palette) Sum+=FMath::Max(0.f,B.RandomWeight);
     if(Sum<=0) {Status=TEXT("请先读取素材，并给至少一个笔刷设置RandomWeight");return;}
     FScopedTransaction Undo(NSLOCTEXT("Alchemy","GenerateGrid","Generate alchemy grid"));Modify();GetLevel()->Modify();
@@ -157,7 +168,7 @@ bool AAlchemyLevelDesigner::ValidateLibrary() {
     TArray<FAlchemySkillRow> S;TArray<FAlchemyRecipeRow> R;TArray<FAlchemyChainRow> C;TArray<FAlchemyQualityRow> Q;FString Error;
     bool OK=AlchemyDesign::ReadTables(SkillTable,RecipeTable,ChainTable,QualityTable,S,R,C,Q,Error);
 #if WITH_EDITOR
-    if(OK) for(const TCHAR* Name:{TEXT("ImportPalette"),TEXT("Randomize"),TEXT("PaintCell"),TEXT("RefreshCells"),TEXT("OpenSkills"),TEXT("OpenRecipes"),TEXT("OpenChains"),TEXT("OpenQuality"),TEXT("ValidateDesign"),TEXT("CreateStarterTables"),TEXT("SaveDesign")}) {
+    if(OK) for(const TCHAR* Name:{TEXT("ImportPalette"),TEXT("Randomize"),TEXT("GenerateFromSeed"),TEXT("PaintCell"),TEXT("RefreshCells"),TEXT("OpenSkills"),TEXT("OpenRecipes"),TEXT("OpenChains"),TEXT("OpenQuality"),TEXT("ValidateDesign"),TEXT("CreateStarterTables"),TEXT("SaveDesign")}) {
         UFunction* F=FindFunction(FName(Name));
         if(!F || !F->GetBoolMetaData(TEXT("CallInEditor")) || F->ParmsSize!=0) {OK=false;Error=FString::Printf(TEXT("编辑按钮%s不可见：须CallInEditor且参数空间为0"),Name);break;}
     }
