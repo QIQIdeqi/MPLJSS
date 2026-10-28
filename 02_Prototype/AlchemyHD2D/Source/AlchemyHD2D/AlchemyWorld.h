@@ -29,6 +29,10 @@ public:
     UPROPERTY() float UITextScale=1;
     UPROPERTY() float MediumTextScale=.9f;
     UPROPERTY() float LargeTextScale=.72f;
+    // TALENT-002: three one-shot unlock nodes (no levels).
+    UPROPERTY() bool RefreshUnlocked=false;
+    UPROPERTY() bool DropRateUnlocked=false;
+    UPROPERTY() bool StartMaterialUnlocked=false;
     float FontSize(float Size) const { return Size*(Size<=18?1.f:Size<26?MediumTextScale:LargeTextScale); }
 };
 
@@ -92,6 +96,15 @@ public:
     int32 Kills=0, RunCoins=0, CraftCount=0, ChainCount=0, ResultCoins=0, PendingTalent=-1, SelectedBag=-1;
     TArray<int32> Inventory={0,0,0,0,0,0}, Selected={0,0,0,0,0,0};
     TArray<int32> Levels, Equipped={0}, Bag;
+    // RESULT-001: pending craft result before accept, plus one-shot reroll state.
+    int32 PendingResultSkill=-1, PendingResultCombination=-1, PendingResultTotal=0;
+    bool PendingIsNuclear=false, PendingRefreshed=false;
+    // ALCH-003: nuclear special result only kills normal enemies, then shows a dedicated result page.
+    // EXP-001: run-local level/xp and the seven in-run attribute stacks.
+    int32 RunLevel=1; float RunXP=0; int32 RunAttrs[7]={0,0,0,0,0,0,0};
+    int32 LevelupChoices[3]={-1,-1,-1};
+    // TALENT-002 start material: chosen once per run before entering combat.
+    int32 StartMaterialChoice=-1;
     bool bTutorialSupplyDone=false;
     int32 TutorialSkill=-1, CodexPage=0;
     bool TutorialActive() const;
@@ -178,6 +191,17 @@ public:
     void Message(FString Text);
     bool SaveProgress();
     bool Craft();
+    void TriggerNuclear();
+    void AcceptPendingResult();
+    void RerollPendingResult();
+    int32 RequiredXP(int32 Level) const;
+    void GrantXP(float Amount);
+    void ApplyRunAttr(int32 AttrIndex);
+    bool TalentNodeUnlocked(int32 Node) const;
+    bool TalentNodeDone(int32 Node) const;
+    void BuyTalentNode(int32 Node);
+    FString ChainHintFor(int32 Skill) const;
+    float MaterialDropChance() const;
     void SpawnEnemy(int32 Type);
     bool FindSpawnPoint(int32 Type,FVector& Position);
     void SpawnWave();

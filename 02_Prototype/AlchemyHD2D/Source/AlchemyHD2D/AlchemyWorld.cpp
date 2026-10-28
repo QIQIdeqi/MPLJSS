@@ -49,6 +49,8 @@ const int32 CombinationSkills[7][3]={{10,1,5},{13,14,15},{16,3,17},{19,6,12},{11
 const int32 CombinationMasks[]={1,2,4,3,5,6,7};
 const TCHAR* CombinationNames[]={TEXT("火粉反应"),TEXT("露水反应"),TEXT("魔法反应"),TEXT("火露混合"),TEXT("火魔混合"),TEXT("露魔混合"),TEXT("三料混合")};
 const float QualityWeights[8][3]={{70,20,10},{65,22,13},{60,25,15},{50,30,20},{45,32,23},{40,33,27},{35,34,31},{30,35,35}};
+// ALCH-003: special (nuclear) proc chance by total input 3..10, linear 5% -> 1%.
+const float SpecialProcChance[8]={5.00f,4.43f,3.86f,3.29f,2.71f,2.14f,1.57f,1.00f};
 using ECast=EAlchemyCast;
 constexpr auto Bolt=ECast::Bolt,Direct=ECast::Direct,SelfArea=ECast::SelfArea,TargetArea=ECast::TargetArea,Bounce=ECast::Bounce;
 struct FSkillConfig {float Damage,CD,Range,Radius,Slow,Factor; ECast Cast; int32 Targets;};
@@ -82,6 +84,20 @@ const float EnemyContact[]={6,7,8,6,10,7,11,12,8,14,12};
 const float TuneContact[]={5,6,7,5,9,6,9};
 const int32 Prices[4][5]={{60,90,130,180,240},{80,120,170,230,300},{70,100,140,190,250},{50,80,120,170,230}};
 const TCHAR* TalentNames[]={TEXT("生命强化"),TEXT("伤害强化"),TEXT("移动强化"),TEXT("吸引范围")};
+// TALENT-002: linear talent sequence of 7 nodes. Attribute nodes map to Talents[0..3];
+// one-shot nodes map to Progress bool flags. attrCost = index into Prices, or -1 for one-shot.
+// oneShot cost is the unlock price.
+struct FAlchemyTalentNode {int32 AttrIndex=-1; int32 OneShotCost=-1; const TCHAR* Name=nullptr;};
+const FAlchemyTalentNode TalentSequence[]={
+    {0,-1,TEXT("生命强化")},
+    {1,-1,TEXT("伤害强化")},
+    {-1,180,TEXT("技能刷新")},
+    {2,-1,TEXT("移动强化")},
+    {-1,160,TEXT("材料掉率提升")},
+    {3,-1,TEXT("吸引范围")},
+    {-1,220,TEXT("开局高级材料")}
+};
+constexpr int32 TalentNodeCount=7;
 const FLinearColor Gold(0.82f,0.58f,0.25f), Teal(0.18f,0.75f,0.65f), Ink(0.025f,0.045f,0.06f), Muted(0.5f,0.62f,0.63f);
 // Layout A: design X is screen-right, design Y is screen-down; default camera yaw is 90.
 // Rows: design left/top/width/height in units (1 unit = 100 cm).
@@ -440,6 +456,13 @@ void AAlchemyWorld::StartRun() {
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
     Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
     TutorialSkill=-1;bTutorialSupplyDone=false;
+    // RESULT-001/EXP-001 run-local state resets.
+    PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=0; PendingIsNuclear=false; PendingRefreshed=false;
+    RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
+    // TALENT-002 start material: if unlocked, grant the chosen elite material once into run inventory.
+    if(Progress->StartMaterialUnlocked && StartMaterialChoice>=0 && StartMaterialChoice<3) {
+        Inventory[3+StartMaterialChoice]=1;
+    }
     MaxHP=(bTune001B?120:100)+Progress->Talents[0]*10; HP=MaxHP;
     DodgeCD=DodgeTime=HurtInv=DodgeInv=0; SpawnCD=2.6f; NextElite=90; EliteIndex=0;
     for(float& T:SkillCD) T=0;
@@ -452,6 +475,9 @@ void AAlchemyWorld::StartRun() {
 void AAlchemyWorld::EndRun(bool Won) {
     if(bRunEnded) return;
     bRunEnded=true; bWon=Won;
+    // EXP-001/PAUSE-001: clear run-local xp/attributes and pending results on run end.
+    RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
+    PendingResultSkill=-1; PendingIsNuclear=false; StartMaterialChoice=-1;
     const int Old=Progress->Coins; Progress->Coins+=RunCoins;
     if(!SaveProgress()) { Progress->Coins=Old; Panel=TEXT("savefailed"); return; }
     ResultCoins=RunCoins; RunCoins=0; Panel=Won?TEXT("victory"):TEXT("defeat");
@@ -492,15 +518,165 @@ bool AAlchemyWorld::CraftOptions(TArray<int32>& Options,TArray<float>& WeightsOu
 bool AAlchemyWorld::Craft() {
     TArray<int32> Options;TArray<float> WeightsOut;FString Reason;int Combination;
     if(!CraftOptions(Options,WeightsOut,Reason,Combination)) {Message(Reason);return false;}
+    // Deduct materials exactly once at submit time (ALCH-001/ALCH-002).
+    for(int i=0;i<6;i++) Inventory[i]-=Selected[i];
+    int Total=0;for(int i=0;i<6;i++) Total+=Selected[i];
+    // ALCH-003: special (nuclear) proc only applies to normal-material free-pour alchemy (Combination>=0),
+    // never to elite fixed recipes.
+    const bool EligibleSpecial = Combination>=0 && !TutorialActive();
+    Selected={0,0,0,0,0,0};
+    // ALCH-003: roll special (nuclear) proc first; if it fires, skip normal quality roll.
+    const bool Special=EligibleSpecial && Random.FRand()*100 < SpecialProcChance[FMath::Clamp(Total-3,0,7)];
+    if(Special) {
+        CraftCount++;
+        PendingIsNuclear=true; PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=Total;
+        PendingRefreshed=false;
+        TriggerNuclear();
+        Panel=TEXT("result");
+        return true;
+    }
+    // Normal quality roll among the receive-able candidates.
     float Roll=Random.FRand()*100;int Match=Options.Last();
     for(int I=0;I<Options.Num();I++) {Roll-=WeightsOut[I];if(Roll<0) {Match=Options[I];break;}}
-    for(int i=0;i<6;i++) Inventory[i]-=Selected[i];
+    // RESULT-001: stage the result for the dedicated result page; do not equip yet.
+    PendingResultSkill=Match; PendingResultCombination=Combination; PendingResultTotal=Total;
+    PendingIsNuclear=false; PendingRefreshed=false;
+    CraftCount++;
+    Panel=TEXT("result");
+    return true;
+}
+
+void AAlchemyWorld::TriggerNuclear() {
+    // ALCH-003: instantly kill every surviving normal enemy (types 0..6), one death event each.
+    // Elites (7..9) and the final boss (10) are untouched. Kill, stat and drops all run normally.
+    int Cleared=0;
+    for(int i=Enemies.Num()-1;i>=0;i--) {
+        if(Enemies[i].HP<=0 || Enemies[i].Type>=7) continue;
+        auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++; Cleared++;
+        SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
+        TutorialSupply(E.Pos);
+        // EXP-001: normal enemy always drops one XP orb (Kind -2).
+        Drop(E.Pos,-2,E.Type);
+        if(Random.FRand()<0.7f) Drop(E.Pos,-1);
+        if(Random.FRand()<MaterialDropChance()) {float R=Random.FRand(); Drop(E.Pos,R<0.4f?0:R<0.75f?1:2);}
+    }
+    Message(FString::Printf(TEXT("核弹炼金！清除普通怪 ×%d"),Cleared));
+}
+
+void AAlchemyWorld::AcceptPendingResult() {
+    if(PendingIsNuclear) {Panel.Empty(); PendingIsNuclear=false; return;}
+    if(PendingResultSkill<0) {Panel.Empty();return;}
+    const int Match=PendingResultSkill;
     if(Levels[Match]==0) { if(Equipped.Num()<6) Equipped.Add(Match); else Bag.Add(Match); }
-    Levels[Match]++; CraftCount++; Selected={0,0,0,0,0,0};
-    if(Combination>=0) Progress->Combinations.AddUnique(Combination);
+    Levels[Match]++;
+    if(PendingResultCombination>=0) Progress->Combinations.AddUnique(PendingResultCombination);
     if(TutorialActive()) {TutorialSkill=Match;bTutorialSupplyDone=true;}
     Progress->Recipes.AddUnique(Match); SaveProgress();
-    Message(FString::Printf(TEXT("炼制成功：%s · Lv.%d"),SkillName(Match),Levels[Match])); return true;
+    Message(FString::Printf(TEXT("已接收：%s · Lv.%d"),SkillName(Match),Levels[Match]));
+    PendingResultSkill=-1; PendingResultCombination=-1; PendingIsNuclear=false; Panel.Empty();
+}
+
+void AAlchemyWorld::RerollPendingResult() {
+    // RESULT-001: one reroll per craft, no extra cost, same combination & total, excludes current result.
+    if(PendingIsNuclear || PendingRefreshed || PendingResultSkill<0 || PendingResultCombination<0) return;
+    TArray<int32> Options;TArray<float> W;
+    // Temporarily restore the staged total's weight row via combination + total.
+    const int Total=PendingResultTotal, C=PendingResultCombination;
+    if(Total<3 || Total>10 || C<0 || C>=7) return;
+    for(int Q=0;Q<3;Q++) {
+        int S=CombinationSkill(C,Q);
+        if(S==PendingResultSkill) continue; // exclude the current staged result
+        if(Levels[S]>=5 || (Levels[S]==0 && Equipped.Num()>=6 && Bag.Num()>=6)) continue;
+        Options.Add(S); W.Add(QualityWeight(Total-3,Q));
+    }
+    if(Options.IsEmpty()) {Message(TEXT("没有其他可接收结果，无法刷新"));return;}
+    float Sum=0;for(float x:W) Sum+=x;
+    float Roll=Random.FRand()*Sum;int Match=Options.Last();
+    for(int I=0;I<Options.Num();I++) {Roll-=W[I];if(Roll<0){Match=Options[I];break;}}
+    PendingResultSkill=Match; PendingRefreshed=true;
+    Message(TEXT("已刷新技能结果"));
+}
+
+int32 AAlchemyWorld::RequiredXP(int32 Level) const {
+    return FMath::RoundToInt(30.f + 15.f*(Level-1) + 2.f*(Level-1)*(Level-1));
+}
+
+void AAlchemyWorld::GrantXP(float Amount) {
+    RunXP += Amount * (1.f + 0.10f * RunAttrs[5]);
+    while(RunXP >= RequiredXP(RunLevel)) {
+        RunXP -= RequiredXP(RunLevel);
+        RunLevel++;
+        // EXP-001: roll three distinct, not-maxed attribute choices.
+        static const int32 MaxLayers[7]={5,5,5,5,5,5,3};
+        TArray<int32> Pool;
+        for(int A=0;A<7;A++) if(RunAttrs[A]<MaxLayers[A]) Pool.Add(A);
+        LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;
+        for(int I=0;I<3 && Pool.Num()>0;I++) {
+            int Pick=Pool[Random.RandRange(0,Pool.Num()-1)];
+            LevelupChoices[I]=Pick; Pool.Remove(Pick);
+        }
+        Panel=TEXT("levelup");
+    }
+}
+
+void AAlchemyWorld::ApplyRunAttr(int32 AttrIndex) {
+    if(AttrIndex<0 || AttrIndex>=7) return;
+    RunAttrs[AttrIndex]++;
+    if(AttrIndex==0) { MaxHP += 15; HP = FMath::Min(HP+15, MaxHP); }
+}
+
+bool AAlchemyWorld::TalentNodeUnlocked(int32 Node) const {
+    if(Node<0 || Node>=TalentNodeCount) return false;
+    if(Node==0) return true;
+    return TalentNodeDone(Node-1);
+}
+bool AAlchemyWorld::TalentNodeDone(int32 Node) const {
+    if(Node<0 || Node>=TalentNodeCount) return false;
+    const auto& N=TalentSequence[Node];
+    if(N.AttrIndex>=0) return Progress->Talents[N.AttrIndex]>=5; // attribute maxed = fully bought
+    switch(N.OneShotCost) {
+        case 180: return Progress->RefreshUnlocked;
+        case 160: return Progress->DropRateUnlocked;
+        case 220: return Progress->StartMaterialUnlocked;
+        default: return false;
+    }
+}
+void AAlchemyWorld::BuyTalentNode(int32 Node) {
+    if(Node<0 || Node>=TalentNodeCount || !TalentNodeUnlocked(Node) || TalentNodeDone(Node)) return;
+    const auto& N=TalentSequence[Node];
+    int32 Cost=0;
+    if(N.AttrIndex>=0) { int L=Progress->Talents[N.AttrIndex]; Cost=Prices[N.AttrIndex][L]; }
+    else Cost=N.OneShotCost;
+    if(Progress->Coins<Cost) { Message(TEXT("货币不足")); return; }
+    Progress->Coins-=Cost;
+    bool OK=true;
+    if(N.AttrIndex>=0) Progress->Talents[N.AttrIndex]++;
+    else if(N.OneShotCost==180) Progress->RefreshUnlocked=true;
+    else if(N.OneShotCost==160) Progress->DropRateUnlocked=true;
+    else if(N.OneShotCost==220) Progress->StartMaterialUnlocked=true;
+    if(!SaveProgress()) { Progress->Coins+=Cost; OK=false; }
+}
+
+FString AAlchemyWorld::ChainHintFor(int32 Skill) const {
+    // RESULT-001/CODEX-001: show full chain info only for discovered chains; otherwise a vague clue.
+    for(int C=0;C<NumChains();C++) {
+        const auto& K=ChainConfig(C);
+        if(K.A!=Skill && K.B!=Skill) continue;
+        int Other=K.A==Skill?K.B:K.A;
+        if(Progress->ChainsV2.Contains(C)) {
+            return FString::Printf(TEXT("连锁：%s（与 %s 同时装备触发，冷却%.0f秒）"),*K.Name,SkillName(Other),K.CD);
+        }
+        // Vague clue by element of the partner skill is not available without full data; use a generic hint.
+        return TEXT("该技能可能与另一类技能产生共鸣，等待实战发现。");
+    }
+    return TEXT("当前尚无专属连锁。");
+}
+
+float AAlchemyWorld::MaterialDropChance() const {
+    // DROP-001 baseline (22% x 70% = 15.4% by default), then TALENT-002 drop-rate node x1.30.
+    float Chance = bDrop001 ? 0.154f : 0.22f;
+    if(Progress->DropRateUnlocked) Chance *= 1.30f;
+    return Chance;
 }
 
 bool AAlchemyWorld::FindSpawnPoint(int Type,FVector& P) {
@@ -611,7 +787,9 @@ int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color
 }
 void AAlchemyWorld::Hurt(float Damage) {
     if(HurtInv>0 || DodgeInv>0 || HP<=0) return;
-    HP=FMath::Max(0.f,HP-Damage); HurtInv=0.65f; Ring(PlayerPos,65,FLinearColor(0.7f,0.12f,0.1f));
+    // EXP-001: run-local damage reduction applies before HP deduction (max -25%).
+    float Reduced=FMath::Max(1.f,FMath::RoundToFloat(Damage*(1.f-0.05f*RunAttrs[4])));
+    HP=FMath::Max(0.f,HP-Reduced); HurtInv=0.65f; Ring(PlayerPos,65,FLinearColor(0.7f,0.12f,0.1f));
     if(HP<=0) {CharacterAnimation.Die();EndRun(false);}
     else CharacterAnimation.Hit();
 }
@@ -620,26 +798,30 @@ void AAlchemyWorld::Drop(FVector P,int Kind,int Count) {
     const TCHAR* Icons[]={TEXT("FirePowder"),TEXT("Dew"),TEXT("MagicShard"),TEXT("BeastCore"),TEXT("VoidCrystal"),TEXT("RootHeart")};
     if(Kind>=6) D.Body=Sprite(TEXT("Chest"),P,160,160);
     else if(Kind>=0 && Kind<6) D.Body=Sprite(Icons[Kind],P,105,105);
+    else if(Kind==-2) D.Body=Sprite(TEXT("Coin"),P,72,72); // XP orb (reuses a small pickup sprite)
     else D.Body=Sprite(TEXT("Coin"),P,95,95);
     Drops.Add(D);
 }
 
 void AAlchemyWorld::CastSkills(float Dt) {
+    // EXP-001: skill range attribute scales range/radius values (not projectile speed or target count).
+    const float RangeScale=1.f+0.08f*RunAttrs[3];
     for(int S:Equipped) {
         const auto& K=SkillConfig(S);SkillCD[S]-=Dt;if(SkillCD[S]>0) continue;
-        int N=Nearest(PlayerPos,K.Range);if(N<0) continue;
+        const float Range=K.Range*RangeScale, Radius=K.Radius*RangeScale;
+        int N=Nearest(PlayerPos,Range);if(N<0) continue;
         SkillCD[S]=K.CD;
-        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]));
+        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]+0.08f*RunAttrs[1]));
         int Hits=0;
         const FLinearColor Color=K.Color;
-        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,K.Range/K.ProjectileSpeed,K.EffectScale,K.HitLife,S==0);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
-        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,K.Radius,Damage,Color,K.Slow,K.Factor,K.CastEffect,K.HitEffect,K.EffectScale,K.CastLife,K.HitLife);
+        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,Range/K.ProjectileSpeed,K.EffectScale,K.HitLife,S==0);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
+        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,Radius,Damage,Color,K.Slow,K.Factor,K.CastEffect,K.HitEffect,K.EffectScale,K.CastLife,K.HitLife);
         else {
             TArray<int32> Used;
             for(int J=0;J<K.Targets && N>=0;J++) {
                 Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,Color,K.HitEffect,K.EffectScale,K.HitLife);Hits++;
                 SlowEnemy(N,K.Slow,K.Factor);
-                N=K.Cast==Bounce?Nearest(E.Pos,K.Range,Used):-1;
+                N=K.Cast==Bounce?Nearest(E.Pos,Range,Used):-1;
             }
         }
         TutorialHit(S,Hits);
@@ -684,7 +866,10 @@ void AAlchemyWorld::Action(FString Id) {
         if(Id==TEXT("close")) Id=TEXT("village");
         if(Id!=TEXT("village")) return;
     }
-    if(Id==TEXT("close")) { Panel.Empty(); PendingTalent=-1; return; }
+    if(Id==TEXT("close")) {
+        if(Panel==TEXT("result") && (PendingResultSkill>=0 || PendingIsNuclear)) return; // must resolve the result
+        Panel.Empty(); PendingTalent=-1; return;
+    }
     if(Id==TEXT("start")) { StartRun(); return; }
     if(Id==TEXT("village")) {
         if(bCombat && Panel!=TEXT("victory") && Panel!=TEXT("defeat")) { EndRun(false); if(Panel==TEXT("savefailed")) return; }
@@ -692,6 +877,30 @@ void AAlchemyWorld::Action(FString Id) {
     }
     if(Id==TEXT("return")) { Panel=TEXT("confirmreturn"); return; }
     if(Id==TEXT("craft")) { Craft(); return; }
+    if(Id==TEXT("acceptresult")) { AcceptPendingResult(); return; }
+    if(Id==TEXT("reroll")) { RerollPendingResult(); return; }
+    if(Id.StartsWith(TEXT("pick"))) { ApplyRunAttr(FCString::Atoi(*Id.Mid(4))); Panel.Empty(); return; }
+    if(Id.StartsWith(TEXT("startmat"))) { StartMaterialChoice=FCString::Atoi(*Id.Mid(8)); Panel=TEXT("level"); return; }
+    if(Id.StartsWith(TEXT("fill")) && Panel==TEXT("codex") && bCombat) {
+        // CODEX-002: one-click fill the minimum material amount for a discovered combination.
+        int C=FCString::Atoi(*Id.Mid(4)); if(C<0 || C>=7) return;
+        if(!Progress->Combinations.Contains(C)) return;
+        int Needed[3]={0,0,0};
+        int Mask=RuntimeRecipes[C].Mask; // 1=fire,2=dew,4=magic
+        if(Mask==7) {Needed[0]=Needed[1]=Needed[2]=1;}
+        else {
+            // Fill by combination table order: single=3, dual=first2+second1, triple=1 each.
+            if((Mask&1)) Needed[0]++; if((Mask&2)) Needed[1]++; if((Mask&4)) Needed[2]++;
+            int Count=Needed[0]+Needed[1]+Needed[2];
+            if(Count==1) { if(Needed[0]) Needed[0]=3; else if(Needed[1]) Needed[1]=3; else Needed[2]=3; }
+            else if(Count==2) { int First=-1; if(Needed[0]) First=0; else if(Needed[1]) First=1; else First=2; int Second=(First==0)?(Needed[1]?1:2):(First==1)?(Needed[2]?2:0):(Needed[0]?0:1); Needed[First]=2; Needed[Second]=1; }
+        }
+        bool Enough=true; for(int M=0;M<3;M++) if(Inventory[M]<Needed[M]) Enough=false;
+        if(!Enough) {Message(TEXT("材料不足，无法一键填充"));return;}
+        Selected={0,0,0,0,0,0}; for(int M=0;M<3;M++) Selected[M]=Needed[M];
+        Panel=TEXT("alchemy");
+        return;
+    }
     if(Id==TEXT("clear")) { Selected={0,0,0,0,0,0}; return; }
     if(Id==TEXT("alchemy") || Id==TEXT("codex") || Id==TEXT("skills") || Id==TEXT("talents") || Id==TEXT("level") || Id==TEXT("research")) { Panel=Id; return; }
     if(Id==TEXT("ortho")) bPerspective=!bPerspective;
@@ -719,17 +928,12 @@ void AAlchemyWorld::Action(FString Id) {
         SelectedBag=-1; return;
     }
     if(Id.StartsWith(TEXT("buy")) && !bCombat) {
-        int I=FCString::Atoi(*Id.Mid(3)); if(I<0 || I>=4) return;
-        int L=Progress->Talents[I]; if(L>=5 || (I>0 && Progress->Talents[I-1]<1)) return;
-        if(Progress->Coins<Prices[I][L]) { Message(TEXT("货币不足")); return; }
+        int I=FCString::Atoi(*Id.Mid(3)); if(I<0 || I>=TalentNodeCount) return;
+        if(!TalentNodeUnlocked(I) || TalentNodeDone(I)) return;
         PendingTalent=I; Panel=TEXT("confirmbuy"); return;
     }
     if(Id==TEXT("confirmbuy") && !bCombat && PendingTalent>=0) {
-        const int I=PendingTalent,L=Progress->Talents[I];
-        if(L<5 && (I==0 || Progress->Talents[I-1]>=1) && Progress->Coins>=Prices[I][L]) {
-            Progress->Coins-=Prices[I][L]; Progress->Talents[I]++;
-            if(!SaveProgress()) {Progress->Coins+=Prices[I][L]; Progress->Talents[I]--;}
-        }
+        BuyTalentNode(PendingTalent);
         PendingTalent=-1; Panel=TEXT("talents"); return;
     }
 }
@@ -834,7 +1038,7 @@ void AAlchemyWorld::Tick(float Dt) {
     Direction=Direction.GetSafeNormal(); if(!Direction.IsNearlyZero()) LastDirection=Direction;
     DodgeCD=FMath::Max(0.f,DodgeCD-Dt); HurtInv=FMath::Max(0.f,HurtInv-Dt); DodgeInv=FMath::Max(0.f,DodgeInv-Dt);
     if(PC->WasInputKeyJustPressed(EKeys::SpaceBar) && DodgeCD<=0) {DodgeCD=2; DodgeTime=0.24f; DodgeInv=0.65f; DodgeDirection=LastDirection;}
-    FVector Delta=Direction*500*(1+0.03f*Progress->Talents[2])*Dt;
+    FVector Delta=Direction*500*(1+0.03f*Progress->Talents[2]+0.05f*RunAttrs[2])*Dt;
     if(DodgeTime>0) {float Step=FMath::Min(Dt,DodgeTime); DodgeTime-=Step; Delta=DodgeDirection*(280/0.24f)*Step;}
     const FVector PreviousPos=PlayerPos;
     PlayerPos=Move(PlayerPos,Delta);
@@ -850,10 +1054,16 @@ void AAlchemyWorld::Tick(float Dt) {
         return;
     }
     RunTime+=Dt; SpawnCD-=Dt; ContactCD-=Dt;
-    if(SpawnCD<=0) {SpawnWave(); SpawnCD=Interval[FMath::Min(5,int(RunTime/60))];}
-    if(RunTime>=NextElite && NextElite<1800) {int Before=Enemies.Num(); SpawnEnemy(7+EliteIndex%3); if(Enemies.Num()>Before) {NextElite+=90; EliteIndex++;}}
+    // EXP-001: in-run HP regen (1/sec per stack), capped at max HP.
+    if(RunAttrs[6]>0) HP=FMath::Min(MaxHP,HP+RunAttrs[6]*Dt);
     if(RunTime>=300 && RunTime-Dt<300) Message(TEXT("最终 BOSS 即将出现 · 10 秒预警"));
     if(RunTime>=310 && !bBossSpawned) {int Before=Enemies.Num(); SpawnEnemy(10); bBossSpawned=Enemies.Num()>Before; if(bBossSpawned) Message(TEXT("腐化之源 · BOSS 原型战"));}
+    // SPAWN-002: once the final boss appears, stop new normal-wave and elite spawns.
+    // Existing enemies stay alive and keep fighting; their death rewards are unchanged.
+    if(!bBossSpawned) {
+        if(SpawnCD<=0) {SpawnWave(); SpawnCD=Interval[FMath::Min(5,int(RunTime/60))];}
+        if(RunTime>=NextElite && NextElite<1800) {int Before=Enemies.Num(); SpawnEnemy(7+EliteIndex%3); if(Enemies.Num()>Before) {NextElite+=90; EliteIndex++;}}
+    }
     CastSkills(Dt);
     for(auto& E:Enemies) {
         if(E.HP<=0) continue;
@@ -925,8 +1135,10 @@ void AAlchemyWorld::Tick(float Dt) {
         if(E.Type==10) {EndRun(true); break;}
         if(E.Type>=7) {Drop(E.Pos,6+E.Type-7); Drop(E.Pos,-1,10);}
         else {
+            // DROP-002/EXP-001: normal enemies always drop one XP orb, plus independent coin/material rolls.
+            Drop(E.Pos,-2,E.Type);
             if(Random.FRand()<0.7f) Drop(E.Pos,-1);
-            if(Random.FRand()<(bDrop001?0.154f:0.22f)) {float R=Random.FRand(); Drop(E.Pos,R<0.4f?0:R<0.75f?1:2);}
+            if(Random.FRand()<MaterialDropChance()) {float R=Random.FRand(); Drop(E.Pos,R<0.4f?0:R<0.75f?1:2);}
         }
     }
     if(!Panel.IsEmpty()) return;
@@ -938,6 +1150,11 @@ void AAlchemyWorld::Tick(float Dt) {
             Inventory[Special]=FMath::Min(10,Inventory[Special]+1);
             for(int j=0;j<4;j++) {float R=Random.FRand();int Kind=R<0.4f?0:R<0.75f?1:2; if(Inventory[Kind]<10) {Inventory[Kind]++;CommonAdded++;}}
             Message(FString::Printf(TEXT("精英宝箱实际入库：专属 ×%d，普通 ×%d%s"),SpecialAdded,CommonAdded,SpecialAdded+CommonAdded<5?TEXT("；素材已满，超额不入库"):TEXT("")));
+        } else if(D.Kind==-2) {
+            // EXP-001: XP orb grants run-local experience.
+            const int Type=FMath::Min(6,FMath::Max(0,D.Count));
+            static const float XPValues[7]={3,4,5,5,6,6,8};
+            GrantXP(XPValues[Type]);
         } else if(D.Kind<0) RunCoins+=D.Count;
         else if(Inventory[D.Kind]>=10) Message(TEXT("素材已满"));
         else Inventory[D.Kind]=FMath::Min(10,Inventory[D.Kind]+D.Count);

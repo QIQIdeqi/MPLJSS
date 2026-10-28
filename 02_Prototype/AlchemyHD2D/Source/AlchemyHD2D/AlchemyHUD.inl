@@ -108,8 +108,12 @@ void AAlchemyHUD::DrawHUD() {
         Text(FString::Printf(TEXT("生命 %.0f / %.0f"),World->HP,World->MaxHP),42,122,24,White);
         Box(42,164,264,18,Ink);Box(42,164,264*World->HP/World->MaxHP,18,Teal);
         Text(World->DodgeCD<=0?TEXT("Space 闪避就绪"):FString::Printf(TEXT("闪避冷却 %.1f秒"),World->DodgeCD),42,197,18,Dim);
-        Box(24,252,300,142,Surface);
-        for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d / 10"),MaterialNames[I],World->Inventory[I]),42,268+I*38,20,I==0?Gold:White);
+        // EXP-001: run level and xp progress bar.
+        int NeedXP=World->RequiredXP(World->RunLevel);
+        Text(FString::Printf(TEXT("Lv.%d   经验 %.0f / %d"),World->RunLevel,World->RunXP,NeedXP),42,224,18,Gold);
+        Box(42,248,264,10,Ink);Box(42,248,264*FMath::Clamp(World->RunXP/NeedXP,0.f,1.f),10,Gold);
+        Box(24,276,300,142,Surface);
+        for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d / 10"),MaterialNames[I],World->Inventory[I]),42,292+I*38,20,I==0?Gold:White);
         float Start=(1280-World->Equipped.Num()*146)/2.f;
         for(int I=0;I<World->Equipped.Num();I++) {
             int K=World->Equipped[I];float X=Start+I*146;Box(X,578,138,76,Surface);
@@ -138,7 +142,7 @@ void AAlchemyHUD::DrawHUD() {
     if(!World->Panel.IsEmpty() && (!World->CharacterAnimation.Dead || World->CharacterAnimation.DeathFinished())) {
         Box(-OX/S,88,Canvas->SizeX/S,580,FLinearColor(.005f,.01f,.015f,.8f));Box(72,98,1136,550,Surface);Box(72,98,1136,4,Gold);
         const FString P=World->Panel;
-        FString Title=P==TEXT("alchemy")?TEXT("炼金 · 战斗已暂停"):P==TEXT("codex")?TEXT("发现图鉴"):P==TEXT("skills")?TEXT("装备与储备"):P==TEXT("talents")?TEXT("永久强化"):P==TEXT("fonts")?TEXT("字体调试 · 即时预览"):P==TEXT("research")?TEXT("画面与可读性"):P==TEXT("level")?TEXT("选择关卡"):P==TEXT("victory")?TEXT("胜利 · 已结算"):P==TEXT("defeat")?TEXT("本局结束"):P==TEXT("confirmbuy")?TEXT("确认购买"):P==TEXT("confirmreturn")?TEXT("返回据点？"):P==TEXT("savefailed")?TEXT("保存失败"):TEXT("暂停");
+        FString Title=P==TEXT("alchemy")?TEXT("炼金 · 战斗已暂停"):P==TEXT("codex")?TEXT("发现图鉴"):P==TEXT("skills")?TEXT("装备与储备"):P==TEXT("talents")?TEXT("永久强化"):P==TEXT("fonts")?TEXT("字体调试 · 即时预览"):P==TEXT("research")?TEXT("画面与可读性"):P==TEXT("level")?TEXT("选择关卡"):P==TEXT("result")?TEXT("炼金结果"):P==TEXT("levelup")?TEXT("升级强化"):P==TEXT("victory")?TEXT("胜利 · 已结算"):P==TEXT("defeat")?TEXT("本局结束"):P==TEXT("confirmbuy")?TEXT("确认购买"):P==TEXT("confirmreturn")?TEXT("返回据点？"):P==TEXT("savefailed")?TEXT("保存失败"):TEXT("暂停");
         Text(Title,104,118,28,Gold);
         Button(TEXT("close"),TEXT("Esc 返回"),1018,114,160);
         Button(TEXT("textsize"),TEXT("F7 字体调试"),778,114,220);
@@ -153,7 +157,10 @@ void AAlchemyHUD::DrawHUD() {
                 Button(FString::Printf(TEXT("material%d"),I),FString::Printf(TEXT("%s%s  %d"),Next==I?TEXT("→ "):TEXT(""),MaterialNames[I],World->Inventory[I]-World->Selected[I]),756,282+I*58,422,World->Inventory[I]>World->Selected[I] && (!World->TutorialActive() || (World->TutorialSkill<0 && World->Selected[I]<1)));
             }
             TArray<int32> Options;TArray<float> Chances;FString Reason;int Combination;bool Valid=World->CraftOptions(Options,Chances,Reason,Combination);FString Probability;
-            if(Valid && Combination>=0) for(int Q=0;Q<3;Q++) {int I=Options.Find(World->CombinationSkill(Combination,Q));Probability+=FString::Printf(TEXT("%s %.1f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
+            if(Valid && Combination>=0) {
+                Probability=FString::Printf(TEXT("特殊 %.2f%%   "),SpecialProcChance[FMath::Clamp(Total-3,0,7)]);
+                for(int Q=0;Q<3;Q++) {int I=Options.Find(World->CombinationSkill(Combination,Q));Probability+=FString::Printf(TEXT("%s %.1f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
+            }
             else Probability=Valid?TEXT("精英专属配方 · 固定产出"):TEXT("满足投料条件后显示实际品质概率");
             Text(Probability,124,456,18,Teal);
             if(!World->TutorialActive()) for(int I=3;I<6;I++) {
@@ -172,7 +179,7 @@ void AAlchemyHUD::DrawHUD() {
             for(int Row=0;Row<PerPage;Row++) {
                 int I=DetailPage*PerPage+Row;if(I>=Count) break;float Y=248+Row*(World->CodexPage==2?72:World->CodexPage==3?96:58);
                 Box(104,Y,1074,World->CodexPage==2?66:World->CodexPage==3?88:52,FLinearColor(.055f,.095f,.11f));
-                if(World->CodexPage==0) {bool Known=World->Progress->Combinations.Contains(I);Text(Known?World->CombinationName(I):TEXT("未发现的组合"),120,Y+13,20,Known?Gold:Dim);Text(Known?TEXT("三种品质；材料比例不改变组合"):TEXT("尝试不同材料种类"),450,Y+15,18,Dim);}
+                if(World->CodexPage==0) {bool Known=World->Progress->Combinations.Contains(I);Text(Known?World->CombinationName(I):TEXT("未发现的组合"),120,Y+13,20,Known?Gold:Dim);Text(Known?TEXT("三种品质；材料比例不改变组合"):TEXT("尝试不同材料种类"),450,Y+15,18,Dim);if(Known) Button(FString::Printf(TEXT("fill%d"),I),TEXT("一键填充"),923,Y+8,235,World->bCombat&&!World->TutorialActive());}
                 if(World->CodexPage==1) for(int Q=0;Q<3;Q++) {int K=World->CombinationSkill(I,Q);bool Known=World->Progress->Recipes.Contains(K);Text(Known?FString::Printf(TEXT("%s %s"),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),World->SkillName(K)):TEXT("未发现技能"),120+Q*352,Y+14,19,Known?Gold:Dim);}
                 if(World->CodexPage==2) {
                     const auto& K=World->ChainConfig(I);bool Known=World->Progress->ChainsV2.Contains(I);Text(K.Name,120,Y+10,21,Gold);
@@ -215,13 +222,66 @@ void AAlchemyHUD::DrawHUD() {
             Button(TEXT("tune"),World->bTune001B?TEXT("战斗：测试配置"):TEXT("战斗：原始基线"),104,450,524,!World->bCombat);Button(TEXT("drop"),World->bDrop001?TEXT("材料掉落：15.4%"):TEXT("材料掉落：22%"),654,450,524,!World->bCombat);
             Paragraph(TEXT("[ / ] 调整视野宽度。战斗与掉落配置仅限据点切换。"),104,535,1074,20,Dim);
         } else if(P==TEXT("talents")) {
-            Text(FString::Printf(TEXT("永久金币 %d；前一天赋达到Lv.1解锁下一项。"),World->Progress->Coins),104,181,18,Dim);
-            for(int I=0;I<4;I++) {int L=World->Progress->Talents[I];bool Open=I==0||World->Progress->Talents[I-1]>=1;float Y=245+I*80;Text(FString::Printf(TEXT("%s  Lv.%d/5 %s"),TalentNames[I],L,Open?TEXT(""):TEXT("锁定")),120,Y+8,23,White);Button(FString::Printf(TEXT("buy%d"),I),L>=5?TEXT("已满级"):FString::Printf(TEXT("购买  %d金币"),Prices[I][L]),808,Y,370,Open&&L<5);}
+            Text(FString::Printf(TEXT("永久金币 %d；前一项完成解锁下一项。"),World->Progress->Coins),104,181,18,Dim);
+            for(int I=0;I<TalentNodeCount;I++) {
+                const auto& N=TalentSequence[I];
+                bool Done=World->TalentNodeDone(I),Open=World->TalentNodeUnlocked(I);
+                float Y=232+I*58;
+                FString State,Label;
+                if(N.AttrIndex>=0) {int L=World->Progress->Talents[N.AttrIndex];State=FString::Printf(TEXT("Lv.%d/5"),L);Label=Done?TEXT("已满级"):FString::Printf(TEXT("购买  %d金币"),Prices[N.AttrIndex][L]);}
+                else {State=TEXT("一次性");Label=Done?TEXT("已解锁"):FString::Printf(TEXT("解锁  %d金币"),N.OneShotCost);}
+                Text(FString::Printf(TEXT("%s  %s  %s"),N.Name,*State,Open?TEXT(""):TEXT("锁定")),120,Y+6,21,Open?White:Dim);
+                if(Open && !Done) Button(FString::Printf(TEXT("buy%d"),I),Label,808,Y,370);
+            }
         } else if(P==TEXT("level")) {
             Text(TEXT("腐化林地"),104,245,32,Gold);Text(TEXT("自动战斗 · 材料炼金 · 固定地图"),104,305,23,White);
-            Paragraph(TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,365,1000,22,Dim);Button(TEXT("start"),TEXT("进入关卡"),104,520,460);
+            if(World->Progress->StartMaterialUnlocked) {
+                Text(TEXT("开局高级材料（选择一种，本局获得1个）："),104,370,20,White);
+                for(int I=0;I<3;I++) {
+                    const TCHAR* Names[]={TEXT("兽核"),TEXT("虚空晶"),TEXT("根须心")};
+                    Button(FString::Printf(TEXT("startmat%d"),I),FString::Printf(TEXT("%s%s"),World->StartMaterialChoice==I?TEXT("→ "):TEXT(""),Names[I]),104+I*366,410,340);
+                }
+            }
+            Paragraph(TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,500,1000,20,Dim);Button(TEXT("start"),TEXT("进入关卡"),104,545,460);
         } else if(P==TEXT("confirmbuy") && World->PendingTalent>=0) {
-            int I=World->PendingTalent,L=World->Progress->Talents[I];Paragraph(FString::Printf(TEXT("%s：Lv.%d → Lv.%d，花费%d金币。"),TalentNames[I],L,L+1,Prices[I][L]),104,260,1000,25,White);Button(TEXT("confirmbuy"),TEXT("确认购买并保存"),104,460,524);Button(TEXT("talents"),TEXT("取消"),654,460,524);
+            int I=World->PendingTalent;const auto& N=TalentSequence[I];
+            FString Desc;
+            if(N.AttrIndex>=0) {int L=World->Progress->Talents[N.AttrIndex];Desc=FString::Printf(TEXT("%s：Lv.%d → Lv.%d，花费%d金币。"),N.Name,L,L+1,Prices[N.AttrIndex][L]);}
+            else Desc=FString::Printf(TEXT("%s：一次性解锁，花费%d金币。"),N.Name,N.OneShotCost);
+            Paragraph(Desc,104,260,1000,25,White);Button(TEXT("confirmbuy"),TEXT("确认购买并保存"),104,460,524);Button(TEXT("talents"),TEXT("取消"),654,460,524);
+        } else if(P==TEXT("result")) {
+            if(World->PendingIsNuclear) {
+                Text(TEXT("核弹炼金 · 特殊结果"),104,200,30,Gold);
+                Paragraph(TEXT("已清除全部普通怪物，精英与BOSS不受影响。"),104,270,1000,24,White);
+                Text(TEXT("特殊结果，不参与常规连锁。"),104,360,20,Dim);
+                Button(TEXT("acceptresult"),TEXT("确认"),104,520,524);
+            } else if(World->PendingResultSkill>=0) {
+                int K=World->PendingResultSkill;
+                const auto& SK=World->SkillConfig(K);
+                Text(FString::Printf(TEXT("炼金成功 · %s"),World->SkillName(K)),104,200,30,Gold);
+                Text(World->PendingResultCombination>=0?FString::Printf(TEXT("组合：%s · 投入%d个"),World->CombinationName(World->PendingResultCombination),World->PendingResultTotal):TEXT("精英专属配方"),104,260,22,White);
+                FString Desc=FString::Printf(TEXT("伤害 %.0f · 冷却 %.1f秒"),SK.Damage,SK.CD);
+                if(SK.Cast==EAlchemyCast::SelfArea||SK.Cast==EAlchemyCast::TargetArea) Desc+=FString::Printf(TEXT(" · 范围半径 %.0f"),SK.Radius/100);
+                else if(SK.Cast==EAlchemyCast::Bounce) Desc+=FString::Printf(TEXT(" · 最多%d目标"),SK.Targets);
+                else if(SK.Cast==EAlchemyCast::Bolt) Desc+=FString::Printf(TEXT(" · 射程 %.0f"),SK.Range/100);
+                if(SK.Slow>0) Desc+=FString::Printf(TEXT(" · 减速%.0f%%/%.1f秒"),(1-SK.Factor)*100,SK.Slow);
+                Text(Desc,104,315,20,Dim);
+                Paragraph(World->ChainHintFor(K),104,360,1000,20,Dim);
+                Button(TEXT("acceptresult"),TEXT("接收技能"),104,520,420);
+                if(World->Progress->RefreshUnlocked && !World->PendingRefreshed && World->PendingResultCombination>=0) Button(TEXT("reroll"),TEXT("刷新一次"),560,520,420);
+            }
+        } else if(P==TEXT("levelup")) {
+            Text(FString::Printf(TEXT("升级 · Lv.%d"),World->RunLevel),104,180,30,Gold);
+            Text(TEXT("选择一项强化"),104,240,22,White);
+            const TCHAR* AttrNames[]={TEXT("生命值"),TEXT("伤害"),TEXT("移动速度"),TEXT("技能范围"),TEXT("伤害减少"),TEXT("经验增加"),TEXT("生命回复")};
+            int MaxLayers[]={5,5,5,5,5,5,3};
+            for(int I=0;I<3;I++) {
+                int Attr=World->LevelupChoices[I];
+                if(Attr<0) continue;
+                float Y=300+I*90;
+                Text(FString::Printf(TEXT("%s  %d/%d"),AttrNames[Attr],World->RunAttrs[Attr],MaxLayers[Attr]),120,Y+8,22,White);
+                Button(FString::Printf(TEXT("pick%d"),Attr),TEXT("选择"),808,Y,370,World->RunAttrs[Attr]<MaxLayers[Attr]);
+            }
         } else if(P==TEXT("confirmreturn")) {
             Paragraph(TEXT("已拾取金币会结算。本局材料与技能将清空。"),104,270,1000,25,White);Button(TEXT("village"),TEXT("确认返回"),104,460,524);Button(TEXT("close"),TEXT("继续战斗"),654,460,524);
         } else if(P==TEXT("victory")||P==TEXT("defeat")) {
