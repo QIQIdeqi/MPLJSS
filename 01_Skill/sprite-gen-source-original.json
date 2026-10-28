@@ -1,0 +1,12 @@
+{
+  "source": "https://github.com/aldegad/sprite-gen",
+  "commit": "419f02cd54b4181e33689759d4ee9c1ef0006301",
+  "version": "3.5.0",
+  "archive": "sprite-gen-3.5.0-source.zip",
+  "bytes": 51101351,
+  "sha256": "94ae017c5fe1d1cfe26ccc61210e5733e2e675b42e65d04fbcbe0b762e0fd7d0",
+  "skill_matches_git_blob": true,
+  "line_endings": "Canonical Git contents; autocrlf disabled during archive",
+  "entries": 658,
+  "includes": "Upstream tracked source, SKILL.md, scripts, documentation, tests and license; excludes local environment/cache"
+}

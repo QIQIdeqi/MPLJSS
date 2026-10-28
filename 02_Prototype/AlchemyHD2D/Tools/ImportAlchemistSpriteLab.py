@@ -3,7 +3,7 @@ import unreal as u
 from pathlib import Path
 import json,shutil
 root=Path(u.Paths.project_dir()).resolve()
-workspace=Path('D:/06_独立游戏/00_冒牌炼金术士')
+workspace=root.parents[1]
 build=workspace/'03_Build/sprite-gen/alchemist-combat-v3-20261028'
 art_root='/Game/Characters/Alchemist'
 asset_root='/Game/Tests/AlchemistSpriteLab'
@@ -12,9 +12,10 @@ lib.make_directory(asset_root);lib.make_directory(art_root)
 textures=[]
 for view,folder in [('Side',build/'side/run'),('Front',build/'front/run'),('Back',build/'back/run')]:
     source=folder/'sprite-sheet-alpha.png'
-    assert source.is_file(),source
     archive=root/'ArtSource/AlchemistCombatV3';archive.mkdir(parents=True,exist_ok=True)
-    retained=archive/f'T_{view}_Atlas.png';shutil.copy2(source,retained)
+    retained=archive/f'T_{view}_Atlas.png'
+    if source.is_file():shutil.copy2(source,retained)
+    assert retained.is_file(),retained
     task=u.AssetImportTask();task.filename=str(retained);task.destination_path=art_root;task.destination_name=f'T_{view}_Atlas';task.automated=True;task.save=True;task.replace_existing=True
     tools.import_asset_tasks([task]);tex=lib.load_asset(f'{art_root}/T_{view}_Atlas');assert tex
     tex.set_editor_property('filter',u.TextureFilter.TF_NEAREST)
@@ -52,8 +53,10 @@ assert edit.connect_material_property(sample,'RGB',u.MaterialProperty.MP_EMISSIV
 assert edit.connect_material_property(sample,'A',u.MaterialProperty.MP_OPACITY)
 edit.recompile_material(mat);lib.save_loaded_asset(mat)
 # Independent bottle sprite, used by the production projectile collision path.
-projectile=workspace/'03_Build/sprite-gen/alchemist-combat-v2-20261028/projectile/item_PotionProjectile.png'
-retained=archive/'PotionProjectile.png';shutil.copy2(projectile,retained)
+projectile=build/'projectile/item_PotionProjectile.png'
+retained=archive/'PotionProjectile.png'
+if projectile.is_file():shutil.copy2(projectile,retained)
+assert retained.is_file(),retained
 task=u.AssetImportTask();task.filename=str(retained);task.destination_path='/Game/Art';task.destination_name='PotionProjectile';task.automated=True;task.replace_existing=True;task.save=True
 tools.import_asset_tasks([task]);potion=lib.load_asset('/Game/Art/PotionProjectile');assert potion
 potion.set_editor_property('filter',u.TextureFilter.TF_NEAREST);potion.set_editor_property('mip_gen_settings',u.TextureMipGenSettings.TMGS_NO_MIPMAPS);potion.set_editor_property('compression_settings',u.TextureCompressionSettings.TC_EDITOR_ICON);potion.set_editor_property('compression_no_alpha',False);lib.save_loaded_asset(potion)
@@ -63,7 +66,9 @@ ps=edit.create_material_expression(pm,u.MaterialExpressionTextureSample);ps.set_
 assert edit.connect_material_property(ps,'RGB',u.MaterialProperty.MP_EMISSIVE_COLOR)
 assert edit.connect_material_property(ps,'A',u.MaterialProperty.MP_OPACITY)
 edit.recompile_material(pm);lib.save_loaded_asset(pm)
-retained=archive/'T_PotionBreakAtlas.png';shutil.copy2(build/'break/run/sprite-sheet-alpha.png',retained)
+retained=archive/'T_PotionBreakAtlas.png'
+if (build/'break/run/sprite-sheet-alpha.png').is_file():shutil.copy2(build/'break/run/sprite-sheet-alpha.png',retained)
+assert retained.is_file(),retained
 task=u.AssetImportTask();task.filename=str(retained);task.destination_path='/Game/Art';task.destination_name='T_PotionBreakAtlas';task.automated=True;task.replace_existing=True;task.save=True
 tools.import_asset_tasks([task]);burst=lib.load_asset('/Game/Art/T_PotionBreakAtlas');assert burst
 burst.set_editor_property('filter',u.TextureFilter.TF_NEAREST);burst.set_editor_property('mip_gen_settings',u.TextureMipGenSettings.TMGS_NO_MIPMAPS);burst.set_editor_property('compression_settings',u.TextureCompressionSettings.TC_EDITOR_ICON);burst.set_editor_property('compression_no_alpha',False);lib.save_loaded_asset(burst)

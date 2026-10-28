@@ -1,6 +1,7 @@
 ﻿param([switch]$Package,[string]$BuildDirectory='HD2D_PC_UI',[string]$EngineRoot)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
+New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot 'Evidence') | Out-Null
 if (-not $EngineRoot) { $EngineRoot = $env:UE_ENGINE_ROOT }
 if (-not $EngineRoot) {
     $engineCandidates=@('D:\02_UnrealEngine\UE_5.8','F:\EPIC GAME\UE_5.8')
@@ -19,7 +20,8 @@ if($projectRoot -match '[^\x00-\x7F]|\s') {
 & "$engineRoot\Engine\Build\BatchFiles\Build.bat" AlchemyHD2DEditor Win64 Development "-Project=$aliasRoot\AlchemyHD2D.uproject" "-Log=$aliasRoot\Evidence\build-editor.log" -WaitMutex -NoHotReloadFromIDE -NoUBA
 if ($LASTEXITCODE -ne 0) { throw 'Editor build failed.' }
 if ($Package) {
-    & "$engineRoot\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$aliasRoot\AlchemyHD2D.uproject" -noP4 -platform=Win64 -clientconfig=Development -build -cook -stage -pak -archive "-archivedirectory=$projectRoot\..\..\03_Build\$BuildDirectory" -utf8output -unattended
+    & "$engineRoot\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$aliasRoot\AlchemyHD2D.uproject" -noP4 -platform=Win64 -clientconfig=Development -build -cook -stage -pak -nodebuginfo -archive "-archivedirectory=$projectRoot\..\..\03_Build\$BuildDirectory" -utf8output -unattended
     if ($LASTEXITCODE -ne 0) { throw 'Packaging failed.' }
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'LaunchDemo.cmd') -Destination (Join-Path $projectRoot "../../03_Build/$BuildDirectory/启动Demo.cmd")
+    Copy-Item -LiteralPath (Join-Path $projectRoot 'Docs/Windows测试版运行说明.txt') -Destination (Join-Path $projectRoot "../../03_Build/$BuildDirectory/运行说明.txt")
 }

@@ -40,3 +40,32 @@ memory/archives/2026-10-27-old-build-saves/
 01_Skill/tools/
 # Generated editor file-access ordering; not a source asset or required game build input
 02_Prototype/AlchemyHD2D/Build/Windows/FileOpenOrder/EditorOpenOrder.log
+03_Build/sprite-gen/_installation-check/
+
+# Publish only production project, documents/memory, skill originals and playable builds.
+# Local production experiments and verification artifacts remain available on SSD.
+/logs/
+/scripts/*
+!/scripts/install-sprite-video-tools.py
+!/scripts/install-rife-windows-compatible.py
+!/scripts/check-sprite-gen-install.py
+!/scripts/qq-codex-bridge/
+/03_Build/sprite-gen/
+/02_Prototype/AlchemyHD2D/Evidence/
+/02_Prototype/AlchemyHD2D/Content/Tests/
+/02_Prototype/AlchemyHD2D/Tools/Test*.py
+/02_Prototype/AlchemyHD2D/Tools/Diagnose*.py
+/02_Prototype/AlchemyHD2D/Tools/Smoke.ps1
+/02_Prototype/AlchemyHD2D/Tools/CleanHistoricalSpriteAssets.py
+/02_Prototype/AlchemyHD2D/Tools/SaveAndCloseForSpriteLab.py
+/02_Prototype/AlchemyHD2D/Tools/OpenAlchemistSpriteLab.ps1
+/02_Prototype/AlchemyHD2D/启动炼金术士动画测试.cmd
+/03_Build/**/Evidence/
+/03_Build/**/*.pdb
+/03_Build/**/Manifest_DebugFiles_Win64.txt
+/03_Build/**/Windows/
+/00_Doc/*_qa/
+**/__pycache__/
+**/.venv/
+**/.pytest_cache/
+*.pyc

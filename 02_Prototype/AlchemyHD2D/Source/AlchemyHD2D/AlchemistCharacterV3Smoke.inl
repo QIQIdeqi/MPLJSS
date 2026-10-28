@@ -11,7 +11,7 @@ void AAlchemyWorld::CharacterV3Smoke(float Delta) {
     }
     if(CaptureStep==1) {
         LeftWalk |= CharacterAnimation.Row==1 && CharacterAnimation.Mirror && !CharacterAnimation.Throwing;
-        for(const auto& Shot:Shots) if(Shot.Potion && FVector::DotProduct(Shot.Velocity,Camera->GetActorRightVector())>0) RightAim=true;
+        for(const auto& Shot:Shots) if(Shot.Potion && FVector::DotProduct(Shot.Velocity,Camera->GetActorRightVector())>0) {RightAim=true;SkillCD[0]=100;}
         for(const auto& FX:Effects) if(FX.PotionBreak && !FX.Body->IsHidden()) BurstVisible=true;
         const FVector Expected=Camera->GetActorUpVector()*(104.f/256*220);
         StableAnchor &= (Player->GetActorLocation()-PlayerPos).Equals(Expected,.05f);

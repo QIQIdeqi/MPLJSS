@@ -1,0 +1,57 @@
+﻿[
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Intermediate",
+        "bytes":  5099940508,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/DerivedDataCache",
+        "bytes":  1627828,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/Cooked",
+        "bytes":  40685077,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/StagedBuilds",
+        "bytes":  574808498,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/Temp",
+        "bytes":  685580,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/Logs",
+        "bytes":  176131,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/MaterialStats",
+        "bytes":  387,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/ShaderDebugInfo",
+        "bytes":  90727,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/Shaders",
+        "bytes":  17406958,
+        "removed":  true
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Saved/UnrealBuildTool",
+        "bytes":  132,
+        "removed":  true
+    },
+    {
+        "path":  "01_Skill/tmp/packaged-check-20261028",
+        "bytes":  574812598,
+        "removed":  true
+    }
+]

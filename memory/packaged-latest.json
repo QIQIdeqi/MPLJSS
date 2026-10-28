@@ -1,0 +1,31 @@
+﻿{
+    "result":  "PASS",
+    "zip":  "03_Build\\HD2D_PC_UI\\冒牌炼金术士_Demo_Win64_最新测试版.zip",
+    "bytes":  310278471,
+    "sha256":  "23fedf8d698c40aaff600b0ab117d6b3ce9250dc7ecf8460033bf76cce6c2fdd",
+    "entries":  43,
+    "no_saves_evidence_pdb":  true,
+    "all_entries_crc":  "PASS",
+    "packaged_gameplay_smoke":  "PASS",
+    "packaged_d3d12_character_v3":  {
+                                        "result":  "PASS",
+                                        "left_walk_right_aim":  true,
+                                        "moves_left":  true,
+                                        "stable_ground_anchor":  true,
+                                        "potion_break_visible":  true,
+                                        "break_count":  1,
+                                        "break_cleanup":  true,
+                                        "hurt_damage_animation":  true,
+                                        "hurt_return":  true,
+                                        "death_started":  true,
+                                        "death_last_frame_held":  true,
+                                        "no_movement_after_death":  true
+                                    },
+    "asset_validation":  {
+                             "assets":  141,
+                             "errors":  0,
+                             "warnings":  0
+                         },
+    "manual_full_playthrough":  false,
+    "extracted_zip_smoke":  "PASS"
+}

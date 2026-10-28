@@ -52,3 +52,12 @@
 ## 已验证的工程清理方式
 
 2026-10-28推送前清理了UE可再生成目录：Intermediate、失败的Intermediate_UnicodeAttempt、DerivedDataCache、Saved下Cooked/StagedBuilds/Temp/Logs/Crashes/MaterialStats/ShaderDebugInfo/Shaders/UnrealBuildTool，以及EditorOpenOrder.log。505个文件共5.713GiB已移入回收站，明细见同级上层cleanup-2026-10-28.json。保留Source、Config、Content、ArtSource、当前Binaries、验证证据、存档、Autosaves、编辑器配置和独有截图。清理前确认对应UE进程已退出，解析并校验每个绝对目标确在工程内，不对链接目录执行递归清理。回收站未清空时只称工程目录体积减少，不称磁盘空间释放。
+## 最新分发与 Skill 原件（2026-10-28，覆盖上文历史状态）
+
+- sprite-gen 固定上游版本的完整源码原件为 `01_Skill/sprite-gen-3.5.0-source.zip`，包含 SKILL.md、脚本、文档和许可证；版本与哈希见同目录 `sprite-gen-source-original.json`。其他游戏开发 Skill 快照、原始 ZIP 和安装记录一并保留。虚拟环境、模型、工具下载和个人偏好不上传。
+- 最新试玩包为 `03_Build/HD2D_PC_UI/冒牌炼金术士_Demo_Win64_最新测试版.zip`。克隆后执行 git lfs pull，完整解压到所在目录，再运行启动Demo.cmd。远端不重复保存解压的 Windows 目录。
+- 2026-10-28 已重新打包，打包 EXE 的标准烟雾检查和真实 D3D12 V3 检查通过，摘要与 ZIP 哈希见 `memory/packaged-latest.json`。不能据此宣称人工完整通关或性能验收。
+- V1/V2 历史素材已清理，需要时从 Git 历史恢复；当前原始动作条、视频、测试地图和 Evidence 仅留本机。Git 保留生产 Source/Config/Content、必要 ArtSource、文档、memory、Skill 原件和完整试玩 ZIP。
+- 生产重导入可使用 `ArtSource/AlchemistCombatV3` 的三张人物图集、药瓶和破碎图集，不依赖已忽略的生图工作目录。
+- `04_Archive` 已移入回收站；四份独有存档保存在工程 `Saved/SaveBackups/history-cleanup-20261028`，不上传存档。后续打包不再生成历史归档目录。
+- Git 删除与 ignore 仅缩减当前版本，旧 Git/LFS 历史对象不会因普通提交消失；未经额外授权不改写历史。
