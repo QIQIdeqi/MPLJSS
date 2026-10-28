@@ -48,3 +48,7 @@
 ## Git 同步规则
 
 使用现有 `origin` 与当前用户授权分支，发布前实时核对，不凭历史提交号判断。保存源代码、资产、说明、安装清单、测试证据及项目 memory；媒体/UE 二进制按仓库 LFS 规则上传。排除缓存、虚拟环境、模型下载、个人配置、临时文件、凭据和本地归档。推送后比较 HEAD、origin/main、远端 ls-remote，确认工作区与 LFS 无待处理；新鲜验证记录也应落入项目 memory。
+
+## 已验证的工程清理方式
+
+2026-10-28推送前清理了UE可再生成目录：Intermediate、失败的Intermediate_UnicodeAttempt、DerivedDataCache、Saved下Cooked/StagedBuilds/Temp/Logs/Crashes/MaterialStats/ShaderDebugInfo/Shaders/UnrealBuildTool，以及EditorOpenOrder.log。505个文件共5.713GiB已移入回收站，明细见同级上层cleanup-2026-10-28.json。保留Source、Config、Content、ArtSource、当前Binaries、验证证据、存档、Autosaves、编辑器配置和独有截图。清理前确认对应UE进程已退出，解析并校验每个绝对目标确在工程内，不对链接目录执行递归清理。回收站未清空时只称工程目录体积减少，不称磁盘空间释放。
