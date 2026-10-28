@@ -61,3 +61,7 @@
 - 生产重导入可使用 `ArtSource/AlchemistCombatV3` 的三张人物图集、药瓶和破碎图集，不依赖已忽略的生图工作目录。
 - `04_Archive` 已移入回收站；四份独有存档保存在工程 `Saved/SaveBackups/history-cleanup-20261028`，不上传存档。后续打包不再生成历史归档目录。
 - Git 删除与 ignore 仅缩减当前版本，旧 Git/LFS 历史对象不会因普通提交消失；未经额外授权不改写历史。
+
+## 历史清理后的协作规则（2026-10-28）
+
+用户随后明确授权清理远端历史旧大文件，已改写 main，保留最新版完整文件树和必要代码、文档记录。详情见 `memory/git-history-cleanup-2026-10-28.md` 与对应 verification JSON。后续以新历史为准；协作者先备份未提交工作再重新克隆，不合并旧历史回 main。旧提交映射和 Git bundle 只留 SSD 的 ignored 临时目录。GitHub 后台旧 LFS 配额清除与提交历史改写是两个步骤，不把新克隆体积缩减当成配额已释放。
