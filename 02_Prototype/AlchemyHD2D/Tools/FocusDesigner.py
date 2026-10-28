@@ -11,9 +11,12 @@ def _focus_after_startup(delta):
     try:
         a=u.get_editor_subsystem(u.EditorActorSubsystem)
         d=next((x for x in a.get_all_level_actors() if isinstance(x,u.AlchemyLevelDesigner)),None)
+        for light in a.get_all_level_actors():
+            if isinstance(light,u.DirectionalLight) and 'AlchemyEditorPreviewLight' in [str(t) for t in light.tags]:
+                light.set_actor_rotation(u.Rotator(pitch=-55,yaw=30,roll=0),False)
         if d:
             a.set_selected_level_actors([d])
-            u.EditorLevelLibrary.set_level_viewport_camera_info(u.Vector(0,-10000,10000),u.Rotator(-45,90,0))
+            u.EditorLevelLibrary.set_level_viewport_camera_info(u.Vector(0,-10000,10000),u.Rotator(pitch=-45,yaw=90,roll=0))
             u.log('ALCHEMY_DESIGNER_FOCUSED')
         if '-AlchemyVerifyEditorUI' in u.SystemLibrary.get_command_line():
             assert d is not None

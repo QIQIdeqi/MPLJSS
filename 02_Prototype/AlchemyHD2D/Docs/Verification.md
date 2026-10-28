@@ -127,3 +127,6 @@ F7或面板右上入口打开字体调试。小号固定100%，中号/大号默�
 - 打开编辑器入口：工程根目录打开关卡与技能编辑器.cmd；默认先编译模块，支持-EngineRoot/UE_ENGINE_ROOT/已知安装位置。ExecCmds启动Focus脚本，不使用会自动退出的ExecutePythonScript。脚本已做语法检查；Windows PowerShell入口实际编译和打开编辑器通过。编辑完整UE工程，不在试玩EXE里提供编辑界面。
 - 使用说明：00_Doc/工具/UE关卡与技能编辑器使用说明.md；默认表CSV快照：Docs/DesignerCSV。试玩ZIP保持字体90_72文件名，维持已分享的GitHub链接；ExportDemo先写新包，再把旧包可恢复归档并替换，避免截断正在使用的旧ZIP。归档、缓存和个人存档保持Git忽略。
 - 最终EXE/ZIP哈希见Evidence/designer-final-verification.json。未完成物理解锁后的UI点击、正常五分钟人工体验、满场性能或技能平衡验收。
+
+### 2026-10-28 解锁后原生编辑器点击复核
+实际点击通过：随机生成、视口选择单格与位置修改、四张原生DataTable入口。测试改动已撤销，地图及表资产未修改。首屏镜头错误由Python Rotator位置参数顺序导致，现以pitch/yaw/roll明确命名；预览灯同步修正，重新启动后Lit模式地图可见。此前“桌面锁屏、点击未测”是历史状态，此项现已补验。

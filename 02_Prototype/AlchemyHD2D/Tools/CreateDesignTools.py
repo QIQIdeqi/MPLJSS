@@ -62,11 +62,11 @@ if fresh:
         c.set_editor_property('collision_half_size',u.Vector2D(w*50,h*50))
         c.set_editor_property('blocks_movement',True);c.set_editor_property('lock_random',True)
 if not any(isinstance(a,u.DirectionalLight) for a in actors.get_all_level_actors()):
-    light=actors.spawn_actor_from_class(u.DirectionalLight,u.Vector(0,0,1500),u.Rotator(-55,30,0))
+    light=actors.spawn_actor_from_class(u.DirectionalLight,u.Vector(0,0,1500),u.Rotator(pitch=-55,yaw=30,roll=0))
     light.set_actor_label('Editor_Preview_Sun');light.set_editor_property('tags',['AlchemyEditorPreviewLight'])
     light.set_editor_property('is_editor_only_actor',True);light.set_actor_hidden_in_game(True)
     light.get_component_by_class(u.DirectionalLightComponent).set_intensity(3)
-try:u.EditorLevelLibrary.set_level_viewport_camera_info(u.Vector(0,-10000,10000),u.Rotator(-45,90,0))
+try:u.EditorLevelLibrary.set_level_viewport_camera_info(u.Vector(0,-10000,10000),u.Rotator(pitch=-45,yaw=90,roll=0))
 except Exception:pass
 designer.refresh_cells()
 designer.save_design()
