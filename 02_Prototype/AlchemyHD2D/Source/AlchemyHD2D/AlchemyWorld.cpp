@@ -124,6 +124,9 @@ void AAlchemyWorld::BeginPlay() {
 #endif
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"));
     if(!LoadDesignConfig()) {
         SetActorTickEnabled(false);
 #if WITH_EDITOR
@@ -173,11 +176,18 @@ void AAlchemyWorld::BeginPlay() {
     auto Sky=GetWorld()->SpawnActor<ASkyLight>(); Sky->GetLightComponent()->SetIntensity(0.9f);
     Sky->GetLightComponent()->SetLightColor(FLinearColor(0.42f,0.62f,0.73f));
     auto PP=GetWorld()->SpawnActor<APostProcessVolume>(); PP->bUnbound=true;
-    PP->Settings.bOverride_VignetteIntensity=true; PP->Settings.VignetteIntensity=0.3f;
-    PP->Settings.bOverride_BloomIntensity=true; PP->Settings.BloomIntensity=0.35f;
+    PP->Settings.bOverride_VignetteIntensity=true; PP->Settings.VignetteIntensity=0.18f;
+    PP->Settings.bOverride_BloomIntensity=true; PP->Settings.BloomIntensity=0.22f;
     BuildScene(false); UpdateCamera(1); Message(TEXT("欢迎来到烛苔村。WASD 移动，靠近设施按 F。"));
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_READY UE5.8 HD2D research; W0 initial=8; cap=300"));
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyStartCombat")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) StartRun();
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview"))) {
+        Progress->TutorialComplete=true;StartRun();RunTime=310;
+        Inventory={6,6,6,1,1,1};Equipped={0,1,2,3};for(int S:Equipped) Levels[S]=2;
+    }
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"))) {
+        Progress->TutorialComplete=true;StartRun();RunTime=80;NextMerchantTime=80;RunCoins=80;Inventory={3,4,2,1,0,0};
+    }
 }
 
 UMaterialInterface* AAlchemyWorld::Material(const FString& Name) {
@@ -191,6 +201,7 @@ AStaticMeshActor* AAlchemyWorld::Mesh(const FString& Shape,FVector Pos,FVector S
     // Every visible mesh is a 2D plane: terrain, props, characters and effects.
     A->GetStaticMeshComponent()->SetStaticMesh(LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Plane.Plane")));
     A->SetActorScale3D(Scale); A->SetActorEnableCollision(false);
+    A->GetStaticMeshComponent()->SetCastShadow(false);
     auto M=UMaterialInstanceDynamic::Create(Material(Shape==TEXT("Sphere") || Shape==TEXT("Cylinder")?TEXT("M_Disc"):TEXT("M_World")),this);
     M->SetVectorParameterValue(TEXT("Tint"),Tint); A->GetStaticMeshComponent()->SetMaterial(0,M);
     if (Solid) Obstacles.Add({FVector2D(Pos),FVector2D(Scale.X*50,Scale.Y*50)});
@@ -212,7 +223,8 @@ void AAlchemyWorld::UpdateSprite(AStaticMeshActor* Body,const FString& Name,FVec
     const FVector Normal=bUprightSprites?FVector(0,-1,0):-Camera->GetActorForwardVector();
     Body->SetActorRotation(FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),Normal).Rotator());
     Body->SetActorScale3D(FVector((Flip?-1:1)*Width/100,Height/100,1));
-    Body->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_")+Name+(bLitSprites?TEXT("_Lit"):TEXT(""))));
+    auto Wanted=Material(TEXT("M_")+Name+(bLitSprites?TEXT("_Lit"):TEXT("")));
+    if(Body->GetStaticMeshComponent()->GetMaterial(0)!=Wanted) Body->GetStaticMeshComponent()->SetMaterial(0,Wanted);
 }
 void AAlchemyWorld::Tree(FVector P,float Size,bool Solid) {
     auto Shadow=Mesh(TEXT("Sphere"),P+FVector(0,0,3),FVector(1.5f,0.8f,1)*Size,FLinearColor(0.055f,0.09f,0.075f));
@@ -228,6 +240,8 @@ void AAlchemyWorld::House(FVector P,FLinearColor Roof) {
 }
 
 void AAlchemyWorld::BuildScene(bool Combat) {
+    CloseMerchant();
+    EndBossArena();
     for(auto& FX:NiagaraFX) if(IsValid(FX.Component)) FX.Component->DestroyComponent();
     NiagaraFX.Empty();DamageNumbers.Empty();
     for(auto A:Scene) if(IsValid(A)) A->Destroy();
@@ -292,6 +306,7 @@ void AAlchemyWorld::BuildScene(bool Combat) {
         for(float XPos=-X/2;XPos<=X/2;XPos+=220) Sheet(TEXT("Rock"),FVector(XPos,Side*(Y/2-40),0),260,180);
     }
     PlayerShadow=Mesh(TEXT("Sphere"),PlayerPos+FVector(0,0,5),FVector(0.85f,0.5f,0.04f),FLinearColor(0.015f,0.028f,0.025f));
+    PlayerShadow->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_SoftShadow")));
     Player=Sprite(TEXT("Hero0_0"),PlayerPos,120,160);
     const bool CharacterReady=CharacterAnimation.Initialize(this,Player->GetStaticMeshComponent());
     ensureMsgf(CharacterReady,TEXT("Missing imported alchemist character assets"));
@@ -301,6 +316,7 @@ void AAlchemyWorld::BuildScene(bool Combat) {
 bool AAlchemyWorld::Walkable(FVector P,float Radius) const {
     const float X=bCombat?CombatHalfSize.X:2350,Y=bCombat?CombatHalfSize.Y:1850;
     if(FMath::Abs(P.X)>X-Radius || FMath::Abs(P.Y)>Y-Radius) return false;
+    if(bBossArenaActive && FVector::DistSquared2D(P,BossArenaCenter)>FMath::Square(FMath::Max(0.f,BossArenaRadius-Radius))) return false;
     for(const auto& O:Obstacles) if(FMath::Abs(P.X-O.Center.X)<O.Half.X+Radius && FMath::Abs(P.Y-O.Center.Y)<O.Half.Y+Radius) return false;
     return true;
 }
@@ -392,7 +408,7 @@ void AAlchemyWorld::Chase(FAlchemyEnemy& E,float Dt) {
 void AAlchemyWorld::UpdateCamera(float Delta) {
     auto C=Camera->GetCameraComponent();
     C->ProjectionMode=bPerspective?ECameraProjectionMode::Perspective:ECameraProjectionMode::Orthographic;
-    C->SetOrthoWidth(ViewWidth); C->SetFieldOfView(50); C->bConstrainAspectRatio=false;
+    C->SetOrthoWidth(bBossArenaActive?FMath::Max(ViewWidth,3600.f):ViewWidth); C->SetFieldOfView(50); C->bConstrainAspectRatio=false;
     C->PostProcessSettings.bOverride_DepthOfFieldFocalDistance=true;
     C->PostProcessSettings.DepthOfFieldFocalDistance=ViewWidth/2/FMath::Tan(FMath::DegreesToRadians(25.f));
     C->PostProcessSettings.bOverride_DepthOfFieldFstop=true; C->PostProcessSettings.DepthOfFieldFstop=bDepthOfField?1.8f:32;
@@ -401,7 +417,7 @@ void AAlchemyWorld::UpdateCamera(float Delta) {
     const float Aspect=VY>0?float(VX)/VY:16.f/9;
     const float HalfHeight=ViewWidth/(2*Aspect*FMath::Sin(FMath::DegreesToRadians(CameraPitch)));
     const float BoundX=bCombat?7111:2400, BoundY=bCombat?5380:1900;
-    FVector Target=PlayerPos;
+    FVector Target=bBossArenaActive?BossArenaCenter:PlayerPos;
     Target.X=FMath::Clamp(Target.X,-FMath::Max(0.f,BoundX-ViewWidth/2),FMath::Max(0.f,BoundX-ViewWidth/2));
     Target.Y=FMath::Clamp(Target.Y,-FMath::Max(0.f,BoundY-HalfHeight),FMath::Max(0.f,BoundY-HalfHeight));
     const float Distance=ViewWidth/2/FMath::Tan(FMath::DegreesToRadians(25.f));
@@ -453,12 +469,13 @@ void AAlchemyWorld::AddMaterial(int32 I) {
     Selected[I]++;
 }
 void AAlchemyWorld::StartRun() {
+    ResetMerchant();
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
     Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
     TutorialSkill=-1;bTutorialSupplyDone=false;
     // RESULT-001/EXP-001 run-local state resets.
     PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=0; PendingIsNuclear=false; PendingRefreshed=false;
-    RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
+    RunLevel=1; RunXP=0; PendingLevelUps=0;LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;for(int A=0;A<7;A++) RunAttrs[A]=0;
     // TALENT-002 start material: if unlocked, grant the chosen elite material once into run inventory.
     if(Progress->StartMaterialUnlocked && StartMaterialChoice>=0 && StartMaterialChoice<3) {
         Inventory[3+StartMaterialChoice]=1;
@@ -474,6 +491,8 @@ void AAlchemyWorld::StartRun() {
 }
 void AAlchemyWorld::EndRun(bool Won) {
     if(bRunEnded) return;
+    CloseMerchant();
+    EndBossArena();PendingLevelUps=0;
     bRunEnded=true; bWon=Won;
     // EXP-001/PAUSE-001: clear run-local xp/attributes and pending results on run end.
     RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
@@ -605,18 +624,22 @@ void AAlchemyWorld::GrantXP(float Amount) {
     RunXP += Amount * (1.f + 0.10f * RunAttrs[5]);
     while(RunXP >= RequiredXP(RunLevel)) {
         RunXP -= RequiredXP(RunLevel);
-        RunLevel++;
-        // EXP-001: roll three distinct, not-maxed attribute choices.
-        static const int32 MaxLayers[7]={5,5,5,5,5,5,3};
-        TArray<int32> Pool;
-        for(int A=0;A<7;A++) if(RunAttrs[A]<MaxLayers[A]) Pool.Add(A);
-        LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;
-        for(int I=0;I<3 && Pool.Num()>0;I++) {
-            int Pick=Pool[Random.RandRange(0,Pool.Num()-1)];
-            LevelupChoices[I]=Pick; Pool.Remove(Pick);
-        }
-        Panel=TEXT("levelup");
+        RunLevel++;PendingLevelUps++;
     }
+    if(Panel!=TEXT("levelup")) RollLevelupChoices();
+}
+void AAlchemyWorld::RollLevelupChoices() {
+    if(PendingLevelUps<=0) return;
+    if(LevelupChoices[0]>=0) {Panel=TEXT("levelup");return;} // Reopening a modal keeps the offered choices.
+    static const int32 MaxLayers[7]={5,5,5,5,5,5,3};
+    TArray<int32> Pool;
+    for(int A=0;A<7;A++) if(RunAttrs[A]<MaxLayers[A]) Pool.Add(A);
+    if(Pool.IsEmpty()) {PendingLevelUps=0;return;}
+    LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;
+    for(int I=0;I<3 && !Pool.IsEmpty();I++) {
+        const int Pick=Pool[Random.RandRange(0,Pool.Num()-1)];LevelupChoices[I]=Pick;Pool.Remove(Pick);
+    }
+    Panel=TEXT("levelup");
 }
 
 void AAlchemyWorld::ApplyRunAttr(int32 AttrIndex) {
@@ -680,6 +703,14 @@ float AAlchemyWorld::MaterialDropChance() const {
 }
 
 bool AAlchemyWorld::FindSpawnPoint(int Type,FVector& P) {
+    if(Type==10) {
+        for(int I=0;I<48;I++) {
+            const float Angle=I*2*PI/48;
+            const FVector Candidate=PlayerPos+FVector(FMath::Cos(Angle),FMath::Sin(Angle),0)*900;
+            if(Walkable(Candidate,EnemyRadius(10))) {P=Candidate;return true;}
+        }
+        return false;
+    }
     // Candidate rectangle lies outside the current orthographic viewport, not merely a player-radius circle.
     int VX=1280,VY=720; GetWorld()->GetFirstPlayerController()->GetViewportSize(VX,VY);
     const float HH=ViewWidth/(2*FMath::Max(0.5f,float(VX)/FMath::Max(1,VY))*FMath::Sin(FMath::DegreesToRadians(CameraPitch)));
@@ -705,6 +736,7 @@ bool AAlchemyWorld::FindSpawnPoint(int Type,FVector& P) {
     return false;
 }
 void AAlchemyWorld::SpawnEnemy(int Type) {
+    if(bBossSpawned && Type!=10) return;
     FVector P;
     if(!FindSpawnPoint(Type,P)) {UE_LOG(LogTemp,Warning,TEXT("ALCHEMY_SPAWN_NO_LEGAL_POINT type=%d time=%.2f"),Type,RunTime);return;}
     FAlchemyEnemy E; E.Type=Type; E.Pos=P;
@@ -713,11 +745,13 @@ void AAlchemyWorld::SpawnEnemy(int Type) {
     E.Speed=EnemySpeed[Type]*(Type==10?1:1+0.025f*FMath::Min(4,Minute));
     E.Contact=Type<7&&bTune001B?TuneContact[Type]:EnemyContact[Type];
     const float Scale=Type==10?3:Type>=7?2:1;
-    E.Body=Sprite(FString::Printf(TEXT("Enemy%d"),FMath::Min(Type,9)),P,100*Scale,100*Scale);
+    E.Body=Sprite(Type==10?TEXT("BossCorruption"):FString::Printf(TEXT("Enemy%d"),Type),P,100*Scale,Type==10?350:100*Scale);
     E.Shadow=Mesh(TEXT("Sphere"),P+FVector(0,0,4),FVector(0.7f*Scale,0.45f*Scale,0.03f),FLinearColor(0.02f,0.03f,0.03f));
+    if(Type==10) UpdateBossVisual(E);
     Enemies.Add(E);
 }
 void AAlchemyWorld::SpawnWave() {
+    if(bBossSpawned) return;
     const int W=FMath::Min(5,int(RunTime/60));
     int Count=Enemies.Num()<Minimum[W]?FMath::Min(Refill[W],Minimum[W]-Enemies.Num()):Batch[W];
     Count=FMath::Min(Count,300-Enemies.Num());
@@ -741,7 +775,14 @@ void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor C
         S.Body=Sprite(TEXT("PotionProjectile"),From+FVector(0,0,90),36,44);
         S.Body->SetActorHiddenInGame(true);
         if(S.Trail.IsValid()) S.Trail->SetVisibility(false);
-    } else S.Body=Mesh(TEXT("Sphere"),From+FVector(0,0,65),FVector(0.22f),Color);
+    } else {
+        S.Body=Mesh(TEXT("Sphere"),From+FVector(0,0,65),FVector(Hostile?.36f:.22f),Color);
+        if(Hostile) {
+            auto M=UMaterialInstanceDynamic::Create(Material(TEXT("M_HostileBolt")),this);M->SetVectorParameterValue(TEXT("Tint"),Color);
+            S.Body->GetStaticMeshComponent()->SetMaterial(0,M);
+            S.Body->SetActorRotation(FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),-Camera->GetActorForwardVector()).Rotator());
+        }
+    }
     Shots.Add(S);
 }
 UNiagaraComponent* AAlchemyWorld::SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life) {
@@ -794,6 +835,7 @@ void AAlchemyWorld::Hurt(float Damage) {
     else CharacterAnimation.Hit();
 }
 void AAlchemyWorld::Drop(FVector P,int Kind,int Count) {
+    if(bCollectBossRewards) {CollectDrop(Kind,Count,true);return;}
     FAlchemyDrop D; D.Pos=P; D.Kind=Kind; D.Count=Count;
     const TCHAR* Icons[]={TEXT("FirePowder"),TEXT("Dew"),TEXT("MagicShard"),TEXT("BeastCore"),TEXT("VoidCrystal"),TEXT("RootHeart")};
     if(Kind>=6) D.Body=Sprite(TEXT("Chest"),P,160,160);
@@ -846,6 +888,12 @@ void AAlchemyWorld::CastSkills(float Dt) {
 }
 
 void AAlchemyWorld::Action(FString Id) {
+    if(Id==TEXT("merchantopen")) {OpenMerchant();return;}
+    if(Id.StartsWith(TEXT("merchantbuy"))) {BuyMerchant(FCString::Atoi(*Id.Mid(11)));return;}
+    if(Id==TEXT("merchantrefresh")) {RefreshMerchant();return;}
+    if(Id.StartsWith(TEXT("merchantsellall"))) {SellMerchant(FCString::Atoi(*Id.Mid(15)),true);return;}
+    if(Id.StartsWith(TEXT("merchantsell"))) {SellMerchant(FCString::Atoi(*Id.Mid(12)));return;}
+    if(Id==TEXT("merchantconfirm")) {ConfirmMerchantSale();return;}
     if(Id==TEXT("textsize") || Id==TEXT("fonts")) {Panel=TEXT("fonts");return;}
     if(Id.StartsWith(TEXT("fontm")) || Id.StartsWith(TEXT("fontl")) || Id==TEXT("fontreset")) {
         const float OldM=Progress->MediumTextScale,OldL=Progress->LargeTextScale;
@@ -867,6 +915,8 @@ void AAlchemyWorld::Action(FString Id) {
         if(Id!=TEXT("village")) return;
     }
     if(Id==TEXT("close")) {
+        if(Panel==TEXT("merchantconfirm")) {MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");return;}
+        if(Panel==TEXT("levelup") && PendingLevelUps>0) return;
         if(Panel==TEXT("result") && (PendingResultSkill>=0 || PendingIsNuclear)) return; // must resolve the result
         Panel.Empty(); PendingTalent=-1; return;
     }
@@ -879,7 +929,11 @@ void AAlchemyWorld::Action(FString Id) {
     if(Id==TEXT("craft")) { Craft(); return; }
     if(Id==TEXT("acceptresult")) { AcceptPendingResult(); return; }
     if(Id==TEXT("reroll")) { RerollPendingResult(); return; }
-    if(Id.StartsWith(TEXT("pick"))) { ApplyRunAttr(FCString::Atoi(*Id.Mid(4))); Panel.Empty(); return; }
+    if(Id.StartsWith(TEXT("pick"))) {
+        const int Choice=FCString::Atoi(*Id.Mid(4));
+        if(Panel!=TEXT("levelup") || PendingLevelUps<=0 || (Choice!=LevelupChoices[0] && Choice!=LevelupChoices[1] && Choice!=LevelupChoices[2])) return;
+        ApplyRunAttr(Choice);PendingLevelUps--;LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;Panel.Empty();RollLevelupChoices();return;
+    }
     if(Id.StartsWith(TEXT("startmat"))) { StartMaterialChoice=FCString::Atoi(*Id.Mid(8)); Panel=TEXT("level"); return; }
     if(Id.StartsWith(TEXT("fill")) && Panel==TEXT("codex") && bCombat) {
         // CODEX-002: one-click fill the minimum material amount for a discovered combination.
@@ -953,12 +1007,16 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::F6)) Panel=Panel==TEXT("research")?TEXT(""):TEXT("research");
     if(PC->WasInputKeyJustPressed(EKeys::Escape)) {
         if(bRunEnded) Action(Panel==TEXT("savefailed")?TEXT("retry"):TEXT("village"));
-        else Panel=Panel.IsEmpty()?TEXT("pause"):TEXT("");
+        else if(Panel.IsEmpty()) Panel=TEXT("pause");else Action(TEXT("close"));
     }
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::Tab)) Panel=Panel==TEXT("alchemy")?TEXT(""):TEXT("alchemy");
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) Panel=Panel==TEXT("skills")?TEXT(""):TEXT("skills");
     if(bSmoke) SmokeCheck(Dt);
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke"))) {MerchantSmoke(Dt);return;}
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture"))) MerchantCapture(Dt);
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossSmoke"))) {BossSmoke(Dt);return;}
+    if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture"))) BossPresentationCapture(Dt);
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke"))) CharacterSmoke(Dt);
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) CharacterV3Smoke(Dt);
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture"))) {CaptureTools(Dt);return;}
@@ -1003,7 +1061,7 @@ void AAlchemyWorld::Tick(float Dt) {
         // Isolated interactive UI check: no real save load/write, no cheat path in ordinary play.
         if(CaptureStep==0 && VisualTime>2) {StartRun();Inventory={10,10,10,1,1,1};Panel=TEXT("alchemy");CaptureStep=1;}
     }
-    else if(bCapture && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) {
+    else if(bCapture && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"))) {
         const auto Capture=[this](const TCHAR* Name) {
             FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence")/Name,false,false);
         };
@@ -1024,12 +1082,13 @@ void AAlchemyWorld::Tick(float Dt) {
         else if(CaptureStep==9 && VisualTime>15) { Capture(TEXT("05_Perspective_Lit.png")); CaptureStep++; }
         else if(CaptureStep==10 && VisualTime>16) {UE_LOG(LogTemp,Display,TEXT("ALCHEMY_CAPTURE_DONE")); FPlatformMisc::RequestExit(false); CaptureStep++;}
     }
+    if(PendingLevelUps>0 && Panel.IsEmpty()) RollLevelupChoices();
     UpdateCamera(Dt);
     UpdateFeedback(Dt);
     if(!Panel.IsEmpty()) {
         Player->SetActorHiddenInGame(false);
         UpdateCharacterVisual(CharacterAnimation.Dead?Dt:0,false);
-        for(auto& E:Enemies) {float Scale=E.Type==10?3:E.Type>=7?2:1; UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),FMath::Min(E.Type,9)),E.Pos,100*Scale,100*Scale);}
+        for(auto& E:Enemies) {if(E.Type==10) {UpdateBossVisual(E);continue;}float Scale=E.Type>=7?2:1;UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),E.Type),E.Pos,100*Scale,100*Scale);}
         return;
     }
     const float Horizontal=(PC->IsInputKeyDown(EKeys::D)?1:0)-(PC->IsInputKeyDown(EKeys::A)?1:0);
@@ -1045,6 +1104,7 @@ void AAlchemyWorld::Tick(float Dt) {
     UpdateCharacterVisual(Dt,!PlayerPos.Equals(PreviousPos));
     Player->SetActorHiddenInGame(!CharacterAnimation.Hurting && (HurtInv>0 || DodgeInv>0) && int(VisualTime*16)%2==0);
     PlayerShadow->SetActorLocation(PlayerPos+FVector(0,0,5));
+    if(bCombat && PC->WasInputKeyJustPressed(EKeys::F) && OpenMerchant()) return;
     if(!bCombat) {
         if(PC->WasInputKeyJustPressed(EKeys::F)) {
             if(FVector::Dist2D(PlayerPos,FVector(-600,100,0))<280) Panel=TEXT("talents");
@@ -1054,19 +1114,25 @@ void AAlchemyWorld::Tick(float Dt) {
         return;
     }
     RunTime+=Dt; SpawnCD-=Dt; ContactCD-=Dt;
+    UpdateMerchant(Dt);
     // EXP-001: in-run HP regen (1/sec per stack), capped at max HP.
     if(RunAttrs[6]>0) HP=FMath::Min(MaxHP,HP+RunAttrs[6]*Dt);
     if(RunTime>=300 && RunTime-Dt<300) Message(TEXT("最终 BOSS 即将出现 · 10 秒预警"));
-    if(RunTime>=310 && !bBossSpawned) {int Before=Enemies.Num(); SpawnEnemy(10); bBossSpawned=Enemies.Num()>Before; if(bBossSpawned) Message(TEXT("腐化之源 · BOSS 原型战"));}
+    if(RunTime>=310 && !bBossSpawned) StartBossEncounter();
     // SPAWN-002: once the final boss appears, stop new normal-wave and elite spawns.
-    // Existing enemies stay alive and keep fighting; their death rewards are unchanged.
+    // Boss entry settles all remaining enemies and drops exactly once.
     if(!bBossSpawned) {
         if(SpawnCD<=0) {SpawnWave(); SpawnCD=Interval[FMath::Min(5,int(RunTime/60))];}
         if(RunTime>=NextElite && NextElite<1800) {int Before=Enemies.Num(); SpawnEnemy(7+EliteIndex%3); if(Enemies.Num()>Before) {NextElite+=90; EliteIndex++;}}
     }
+    if(!Panel.IsEmpty()) return;
     CastSkills(Dt);
     for(auto& E:Enemies) {
         if(E.HP<=0) continue;
+        if(E.Type==10) {
+            E.HitFlash=FMath::Max(0.f,E.HitFlash-Dt);UpdateBoss(E,Dt);
+            UpdateBossVisual(E);continue;
+        }
         E.AttackCD-=Dt; E.Slow=FMath::Max(0.f,E.Slow-Dt);E.HitFlash=FMath::Max(0.f,E.HitFlash-Dt);
         if(E.Type==10 && E.HP<=3000 && !E.Phase2) {E.Phase2=true; E.Transition=2; Message(TEXT("BOSS 第二阶段 · 2秒转换，可继续攻击"));}
         if(E.Transition>0) { E.Transition-=Dt; continue; }
@@ -1133,31 +1199,13 @@ void AAlchemyWorld::Tick(float Dt) {
         SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
         TutorialSupply(E.Pos);
         if(E.Type==10) {EndRun(true); break;}
-        if(E.Type>=7) {Drop(E.Pos,6+E.Type-7); Drop(E.Pos,-1,10);}
-        else {
-            // DROP-002/EXP-001: normal enemies always drop one XP orb, plus independent coin/material rolls.
-            Drop(E.Pos,-2,E.Type);
-            if(Random.FRand()<0.7f) Drop(E.Pos,-1);
-            if(Random.FRand()<MaterialDropChance()) {float R=Random.FRand(); Drop(E.Pos,R<0.4f?0:R<0.75f?1:2);}
-        }
+        RewardEnemy(E);
     }
     if(!Panel.IsEmpty()) return;
     for(int i=Drops.Num()-1;i>=0;i--) {
         auto& D=Drops[i]; float Dist=FVector::Dist2D(D.Pos,PlayerPos);
         if(Dist>(D.Kind>=6?220:250*(1+0.1f*Progress->Talents[3]))) continue;
-        if(D.Kind>=6) {
-            int Special=D.Kind-3,SpecialAdded=Inventory[Special]<10?1:0,CommonAdded=0;
-            Inventory[Special]=FMath::Min(10,Inventory[Special]+1);
-            for(int j=0;j<4;j++) {float R=Random.FRand();int Kind=R<0.4f?0:R<0.75f?1:2; if(Inventory[Kind]<10) {Inventory[Kind]++;CommonAdded++;}}
-            Message(FString::Printf(TEXT("精英宝箱实际入库：专属 ×%d，普通 ×%d%s"),SpecialAdded,CommonAdded,SpecialAdded+CommonAdded<5?TEXT("；素材已满，超额不入库"):TEXT("")));
-        } else if(D.Kind==-2) {
-            // EXP-001: XP orb grants run-local experience.
-            const int Type=FMath::Min(6,FMath::Max(0,D.Count));
-            static const float XPValues[7]={3,4,5,5,6,6,8};
-            GrantXP(XPValues[Type]);
-        } else if(D.Kind<0) RunCoins+=D.Count;
-        else if(Inventory[D.Kind]>=10) Message(TEXT("素材已满"));
-        else Inventory[D.Kind]=FMath::Min(10,Inventory[D.Kind]+D.Count);
+        CollectDrop(D.Kind,D.Count);
         D.Body->Destroy(); Drops.RemoveAtSwap(i);
     }
     for(int i=Effects.Num()-1;i>=0;i--) {
@@ -1213,6 +1261,11 @@ void AAlchemyWorld::LayoutCheck() {
 void AAlchemyWorld::AlchemyCheck() {
     bool OK=true;
     const auto Check=[&](bool Pass,const TCHAR* Name) {OK &= Pass;UE_LOG(LogTemp,Display,TEXT("ALCH002_CHECK %s %s"),Name,Pass?TEXT("PASS"):TEXT("FAIL"));};
+    // These legacy checks cover normal quality/acceptance. Pick a deterministic non-nuclear seed.
+    const auto CraftAndAccept=[&]() {
+        int Seed=1;while(FRandomStream(Seed).FRand()<.05f) Seed++;Random.Initialize(Seed);
+        const bool Made=Craft();if(Made) AcceptPendingResult();return Made;
+    };
     Progress=NewObject<UAlchemyProgress>(this);Progress->Coins=123;Progress->Recipes={1,7};Progress->Chains={0,1};Progress->Talents={1,2,0,0};
     MigrateProgress(true);
     Check(Progress->Coins==123 && Progress->Recipes.Contains(1) && Progress->Recipes.Contains(7) && Progress->TutorialComplete && Progress->Combinations.IsEmpty() && Progress->ChainsV2.IsEmpty() && Progress->Talents[1]==2,TEXT("legacy_semantic_migration"));
@@ -1232,7 +1285,7 @@ void AAlchemyWorld::AlchemyCheck() {
             if(W.Num()==3) for(int Q=0;Q<3;Q++) Tables &= FMath::IsNearlyEqual(W[Q],QualityWeights[Total-3][Q],.001f);
         }
         Levels.Init(0,25);Levels[0]=1;Equipped={0};Bag.Empty();
-        Tables &= Craft() && Progress->Combinations.Contains(G);
+        Tables &= CraftAndAccept() && Progress->Combinations.Contains(G);
     }
     Check(Tables && Unique.Num()==21,TEXT("7_groups_21_skills_8_probability_rows_and_crafting"));
     Levels.Init(0,25);Levels[0]=1;Equipped={0};Bag.Empty();Inventory={10,10,10,0,0,0};Selected={1,1,1,0,0,0};Levels[23]=5;
@@ -1241,10 +1294,10 @@ void AAlchemyWorld::AlchemyCheck() {
     Check(Filter && !Craft() && Before==Inventory,TEXT("filter_renormalization_and_all_blocked_no_cost"));
     Levels.Init(0,25);Levels[0]=1;Equipped={0,1,2,3,5,6};Bag={7,8,9,10,11,12};Selected={1,1,1,0,0,0};
     bool Capacity=!CraftOptions(Options,W,Reason,C);Levels[4]=1;
-    Capacity &= CraftOptions(Options,W,Reason,C) && Options.Num()==1 && Options[0]==4 && W[0]==100 && Craft() && Levels[4]==2;
+    Capacity &= CraftOptions(Options,W,Reason,C) && Options.Num()==1 && Options[0]==4 && W[0]==100 && CraftAndAccept() && Levels[4]==2;
     Check(Capacity,TEXT("capacity_filters_new_but_allows_existing_upgrade"));
     Levels.Init(0,25);Levels[0]=1;Equipped={0};Bag.Empty();Inventory={3,3,3,1,1,1};Selected={1,0,1,1,0,0};
-    Check(Craft() && Levels[7]==1 && Inventory[3]==0,TEXT("elite_fixed_recipe_preserved"));
+    Check(CraftAndAccept() && Levels[7]==1 && Inventory[3]==0,TEXT("elite_fixed_recipe_preserved"));
     Selected={1,1,1,0,1,0};Before=Inventory;Check(!Craft() && Inventory==Before,TEXT("invalid_special_no_cost"));
     const auto ClearEnemies=[&]() {for(auto& E:Enemies) {E.Body->Destroy();E.Shadow->Destroy();}Enemies.Empty();};
     ClearEnemies();SpawnEnemy(0);SpawnEnemy(0);
@@ -1254,7 +1307,7 @@ void AAlchemyWorld::AlchemyCheck() {
     TutorialSupply(PlayerPos);Supply &= Drops.Num()==1;TutorialSupply(PlayerPos);Supply &= Drops.Num()==2;TutorialSupply(PlayerPos);Supply &= Drops.Num()==3;TutorialSupply(PlayerPos);Supply &= Drops.Num()==3 && bTutorialSupplyDone;
     Check(Supply,TEXT("tutorial_35s_one_missing_per_kill_no_duplicate_ground_drop"));
     Inventory={3,3,3,0,0,0};Selected={0,0,0,0,0,0};AddMaterial(0);AddMaterial(0);AddMaterial(3);
-    bool Tutorial=Selected[0]==1 && Selected[3]==0;AddMaterial(1);AddMaterial(2);Tutorial &= Craft() && TutorialSkill>=0;
+    bool Tutorial=Selected[0]==1 && Selected[3]==0;AddMaterial(1);AddMaterial(2);Tutorial &= CraftAndAccept() && TutorialSkill>=0;
     int TS=TutorialSkill;Before=Inventory;Selected={1,1,1,0,0,0};Tutorial &= !Craft() && Inventory==Before;
     TutorialHit(TS,1);Tutorial &= !Progress->TutorialComplete;TutorialHit(0,2);Tutorial &= !Progress->TutorialComplete;
     SpawnEnemy(0);SpawnEnemy(0);for(int I=0;I<Enemies.Num();I++) {Enemies[I].Pos=FVector(200+40*I,0,0);Enemies[I].HP=10000;}
@@ -1312,7 +1365,7 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
         AlchemyCheck();Progress=NewObject<UAlchemyProgress>(this);MigrateProgress(true);StartRun();
         Inventory={3,3,3,0,0,0}; Selected={1,0,0,0,0,0}; auto Before=Inventory;
         Require(!Craft() && Before==Inventory,TEXT("invalid_craft_no_cost"));
-        Selected={2,0,1,0,0,0}; Require(Craft() && CraftCount==1 && Inventory[0]==1 && Inventory[2]==2,TEXT("valid_random_combination"));
+        Selected={2,0,1,0,0,0};const bool Crafted=Craft();if(Crafted) AcceptPendingResult();Require(Crafted && CraftCount==1 && Inventory[0]==1 && Inventory[2]==2,TEXT("valid_random_combination"));
         for(int S:CombinationSkills[4]) Levels[S]=5;
         Inventory={3,3,3,0,0,0}; Selected={2,0,1,0,0,0}; Before=Inventory;
         Require(!Craft() && Before==Inventory,TEXT("max_level_no_cost"));
@@ -1337,15 +1390,20 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
         RunTime=309.98f; SmokeTime=0; SmokeStep=4;
     } else if(SmokeStep==4 && SmokeTime>0.3f) {
         Require(bBossSpawned,TEXT("boss_at_310"));
+        PendingLevelUps=0;Panel.Empty();
         NextElite=360;EliteIndex=3;RunTime=359.98f;SmokeTime=0;SmokeStep=5;
     } else if(SmokeStep==5 && SmokeTime>0.3f) {
-        Require(RunTime>=360 && NextElite==450 && EliteIndex==4,TEXT("elite_at_360_during_boss"));
+        Require(RunTime>=360 && NextElite==360 && EliteIndex==3 && Enemies.Num()==1,TEXT("no_elites_during_boss"));
         UE_LOG(LogTemp,Display,TEXT("ALCHEMY_SMOKE_PASS"));
-        FFileHelper::SaveStringToFile(TEXT("PASS: Layout A geometry, coordinates, paths and pursuit at three radii; spawn coverage; initial spawn, tuning, recipes, material cap, pause, camera, boss timeline, elite at 360\n"),*(FPaths::ProjectDir()/TEXT("Evidence/smoke-result.txt")));
+        FFileHelper::SaveStringToFile(TEXT("PASS: Layout A, spawn coverage, tuning, recipes, cap, pause, camera, boss entry and no elite spawns during boss\n"),*(FPaths::ProjectDir()/TEXT("Evidence/smoke-result.txt")));
         FPlatformMisc::RequestExit(false); SmokeStep=6;
     }
 }
 
+#include "AlchemyBoss.inl"
+#include "AlchemyMerchant.inl"
+#include "AlchemyMerchantChecks.inl"
+#include "AlchemyMerchantHUD.inl"
 #include "AlchemyHUD.inl"
 #include "AlchemyFeedback.inl"
 #include "AlchemyToolsChecks.inl"

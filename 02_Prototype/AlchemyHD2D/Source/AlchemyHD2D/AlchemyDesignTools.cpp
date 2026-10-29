@@ -156,7 +156,18 @@ void AAlchemyLevelDesigner::PaintCell() {
 void AAlchemyLevelDesigner::RefreshCells() {for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It) if(It->GetOwner()==this) It->ApplyAppearance();}
 void AAlchemyLevelDesigner::SetRuntimeVisible(bool Visible) {SetActorHiddenInGame(!Visible);
     for(TActorIterator<AActor> It(GetWorld());It;++It) if(It->ActorHasTag(TEXT("AlchemyEditorPreviewLight")) && It->GetRootComponent()) It->GetRootComponent()->SetVisibility(false,true);
-    for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It) if(It->GetOwner()==this) It->SetActorHiddenInGame(!Visible);}
+    for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It) if(It->GetOwner()==this) {
+        It->SetActorHiddenInGame(!Visible);
+        if(Visible && It->bGround && It->Texture) {
+            const FString Override=It->MaterialOverride?It->MaterialOverride->GetName():TEXT("");
+            if(Override.IsEmpty() || Override==TEXT("M_Grass") || Override==TEXT("M_Dirt") || Override==TEXT("M_Stone")) {
+                if(auto* Base=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Design/M_DesignerGround.M_DesignerGround"))) {
+                    auto* M=UMaterialInstanceDynamic::Create(Base,It->Image);M->SetTextureParameterValue(TEXT("Image"),It->Texture);It->Image->SetMaterial(0,M);
+                }
+            }
+        }
+    }
+}
 void AAlchemyLevelDesigner::OpenTable(UDataTable* Table) {
 #if WITH_EDITOR
     if(Table && GEditor) GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Table);

@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-29",
+  "asset": "BossCorruption",
+  "provider": "Native GPT image generation in this chat, not paid API or Grok",
+  "source_reference": "ArtSource/Enemy9.png",
+  "original": "BossCorruption_20261029.png",
+  "source_sha256": "ca612c50ac9658e00e5019959ec36e3322488453f016373e6d9f3cd8a77b15fa",
+  "production": "BossCorruption.png",
+  "production_sha256": "ea655f32d301425ce1fd8d074982c3e02d15ace8271c33754939b64580be99db",
+  "size": [
+    384,
+    448
+  ],
+  "alpha_bbox": [
+    33,
+    24,
+    352,
+    432
+  ],
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "normalization": "sprite-gen 3.5.0 slice-sheet, 1x1, native alpha floor64, sheet scale, contain fit, 384x448, baseline432, target408",
+  "sheet_report": "03_Build/sprite-gen/boss-20261029/slice-sheet.json",
+  "view": "front three-quarter, static boss pose",
+  "animation": "Runtime dash, hit response and telegraphs; no claim of generated multi-frame boss animation",
+  "qa": "Native slice alpha/contain PASS; Unreal import and actual 1280x720 / 2560x1080 rendered inspection PASS"
+}

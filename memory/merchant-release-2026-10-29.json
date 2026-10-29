@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-29",
+  "result": "PASS",
+  "base_commit": "09b1219cbf88f25a917be2583167d7eaceedc0c6",
+  "engine": "Unreal Engine 5.8.4 CL58902052",
+  "configuration": "Win64 Development",
+  "editor_build": "PASS",
+  "data_validation": {
+    "errors": 0,
+    "warnings": 1,
+    "warning": "Existing AutoSDKInfo log cleanup lock"
+  },
+  "uat": "BUILD SUCCESSFUL",
+  "uat_seconds": 193.17,
+  "merchant": {
+    "result": "PASS",
+    "checks": 29,
+    "stock_rolls": 4000
+  },
+  "packaged_checks": {
+    "AlchemyMerchantSmoke": "PASS",
+    "AlchemyBossSmoke": "PASS",
+    "AlchemySmoke": "PASS",
+    "AlchemyCharacterV3Smoke": "PASS",
+    "AlchemyMerchantCapture": "PASS",
+    "AlchemyBossCapture": "PASS"
+  },
+  "packaged_boss": {
+    "result": "PASS",
+    "cleared": 10,
+    "attack_counts": [
+      2,
+      2,
+      2
+    ],
+    "hostile_shots": 28
+  },
+  "packaged_character_v3": {
+    "result": "PASS",
+    "left_walk_right_aim": true,
+    "moves_left": true,
+    "stable_ground_anchor": true,
+    "potion_break_visible": true,
+    "break_count": 1,
+    "break_cleanup": true,
+    "hurt_damage_animation": true,
+    "hurt_return": true,
+    "death_started": true,
+    "death_last_frame_held": true,
+    "no_movement_after_death": true
+  },
+  "rendered_merchant_editor": {
+    "1280x720": 6,
+    "2560x1080": 6
+  },
+  "rendered_packaged": {
+    "merchant_1280x720": 6,
+    "boss_1280x720": 6
+  },
+  "visual_inspection": "Shop, sale confirmation, world NPC, boss arena and telegraphs inspected",
+  "zip": {
+    "path": "03_Build\\HD2D_PC_UI\\冒牌炼金术士_Demo_Win64_最新测试版.zip",
+    "bytes": 351092235,
+    "sha256": "c768e15869ce81efd52b66976ba234eb4ba9f5d8737ece4bdb4a8bdf8af08ad8",
+    "entries": 45,
+    "crc": "PASS",
+    "all_entries_match_tested_build": true,
+    "saved_evidence_pdb_excluded": true
+  },
+  "save_preserved_sha256": "cbacc503f887c6ae856ec6f10d42325c3bd0f6bc3ff1bdeb202b9ae9af46008b",
+  "assets": "Existing merchant placeholder sprites; new Boss GPT source and production image plus UE materials retained",
+  "skill_originals": [
+    "01_Skill/sprite-gen-3.5.0-source.zip",
+    "01_Skill/installed/awesome-gamedev-agent-skills"
+  ],
+  "git_target": "origin/main; publication evidence in memory/2026-10-29.md and final delivery",
+  "not_claimed": [
+    "Manual full playthrough",
+    "Economy balance acceptance",
+    "Crowd performance benchmark"
+  ]
+}

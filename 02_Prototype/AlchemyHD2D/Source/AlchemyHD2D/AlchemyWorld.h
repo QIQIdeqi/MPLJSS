@@ -44,6 +44,10 @@ struct FAlchemyEnemy {
     float HP=1, MaxHP=1, Speed=1, Contact=0, AttackCD=1, Windup=0, Slow=0, Transition=0;
     FVector Aim=FVector::ZeroVector;
     bool Phase2=false;
+    int32 BossAttack=0, BossSequence=0;
+    float BossActive=0;
+    bool BossDashHit=false;
+    FVector DashDirection=FVector::ZeroVector;
     TArray<FVector> Path;
     float RepathCD=0;
     float SlowFactor=0.65f;
@@ -103,6 +107,7 @@ public:
     // EXP-001: run-local level/xp and the seven in-run attribute stacks.
     int32 RunLevel=1; float RunXP=0; int32 RunAttrs[7]={0,0,0,0,0,0,0};
     int32 LevelupChoices[3]={-1,-1,-1};
+    int32 PendingLevelUps=0;
     // TALENT-002 start material: chosen once per run before entering combat.
     int32 StartMaterialChoice=-1;
     bool bTutorialSupplyDone=false;
@@ -165,6 +170,23 @@ public:
     AStaticMeshActor* PlayerShadow=nullptr;
     UPROPERTY() TArray<TObjectPtr<AActor>> Scene;
     float SpawnCD=2.6f, NextElite=90, ContactCD=0, VisualTime=0;
+    bool bBossArenaActive=false, bCollectBossRewards=false;
+    FVector BossArenaCenter=FVector::ZeroVector;
+    float BossArenaRadius=1450;
+    int32 BossClearCount=0, BossAttackCounts[3]={0,0,0};
+    UPROPERTY() TObjectPtr<AStaticMeshActor> BossArenaRing;
+    UPROPERTY() TObjectPtr<AStaticMeshActor> BossTelegraph;
+    UPROPERTY() TArray<TObjectPtr<AStaticMeshActor>> BossFanTelegraphs;
+    bool bMerchantActive=false, MerchantEliteUnlocked[3]={false,false,false};
+    FVector MerchantPos=FVector::ZeroVector;
+    float MerchantRemaining=0,NextMerchantTime=80;
+    int32 MerchantVisit=0,MerchantRerolls=0,MerchantStock[3]={0,1,2};
+    bool MerchantSoldOut[3]={false,false,false};
+    int32 MerchantSellKind=-1,MerchantSellCount=0;
+    FRandomStream MerchantRandom{1177};
+    UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantBody;
+    UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantStall;
+    UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantMarker;
     TArray<float> SkillCD,ChainCD;
     int32 EliteIndex=0, SmokeStep=0, CaptureStep=0;
     float SmokeTime=0;
@@ -196,6 +218,7 @@ public:
     void RerollPendingResult();
     int32 RequiredXP(int32 Level) const;
     void GrantXP(float Amount);
+    void RollLevelupChoices();
     void ApplyRunAttr(int32 AttrIndex);
     bool TalentNodeUnlocked(int32 Node) const;
     bool TalentNodeDone(int32 Node) const;
@@ -203,6 +226,31 @@ public:
     FString ChainHintFor(int32 Skill) const;
     float MaterialDropChance() const;
     void SpawnEnemy(int32 Type);
+    bool StartBossEncounter();
+    void UpdateBoss(FAlchemyEnemy& Enemy,float Delta);
+    void UpdateBossVisual(FAlchemyEnemy& Enemy);
+    void EndBossArena();
+    void ClearBossTelegraphs();
+    void RewardEnemy(const FAlchemyEnemy& Enemy);
+    void CollectDrop(int32 Kind,int32 Count,bool BossTransfer=false);
+    void BossSmoke(float Delta);
+    void BossPresentationCapture(float Delta);
+    void ResetMerchant();
+    void RollMerchantStock();
+    bool SpawnMerchant();
+    void CloseMerchant();
+    bool OpenMerchant();
+    bool CanTrade() const;
+    int32 MerchantBuyPrice(int32 Kind) const;
+    int32 MerchantSellPrice(int32 Kind) const;
+    int32 MerchantRefreshPrice() const;
+    bool BuyMerchant(int32 Slot);
+    bool RefreshMerchant();
+    bool SellMerchant(int32 Kind,bool All=false);
+    bool ConfirmMerchantSale();
+    void UpdateMerchant(float Delta);
+    void MerchantSmoke(float Delta);
+    void MerchantCapture(float Delta);
     bool FindSpawnPoint(int32 Type,FVector& Position);
     void SpawnWave();
     int32 Nearest(FVector Pos,float Range,const TArray<int32>& Exclude={}) const;
@@ -247,6 +295,7 @@ public:
     void Paragraph(const FString& Value,float X,float Y,float Width,float Size=18,FLinearColor Color=FLinearColor::White);
     void Box(float X,float Y,float W,float H,FLinearColor Color);
     void Button(const FString& Id,const FString& Label,float X,float Y,float W=180,bool Enabled=true,float Height=48);
+    void DrawMerchant();
 };
 
 UCLASS()

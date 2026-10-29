@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-29",
+  "result": "APPROVED_OBJECTS_ALREADY_RECYCLED_PRESERVED_OBJECTS_RESTORED",
+  "approved_objects_absent_from_active_cache": 40,
+  "approved_bytes": 10705372455,
+  "approved_objects_still_in_recycle_bin": 40,
+  "permanent_deletion_this_turn": 0,
+  "permanent_deletion_blocked_by_automatic_review": true,
+  "review_reason": "blocked by policy; no detailed reason provided",
+  "preserved_old_objects_restored": 25,
+  "preserved_old_bytes": 262360878,
+  "current_objects_restored": 145,
+  "restoration_sha256": "PASS",
+  "current_lfs_fsck": "PASS",
+  "untargeted_archive_untouched": true,
+  "source": "The full prior .git/lfs directory had been moved to the Recycle Bin before this turn. Copied back only 25 preserved objects and 145 current objects."
+}

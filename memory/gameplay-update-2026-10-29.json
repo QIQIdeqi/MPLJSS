@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-29",
+  "pulled_head": "09b1219cbf88f25a917be2583167d7eaceedc0c6",
+  "engine": "Unreal 5.8.4 CL58902052",
+  "editor_build": "PASS",
+  "boss_rules": {
+    "result": "PASS",
+    "cleared": 10,
+    "attack_counts": [
+      2,
+      2,
+      2
+    ],
+    "hostile_shots": 28
+  },
+  "boss_rule_checks": 28,
+  "legacy_gameplay_checks": "PASS",
+  "alchemist_v3_regression": {
+    "result": "PASS",
+    "left_walk_right_aim": true,
+    "moves_left": true,
+    "stable_ground_anchor": true,
+    "potion_break_visible": true,
+    "break_count": 1,
+    "break_cleanup": true,
+    "hurt_damage_animation": true,
+    "hurt_return": true,
+    "death_started": true,
+    "death_last_frame_held": true,
+    "no_movement_after_death": true
+  },
+  "rendered_viewports": [
+    [
+      1280,
+      720
+    ],
+    [
+      2560,
+      1080
+    ]
+  ],
+  "screenshots": [
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/1280x720/01_DashWarning.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/1280x720/02_Dash.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/1280x720/03_BarrageWarning.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/1280x720/04_Barrage.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/1280x720/05_WaveWarning.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/1280x720/06_Shockwave.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/2560x1080/01_DashWarning.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/2560x1080/02_Dash.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/2560x1080/03_BarrageWarning.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/2560x1080/04_Barrage.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/2560x1080/05_WaveWarning.png",
+    "02_Prototype/AlchemyHD2D/Evidence/Boss20261029/2560x1080/06_Shockwave.png"
+  ],
+  "boss_source_sha256": "b4301fe86fbf049a5318ebcdecd072be03d1447d4fa00300d2404b710189f796",
+  "native_material_script_sha256": "aeb43a725d364e0395d4a4f3f0627a9e4feb1627a80eb46078eb6d411b6cfa65",
+  "runtime_demo": "02_Prototype/AlchemyHD2D/启动Boss战测试.cmd",
+  "preview_uses_player_save": false,
+  "event_system": "Design proposal only; not implemented",
+  "merchant_confirmed_rule": "Three random slots; duplicates allowed, at least two distinct materials",
+  "windows_zip_repackaged": false,
+  "git_pushed": false,
+  "manual_full_playthrough": false,
+  "performance_benchmark": false,
+  "notes": [
+    "Rule checks use isolated simulated state. RHI captures run actual attacks with scripted setup, not a manual player playthrough.",
+    "Final queue-choice cache change is covered by BossSmoke; visual capture code was unchanged by that final change."
+  ],
+  "follow_up_release": "merchant-release-2026-10-29.json",
+  "state_at_capture": "Boss implementation before merchant release; see follow_up_release for packaging and delivery"
+}

@@ -14,3 +14,4 @@
 03_Build/sprite-gen/**/*.gif filter=lfs diff=lfs merge=lfs -text
 03_Build/sprite-gen/**/*.webp filter=lfs diff=lfs merge=lfs -text
 02_Prototype/AlchemyHD2D/ArtSource/Alchemist*/**/*.png filter=lfs diff=lfs merge=lfs -text
+02_Prototype/AlchemyHD2D/ArtSource/BossCorruption*.png filter=lfs diff=lfs merge=lfs -text

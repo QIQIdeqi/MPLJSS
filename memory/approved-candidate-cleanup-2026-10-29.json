@@ -1,0 +1,32 @@
+﻿[
+    {
+        "path":  "01_Skill/tmp/history-rewrite-20261028/remote-proof",
+        "bytes":  779258393,
+        "removed":  true,
+        "method":  "RecycleBin"
+    },
+    {
+        "path":  ".git/lfs-remote-proof-20261028",
+        "bytes":  350548913,
+        "removed":  true,
+        "method":  "RecycleBin"
+    },
+    {
+        "path":  ".git/lfs-remote-proof-designers-20261028",
+        "bytes":  350592558,
+        "removed":  true,
+        "method":  "RecycleBin"
+    },
+    {
+        "path":  "01_Skill/cache",
+        "bytes":  572223996,
+        "removed":  true,
+        "method":  "RecycleBin"
+    },
+    {
+        "path":  "02_Prototype/AlchemyHD2D/Binaries/Win64/AlchemyHD2D.pdb",
+        "bytes":  371789824,
+        "removed":  true,
+        "method":  "RecycleBin"
+    }
+]

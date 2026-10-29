@@ -62,7 +62,7 @@ void AAlchemyHUD::DrawHUD() {
     if(!World || !World->Progress || !Canvas) return;
     S=FMath::Min(Canvas->SizeX/1280.f,Canvas->SizeY/720.f);OX=(Canvas->SizeX-1280*S)/2;OY=(Canvas->SizeY-720*S)/2;
     auto PC=GetOwningPlayerController();
-    if(LastPanel!=World->Panel) {FocusIndex=2;DetailPage=0;LastPanel=World->Panel;}
+    if(LastPanel!=World->Panel) {FocusIndex=World->Panel==TEXT("merchant")?0:2;DetailPage=0;LastPanel=World->Panel;}
     else if(!World->Panel.IsEmpty() && !FocusOrder.IsEmpty()) {
         int Step=(PC->WasInputKeyJustPressed(EKeys::Down)||PC->WasInputKeyJustPressed(EKeys::Gamepad_DPad_Down)?1:0)-(PC->WasInputKeyJustPressed(EKeys::Up)||PC->WasInputKeyJustPressed(EKeys::Gamepad_DPad_Up)?1:0);
         FocusIndex=(FocusIndex+Step+FocusOrder.Num())%FocusOrder.Num();
@@ -104,7 +104,7 @@ void AAlchemyHUD::DrawHUD() {
             FLinearColor Color(1,.9f,.55f,FMath::Min(1.f,Number.Life/.2f));
             Text(FString::Printf(TEXT("%.0f"),Number.Value),X,Y,19+4*FMath::Max(0.f,1-Age/.12f),Color);
         }
-        Box(24,108,300,130,Surface);
+        Box(24,108,300,160,Surface);Box(24,108,4,160,Teal);
         Text(FString::Printf(TEXT("生命 %.0f / %.0f"),World->HP,World->MaxHP),42,122,24,White);
         Box(42,164,264,18,Ink);Box(42,164,264*World->HP/World->MaxHP,18,Teal);
         Text(World->DodgeCD<=0?TEXT("Space 闪避就绪"):FString::Printf(TEXT("闪避冷却 %.1f秒"),World->DodgeCD),42,197,18,Dim);
@@ -112,14 +112,14 @@ void AAlchemyHUD::DrawHUD() {
         int NeedXP=World->RequiredXP(World->RunLevel);
         Text(FString::Printf(TEXT("Lv.%d   经验 %.0f / %d"),World->RunLevel,World->RunXP,NeedXP),42,224,18,Gold);
         Box(42,248,264,10,Ink);Box(42,248,264*FMath::Clamp(World->RunXP/NeedXP,0.f,1.f),10,Gold);
-        Box(24,276,300,142,Surface);
-        for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d / 10"),MaterialNames[I],World->Inventory[I]),42,292+I*38,20,I==0?Gold:White);
+        Box(24,280,300,142,Surface);Box(24,280,4,142,Gold);
+        for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d%s"),MaterialNames[I],World->Inventory[I],World->Inventory[I]>10?TEXT(" · 补给"):TEXT(" / 10")),42,296+I*38,20,I==0?Gold:White);
         float Start=(1280-World->Equipped.Num()*146)/2.f;
         for(int I=0;I<World->Equipped.Num();I++) {
             int K=World->Equipped[I];float X=Start+I*146;Box(X,578,138,76,Surface);
             Text(World->SkillName(K),X+10,587,17,White);Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),X+10,621,18,Gold);
         }
-        if(World->TutorialActive()) {
+        if(World->TutorialActive() && !World->bBossArenaActive) {
             bool Ready=World->Inventory[0]>0 && World->Inventory[1]>0 && World->Inventory[2]>0;
             const float TY=World->RunTime>=300?186:108;
             Box(350,TY,650,118,Surface);
@@ -129,7 +129,20 @@ void AAlchemyHUD::DrawHUD() {
         if(World->RunTime>=300 && !World->bBossSpawned) {Box(340,102,600,68,Surface);Text(FString::Printf(TEXT("BOSS 即将出现：%.1f秒"),310-World->RunTime),360,120,26,Gold);}
         for(const auto& E:World->Enemies) if(E.Type==10) {
             World->RenderedBossBarY=102;
-            Box(340,102,600,68,Surface);Text(TEXT("腐化之源"),360,112,24,Gold);Box(360,152,560,12,Ink);Box(360,152,560*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);break;
+            Box(340,102,600,104,Surface);Box(340,102,600,3,Gold);
+            Text(E.Phase2?TEXT("腐化之源 · 二阶段"):TEXT("腐化之源 · 封锁战场"),360,112,24,Gold);
+            Box(360,150,560,12,Ink);Box(360,150,560*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);
+            const TCHAR* Names[]={TEXT("冲刺 · 离开橙色直线"),TEXT("弹幕 · 从扇形间隙穿过"),TEXT("冲击波 · 向侧面闪避")};
+            Text(E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:TEXT("保持移动 · 金色边界不可越过"),360,174,18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
+        }
+        if(World->bMerchantActive && !World->bBossSpawned) {
+            const FVector D=World->MerchantPos-World->PlayerPos;
+            const float Right=FVector::DotProduct(D,World->Camera->GetActorRightVector()),Up=FVector::DotProduct(D,World->Camera->GetActorForwardVector().GetSafeNormal2D());
+            const TCHAR* Way=FMath::Abs(Right)>FMath::Abs(Up)?(Right>0?TEXT("右方"):TEXT("左方")):(Up>0?TEXT("上方"):TEXT("下方"));
+            Box(964,108,292,150,Surface);Box(964,108,4,150,Gold);
+            Text(FString::Printf(TEXT("流浪商人 · %.0f秒"),World->MerchantRemaining),982,122,20,Gold);
+            Text(FString::Printf(TEXT("%s %.1f米 · 金色标记"),Way,D.Size2D()/100),982,158,18,White);
+            Button(TEXT("merchantopen"),World->CanTrade()?TEXT("F 打开交易"):TEXT("靠近商人后按 F"),982,199,256,World->CanTrade(),42);
         }
     } else if(!World->bCombat && World->Panel.IsEmpty()) {
         for(int I=0;I<3;I++) {
@@ -143,10 +156,13 @@ void AAlchemyHUD::DrawHUD() {
         Box(-OX/S,88,Canvas->SizeX/S,580,FLinearColor(.005f,.01f,.015f,.8f));Box(72,98,1136,550,Surface);Box(72,98,1136,4,Gold);
         const FString P=World->Panel;
         FString Title=P==TEXT("alchemy")?TEXT("炼金 · 战斗已暂停"):P==TEXT("codex")?TEXT("发现图鉴"):P==TEXT("skills")?TEXT("装备与储备"):P==TEXT("talents")?TEXT("永久强化"):P==TEXT("fonts")?TEXT("字体调试 · 即时预览"):P==TEXT("research")?TEXT("画面与可读性"):P==TEXT("level")?TEXT("选择关卡"):P==TEXT("result")?TEXT("炼金结果"):P==TEXT("levelup")?TEXT("升级强化"):P==TEXT("victory")?TEXT("胜利 · 已结算"):P==TEXT("defeat")?TEXT("本局结束"):P==TEXT("confirmbuy")?TEXT("确认购买"):P==TEXT("confirmreturn")?TEXT("返回据点？"):P==TEXT("savefailed")?TEXT("保存失败"):TEXT("暂停");
+        if(P==TEXT("merchant")) Title=TEXT("流浪商人 · 战斗已暂停");
+        if(P==TEXT("merchantconfirm")) Title=TEXT("确认出售全部材料");
         Text(Title,104,118,28,Gold);
         Button(TEXT("close"),TEXT("Esc 返回"),1018,114,160);
         Button(TEXT("textsize"),TEXT("F7 字体调试"),778,114,220);
-        if(P==TEXT("alchemy")) {
+        if(P==TEXT("merchant") || P==TEXT("merchantconfirm")) DrawMerchant();
+        else if(P==TEXT("alchemy")) {
             Text(TEXT("点击或拖入材料；点击炉内材料取回。"),104,181,18,Dim);
             Furnace=FBox2D(FVector2D(104,220),FVector2D(704,490));Box(104,220,600,270,FLinearColor(.055f,.105f,.12f));
             int Total=0;for(int N:World->Selected) Total+=N;Text(FString::Printf(TEXT("炼金炉    %d / 10"),Total),124,232,24,Gold);

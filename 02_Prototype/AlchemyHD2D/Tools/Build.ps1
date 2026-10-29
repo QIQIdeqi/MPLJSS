@@ -23,5 +23,7 @@ if ($Package) {
     & "$engineRoot\Engine\Build\BatchFiles\RunUAT.bat" BuildCookRun "-project=$aliasRoot\AlchemyHD2D.uproject" -noP4 -platform=Win64 -clientconfig=Development -build -cook -stage -pak -nodebuginfo -archive "-archivedirectory=$projectRoot\..\..\03_Build\$BuildDirectory" -utf8output -unattended
     if ($LASTEXITCODE -ne 0) { throw 'Packaging failed.' }
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'LaunchDemo.cmd') -Destination (Join-Path $projectRoot "../../03_Build/$BuildDirectory/启动Demo.cmd")
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'TestMerchant.cmd') -Destination (Join-Path $projectRoot "../../03_Build/$BuildDirectory/测试商人.cmd")
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'TestBoss.cmd') -Destination (Join-Path $projectRoot "../../03_Build/$BuildDirectory/测试Boss.cmd")
     Copy-Item -LiteralPath (Join-Path $projectRoot 'Docs/Windows测试版运行说明.txt') -Destination (Join-Path $projectRoot "../../03_Build/$BuildDirectory/运行说明.txt")
 }

@@ -1,0 +1,12 @@
+GitHub Support 旧 LFS 对象清理申请（已准备，未发送）
+
+1. 用仓库所属账号登录 https://support.github.com/contact 。选择页面当前提供的仓库/LFS 存储或相关支持入口；具体可选服务取决于账号权限和方案。
+2. 将“清理申请英文.txt”的 Subject 填入标题，其余内容填入正文。
+3. 附上同目录 obsolete-and-retain-objects.json。它包含326个待核实清理对象，以及145个必须保留对象。
+4. 如需补充验证证据，可附 memory/git-history-cleanup-verification-2026-10-28.json；不需要发送整个工程、Git备份、存档或任何凭据。
+5. 提交前若仓库新增了LFS素材，应重新生成保留清单，并让Support按最新refs复核。不要把本附件长期当作可直接执行的删除指令。
+
+本申请请求Support核实并选择性清理，不代表GitHub已受理或已释放配额。不会自动发送，不包含账号密码、令牌或玩家存档。GitHub官方说明，历史改写后的旧LFS仍可能计入配额；无法删除仓库时可联系Support协助。
+
+仓库：https://github.com/QIQIdeqi/MPLJSS
+官方说明：https://docs.github.com/en/repositories/working-with-files/managing-large-files/removing-files-from-git-large-file-storage

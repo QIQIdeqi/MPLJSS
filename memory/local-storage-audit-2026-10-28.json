@@ -1,0 +1,758 @@
+{
+  "date": "2026-10-28",
+  "scope": "Workspace only; includes hidden Git data; does not follow symlinks or junctions; does not scan other projects or recycle bin",
+  "workspace": "D:\\06_独立游戏\\00_冒牌炼金术士",
+  "total_file_bytes": 19144653771,
+  "file_count": 7874,
+  "top_level_directories": [
+    {
+      "path": ".git",
+      "bytes": 13659500616
+    },
+    {
+      "path": "01_Skill",
+      "bytes": 3536814391
+    },
+    {
+      "path": "03_Build",
+      "bytes": 970440844
+    },
+    {
+      "path": "02_Prototype",
+      "bytes": 940733932
+    },
+    {
+      "path": "00_Doc",
+      "bytes": 29675949
+    },
+    {
+      "path": "scripts",
+      "bytes": 7168796
+    },
+    {
+      "path": "memory",
+      "bytes": 268926
+    },
+    {
+      "path": "logs",
+      "bytes": 43633
+    },
+    {
+      "path": ".qq-workspaces",
+      "bytes": 1715
+    }
+  ],
+  "largest_directories": [
+    {
+      "path": ".git",
+      "bytes": 13659500616
+    },
+    {
+      "path": ".git/lfs",
+      "bytes": 11348980005
+    },
+    {
+      "path": ".git/lfs/objects",
+      "bytes": 11348979981
+    },
+    {
+      "path": "01_Skill",
+      "bytes": 3536814391
+    },
+    {
+      "path": "01_Skill/tmp",
+      "bytes": 2310792164
+    },
+    {
+      "path": "01_Skill/tmp/history-rewrite-20261028",
+      "bytes": 2289330517
+    },
+    {
+      "path": ".git/objects",
+      "bytes": 1609084939
+    },
+    {
+      "path": ".git/objects/pack",
+      "bytes": 1608859887
+    },
+    {
+      "path": "03_Build",
+      "bytes": 970440844
+    },
+    {
+      "path": "02_Prototype",
+      "bytes": 940733932
+    },
+    {
+      "path": "02_Prototype/AlchemyHD2D",
+      "bytes": 940733932
+    },
+    {
+      "path": "03_Build/HD2D_PC_UI",
+      "bytes": 906271245
+    },
+    {
+      "path": "02_Prototype/AlchemyHD2D/Binaries",
+      "bytes": 811500173
+    },
+    {
+      "path": "02_Prototype/AlchemyHD2D/Binaries/Win64",
+      "bytes": 811500173
+    },
+    {
+      "path": "01_Skill/tmp/history-rewrite-20261028/remote-proof",
+      "bytes": 779258393
+    },
+    {
+      "path": "03_Build/HD2D_PC_UI/Windows",
+      "bytes": 595990495
+    },
+    {
+      "path": "01_Skill/cache",
+      "bytes": 572223996
+    },
+    {
+      "path": "01_Skill/cache/video-tools",
+      "bytes": 550414581
+    },
+    {
+      "path": "03_Build/HD2D_PC_UI/Windows/AlchemyHD2D",
+      "bytes": 523409906
+    },
+    {
+      "path": ".git/lfs/objects/32",
+      "bytes": 511327296
+    },
+    {
+      "path": ".git/lfs/objects/e0",
+      "bytes": 410288496
+    },
+    {
+      "path": "01_Skill/tmp/history-rewrite-20261028/remote-proof/.git",
+      "bytes": 389296738
+    },
+    {
+      "path": "01_Skill/tmp/history-rewrite-20261028/remote-proof/.git/lfs",
+      "bytes": 381246648
+    },
+    {
+      "path": "01_Skill/tmp/history-rewrite-20261028/remote-proof/.git/lfs/objects",
+      "bytes": 381246648
+    },
+    {
+      "path": ".git/lfs/objects/e8",
+      "bytes": 371922705
+    },
+    {
+      "path": ".git/lfs/objects/f3",
+      "bytes": 371251829
+    },
+    {
+      "path": ".git/lfs/objects/30",
+      "bytes": 371249152
+    },
+    {
+      "path": ".git/lfs/objects/30/ea",
+      "bytes": 371249152
+    },
+    {
+      "path": ".git/lfs/objects/e0/f5",
+      "bytes": 371240960
+    },
+    {
+      "path": ".git/lfs/objects/f3/c2",
+      "bytes": 371240960
+    },
+    {
+      "path": ".git/lfs/objects/69",
+      "bytes": 370863750
+    },
+    {
+      "path": ".git/lfs/objects/69/95",
+      "bytes": 370863750
+    },
+    {
+      "path": ".git/lfs/objects/17",
+      "bytes": 370847744
+    },
+    {
+      "path": ".git/lfs/objects/17/49",
+      "bytes": 370847744
+    },
+    {
+      "path": ".git/lfs/objects/e8/e5",
+      "bytes": 370839552
+    }
+  ],
+  "largest_files": [
+    {
+      "path": ".git/objects/pack/pack-ad56ea22b2722a189ecd6cca13961444d7a98940.pack",
+      "bytes": 1501588012
+    },
+    {
+      "path": "01_Skill/tmp/history-rewrite-20261028/before-cleanup.bundle",
+      "bytes": 1501495238
+    },
+    {
+      "path": "01_Skill/cache/video-tools/rife-ncnn-vulkan-20221029-windows.zip",
+      "bytes": 431540241
+    },
+    {
+      "path": "02_Prototype/AlchemyHD2D/Binaries/Win64/AlchemyHD2D.pdb",
+      "bytes": 371789824
+    },
+    {
+      "path": ".git/lfs/objects/30/ea/30eab101166349728f949c99dd3d3c52db44148056f073e301ccd1814dcc35da",
+      "bytes": 371249152
+    },
+    {
+      "path": ".git/lfs/objects/f3/c2/f3c2a3c16273ec3a2b0973fac7f14be36f4537ad2207160e82cef63cb43a2729",
+      "bytes": 371240960
+    },
+    {
+      "path": ".git/lfs/objects/e0/f5/e0f507a9d3763474648a3338d4e868798407f233378f3110e3eb7797b9ab2ed5",
+      "bytes": 371240960
+    },
+    {
+      "path": ".git/lfs/objects/69/95/69957b23d154881a4d1073a489b2f078959c2365f3d843b5cfc2bbb68648e0f1",
+      "bytes": 370855936
+    },
+    {
+      "path": ".git/lfs/objects/17/49/1749b81c1ccb4a630ea0982bb4342d8c80da15995335d0cbfabe5b7a6ce1df53",
+      "bytes": 370847744
+    },
+    {
+      "path": ".git/lfs/objects/e8/e5/e8e5a9fe32d54d11941cb7e6cc4e7c8ed7a44b00978b2dd6f22a646b061673c3",
+      "bytes": 370839552
+    },
+    {
+      "path": ".git/lfs/objects/ed/bf/edbf7026503b2ed85763b004d45daf2dcae252ccc6f8364b328478cd781812c7",
+      "bytes": 366063616
+    },
+    {
+      "path": ".git/lfs/objects/13/40/134013b4ec91027cacd3a206508df1b667645c8948cc001ecc6f7397980ec93f",
+      "bytes": 365382732
+    },
+    {
+      "path": ".git/lfs/objects/c6/a3/c6a316afd39499b8da137ef099c4a5cb7f7b15895adfca06bc79be3d82bbe045",
+      "bytes": 350593913
+    },
+    {
+      "path": ".git/lfs-remote-proof-designers-20261028/objects/2d/fa/2dfaf04bf6eafbcf04340f6f21311e9f06de399702f019f7e581a42299dcf5a0",
+      "bytes": 350592558
+    },
+    {
+      "path": ".git/lfs/objects/18/84/188450f69ae247b2a999195bed3419b72f80973964cbccf8e80d5d75a76988e6",
+      "bytes": 350591300
+    },
+    {
+      "path": ".git/lfs/objects/dd/00/dd00f68c792065f8d4d4f5417bb47b6bf6284ba6d8d282298dfc935ebe4e4e2b",
+      "bytes": 350549002
+    },
+    {
+      "path": ".git/lfs-remote-proof-20261028/objects/52/05/52054f7d58e4b5264eba2bcdc3ca551d5aa69e0de9af01631b0f9b92580e2682",
+      "bytes": 350548913
+    },
+    {
+      "path": ".git/lfs/objects/05/9c/059cc25d1acf8ae017c2b0c8a16f4266cf267b90b36e29dc57e35aa50ef086d1",
+      "bytes": 350548575
+    },
+    {
+      "path": ".git/lfs/objects/0c/77/0c77d12e4957b7ec47416ecd3d8425ccec897a3bd870105b2f40c2b44a3087ca",
+      "bytes": 336162596
+    },
+    {
+      "path": "03_Build/HD2D_PC_UI/Windows/AlchemyHD2D/Binaries/Win64/AlchemyHD2D.exe",
+      "bytes": 332123648
+    },
+    {
+      "path": "02_Prototype/AlchemyHD2D/Binaries/Win64/AlchemyHD2D.exe",
+      "bytes": 332123648
+    },
+    {
+      "path": ".git/lfs/objects/c5/c7/c5c760b10f69277dce7bc815843a8419b1b5a23339fc8d52ca83073cb93583b2",
+      "bytes": 332123648
+    },
+    {
+      "path": ".git/lfs/objects/5d/7c/5d7c471df36297b15f48ded265508e823eb0af0ca0022fb0b7e7edef6cd3a056",
+      "bytes": 332123648
+    },
+    {
+      "path": ".git/lfs/objects/32/3a/323ae1de71e7023fd43c559fea1c6dce3acf702103fef8befd9857b0f21e28cf",
+      "bytes": 332075520
+    },
+    {
+      "path": ".git/lfs/objects/4e/e9/4ee9ddef830d19424a313e85d2fc720691681c1184576ed6dafd2cf5a32a9588",
+      "bytes": 332073472
+    },
+    {
+      "path": ".git/lfs/objects/16/b1/16b102795de1dc090e8014286077ba69ebe285781bfc8e601db0f9846314abf3",
+      "bytes": 332072960
+    },
+    {
+      "path": ".git/lfs/objects/46/7b/467b32406aa17ce737574e4eb72111ff635a739e34c4d3353db6438f8973c503",
+      "bytes": 332016640
+    },
+    {
+      "path": ".git/lfs/objects/95/64/9564dea77c6bf259253409f6a242d0f141c3128f8c5223357d40133db56bf17b",
+      "bytes": 332015104
+    },
+    {
+      "path": ".git/lfs/objects/74/75/74753b24be71c56e64a749dd5875864a683fbf5ef64ef78a8d149b4c9c32b389",
+      "bytes": 332012032
+    },
+    {
+      "path": ".git/lfs/objects/a6/e4/a6e4d4d10061b31a92dd4aef5a4e8a92d8aa4d305da46daf8cfb625136e2bb96",
+      "bytes": 331993600
+    },
+    {
+      "path": ".git/lfs/objects/ee/1c/ee1c7ecfbd98157bf32eb1ca153dde746ffebb99329b0735b002f4347906251c",
+      "bytes": 331773024
+    },
+    {
+      "path": ".git/lfs/objects/38/8c/388cac8e9beee9187ae1d3b696f151fa43592f657cfcf896b10754812dcc95a6",
+      "bytes": 313625092
+    },
+    {
+      "path": ".git/lfs/objects/25/d4/25d45994e4c0bcb77560f3c87ac3c356cb29cd93cc1a0865461265b3eb595674",
+      "bytes": 313559576
+    },
+    {
+      "path": ".git/lfs/objects/cb/9a/cb9a97dcbed324b95f8e2379ce945d0486e44a70e4c7723e6d8ba87dddae447d",
+      "bytes": 310283776
+    },
+    {
+      "path": "03_Build/HD2D_PC_UI/冒牌炼金术士_Demo_Win64_最新测试版.zip",
+      "bytes": 310278471
+    }
+  ],
+  "local_lfs_object_classification": {
+    "current": {
+      "files": 145,
+      "bytes": 381246648
+    },
+    "not_in_remote_cleanup_manifest_preserve": {
+      "files": 65,
+      "bytes": 10967733333
+    }
+  },
+  "skipped_links": [],
+  "errors": [],
+  "deleted_files": 0,
+  "unverified_local_lfs_signatures": {
+    "ZIP archive": {
+      "files": 7,
+      "bytes": 2070490833
+    },
+    "Other": {
+      "files": 31,
+      "bytes": 392943004
+    },
+    "PDB debug symbols": {
+      "files": 12,
+      "bytes": 3843169392
+    },
+    "Windows PE EXE or DLL": {
+      "files": 15,
+      "bytes": 4661130104
+    }
+  },
+  "unverified_local_lfs_objects": [
+    {
+      "oid": "059cc25d1acf8ae017c2b0c8a16f4266cf267b90b36e29dc57e35aa50ef086d1",
+      "bytes": 350548575,
+      "signature": "ZIP archive",
+      "historical_paths": []
+    },
+    {
+      "oid": "0b727f05772b865aadafbe21d6265fb595755cb1b539b4e79973a6e08825d382",
+      "bytes": 51984,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "0c77d12e4957b7ec47416ecd3d8425ccec897a3bd870105b2f40c2b44a3087ca",
+      "bytes": 336162596,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "1007effac2844e5e6a05887031bc6dd7b0499374c6dbe22b9d58099c96322d41",
+      "bytes": 308545069,
+      "signature": "ZIP archive",
+      "historical_paths": []
+    },
+    {
+      "oid": "134013b4ec91027cacd3a206508df1b667645c8948cc001ecc6f7397980ec93f",
+      "bytes": 365382732,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "16b102795de1dc090e8014286077ba69ebe285781bfc8e601db0f9846314abf3",
+      "bytes": 332072960,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "1749b81c1ccb4a630ea0982bb4342d8c80da15995335d0cbfabe5b7a6ce1df53",
+      "bytes": 370847744,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "188450f69ae247b2a999195bed3419b72f80973964cbccf8e80d5d75a76988e6",
+      "bytes": 350591300,
+      "signature": "ZIP archive",
+      "historical_paths": []
+    },
+    {
+      "oid": "1d17a10cc099b590796e40c2314aa85f5de2e79f8cd6e8279dbd0f725dab12fc",
+      "bytes": 378340,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "20a49a3b79ac636196759909a2457a1dbce10a6544596de14e3dae749dae051b",
+      "bytes": 134962,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "20cd4cdf59e866f455cbacc781a32f8fb8db2f0bdbe20a00ffafc4c24dde38e6",
+      "bytes": 127321680,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "2182421f11cb4a57d59e485f08a060abec644c30cb82c057b05cd8949818ef48",
+      "bytes": 3209760,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "25d45994e4c0bcb77560f3c87ac3c356cb29cd93cc1a0865461265b3eb595674",
+      "bytes": 313559576,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "30eab101166349728f949c99dd3d3c52db44148056f073e301ccd1814dcc35da",
+      "bytes": 371249152,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "323ae1de71e7023fd43c559fea1c6dce3acf702103fef8befd9857b0f21e28cf",
+      "bytes": 332075520,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "32af09fa8536d95391b0b5e64d5d4a362b8b207414d8c10e00bbb772cc99489f",
+      "bytes": 179251776,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "343f41b7ddf8c433e49c9a557ab05d44038512710b659e959116fd0bdc410521",
+      "bytes": 76260624,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "36126cd5c715f64dbd488dd87a1b4fce4b69228cde511523c92993eadf6afc16",
+      "bytes": 7510,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "388cac8e9beee9187ae1d3b696f151fa43592f657cfcf896b10754812dcc95a6",
+      "bytes": 313625092,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "3d1099e73859255dd113a569552f00c6c93c8f1f445490d1d97261bba350857d",
+      "bytes": 19761,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "43105514c53ea5195b14308b35dea56e7346e96f2a6473244fdd1b8bea5f0fb5",
+      "bytes": 875766,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "449f14216e5a854e60af880b9ea2f7444f8e509212804ea2b1714f11319d018a",
+      "bytes": 225964684,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "467b32406aa17ce737574e4eb72111ff635a739e34c4d3353db6438f8973c503",
+      "bytes": 332016640,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "4d4b5eb10ee6ee126d6d54521c96f70a9e15a7a84d854d568193843ca5d5d2e5",
+      "bytes": 782,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "4ee9ddef830d19424a313e85d2fc720691681c1184576ed6dafd2cf5a32a9588",
+      "bytes": 332073472,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "505ce4b8a5ef21eed9ab706d24f012005bf6844b4be90973c1ed257642ff7b45",
+      "bytes": 8969,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "56edfaeb1ada0b0ee7b46c001872a8e04115ee394c1c0834c8cd0c755b7ea69d",
+      "bytes": 875736,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "5b55bf492f3aa99b74c99d6dc70c96418cb104844f9df65c6b76525dc45fed57",
+      "bytes": 21244,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "5d7c471df36297b15f48ded265508e823eb0af0ca0022fb0b7e7edef6cd3a056",
+      "bytes": 332123648,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "5e28e255d082bb288191f425237167d6ec22b05cd27ca31f77a5e4dc6da0adf1",
+      "bytes": 177417328,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "6234420f9682825d0ff0bb6bd8830497e792437985bb9481cbb4b4adcd33512b",
+      "bytes": 3209584,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "69957b23d154881a4d1073a489b2f078959c2365f3d843b5cfc2bbb68648e0f1",
+      "bytes": 370855936,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "6b31a7fda37d19ea10986ffe231e27c4950df334753e194f219c2960f4988285",
+      "bytes": 10657969,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "74753b24be71c56e64a749dd5875864a683fbf5ef64ef78a8d149b4c9c32b389",
+      "bytes": 332012032,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "76cb0d239a33f10dbe9784a8a0e4448f8f08c78bc33d818af4e1157da277e30f",
+      "bytes": 21292,
+      "signature": "Other",
+      "historical_paths": [
+        "02_Prototype/AlchemyHD2D/Content/Design/DT_Skills.uasset"
+      ]
+    },
+    {
+      "oid": "7828bf980b502c1d965cae31d14861562291e7519af58104cb3bb819a11b8fb9",
+      "bytes": 54110,
+      "signature": "Other",
+      "historical_paths": [
+        "02_Prototype/AlchemyHD2D/Content/Tests/DesignerVerification.umap"
+      ]
+    },
+    {
+      "oid": "783bf7a1e96c4c40bef8b9859be605b5d8f6e3c37024ea648fe12cae387c11a8",
+      "bytes": 879154,
+      "signature": "Other",
+      "historical_paths": [
+        "02_Prototype/AlchemyHD2D/Content/Maps/Research.umap"
+      ]
+    },
+    {
+      "oid": "7aa12578ae44cfce8964723fa9a1fbca1b77ee0c812290af4e18a9fa028ba7b1",
+      "bytes": 308545281,
+      "signature": "ZIP archive",
+      "historical_paths": []
+    },
+    {
+      "oid": "8f250cd7525677b3e10b03cfd3bf4e75edfc4611439fb455abbf071d1cf64d50",
+      "bytes": 81829484,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "9564dea77c6bf259253409f6a242d0f141c3128f8c5223357d40133db56bf17b",
+      "bytes": 332015104,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "97120e5a1e4cc5709fdc409ce776128bae00a1379209bf0c6bc3197f4b8c8627",
+      "bytes": 782,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "9f9863cf7579b333eb4410ad6cd36910bdb4caf5ef3c2b60561dc6f89d81874a",
+      "bytes": 288204884,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "a6e4d4d10061b31a92dd4aef5a4e8a92d8aa4d305da46daf8cfb625136e2bb96",
+      "bytes": 331993600,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "b4ebbcb1f1cfbbb34a0c55ae1096ce1767999709745c371cf2e0d4228dabacee",
+      "bytes": 746958,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "b5dcf65bf342c5fdfd02384ea03b290fe534162713827dbabb5f33f94faed942",
+      "bytes": 54109,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "bc1358725c82730c0929e5164926a229049ca1383796d39b1cbc879339e1c8a8",
+      "bytes": 782,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "c17774ddf294b02854b53e48e393c495d57f04770d8e9f6b36ea0f514b12a10d",
+      "bytes": 51117693,
+      "signature": "ZIP archive",
+      "historical_paths": []
+    },
+    {
+      "oid": "c5c760b10f69277dce7bc815843a8419b1b5a23339fc8d52ca83073cb93583b2",
+      "bytes": 332123648,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "c6a316afd39499b8da137ef099c4a5cb7f7b15895adfca06bc79be3d82bbe045",
+      "bytes": 350593913,
+      "signature": "ZIP archive",
+      "historical_paths": []
+    },
+    {
+      "oid": "cb9a97dcbed324b95f8e2379ce945d0486e44a70e4c7723e6d8ba87dddae447d",
+      "bytes": 310283776,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "cc41539a59bbf3fe04859adcbdd359e5747376fe0e9e2a9430ac9dc5ccb8a7aa",
+      "bytes": 124026256,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "d035ef4e3da46235afcf28ec3034867f072747adf35080cdffbee80667e93d96",
+      "bytes": 3210416,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "d1a77e48a4b531e261e66187a90f07f156c5a7ba8355d0a9bd63ef9ea0c35556",
+      "bytes": 54015,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "d31748cef540d990ab840d6af9185ad029af0d5af3139f5502d842d4742a78bf",
+      "bytes": 54268,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "dd00f68c792065f8d4d4f5417bb47b6bf6284ba6d8d282298dfc935ebe4e4e2b",
+      "bytes": 350549002,
+      "signature": "ZIP archive",
+      "historical_paths": []
+    },
+    {
+      "oid": "e00fef2e025cfd493433af938e1c590899a2610740a814f6db5ccac77610ef7d",
+      "bytes": 39047536,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "e0f507a9d3763474648a3338d4e868798407f233378f3110e3eb7797b9ab2ed5",
+      "bytes": 371240960,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "e2ea9e2d3a9c5251165a1e0e323512d6c73f6dd22911700bcd99be18edb5d4a7",
+      "bytes": 140207,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "e7c5a7c7ad1c1aa355418e9424697800b7d87554e66f04ddd483692d52715d73",
+      "bytes": 6897,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "e8e5a9fe32d54d11941cb7e6cc4e7c8ed7a44b00978b2dd6f22a646b061673c3",
+      "bytes": 370839552,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "edbf7026503b2ed85763b004d45daf2dcae252ccc6f8364b328478cd781812c7",
+      "bytes": 366063616,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "ee1c7ecfbd98157bf32eb1ca153dde746ffebb99329b0735b002f4347906251c",
+      "bytes": 331773024,
+      "signature": "Windows PE EXE or DLL",
+      "historical_paths": []
+    },
+    {
+      "oid": "f3c2a3c16273ec3a2b0973fac7f14be36f4537ad2207160e82cef63cb43a2729",
+      "bytes": 371240960,
+      "signature": "PDB debug symbols",
+      "historical_paths": []
+    },
+    {
+      "oid": "f6ba1b5acacb26732c1e4e274862046b77d7a80ab32a92ba8c128c72f92b2294",
+      "bytes": 735815,
+      "signature": "Other",
+      "historical_paths": []
+    },
+    {
+      "oid": "fe81811b2cd40c2c0c0901e6158e8e6bb3eafc216d1e933c9b7fca4ea1582cce",
+      "bytes": 875736,
+      "signature": "Other",
+      "historical_paths": []
+    }
+  ]
+}

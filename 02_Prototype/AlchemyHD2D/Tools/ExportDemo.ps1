@@ -7,12 +7,14 @@ $buildRoot=[IO.Path]::GetFullPath((Join-Path $projectRoot "../../03_Build/$Build
 $allowedRoot=[IO.Path]::GetFullPath((Join-Path $projectRoot '../../03_Build'))
 if(-not $buildRoot.StartsWith($allowedRoot+'\')) {throw 'Export target must stay inside 03_Build.'}
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'LaunchDemo.cmd') -Destination (Join-Path $buildRoot '启动Demo.cmd')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'TestMerchant.cmd') -Destination (Join-Path $buildRoot '测试商人.cmd')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'TestBoss.cmd') -Destination (Join-Path $buildRoot '测试Boss.cmd')
 $zipPath=Join-Path $buildRoot '冒牌炼金术士_Demo_Win64_最新测试版.zip'
 $writePath=Join-Path $buildRoot ('Demo_'+[guid]::NewGuid().ToString('N')+'.zip')
 $stream=[IO.File]::Open($writePath,[IO.FileMode]::CreateNew)
 $zip=[IO.Compression.ZipArchive]::new($stream,[IO.Compression.ZipArchiveMode]::Create)
 try {
-    $files=@(Get-Item -LiteralPath (Join-Path $buildRoot '启动Demo.cmd'),(Join-Path $buildRoot '运行说明.txt'))
+    $files=@(Get-Item -LiteralPath (Join-Path $buildRoot '启动Demo.cmd'),(Join-Path $buildRoot '测试商人.cmd'),(Join-Path $buildRoot '测试Boss.cmd'),(Join-Path $buildRoot '运行说明.txt'))
     $files+=Get-ChildItem -LiteralPath (Join-Path $buildRoot 'Windows') -File -Recurse | Where-Object { $_.FullName -notmatch '\\(Saved|Evidence)\\' -and $_.Extension -ne '.pdb' -and $_.Name -ne 'Manifest_DebugFiles_Win64.txt' }
     foreach($file in $files) {
         $entryName=$file.FullName.Substring($buildRoot.Length+1).Replace('\','/')

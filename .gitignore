@@ -52,6 +52,7 @@ memory/archives/2026-10-27-old-build-saves/
 !/scripts/qq-codex-bridge/
 /03_Build/sprite-gen/
 /02_Prototype/AlchemyHD2D/Evidence/
+/02_Prototype/AlchemyHD2D/Build/Windows/FileOpenOrder/
 /02_Prototype/AlchemyHD2D/Content/Tests/
 /02_Prototype/AlchemyHD2D/Tools/Test*.py
 /02_Prototype/AlchemyHD2D/Tools/Diagnose*.py

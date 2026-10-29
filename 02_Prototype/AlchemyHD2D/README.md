@@ -4,6 +4,8 @@
 
 ## 启动
 
+2026-10-29 新增局内商人（至少两种材料的三个随机货位、购买、出售确认、金币刷新），并接入 Boss 清场奖励、封闭战圈、冲刺/扇形弹幕/直线冲击波及场景/HUD 可读性调整。工程内双击 `启动商人交易测试.cmd` 或 `启动Boss战测试.cmd` 可进入隔离测试，不读取或覆盖玩家存档；规则见 `Docs/Merchant.md`、`Docs/BossEncounter.md`。Windows 最新包同步提供 `测试商人.cmd` 和 `测试Boss.cmd`。发布验证见工作区 `memory/merchant-release-2026-10-29.json`；其余突发事件保留为策划方案。
+
 远端保留完整最新测试版 ZIP，不重复存放解压后的 Windows 目录。Git 克隆后先执行 `git lfs pull`，再将 ZIP 完整解压到其所在目录。生产工程、必要源图、文档、memory 和 Skill 原件保留在 Git；测试地图、验证输出、原始生图实验、缓存和存档仅保留本机。
 
 优先双击工作区 `03_Build/HD2D_PC_UI/启动Demo.cmd`，可运行本次PC字体及HUD更新的独立Windows版，无需打开编辑器。请保留同目录的完整Windows文件夹。03_Build仅保留本最新版；旧运行包已移除，历史验证记录保留在工程Evidence中。

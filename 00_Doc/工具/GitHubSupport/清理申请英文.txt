@@ -1,0 +1,29 @@
+Subject: Request to purge 326 obsolete Git LFS objects after history rewrite — QIQIdeqi/MPLJSS
+
+Hello GitHub Support,
+
+I would like assistance reclaiming storage used by obsolete Git LFS objects in this repository:
+https://github.com/QIQIdeqi/MPLJSS
+
+On October 28, 2026 (Asia/Shanghai), we rewrote the main branch with git-filter-repo to remove obsolete test artifacts, historical game builds and superseded binary assets. We need to preserve the repository and its existing identity rather than delete and recreate it.
+
+The rewrite was pushed using force-with-lease. The rewrite checkpoint is:
+b02ce92341f7d14bb3e481d76afc1c54e431953c
+Additional documentation commits may follow this checkpoint. When checked while preparing this request, the only advertised branch was main, with no advertised tags or pull-request refs.
+
+Before cleanup, reachable history referenced 471 unique LFS objects totaling 7,311,495,528 bytes. Rewritten history references only the 145 retained objects totaling 381,246,648 bytes. The 326 obsolete objects total 6,930,248,880 bytes.
+
+We verified a fresh clone from GitHub and successfully downloaded all 145 retained LFS objects. git lfs fsck passed. The latest playable Windows ZIP and the original Skill source ZIP both passed SHA256 and ZIP CRC checks. The latest project file tree was unchanged by the rewrite.
+
+The attachment, obsolete-and-retain-objects.json, explicitly lists:
+- obsolete: 326 SHA256 object IDs and byte sizes that are no longer referenced by the rewritten history;
+- retain: 145 SHA256 object IDs and byte sizes that MUST remain available.
+
+Please verify reachability against the current repository refs before any purge. If supported, purge only the obsolete objects that are no longer referenced, preserve all retained objects, and recalculate the repository/account's LFS storage usage afterward. We understand that rewriting history alone does not remove LFS objects from GitHub storage or reclaim the storage quota.
+
+Please do not delete or recreate the repository, and do not remove any object from the retain list. If a selective purge is not available for this account, please advise on the supported alternative before taking any destructive action.
+
+Reference documentation:
+https://docs.github.com/en/repositories/working-with-files/managing-large-files/removing-files-from-git-large-file-storage
+
+Thank you.
