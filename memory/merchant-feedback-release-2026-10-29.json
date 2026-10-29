@@ -58,5 +58,12 @@
     "Digital engine mix verified; headphones/speaker listening not claimed",
     "No manual full playthrough or crowd benchmark"
   ],
-  "git_target": "origin/main; publication recorded in daily memory and final response"
+  "git_target": "origin/main; publication recorded in daily memory and final response",
+  "published_feature_commit": "a29db02512dc5c76883c5691587ad87cec94a7f5",
+  "publication": {
+    "remote": "origin/main",
+    "lfs": "5 objects, 354 MB, success",
+    "sync": "HEAD, origin/main and live remote matched",
+    "unrelated_draft_preserved": true
+  }
 }
