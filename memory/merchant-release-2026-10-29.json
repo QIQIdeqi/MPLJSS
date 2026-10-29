@@ -78,5 +78,12 @@
     "Manual full playthrough",
     "Economy balance acceptance",
     "Crowd performance benchmark"
-  ]
+  ],
+  "published_feature_commit": "8c54e894729b82dbe7560446219c422f7518f74f",
+  "publication": {
+    "remote": "origin/main",
+    "lfs_upload": "11 objects, 353 MB, success",
+    "feature_sync_verified": true,
+    "memory_delivery_follow_up": "Metadata-only commit follows; final live HEAD in delivery response"
+  }
 }
