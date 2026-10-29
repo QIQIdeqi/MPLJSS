@@ -73,3 +73,11 @@
 Boss 规则、原玩法和人物 V3 回归通过，真实渲染核对 1280×720 与 2560×1080；摘要 `memory/gameplay-update-2026-10-29.json`。当前修改在本机工程，未推送、未重打包旧 Windows ZIP；新测试入口 `02_Prototype/AlchemyHD2D/启动Boss战测试.cmd` 不覆盖玩家存档。
 
 事件/商人当前为讨论方案，用户已确认货位允许重复但至少两种；不把方案写成已经实现的功能。
+
+## 商人实现及独立美术（2026-10-29，覆盖上文历史状态）
+
+- 商人系统已发布于967cacb之前的功能提交8c54e89；不是未实现提案。规则见工程Docs/Merchant.md，原版发布记录memory/merchant-release-2026-10-29.json。
+- 后续独立立绘用本聊天原生GPT新生图，保留ArtSource/MerchantWanderer_20261029.png与完整提示词、哈希provenance；sprite-gen 3.5.0原生slice-sheet单图1x1、alpha-floor64、contain、384x448、baseline432、target408，输出MerchantWanderer.png。所有消费路径在SSD，未切换Grok或付费API。
+- Tools/ImportMerchantArt.py导入生产图及Lit/Unlit材质，创建M_MerchantArrival/M_MerchantSpark两个可参数化原生材质。运行时替换Hero0/Lectern组合，脚底定位沿CameraUp乘208/448×当前高度；保留交互圈，新增柔和阴影。
+- 独立出场由两个动态炼金环、12枚聚拢光点及既有Niagara短促Burst组成，1.4秒显现落定；暂停跟随交易，完成或提前离场清理。单张立绘并非生成多帧动作。商人随机流与交易参数未改变。
+- 商人规则现34项（包含出场开始、暂停、落脚清理和中途取消），4000货位抽样保留。AlchemyMerchantCapture现每分辨率9帧，额外记录出场起始/聚拢/落定；不再按旧版6帧验证。最新Windows实包/ZIP/Git验证以memory/merchant-art-release-2026-10-29.json和当日日志为准，不将编辑器画面当实包证据。

@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-29",
+  "result": "PASS",
+  "base_commit": "967cacba915e914f804f7498635027ea00127518",
+  "engine": "UE 5.8.4 CL58902052",
+  "build": "Win64 Development",
+  "uat_seconds": 126.82,
+  "validation": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "merchant_rules": {
+    "result": "PASS",
+    "checks": 34,
+    "stock_rolls": 4000
+  },
+  "packaged_checks": {
+    "AlchemyMerchantSmoke": "PASS",
+    "AlchemyBossSmoke": "PASS",
+    "AlchemySmoke": "PASS"
+  },
+  "packaged_d3d12_capture": "PASS",
+  "editor_frames": {
+    "1280x720": 9,
+    "2560x1080": 9
+  },
+  "packaged_frames": {
+    "1280x720": 9
+  },
+  "visual_inspection": "Arrival start/gather/settled and NPC grounded silhouette checked in editor and packaged game",
+  "arrival": {
+    "seconds": 1.4,
+    "rings": 2,
+    "gathering_sparks": 12,
+    "niagara": "Existing impact burst, reused",
+    "pause_cleanup_cancel": "PASS"
+  },
+  "art_source": "02_Prototype/AlchemyHD2D/ArtSource/MerchantWanderer.provenance.json",
+  "zip": {
+    "path": "03_Build\\HD2D_PC_UI\\冒牌炼金术士_Demo_Win64_最新测试版.zip",
+    "bytes": 351311268,
+    "sha256": "e012a509df03d2c5813e7906fa06ee55491f96cfd4a96b9522f632d9c1d565c2",
+    "entries": 45,
+    "crc": "PASS",
+    "matches_tested_build": true,
+    "no_saves_evidence_or_pdb": true
+  },
+  "save_preserved_sha256": "cbacc503f887c6ae856ec6f10d42325c3bd0f6bc3ff1bdeb202b9ae9af46008b",
+  "unrelated_local_draft_preserved": "00_Doc/系统/局内突发事件与商人方案_2026-10-29.txt",
+  "boundaries": [
+    "Single standing image with runtime entrance; no generated frame animation",
+    "No manual full-playthrough or crowd performance claim"
+  ],
+  "git_target": "origin/main; actual delivery recorded in daily memory and final response"
+}

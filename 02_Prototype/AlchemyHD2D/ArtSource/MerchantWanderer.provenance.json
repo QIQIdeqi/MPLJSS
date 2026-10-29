@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-29",
+  "asset": "MerchantWanderer",
+  "provider": "Native ChatGPT GPT image generation; no Grok or paid API fallback",
+  "original": "MerchantWanderer_20261029.png",
+  "production": "MerchantWanderer.png",
+  "prompt": "Create ONE production-ready transparent full-body pixel-art sprite of an original wandering alchemical merchant for a dark woodland 2.5D fantasy roguelite. A friendly stocky older travelling woman, warm tan skin, silver hair, round brass spectacles, a broad plum-purple pointed travelling hat with a tiny gold charm, deep aubergine coat, mustard scarf, sturdy brown boots. Large leather backpack neatly carrying turquoise and amber ingredient bottles, rolled maps and a brass balance scale. One hand holds a compact open wooden display case with three brightly colored ingredient jars. Clear friendly face, distinct silhouette recognizable at small game scale. Front three-quarter view, facing slightly towards viewer's right. Entire character including boots, hat, backpack and case fully inside canvas, generous transparent margins. Single grounded standing pose, no floor, no cast shadow, no scenery, no text or UI, no other people, no ghost duplicates or separate floating items. Clean carefully clustered pixel art, crisp pixel edges, restrained 24-color fantasy palette, strong readable silhouette, similar fidelity to premium SNES/Octopath-style 2D RPG NPC sprites. Character plus belongings form a single cohesive connected silhouette. True transparent background. Portrait canvas. This is a standalone final merchant sprite, not a concept sheet, not a painted portrait crop.",
+  "normalization": "sprite-gen 3.5.0 slice-sheet --grid 1x1 --chroma-key none --alpha-floor 64 --scale sheet --fit contain --cell-width 384 --cell-height 448 --baseline-y 432 --target-height 408",
+  "production_size": [
+    384,
+    448
+  ],
+  "baseline_y": 432,
+  "animation": "Single standing sprite with runtime reveal/settle, two animated rings, twelve gathering sparks and existing Niagara burst. Not generated multi-frame character animation.",
+  "import": "Tools/ImportMerchantArt.py creates /Game/Art/MerchantWanderer, M_MerchantWanderer[_Lit], M_MerchantArrival and M_MerchantSpark",
+  "source_sha256": "0c2462d3ba2a6172b8c50aec25943f8a7dc6015d31e8f95010f03e420c9b6b50",
+  "production_sha256": "835aab0941996084d82861fbe7e9c0dd924e49f624d69321aaecdf87dd9d7e6e",
+  "alpha_bbox": [
+    58,
+    24,
+    327,
+    432
+  ],
+  "alpha_extrema": [
+    0,
+    254
+  ]
+}

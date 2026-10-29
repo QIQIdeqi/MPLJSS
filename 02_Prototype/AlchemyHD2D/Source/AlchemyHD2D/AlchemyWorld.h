@@ -179,14 +179,16 @@ public:
     UPROPERTY() TArray<TObjectPtr<AStaticMeshActor>> BossFanTelegraphs;
     bool bMerchantActive=false, MerchantEliteUnlocked[3]={false,false,false};
     FVector MerchantPos=FVector::ZeroVector;
-    float MerchantRemaining=0,NextMerchantTime=80;
+    float MerchantRemaining=0,NextMerchantTime=80,MerchantArrivalAge=0;
     int32 MerchantVisit=0,MerchantRerolls=0,MerchantStock[3]={0,1,2};
     bool MerchantSoldOut[3]={false,false,false};
     int32 MerchantSellKind=-1,MerchantSellCount=0;
     FRandomStream MerchantRandom{1177};
     UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantBody;
-    UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantStall;
+    UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantShadow;
     UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantMarker;
+    UPROPERTY() TArray<TObjectPtr<AStaticMeshActor>> MerchantArrivalParts;
+    UPROPERTY() TObjectPtr<UNiagaraComponent> MerchantArrivalFX;
     TArray<float> SkillCD,ChainCD;
     int32 EliteIndex=0, SmokeStep=0, CaptureStep=0;
     float SmokeTime=0;
@@ -249,6 +251,7 @@ public:
     bool SellMerchant(int32 Kind,bool All=false);
     bool ConfirmMerchantSale();
     void UpdateMerchant(float Delta);
+    void UpdateMerchantVisual(float Delta);
     void MerchantSmoke(float Delta);
     void MerchantCapture(float Delta);
     bool FindSpawnPoint(int32 Type,FVector& Position);

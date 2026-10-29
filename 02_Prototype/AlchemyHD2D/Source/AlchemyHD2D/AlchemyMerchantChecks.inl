@@ -4,12 +4,17 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     Progress->TutorialComplete=true;Progress->Coins=123;StartRun();MerchantRandom.Initialize(1177);RunTime=80;NextMerchantTime=80;
     UpdateMerchant(.01f);Check(bMerchantActive && MerchantVisit==1 && MerchantRemaining==35,TEXT("scheduled_first_visit"));
     Check(FVector::Dist2D(PlayerPos,MerchantPos)>=500 && FVector::Dist2D(PlayerPos,MerchantPos)<=900 && Walkable(MerchantPos,60),TEXT("legal_nearby_spawn"));
+    Check(MerchantBody->GetStaticMeshComponent()->GetMaterial(0)->GetName().Contains(TEXT("MerchantWanderer")) && IsValid(MerchantShadow),TEXT("dedicated_merchant_art_replaces_prototypes"));
+    Check(MerchantArrivalParts.Num()==14 && MerchantArrivalAge==0,TEXT("arrival_starts_once_with_two_rings_twelve_sparks"));
     const int Bank=Progress->Coins;RunCoins=0;
     Check(!OpenMerchant() && !BuyMerchant(0),TEXT("out_of_range_transactions_rejected"));
     PlayerPos=MerchantPos+Camera->GetActorRightVector().GetSafeNormal2D()*100;Selected={1,0,0,0,0,0};
     Check(OpenMerchant() && Selected[0]==0,TEXT("open_releases_furnace_selection"));
     const float Left=MerchantRemaining,Clock=RunTime;UpdateMerchant(10);
     Check(MerchantRemaining==Left && RunTime==Clock,TEXT("shop_pauses_event_clock"));
+    UpdateMerchantVisual(10);Check(MerchantArrivalAge==0 && MerchantArrivalParts.Num()==14,TEXT("arrival_pauses_with_shop"));
+    Panel.Empty();UpdateMerchantVisual(1.5f);Panel=TEXT("merchant");
+    Check(MerchantArrivalParts.IsEmpty() && !IsValid(MerchantArrivalFX) && (MerchantBody->GetActorLocation()-MerchantPos).Equals(Camera->GetActorUpVector()*(208.f/448*260),.01f),TEXT("arrival_cleans_up_and_feet_settle_on_baseline"));
     Check(!BuyMerchant(0) && !RefreshMerchant() && RunCoins==0 && MerchantRerolls==0,TEXT("insufficient_funds_costs_nothing"));
     MerchantStock[0]=0;MerchantStock[1]=MerchantStock[2]=1;for(bool& S:MerchantSoldOut) S=false;
     RunCoins=80;Inventory={0,0,0,0,0,0};Action(TEXT("merchantbuy0"));
@@ -47,7 +52,9 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     Panel.Empty();UpdateMerchant(36);const int AfterExpiry=RunCoins;
     Check(!bMerchantActive && !BuyMerchant(0) && RunCoins==AfterExpiry,TEXT("expiry_disables_hidden_actions"));
     RunTime=NextMerchantTime;UpdateMerchant(.01f);Check(bMerchantActive && MerchantVisit==2 && MerchantRerolls==0,TEXT("next_visit_resets_fee"));
-    CloseMerchant();MerchantVisit=0;RunTime=80;NextMerchantTime=80;Progress->TutorialComplete=false;UpdateMerchant(.1f);
+    const auto ArrivalActors=MerchantArrivalParts;CloseMerchant();
+    Check(MerchantArrivalParts.IsEmpty() && !IsValid(MerchantArrivalFX) && !ArrivalActors.ContainsByPredicate([](const TObjectPtr<AStaticMeshActor>& A){return IsValid(A);}),TEXT("leaving_mid_arrival_cancels_all_parts"));
+    MerchantVisit=0;RunTime=80;NextMerchantTime=80;Progress->TutorialComplete=false;UpdateMerchant(.1f);
     Check(!bMerchantActive,TEXT("tutorial_defers_merchant"));Progress->TutorialComplete=true;UpdateMerchant(.1f);
     Check(bMerchantActive,TEXT("merchant_resumes_after_tutorial"));
     RunTime=300;UpdateMerchant(.01f);Check(!bMerchantActive && !SpawnMerchant(),TEXT("boss_warning_ends_trading"));
@@ -64,19 +71,22 @@ void AAlchemyWorld::MerchantCapture(float Dt) {
         int X=0,Y=0;GetWorld()->GetFirstPlayerController()->GetViewportSize(X,Y);
         const FString Folder=FPaths::ProjectDir()/FString::Printf(TEXT("Evidence/Merchant20261029/%dx%d"),X,Y);
         IFileManager::Get().MakeDirectory(*Folder,true);FScreenshotRequest::RequestScreenshot(Folder/Name,false,false);
-        UE_LOG(LogTemp,Display,TEXT("MERCHANT_FRAME %s time=%.3f ttl=%.3f coins=%d"),Name,RunTime,MerchantRemaining,RunCoins);
+        UE_LOG(LogTemp,Display,TEXT("MERCHANT_FRAME %s time=%.3f ttl=%.3f coins=%d arrival=%.3f parts=%d"),Name,RunTime,MerchantRemaining,RunCoins,MerchantArrivalAge,MerchantArrivalParts.Num());
     };
     if(CaptureStep==0 && T>.5f) {
         Progress->TutorialComplete=true;StartRun();RunTime=80;NextMerchantTime=80;RunCoins=80;Inventory={3,4,2,1,0,0};
         for(auto& E:Enemies){E.Body->Destroy();E.Shadow->Destroy();}Enemies.Empty();SpawnCD=10000;
         if(!SpawnMerchant()){FPlatformMisc::RequestExitWithStatus(false,1);return;}
-        PlayerPos=MerchantPos+Camera->GetActorRightVector().GetSafeNormal2D()*100;UpdateCamera(0);UpdateCharacterVisual(0,false);
-        MerchantStock[0]=0;MerchantStock[1]=1;MerchantStock[2]=2;OpenMerchant();ToastTime=0;CaptureStep=1;
-    } else if(CaptureStep==1 && T>1.2f){Shot(TEXT("01_Shop.png"));CaptureStep=2;}
-    else if(CaptureStep==2 && T>2.1f){Action(TEXT("merchantbuy0"));Shot(TEXT("02_Purchased.png"));CaptureStep=3;}
-    else if(CaptureStep==3 && T>3){Action(TEXT("merchantrefresh"));Shot(TEXT("03_Refreshed.png"));CaptureStep=4;}
-    else if(CaptureStep==4 && T>4){Action(TEXT("merchantsellall0"));Shot(TEXT("04_ConfirmSale.png"));CaptureStep=5;}
-    else if(CaptureStep==5 && T>5.2f){Action(TEXT("merchantconfirm"));Shot(TEXT("05_Sold.png"));CaptureStep=6;}
-    else if(CaptureStep==6 && T>6.1f){Action(TEXT("close"));Shot(TEXT("06_MerchantWorld.png"));CaptureStep=7;}
-    else if(CaptureStep==7 && T>7.2f){UE_LOG(LogTemp,Display,TEXT("ALCHEMY_MERCHANT_CAPTURE_PASS"));FPlatformMisc::RequestExitWithStatus(false,0);CaptureStep=8;}
+        PlayerPos=MerchantPos+Camera->GetActorRightVector().GetSafeNormal2D()*220;UpdateCamera(0);UpdateCharacterVisual(0,false);
+        MerchantStock[0]=0;MerchantStock[1]=1;MerchantStock[2]=2;ToastTime=0;CaptureStep=1;
+    } else if(CaptureStep==1 && T>.68f){Shot(TEXT("00_ArrivalStart.png"));CaptureStep=2;}
+    else if(CaptureStep==2 && T>1.2f){Shot(TEXT("00_ArrivalGather.png"));CaptureStep=3;}
+    else if(CaptureStep==3 && T>2.1f){Shot(TEXT("00_ArrivalSettled.png"));CaptureStep=4;}
+    else if(CaptureStep==4 && T>3.1f){OpenMerchant();Shot(TEXT("01_Shop.png"));CaptureStep=5;}
+    else if(CaptureStep==5 && T>4){Action(TEXT("merchantbuy0"));Shot(TEXT("02_Purchased.png"));CaptureStep=6;}
+    else if(CaptureStep==6 && T>4.9f){Action(TEXT("merchantrefresh"));Shot(TEXT("03_Refreshed.png"));CaptureStep=7;}
+    else if(CaptureStep==7 && T>5.9f){Action(TEXT("merchantsellall0"));Shot(TEXT("04_ConfirmSale.png"));CaptureStep=8;}
+    else if(CaptureStep==8 && T>7.1f){Action(TEXT("merchantconfirm"));Shot(TEXT("05_Sold.png"));CaptureStep=9;}
+    else if(CaptureStep==9 && T>8){Action(TEXT("close"));Shot(TEXT("06_MerchantWorld.png"));CaptureStep=10;}
+    else if(CaptureStep==10 && T>9.2f){UE_LOG(LogTemp,Display,TEXT("ALCHEMY_MERCHANT_CAPTURE_PASS"));FPlatformMisc::RequestExitWithStatus(false,0);CaptureStep=11;}
 }
