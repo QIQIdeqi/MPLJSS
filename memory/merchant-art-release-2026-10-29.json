@@ -51,5 +51,7 @@
     "Single standing image with runtime entrance; no generated frame animation",
     "No manual full-playthrough or crowd performance claim"
   ],
-  "git_target": "origin/main; actual delivery recorded in daily memory and final response"
+  "git_target": "origin/main; actual delivery recorded in daily memory and final response",
+  "published_feature_commit": "60d914f81c458c3ff5a6d9bd0d03a4921a6e7666",
+  "git_feature_sync": "HEAD, origin/main and live remote match; 8 LFS objects uploaded successfully; unrelated local draft retained"
 }
