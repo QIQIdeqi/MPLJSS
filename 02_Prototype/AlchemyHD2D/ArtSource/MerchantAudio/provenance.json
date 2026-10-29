@@ -1,0 +1,18 @@
+{
+  "origin": "Original deterministic synthesis, no external samples",
+  "sample_rate": 44100,
+  "files": {
+    "S_MerchantBuy.wav": {
+      "seconds": 0.42,
+      "peak_dbfs": -6.94,
+      "rms": 0.06936855184424504,
+      "sha256": "d6255cc199207c7a90539b647d311be8e1701cbc77c3e3ca9fd9b14774b8fa45"
+    },
+    "S_MerchantSell.wav": {
+      "seconds": 0.42,
+      "peak_dbfs": -6.94,
+      "rms": 0.08374843471599551,
+      "sha256": "af6e5b2aa2d9c8101ae91e37cea4d4f3670c45b6e165e7575a84728a90170f31"
+    }
+  }
+}

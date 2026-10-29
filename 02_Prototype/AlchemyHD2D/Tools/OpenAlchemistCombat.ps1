@@ -1,4 +1,4 @@
-param([switch]$Editor,[switch]$BossPreview,[switch]$MerchantPreview)
+﻿param([switch]$Editor,[switch]$BossPreview,[switch]$MerchantPreview)
 $ErrorActionPreference='Stop'
 $project='D:\03_UEProject\AlchemyHD2DResearch\AlchemyHD2D.uproject'
 $engine='D:\02_UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'

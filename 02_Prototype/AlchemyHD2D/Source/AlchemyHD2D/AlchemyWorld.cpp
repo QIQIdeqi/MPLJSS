@@ -3,6 +3,8 @@
 #include "Engine/StaticMeshActor.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/Texture2D.h"
+#include "Sound/SoundBase.h"
+#include "AudioMixerBlueprintLibrary.h"
 #include "Engine/Canvas.h"
 #include "Engine/Font.h"
 #include "Components/StaticMeshComponent.h"
@@ -20,6 +22,7 @@
 #include "EngineUtils.h"
 #include "InputCoreTypes.h"
 #include "Misc/Paths.h"
+#include "Misc/App.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Misc/FileHelper.h"
@@ -160,6 +163,9 @@ void AAlchemyWorld::BeginPlay() {
     PotionBreakAtlas=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Art/T_PotionBreakAtlas.T_PotionBreakAtlas"));
     Levels.Init(0,NumSkills());Levels[0]=1;
     ImpactFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyImpact.NS_AlchemyImpact"));
+    MerchantBuySound=LoadObject<USoundBase>(nullptr,TEXT("/Game/Art/Audio/S_MerchantBuy.S_MerchantBuy"));
+    MerchantSellSound=LoadObject<USoundBase>(nullptr,TEXT("/Game/Art/Audio/S_MerchantSell.S_MerchantSell"));
+    MerchantCoinTexture=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Art/Coin.Coin"));
     BlastFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyBlast.NS_AlchemyBlast"));
     TrailFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyTrail.NS_AlchemyTrail"));
     ParticleMaterial=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/VFX/M_AlchemyParticle.M_AlchemyParticle"));
@@ -994,6 +1000,7 @@ void AAlchemyWorld::Action(FString Id) {
 
 void AAlchemyWorld::Tick(float Dt) {
     Super::Tick(Dt); Dt=FMath::Min(Dt,0.1f); VisualTime+=Dt; ToastTime-=Dt;
+    UpdateMerchantFeedback();
     HitFXThisFrame=0;
     auto PC=GetWorld()->GetFirstPlayerController(); if(!PC || !Player) return;
     if(PC->WasInputKeyJustPressed(EKeys::F1)) Action(TEXT("ortho"));

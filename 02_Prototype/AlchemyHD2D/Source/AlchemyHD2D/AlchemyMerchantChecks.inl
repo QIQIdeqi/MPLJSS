@@ -6,6 +6,8 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     Check(FVector::Dist2D(PlayerPos,MerchantPos)>=500 && FVector::Dist2D(PlayerPos,MerchantPos)<=900 && Walkable(MerchantPos,60),TEXT("legal_nearby_spawn"));
     Check(IsValid(MerchantAnimationMaterial) && MerchantAnimationMaterial->Parent->GetName().Contains(TEXT("MerchantAnimated")) && IsValid(MerchantShadow),TEXT("dedicated_merchant_art_replaces_prototypes"));
     Check(MerchantArrivalParts.Num()==14 && MerchantArrivalAge==0,TEXT("arrival_starts_once_with_two_rings_twelve_sparks"));
+    Check(IsValid(MerchantBuySound) && IsValid(MerchantSellSound) && IsValid(MerchantCoinTexture),TEXT("trade_audio_and_coin_assets_loaded"));
+    Check(!MerchantBubble.IsEmpty() && MerchantBubbleUntil>VisualTime,TEXT("spawn_dialogue_bubble_ready"));
     const int Bank=Progress->Coins;RunCoins=0;
     Check(!OpenMerchant() && !BuyMerchant(0),TEXT("out_of_range_transactions_rejected"));
     PlayerPos=MerchantPos+Camera->GetActorRightVector().GetSafeNormal2D()*100;Selected={1,0,0,0,0,0};
@@ -35,7 +37,10 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     MerchantStock[0]=0;MerchantStock[1]=MerchantStock[2]=1;for(bool& S:MerchantSoldOut) S=false;
     RunCoins=80;Inventory={0,0,0,0,0,0};Action(TEXT("merchantbuy0"));
     Check(RunCoins==72 && Inventory[0]==1 && MerchantSoldOut[0],TEXT("purchase_deducts_once"));
+    const int TradeSerial=MerchantTradeSerial,SoundSerial=MerchantSoundEvents;
+    Check(MerchantCoinEffects.Num()>0 && MerchantCoinEffects.Last().Delta==-8 && SoundSerial>0,TEXT("buy_emits_outgoing_coins_and_sound"));
     Action(TEXT("merchantbuy0"));Check(RunCoins==72 && Inventory[0]==1,TEXT("sold_out_blocks_repeat_purchase"));
+    Check(MerchantTradeSerial==TradeSerial && MerchantSoundEvents==SoundSerial,TEXT("failed_purchase_has_no_feedback_or_sound"));
     Inventory[1]=10;Check(!BuyMerchant(1) && RunCoins==72,TEXT("capacity_rejects_without_charge"));
     MerchantRerolls=2;Action(TEXT("close"));Check(OpenMerchant() && MerchantRerolls==2 && MerchantSoldOut[0] && MerchantStock[0]==0,TEXT("reopen_preserves_stock_and_fee"));
     RunCoins=1000;MerchantRerolls=0;bool Fees=true;
@@ -54,6 +59,7 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     Check(Locked && Unlocked,TEXT("elite_material_pool_unlocks_only_earned_kind"));
     Inventory[0]=4;const int BeforeSell=RunCoins;Action(TEXT("merchantsell0"));
     Check(Inventory[0]==3 && RunCoins==BeforeSell+2,TEXT("sell_one"));
+    Check(MerchantCoinEffects.Last().Delta==2 && MerchantCoinEffects.Last().To.Equals(FVector2D(270,196)),TEXT("sale_coins_fly_into_wallet"));
     Action(TEXT("merchantsellall0"));Check(Panel==TEXT("merchantconfirm") && Inventory[0]==3,TEXT("sell_all_requires_confirmation"));
     Action(TEXT("close"));Check(Panel==TEXT("merchant") && Inventory[0]==3 && RunCoins==BeforeSell+2,TEXT("cancel_sale_costs_nothing"));
     Action(TEXT("merchantsellall0"));Action(TEXT("merchantconfirm"));Action(TEXT("merchantconfirm"));
@@ -65,15 +71,21 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     Check(!BuyMerchant(0) && SellMerchant(0),TEXT("boss_overflow_can_sell_but_cannot_buy_more"));
     CollectDrop(0,1);Check(Inventory[0]==13,TEXT("boss_overflow_not_truncated"));
     Check(Progress->Coins==Bank,TEXT("bank_currency_untouched_during_trade"));
+    const int WalletBeforeFX=RunCoins;VisualTime+=2;UpdateMerchantFeedback();
+    Check(MerchantCoinEffects.IsEmpty() && RunCoins==WalletBeforeFX,TEXT("ui_effects_expire_without_changing_balance"));
     Panel.Empty();UpdateMerchant(36);const int AfterExpiry=RunCoins;
-    Check(!bMerchantActive && !BuyMerchant(0) && RunCoins==AfterExpiry,TEXT("expiry_disables_hidden_actions"));
+    Check(bMerchantLeaving && !CanTrade() && !BuyMerchant(0) && RunCoins==AfterExpiry,TEXT("expiry_disables_hidden_actions"));
+    Check(MerchantArrivalParts.Num()==14 && MerchantAnimationFrame>=0 && !MerchantBubble.IsEmpty(),TEXT("departure_starts_goodbye_and_portal"));
+    UpdateMerchant(.6f);Check(bMerchantActive && bMerchantLeaving && MerchantAnimationFrame>=6,TEXT("departure_plays_goodbye_wave"));
+    UpdateMerchant(.7f);Check(MerchantBody->GetActorScale3D().Y<2.6f,TEXT("departure_shrinks_into_portal"));
+    UpdateMerchant(.4f);Check(!bMerchantActive && MerchantArrivalParts.IsEmpty() && !IsValid(MerchantAnimationMaterial) && MerchantBubble.IsEmpty(),TEXT("departure_cleans_actor_effects_and_dialogue"));
     RunTime=NextMerchantTime;UpdateMerchant(.01f);Check(bMerchantActive && MerchantVisit==2 && MerchantRerolls==0,TEXT("next_visit_resets_fee"));
     const auto ArrivalActors=MerchantArrivalParts;CloseMerchant();
     Check(MerchantArrivalParts.IsEmpty() && !IsValid(MerchantArrivalFX) && !ArrivalActors.ContainsByPredicate([](const TObjectPtr<AStaticMeshActor>& A){return IsValid(A);}),TEXT("leaving_mid_arrival_cancels_all_parts"));
     MerchantVisit=0;RunTime=80;NextMerchantTime=80;Progress->TutorialComplete=false;UpdateMerchant(.1f);
     Check(!bMerchantActive,TEXT("tutorial_defers_merchant"));Progress->TutorialComplete=true;UpdateMerchant(.1f);
     Check(bMerchantActive,TEXT("merchant_resumes_after_tutorial"));
-    RunTime=300;UpdateMerchant(.01f);Check(!bMerchantActive && !SpawnMerchant(),TEXT("boss_warning_ends_trading"));
+    RunTime=300;UpdateMerchant(.01f);Check(bMerchantLeaving && !CanTrade() && !SpawnMerchant(),TEXT("boss_warning_ends_trading"));UpdateMerchant(1.7f);
     RunTime=80;MerchantVisit=0;NextMerchantTime=80;UpdateMerchant(.01f);
     Check(bMerchantActive && StartBossEncounter() && !bMerchantActive && !SpawnMerchant(),TEXT("boss_entry_closes_and_blocks_merchant"));
     const int Deposit=RunCoins;EndRun(false);Check(Progress->Coins==Bank+Deposit && RunCoins==0 && !bMerchantActive,TEXT("remaining_wallet_banked_once_at_run_end"));
@@ -97,7 +109,8 @@ void AAlchemyWorld::MerchantCapture(float Dt) {
     }
     if(CaptureStep==0 && T>.5f) {
         Progress->TutorialComplete=true;StartRun();RunTime=80;NextMerchantTime=80;RunCoins=80;Inventory={3,4,2,1,0,0};
-        MerchantCapturedWaveFrames=MerchantCapturedIdleFrames=0;
+        MerchantCapturedWaveFrames=MerchantCapturedIdleFrames=0;bMerchantCapturedBuyCoins=bMerchantCapturedSellCoins=false;
+        if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyRecordMerchantAudio"))) {FApp::SetUnfocusedVolumeMultiplier(1);UAudioMixerBlueprintLibrary::StartRecordingOutput(this,12);}
         for(auto& E:Enemies){E.Body->Destroy();E.Shadow->Destroy();}Enemies.Empty();SpawnCD=10000;
         if(!SpawnMerchant()){FPlatformMisc::RequestExitWithStatus(false,1);return;}
         PlayerPos=MerchantPos+Camera->GetActorRightVector().GetSafeNormal2D()*220;UpdateCamera(0);UpdateCharacterVisual(0,false);
@@ -107,9 +120,18 @@ void AAlchemyWorld::MerchantCapture(float Dt) {
     else if(CaptureStep==3 && T>2.1f){Shot(TEXT("00_ArrivalSettled.png"));CaptureStep=4;}
     else if(CaptureStep==4 && T>3.1f){OpenMerchant();Shot(TEXT("01_Shop.png"));CaptureStep=5;}
     else if(CaptureStep==5 && T>4){Action(TEXT("merchantbuy0"));Shot(TEXT("02_Purchased.png"));CaptureStep=6;}
+    else if(CaptureStep==6 && T>4.35f && !bMerchantCapturedBuyCoins){Shot(TEXT("12_BuyCoins.png"));bMerchantCapturedBuyCoins=true;}
     else if(CaptureStep==6 && T>4.9f){Action(TEXT("merchantrefresh"));Shot(TEXT("03_Refreshed.png"));CaptureStep=7;}
     else if(CaptureStep==7 && T>5.9f){Action(TEXT("merchantsellall0"));Shot(TEXT("04_ConfirmSale.png"));CaptureStep=8;}
     else if(CaptureStep==8 && T>7.1f){Action(TEXT("merchantconfirm"));Shot(TEXT("05_Sold.png"));CaptureStep=9;}
+    else if(CaptureStep==9 && T>7.45f && !bMerchantCapturedSellCoins){Shot(TEXT("12_SellCoins.png"));bMerchantCapturedSellCoins=true;}
     else if(CaptureStep==9 && T>8){Action(TEXT("close"));Shot(TEXT("06_MerchantWorld.png"));CaptureStep=10;}
-    else if(CaptureStep==10 && T>9.2f){const bool Complete=MerchantCapturedWaveFrames==6 && MerchantCapturedIdleFrames==4;UE_LOG(LogTemp,Display,TEXT("ALCHEMY_MERCHANT_CAPTURE_%s"),Complete?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,Complete?0:1);CaptureStep=11;}
+    else if(CaptureStep==10 && T>9.2f){
+        if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyRecordMerchantAudio"))) UAudioMixerBlueprintLibrary::StopRecordingOutput(this,EAudioRecordingExportType::WavFile,TEXT("MerchantTradeMix"),FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()/TEXT("Evidence/Merchant20261029")));
+        BeginMerchantDeparture();CaptureStep=11;
+    }
+    else if(CaptureStep==11 && T>9.65f){Shot(TEXT("13_Goodbye.png"));CaptureStep=12;}
+    else if(CaptureStep==12 && T>10.5f){Shot(TEXT("14_DeparturePortal.png"));CaptureStep=13;}
+    else if(CaptureStep==13 && T>11.05f){Shot(TEXT("15_Left.png"));CaptureStep=14;}
+    else if(CaptureStep==14 && T>12){const bool Complete=MerchantCapturedWaveFrames==6 && MerchantCapturedIdleFrames==4 && bMerchantCapturedBuyCoins && bMerchantCapturedSellCoins && !bMerchantActive && MerchantArrivalParts.IsEmpty();UE_LOG(LogTemp,Display,TEXT("ALCHEMY_MERCHANT_CAPTURE_%s"),Complete?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,Complete?0:1);CaptureStep=15;}
 }

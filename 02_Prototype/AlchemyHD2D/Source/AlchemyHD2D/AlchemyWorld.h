@@ -13,6 +13,12 @@ class ACameraActor;
 class UMaterialInterface;
 class UNiagaraSystem;
 class UNiagaraComponent;
+class USoundBase;
+struct FMerchantCoinEffect {
+    FVector2D From,To;
+    float Born=0;
+    int32 Delta=0;
+};
 
 UCLASS()
 class UAlchemyProgress : public USaveGame {
@@ -183,6 +189,15 @@ public:
     float MerchantAnimClock=0,MerchantWaveTime=-1,MerchantGreetingCD=0;
     int32 MerchantAnimationFrame=0,MerchantCapturedWaveFrames=0,MerchantCapturedIdleFrames=0;
     bool bMerchantAnimationLit=false;
+    bool bMerchantLeaving=false;
+    bool bMerchantCapturedBuyCoins=false,bMerchantCapturedSellCoins=false;
+    float MerchantDepartureTime=0,MerchantBubbleUntil=0;
+    FString MerchantBubble;
+    int32 MerchantTradeSerial=0,MerchantSoundEvents=0;
+    TArray<FMerchantCoinEffect> MerchantCoinEffects;
+    UPROPERTY() TObjectPtr<USoundBase> MerchantBuySound;
+    UPROPERTY() TObjectPtr<USoundBase> MerchantSellSound;
+    UPROPERTY() TObjectPtr<UTexture2D> MerchantCoinTexture;
     int32 MerchantVisit=0,MerchantRerolls=0,MerchantStock[3]={0,1,2};
     bool MerchantSoldOut[3]={false,false,false};
     int32 MerchantSellKind=-1,MerchantSellCount=0;
@@ -256,6 +271,11 @@ public:
     bool ConfirmMerchantSale();
     void UpdateMerchant(float Delta);
     void UpdateMerchantVisual(float Delta);
+    void StartMerchantEffect();
+    void BeginMerchantDeparture();
+    void MerchantSay(const FString& Line,float Seconds=3);
+    void MerchantTradeFeedback(int32 Delta,FVector2D From,FVector2D To,const FString& Line);
+    void UpdateMerchantFeedback();
     void MerchantSmoke(float Delta);
     void MerchantCapture(float Delta);
     bool FindSpawnPoint(int32 Type,FVector& Position);
@@ -303,6 +323,7 @@ public:
     void Box(float X,float Y,float W,float H,FLinearColor Color);
     void Button(const FString& Id,const FString& Label,float X,float Y,float W=180,bool Enabled=true,float Height=48);
     void DrawMerchant();
+    void DrawMerchantFeedback();
 };
 
 UCLASS()

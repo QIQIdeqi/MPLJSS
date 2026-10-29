@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-29",
+  "result": "PASS",
+  "base_commit": "f8e45a25fba81503c303012c1b4d85528ae22584",
+  "engine": "UE5.8.4 CL58902052",
+  "build": "Win64 Development",
+  "uat_seconds": 53.78,
+  "data_validation": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "merchant_rules": {
+    "result": "PASS",
+    "checks": 52,
+    "stock_rolls": 4000
+  },
+  "packaged_checks": {
+    "AlchemyMerchantSmoke": "PASS",
+    "AlchemyBossSmoke": "PASS",
+    "AlchemySmoke": "PASS",
+    "AlchemyCharacterV3Smoke": "PASS"
+  },
+  "editor_frames": {
+    "1280x720": 24,
+    "2560x1080": 24
+  },
+  "packaged_frames": {
+    "1280x720": 24
+  },
+  "packaged_audio_render": {
+    "rate": 48000,
+    "channels": 2,
+    "seconds": 1.5573333333333332,
+    "peak": 0.096710205078125,
+    "rms": 0.014327472217047235
+  },
+  "audio_source": "02_Prototype/AlchemyHD2D/ArtSource/MerchantAudio/provenance.json",
+  "audio_recording": "Local packaged Evidence/Merchant20261029/MerchantTradeMix.wav; not uploaded",
+  "features": [
+    "Success-only buy/sell/refresh chimes",
+    "Income coins fly to wallet; costs fly out",
+    "Event dialogue bubbles in world and shop",
+    "1.6s goodbye wave and collapsing portal; trades disabled immediately; forced Boss cleanup"
+  ],
+  "packaging_fix": "Project bUseZenStore=False; old regenerable cooked cache isolated inside ignored Saved; no global service configuration changes",
+  "zip": {
+    "path": "03_Build\\HD2D_PC_UI\\冒牌炼金术士_Demo_Win64_最新测试版.zip",
+    "bytes": 353578045,
+    "sha256": "cc2f043adbfa30c8eb3763158c00999350ca8a4c8a97461f66d3cb30396fdcc9",
+    "entries": 45,
+    "crc": "PASS",
+    "matches_tested_build": true,
+    "no_saves_evidence_pdb_or_projectstore": true
+  },
+  "save_preserved_sha256": "cbacc503f887c6ae856ec6f10d42325c3bd0f6bc3ff1bdeb202b9ae9af46008b",
+  "unrelated_draft_preserved": "00_Doc/系统/局内突发事件与商人方案_2026-10-29.txt",
+  "boundaries": [
+    "Digital engine mix verified; headphones/speaker listening not claimed",
+    "No manual full playthrough or crowd benchmark"
+  ],
+  "git_target": "origin/main; publication recorded in daily memory and final response"
+}

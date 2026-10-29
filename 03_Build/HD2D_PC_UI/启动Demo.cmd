@@ -6,7 +6,7 @@ for %%I in ("%DEMO%") do if %%~zI LSS 1048576 goto lfs
 if not exist "%~dp0Windows\AlchemyHD2D\Content\Paks\AlchemyHD2D-Windows.pak" goto missing
 if not exist "%~dp0Windows\AlchemyHD2D\Content\Paks\AlchemyHD2D-Windows.ucas" goto missing
 if not exist "%~dp0Windows\AlchemyHD2D\Content\Paks\AlchemyHD2D-Windows.utoc" goto missing
-start "" /D "%~dp0Windows" "%~dp0Windows\AlchemyHD2D.exe" -windowed -ResX=1280 -ResY=720 -nosound %*
+start "" /D "%~dp0Windows" "%~dp0Windows\AlchemyHD2D.exe" -windowed -ResX=1280 -ResY=720 %*
 exit /b 0
 :missing
 echo Demo files are incomplete. Extract the ENTIRE latest Win64 ZIP first.

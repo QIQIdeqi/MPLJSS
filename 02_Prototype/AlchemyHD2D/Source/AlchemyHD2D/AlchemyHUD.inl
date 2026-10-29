@@ -140,9 +140,9 @@ void AAlchemyHUD::DrawHUD() {
             const float Right=FVector::DotProduct(D,World->Camera->GetActorRightVector()),Up=FVector::DotProduct(D,World->Camera->GetActorForwardVector().GetSafeNormal2D());
             const TCHAR* Way=FMath::Abs(Right)>FMath::Abs(Up)?(Right>0?TEXT("右方"):TEXT("左方")):(Up>0?TEXT("上方"):TEXT("下方"));
             Box(964,108,292,150,Surface);Box(964,108,4,150,Gold);
-            Text(FString::Printf(TEXT("流浪商人 · %.0f秒"),World->MerchantRemaining),982,122,20,Gold);
+            Text(World->bMerchantLeaving?FString(TEXT("流浪商人 · 正在离场")):FString::Printf(TEXT("流浪商人 · %.0f秒"),World->MerchantRemaining),982,122,20,Gold);
             Text(FString::Printf(TEXT("%s %.1f米 · 金色标记"),Way,D.Size2D()/100),982,158,18,White);
-            Button(TEXT("merchantopen"),World->CanTrade()?TEXT("F 打开交易"):TEXT("靠近商人后按 F"),982,199,256,World->CanTrade(),42);
+            Button(TEXT("merchantopen"),World->bMerchantLeaving?TEXT("正在收摊，暂不交易"):World->CanTrade()?TEXT("F 打开交易"):TEXT("靠近商人后按 F"),982,199,256,World->CanTrade(),42);
         }
     } else if(!World->bCombat && World->Panel.IsEmpty()) {
         for(int I=0;I<3;I++) {
@@ -311,4 +311,5 @@ void AAlchemyHUD::DrawHUD() {
         }
     }
     if(World->ToastTime>0) {Box(-OX/S,-OY/S,Canvas->SizeX/S,88+OY/S,FLinearColor(.025f,.075f,.085f,.99f));Paragraph(World->Toast,24,16,1232,20,Gold);}
+    DrawMerchantFeedback();
 }

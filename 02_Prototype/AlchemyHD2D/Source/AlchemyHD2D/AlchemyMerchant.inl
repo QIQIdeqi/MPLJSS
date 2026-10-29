@@ -5,10 +5,11 @@ int32 AAlchemyWorld::MerchantBuyPrice(int32 Kind) const {
 int32 AAlchemyWorld::MerchantSellPrice(int32 Kind) const {return Kind>=0 && Kind<6?(Kind<3?2:8):0;}
 int32 AAlchemyWorld::MerchantRefreshPrice() const {return 5+5*FMath::Min(MerchantRerolls,4);}
 bool AAlchemyWorld::CanTrade() const {
-    return bCombat && !bRunEnded && !bBossSpawned && RunTime<300 && bMerchantActive && MerchantRemaining>0 && FVector::Dist2D(PlayerPos,MerchantPos)<=260;
+    return bCombat && !bRunEnded && !bBossSpawned && RunTime<300 && bMerchantActive && !bMerchantLeaving && MerchantRemaining>0 && FVector::Dist2D(PlayerPos,MerchantPos)<=260;
 }
 void AAlchemyWorld::CloseMerchant() {
     bMerchantActive=false;MerchantRemaining=0;MerchantSellKind=-1;MerchantSellCount=0;
+    bMerchantLeaving=false;MerchantDepartureTime=0;MerchantBubble.Empty();MerchantCoinEffects.Empty();
     for(auto* A:{MerchantBody.Get(),MerchantShadow.Get(),MerchantMarker.Get()}) if(IsValid(A)) A->Destroy();
     MerchantBody=MerchantShadow=MerchantMarker=nullptr;
     for(auto& A:MerchantArrivalParts) if(IsValid(A)) A->Destroy();
@@ -50,13 +51,7 @@ bool AAlchemyWorld::SpawnMerchant() {
     MerchantMarker=Mesh(TEXT("Plane"),MerchantPos+FVector(0,0,12),FVector(2.6f,2.6f,1),Gold);
     MerchantMarker->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_ArenaRing")));
     MerchantArrivalAge=0;
-    for(int I=0;I<14;I++) {
-        auto* A=Mesh(TEXT("Plane"),MerchantPos+FVector(0,0,15),FVector(.01f),FLinearColor::White);
-        auto* M=UMaterialInstanceDynamic::Create(Material(I<2?TEXT("M_MerchantArrival"):TEXT("M_MerchantSpark")),this);
-        M->SetVectorParameterValue(TEXT("Tint"),I%2?FLinearColor(.2f,1,.8f):Gold);
-        A->GetStaticMeshComponent()->SetMaterial(0,M);MerchantArrivalParts.Add(A);
-    }
-    MerchantArrivalFX=SpawnVFX(ImpactFX,MerchantPos+FVector(0,0,45),FLinearColor(.25f,1,.75f),.9f,1.4f);
+    StartMerchantEffect();MerchantSay(TEXT("新鲜材料！缺什么尽管来看看。"),4);
     UpdateMerchantVisual(0);
     static const float Times[]={80,175,265},Jitter[]={10,15,10};
     NextMerchantTime=MerchantVisit<3?FMath::Max(RunTime+60,Times[MerchantVisit]+MerchantRandom.FRandRange(-Jitter[MerchantVisit],Jitter[MerchantVisit])):300;
@@ -66,19 +61,21 @@ bool AAlchemyWorld::SpawnMerchant() {
 }
 bool AAlchemyWorld::OpenMerchant() {
     if(!CanTrade() || !Panel.IsEmpty() || PendingLevelUps>0 || PendingResultSkill>=0 || PendingIsNuclear) return false;
-    Selected={0,0,0,0,0,0};MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");UpdateFeedback(0);return true;
+    Selected={0,0,0,0,0,0};MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");UpdateFeedback(0);MerchantSay(TEXT("缺材料可以买，多出来的我也收。"));return true;
 }
 bool AAlchemyWorld::BuyMerchant(int32 Slot) {
     if(!CanTrade() || Panel!=TEXT("merchant") || Slot<0 || Slot>=3 || MerchantSoldOut[Slot]) return false;
     const int Kind=MerchantStock[Slot],Price=MerchantBuyPrice(Kind);
     if(Kind<0 || Kind>=6 || Inventory[Kind]>=10 || RunCoins<Price) return false;
     RunCoins-=Price;Inventory[Kind]++;MerchantSoldOut[Slot]=true;
+    MerchantTradeFeedback(-Price,FVector2D(270,196),FVector2D(276+364*Slot,332),TEXT("好眼光，这份材料归你了！"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_BUY visit=%d slot=%d kind=%d cost=%d balance=%d"),MerchantVisit,Slot,Kind,Price,RunCoins);
     Message(FString::Printf(TEXT("购入 %s ×1，花费%d金币"),MaterialNames[Kind],Price));return true;
 }
 bool AAlchemyWorld::RefreshMerchant() {
     if(!CanTrade() || Panel!=TEXT("merchant") || RunCoins<MerchantRefreshPrice()) return false;
     const int Cost=MerchantRefreshPrice();RunCoins-=Cost;MerchantRerolls++;RollMerchantStock();
+    MerchantTradeFeedback(-Cost,FVector2D(270,196),FVector2D(985,200),TEXT("换一批货，再挑挑看？"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_REFRESH visit=%d count=%d cost=%d balance=%d"),MerchantVisit,MerchantRerolls,Cost,RunCoins);
     Message(FString::Printf(TEXT("货位已刷新，花费%d金币；下次%d金币"),Cost,MerchantRefreshPrice()));return true;
 }
@@ -86,6 +83,7 @@ bool AAlchemyWorld::SellMerchant(int32 Kind,bool All) {
     if(!CanTrade() || Panel!=TEXT("merchant") || Kind<0 || Kind>=6 || Inventory[Kind]<=0) return false;
     if(All) {MerchantSellKind=Kind;MerchantSellCount=Inventory[Kind];Panel=TEXT("merchantconfirm");return true;}
     Inventory[Kind]--;RunCoins+=MerchantSellPrice(Kind);
+    MerchantTradeFeedback(MerchantSellPrice(Kind),FVector2D(354+364*(Kind%3),448+72*(Kind/3)),FVector2D(270,196),TEXT("材料我收下，金币请拿稳。"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_SELL visit=%d kind=%d count=1 balance=%d"),MerchantVisit,Kind,RunCoins);return true;
 }
 bool AAlchemyWorld::ConfirmMerchantSale() {
@@ -94,15 +92,23 @@ bool AAlchemyWorld::ConfirmMerchantSale() {
     MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");
     if(Kind<0 || Kind>=6 || Count<=0 || Inventory[Kind]!=Count) {Message(TEXT("库存已变化，请重新确认出售。"));return false;}
     Inventory[Kind]-=Count;RunCoins+=Count*MerchantSellPrice(Kind);
+    MerchantTradeFeedback(Count*MerchantSellPrice(Kind),FVector2D(354+364*(Kind%3),448+72*(Kind/3)),FVector2D(270,196),TEXT("这批我全收了，下次还来！"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_SELL visit=%d kind=%d count=%d balance=%d"),MerchantVisit,Kind,Count,RunCoins);return true;
 }
 void AAlchemyWorld::UpdateMerchant(float Dt) {
-    if(!bCombat || bRunEnded || bBossSpawned || RunTime>=300) {CloseMerchant();return;}
+    if(!bCombat || bRunEnded || bBossSpawned) {CloseMerchant();return;}
+    if(RunTime>=300 && bMerchantActive && !bMerchantLeaving) BeginMerchantDeparture();
     if(!Panel.IsEmpty()) return;
+    if(bMerchantLeaving) {
+        MerchantDepartureTime+=Dt;UpdateMerchantVisual(Dt);
+        if(MerchantDepartureTime>=1.6f) CloseMerchant();
+        return;
+    }
+    if(RunTime>=300) return;
     if(bMerchantActive) {
         UpdateMerchantVisual(Dt);
         MerchantRemaining=FMath::Max(0.f,MerchantRemaining-Dt);
-        if(MerchantRemaining<=0) {UE_LOG(LogTemp,Display,TEXT("MERCHANT_LEAVE visit=%d"),MerchantVisit);CloseMerchant();Message(TEXT("流浪商人已经离开"));}
+        if(MerchantRemaining<=0) {UE_LOG(LogTemp,Display,TEXT("MERCHANT_LEAVE visit=%d"),MerchantVisit);BeginMerchantDeparture();}
     } else if(RunTime>=NextMerchantTime && MerchantVisit<3 && !TutorialActive()) SpawnMerchant();
 }
 
@@ -112,40 +118,74 @@ void AAlchemyWorld::UpdateMerchantVisual(float Dt) {
     const float PreviousArrival=MerchantArrivalAge;
     MerchantArrivalAge=FMath::Min(1.4f,MerchantArrivalAge+Dt);
     const float T=MerchantArrivalAge/1.4f,Ease=1-FMath::Square(1-T);
-    if(T>=1 && Dt>0) {
+    if(T>=1 && Dt>0 && !bMerchantLeaving) {
         MerchantGreetingCD=FMath::Max(0.f,MerchantGreetingCD-Dt);
         if(MerchantWaveTime>=0) {
             MerchantWaveTime+=Dt;
             if(MerchantWaveTime>=1) {MerchantWaveTime=-1;MerchantAnimClock=0;}
         } else if(PreviousArrival<1.4f || (MerchantGreetingCD<=0 && FVector::Dist2D(PlayerPos,MerchantPos)<=260)) {
             MerchantWaveTime=0;MerchantGreetingCD=8;
+            MerchantSay(TEXT("来看看，炼金路上总用得着！"));
         } else MerchantAnimClock+=Dt;
     }
+    if(bMerchantLeaving) MerchantWaveTime=FMath::Min(.999f,MerchantDepartureTime);
     MerchantAnimationFrame=MerchantWaveTime>=0?6+FMath::Min(5,int(MerchantWaveTime*6)):int(MerchantAnimClock*4)%4;
     if(!IsValid(MerchantAnimationMaterial) || bMerchantAnimationLit!=bLitSprites) {
         MerchantAnimationMaterial=UMaterialInstanceDynamic::Create(Material(bLitSprites?TEXT("M_MerchantAnimated_Lit"):TEXT("M_MerchantAnimated")),this);
         bMerchantAnimationLit=bLitSprites;
     }
     MerchantAnimationMaterial->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor((MerchantAnimationFrame%6)/6.f,(MerchantAnimationFrame/6)/2.f,0,0));
-    const float Height=260*(.82f+.18f*Ease);
+    const float DepartureScale=bMerchantLeaving?FMath::Max(.02f,1-FMath::Max(0.f,MerchantDepartureTime-1)/.6f):1;
+    const float Height=260*(.82f+.18f*Ease)*DepartureScale;
     UpdateSprite(MerchantBody,TEXT("MerchantWanderer"),MerchantPos,Height*384/448,Height,false,MerchantAnimationMaterial);
-    MerchantBody->SetActorLocation(MerchantPos+Camera->GetActorUpVector()*(208.f/448*Height+18*(1-Ease)));
+    MerchantBody->SetActorLocation(MerchantPos+Camera->GetActorUpVector()*(208.f/448*Height+18*(1-Ease)+25*(1-DepartureScale)));
+    const float EffectT=bMerchantLeaving?FMath::Min(1.f,MerchantDepartureTime/1.6f):T;
+    const float EffectEase=1-FMath::Square(1-EffectT);
     for(int I=0;I<MerchantArrivalParts.Num();I++) {
         auto* A=MerchantArrivalParts[I].Get();
         if(I<2) {
-            const float Radius=I==0?45+150*Ease:145-95*Ease;
+            const float Radius=bMerchantLeaving?FMath::Max(1.f,(I==0?190:140)*(1-EffectEase)):I==0?45+150*Ease:145-95*Ease;
             A->SetActorScale3D(FVector(Radius/50,Radius/50,1));
         } else {
-            const float Angle=(I-2)*2*PI/12+T*1.6f,Radius=170*(1-Ease)+35;
-            A->SetActorLocation(MerchantPos+FVector(FMath::Cos(Angle)*Radius,FMath::Sin(Angle)*Radius,20+90*FMath::Sin(PI*T)));
+            const float Angle=(I-2)*2*PI/12+EffectT*1.6f,Radius=bMerchantLeaving?35+140*EffectEase:170*(1-Ease)+35;
+            A->SetActorLocation(MerchantPos+FVector(FMath::Cos(Angle)*Radius,FMath::Sin(Angle)*Radius,20+(bMerchantLeaving?130*EffectEase:90*FMath::Sin(PI*EffectT))));
             A->SetActorRotation(FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),-Camera->GetActorForwardVector()).Rotator());
-            const float Size=7+9*FMath::Sin(PI*T);A->SetActorScale3D(FVector(Size/100,Size/100,1));
+            const float Size=7+9*FMath::Sin(PI*EffectT);A->SetActorScale3D(FVector(Size/100,Size/100,1));
         }
-        CastChecked<UMaterialInstanceDynamic>(A->GetStaticMeshComponent()->GetMaterial(0))->SetScalarParameterValue(TEXT("Fade"),1-T);
+        CastChecked<UMaterialInstanceDynamic>(A->GetStaticMeshComponent()->GetMaterial(0))->SetScalarParameterValue(TEXT("Fade"),1-EffectT);
     }
-    if(T>=1) {
+    if(EffectT>=1) {
         for(auto& A:MerchantArrivalParts) if(IsValid(A)) A->Destroy();
         MerchantArrivalParts.Empty();
         if(IsValid(MerchantArrivalFX)) MerchantArrivalFX->DestroyComponent();MerchantArrivalFX=nullptr;
     }
+}
+
+void AAlchemyWorld::StartMerchantEffect() {
+    for(auto& A:MerchantArrivalParts) if(IsValid(A)) A->Destroy();MerchantArrivalParts.Empty();
+    if(IsValid(MerchantArrivalFX)) MerchantArrivalFX->DestroyComponent();
+    for(int I=0;I<14;I++) {
+        auto* A=Mesh(TEXT("Plane"),MerchantPos+FVector(0,0,15),FVector(.01f),FLinearColor::White);
+        auto* M=UMaterialInstanceDynamic::Create(Material(I<2?TEXT("M_MerchantArrival"):TEXT("M_MerchantSpark")),this);
+        M->SetVectorParameterValue(TEXT("Tint"),I%2?FLinearColor(.2f,1,.8f):Gold);
+        A->GetStaticMeshComponent()->SetMaterial(0,M);MerchantArrivalParts.Add(A);
+    }
+    MerchantArrivalFX=SpawnVFX(ImpactFX,MerchantPos+FVector(0,0,45),FLinearColor(.25f,1,.75f),.7f,1.6f);
+}
+void AAlchemyWorld::BeginMerchantDeparture() {
+    if(!bMerchantActive || bMerchantLeaving) return;
+    bMerchantLeaving=true;MerchantDepartureTime=0;MerchantRemaining=0;MerchantWaveTime=0;MerchantArrivalAge=1.4f;
+    MerchantSellKind=-1;MerchantSellCount=0;
+    if(Panel==TEXT("merchant") || Panel==TEXT("merchantconfirm")) Panel.Empty();
+    StartMerchantEffect();MerchantSay(RunTime>=300?TEXT("危险来了，我先撤啦！"):TEXT("收摊啦，下回见，小炼金术士！"),2);
+}
+void AAlchemyWorld::MerchantSay(const FString& Line,float Seconds) {MerchantBubble=Line;MerchantBubbleUntil=VisualTime+Seconds;}
+void AAlchemyWorld::MerchantTradeFeedback(int32 Delta,FVector2D From,FVector2D To,const FString& Line) {
+    MerchantTradeSerial++;if(MerchantCoinEffects.Num()>=12) MerchantCoinEffects.RemoveAt(0);
+    MerchantCoinEffects.Add({From,To,VisualTime,Delta});MerchantSay(Line);
+    auto* Sound=Delta>0?MerchantSellSound.Get():MerchantBuySound.Get();
+    if(Sound) {MerchantSoundEvents++;UGameplayStatics::PlaySound2D(this,Sound,.6f);}
+}
+void AAlchemyWorld::UpdateMerchantFeedback() {
+    MerchantCoinEffects.RemoveAll([&](const FMerchantCoinEffect& E){return VisualTime-E.Born>1.1f;});
 }

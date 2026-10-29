@@ -87,3 +87,9 @@ Boss 规则、原玩法和人物 V3 回归通过，真实渲染核对 1280×720 
 - ImportMerchantAnimation.py导入MerchantAnimated与Lit/Unlit材质；UpdateMerchantVisual按缓存MID更新UV，固定世界位置/脚底。入场招手一次、近距按8秒冷却再招手，交易与暂停冻结，结束恢复待机，离场重置。旧ImportMerchantArt.py维护静态参考与出场材质。
 - 当前MerchantSmoke42项，MerchantCapture每分辨率19帧（原9帧加6招手和4待机）。编辑器双分辨率、Windows实包回归与D3D12验证通过，最新分发摘要memory/merchant-animation-release-2026-10-29.json。GIF帧预览仅本地，wave GIF重复展示不改变运行时非循环招手/冷却规则。
 - inspect-motion对单脚接触仍needs-review，招手近似中立端点保留全部原时长；不把运动存在/脚底像素相同当成严格步态标定。源生成提示词与一次裁切重生成原因见provenance。
+
+## 商人成交反馈与离场（2026-10-29，最新覆盖）
+- 最新实现增加购买/刷新支出声、出售收款声与金币HUD弧线，反馈仅成功后触发、从不二次改余额。MerchantSay短句覆盖世界气泡及商店底部，使用VisualTime；角色动作、冷却与1.6秒离场使用战斗时间。BeginMerchantDeparture立即禁交易，告别复用6帧wave，缩放与收束/散点由运行时驱动；Boss/结算/切图强制CloseMerchant。
+- 两个原创合成WAV和生成/导入工具保留在ArtSource/MerchantAudio及Tools，Game/Art/Audio会随AlwaysCook打入。普通启动现启用声音；自动规则测试可-nosound，真实音频验证用-AlchemyMerchantCapture -AlchemyRecordMerchantAudio -AudioMixer并分析导出混音，不声称耳听通过。
+- MerchantSmoke现52项；MerchantCapture现每组24图，新增支出/收入金币中间态与告别/收束/结束三阶段。最新Windows/音频/ZIP/Git记录见memory/merchant-feedback-release-2026-10-29.json。
+- UE5.8.4曾出现Cooked Zen项目端口与暂存启动端口不一致。当前项目DefaultGame.ini显式bUseZenStore=False，使用SSD文件式Cook+IoStore；Saved旧Cooked缓存被隔离而非删除，正式SaveGames不动，不更改全局Zen服务。
