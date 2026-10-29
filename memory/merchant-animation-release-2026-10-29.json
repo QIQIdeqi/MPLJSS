@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-29",
+  "result": "PASS",
+  "base_commit": "c81be877a15d5415cbfa038cafbce80690b139e9",
+  "engine": "UE5.8.4 CL58902052",
+  "build": "Win64 Development",
+  "uat_seconds": 110.22,
+  "data_validation": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    },
+    "wave": {
+      "row": 1,
+      "frames": 6,
+      "fps": 6,
+      "loop": false
+    }
+  },
+  "atlas": {
+    "width": 2304,
+    "height": 896,
+    "columns": 6,
+    "rows": 2,
+    "cell_width": 384,
+    "cell_height": 448,
+    "baseline_y": 432
+  },
+  "merchant_rules": {
+    "result": "PASS",
+    "checks": 42,
+    "stock_rolls": 4000
+  },
+  "packaged_checks": {
+    "AlchemyMerchantSmoke": "PASS",
+    "AlchemyBossSmoke": "PASS",
+    "AlchemySmoke": "PASS",
+    "AlchemyCharacterV3Smoke": "PASS"
+  },
+  "editor_frames": {
+    "1280x720": 19,
+    "2560x1080": 19
+  },
+  "packaged_frames": {
+    "1280x720": 19
+  },
+  "visual_review": "Six waving poses and four idle poses sampled in real D3D12; foot baseline, transparent edges and shop pause checked",
+  "source_qa": {
+    "extract_errors": 0,
+    "extract_warnings": 0,
+    "atlas_errors": 0,
+    "inspect_errors": 0,
+    "inspect_warnings": 0,
+    "motion_present_both_states": true,
+    "motion_status": "needs-review: no manually calibrated single-foot contacts; wave neutral endpoints intentionally similar, all source durations preserved",
+    "review": "Full-body poses and planted baseline reviewed; runtime root anchoring and playback verified separately in release record"
+  },
+  "animation_provenance": "02_Prototype/AlchemyHD2D/ArtSource/MerchantAnimation/provenance.json",
+  "zip": {
+    "path": "03_Build\\HD2D_PC_UI\\冒牌炼金术士_Demo_Win64_最新测试版.zip",
+    "bytes": 353552823,
+    "sha256": "3d237264930ee7f75f94a93e107cf8fa7e1ae7151e70fdfb7c25b623067cae6b",
+    "entries": 45,
+    "crc": "PASS",
+    "matches_tested_build": true,
+    "no_saves_evidence_or_pdb": true
+  },
+  "save_preserved_sha256": "cbacc503f887c6ae856ec6f10d42325c3bd0f6bc3ff1bdeb202b9ae9af46008b",
+  "unrelated_draft_preserved": "00_Doc/系统/局内突发事件与商人方案_2026-10-29.txt",
+  "boundaries": [
+    "Motion report does not calibrate single-foot ground contact",
+    "No manual full-playthrough or crowd performance claim"
+  ],
+  "git_target": "origin/main; publication evidence follows in daily memory and final response"
+}

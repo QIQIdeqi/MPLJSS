@@ -218,12 +218,12 @@ AStaticMeshActor* AAlchemyWorld::Sheet(const FString& Name,FVector Pos,float Wid
     A->GetStaticMeshComponent()->SetCastShadow(false);
     return A;
 }
-void AAlchemyWorld::UpdateSprite(AStaticMeshActor* Body,const FString& Name,FVector Pos,float Width,float Height,bool Flip) {
+void AAlchemyWorld::UpdateSprite(AStaticMeshActor* Body,const FString& Name,FVector Pos,float Width,float Height,bool Flip,UMaterialInterface* OverrideMaterial) {
     Body->SetActorLocation(Pos+FVector(0,0,Height*0.46f));
     const FVector Normal=bUprightSprites?FVector(0,-1,0):-Camera->GetActorForwardVector();
     Body->SetActorRotation(FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),Normal).Rotator());
     Body->SetActorScale3D(FVector((Flip?-1:1)*Width/100,Height/100,1));
-    auto Wanted=Material(TEXT("M_")+Name+(bLitSprites?TEXT("_Lit"):TEXT("")));
+    auto Wanted=OverrideMaterial?OverrideMaterial:Material(TEXT("M_")+Name+(bLitSprites?TEXT("_Lit"):TEXT("")));
     if(Body->GetStaticMeshComponent()->GetMaterial(0)!=Wanted) Body->GetStaticMeshComponent()->SetMaterial(0,Wanted);
 }
 void AAlchemyWorld::Tree(FVector P,float Size,bool Solid) {

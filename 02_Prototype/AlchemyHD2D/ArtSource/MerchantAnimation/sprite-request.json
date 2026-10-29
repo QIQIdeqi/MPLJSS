@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "MerchantWanderer",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 384,
+    "height": 448,
+    "safe_margin_x": 16,
+    "safe_margin_y": 16
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "selection": "manual"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "Front three-quarter right view. A readable subtle standing idle cycle: neutral, breathe in with shoulders and scarf lifted slightly, breathe out, return to neutral. Both boots planted, head scale fixed. Backpack and scarf gently follow breathing. Display case and three bottles remain in same hand, no root translation."
+    },
+    "wave": {
+      "frames": 6,
+      "fps": 6,
+      "loop": false,
+      "action": "Front three-quarter right view. A friendly greeting with the free screen-left hand: neutral hand holding backpack strap, release strap and bend elbow, lift open palm beside face, wave palm outward, wave palm inward, lower hand back to exact neutral strap hold. Other hand steadily holds display case with three bottles. Both boots planted, no body turns or walking."
+    }
+  },
+  "style": "Exact approved merchant identity: silver-haired older woman, round brass glasses, plum pointed hat, mustard scarf, plum coat, leather backpack, three-bottle display case. Crisp pixel art, consistent head/body size and accessories across every frame.",
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "nearest",
+    "align_x": "foot-centroid",
+    "align_y": "bottom",
+    "ground_frames": true,
+    "pixel_unfake": false
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

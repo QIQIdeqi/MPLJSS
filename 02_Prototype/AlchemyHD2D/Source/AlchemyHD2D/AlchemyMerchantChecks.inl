@@ -4,7 +4,7 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     Progress->TutorialComplete=true;Progress->Coins=123;StartRun();MerchantRandom.Initialize(1177);RunTime=80;NextMerchantTime=80;
     UpdateMerchant(.01f);Check(bMerchantActive && MerchantVisit==1 && MerchantRemaining==35,TEXT("scheduled_first_visit"));
     Check(FVector::Dist2D(PlayerPos,MerchantPos)>=500 && FVector::Dist2D(PlayerPos,MerchantPos)<=900 && Walkable(MerchantPos,60),TEXT("legal_nearby_spawn"));
-    Check(MerchantBody->GetStaticMeshComponent()->GetMaterial(0)->GetName().Contains(TEXT("MerchantWanderer")) && IsValid(MerchantShadow),TEXT("dedicated_merchant_art_replaces_prototypes"));
+    Check(IsValid(MerchantAnimationMaterial) && MerchantAnimationMaterial->Parent->GetName().Contains(TEXT("MerchantAnimated")) && IsValid(MerchantShadow),TEXT("dedicated_merchant_art_replaces_prototypes"));
     Check(MerchantArrivalParts.Num()==14 && MerchantArrivalAge==0,TEXT("arrival_starts_once_with_two_rings_twelve_sparks"));
     const int Bank=Progress->Coins;RunCoins=0;
     Check(!OpenMerchant() && !BuyMerchant(0),TEXT("out_of_range_transactions_rejected"));
@@ -15,6 +15,22 @@ void AAlchemyWorld::MerchantSmoke(float Dt) {
     UpdateMerchantVisual(10);Check(MerchantArrivalAge==0 && MerchantArrivalParts.Num()==14,TEXT("arrival_pauses_with_shop"));
     Panel.Empty();UpdateMerchantVisual(1.5f);Panel=TEXT("merchant");
     Check(MerchantArrivalParts.IsEmpty() && !IsValid(MerchantArrivalFX) && (MerchantBody->GetActorLocation()-MerchantPos).Equals(Camera->GetActorUpVector()*(208.f/448*260),.01f),TEXT("arrival_cleans_up_and_feet_settle_on_baseline"));
+    Check(MerchantWaveTime==0 && MerchantAnimationFrame==6,TEXT("arrival_triggers_greeting_once"));
+    Panel.Empty();const FVector Standing=MerchantBody->GetActorLocation();auto* AnimationMID=MerchantAnimationMaterial.Get();
+    bool WaveFrames=true;for(int I=1;I<6;I++){UpdateMerchantVisual(1.f/6+.0001f);WaveFrames&=MerchantAnimationFrame==6+I && MerchantBody->GetActorLocation().Equals(Standing,.01f);}
+    Check(WaveFrames,TEXT("wave_advances_six_frames_without_root_motion"));
+    const float WaveClock=MerchantWaveTime;Panel=TEXT("merchant");UpdateMerchantVisual(2);
+    Check(MerchantWaveTime==WaveClock && MerchantAnimationFrame==11,TEXT("wave_pauses_in_shop"));
+    Panel.Empty();UpdateMerchantVisual(.2f);Check(MerchantWaveTime<0 && MerchantAnimationFrame==0,TEXT("greeting_returns_to_idle"));
+    bool IdleFrames=true;for(int I=1;I<=4;I++){UpdateMerchantVisual(.2501f);IdleFrames&=MerchantAnimationFrame==I%4 && MerchantBody->GetActorLocation().Equals(Standing,.01f);}
+    Check(IdleFrames && MerchantAnimationMaterial==AnimationMID,TEXT("idle_loops_four_frames_with_cached_material"));
+    const int IdleFrame=MerchantAnimationFrame;const float IdleClock=MerchantAnimClock;Panel=TEXT("merchant");UpdateMerchantVisual(3);
+    Check(MerchantAnimationFrame==IdleFrame && MerchantAnimClock==IdleClock,TEXT("idle_pauses_in_shop"));
+    Panel.Empty();MerchantGreetingCD=0;PlayerPos=MerchantPos+FVector(800,0,0);UpdateMerchantVisual(.1f);
+    Check(MerchantWaveTime<0,TEXT("far_player_does_not_trigger_repeated_greeting"));
+    PlayerPos=MerchantPos+Camera->GetActorRightVector().GetSafeNormal2D()*100;UpdateMerchantVisual(.1f);
+    Check(MerchantWaveTime==0 && MerchantAnimationFrame==6,TEXT("near_player_triggers_greeting_after_cooldown"));
+    Panel=TEXT("merchant");
     Check(!BuyMerchant(0) && !RefreshMerchant() && RunCoins==0 && MerchantRerolls==0,TEXT("insufficient_funds_costs_nothing"));
     MerchantStock[0]=0;MerchantStock[1]=MerchantStock[2]=1;for(bool& S:MerchantSoldOut) S=false;
     RunCoins=80;Inventory={0,0,0,0,0,0};Action(TEXT("merchantbuy0"));
@@ -71,10 +87,17 @@ void AAlchemyWorld::MerchantCapture(float Dt) {
         int X=0,Y=0;GetWorld()->GetFirstPlayerController()->GetViewportSize(X,Y);
         const FString Folder=FPaths::ProjectDir()/FString::Printf(TEXT("Evidence/Merchant20261029/%dx%d"),X,Y);
         IFileManager::Get().MakeDirectory(*Folder,true);FScreenshotRequest::RequestScreenshot(Folder/Name,false,false);
-        UE_LOG(LogTemp,Display,TEXT("MERCHANT_FRAME %s time=%.3f ttl=%.3f coins=%d arrival=%.3f parts=%d"),Name,RunTime,MerchantRemaining,RunCoins,MerchantArrivalAge,MerchantArrivalParts.Num());
+        UE_LOG(LogTemp,Display,TEXT("MERCHANT_FRAME %s time=%.3f ttl=%.3f coins=%d arrival=%.3f parts=%d anim=%d"),Name,RunTime,MerchantRemaining,RunCoins,MerchantArrivalAge,MerchantArrivalParts.Num(),MerchantAnimationFrame);
     };
+    if(bMerchantActive && MerchantWaveTime>=0 && MerchantCapturedWaveFrames<6 && MerchantAnimationFrame==6+MerchantCapturedWaveFrames) {
+        Shot(*FString::Printf(TEXT("10_Wave%d.png"),MerchantCapturedWaveFrames));MerchantCapturedWaveFrames++;return;
+    }
+    if(bMerchantActive && MerchantCapturedWaveFrames==6 && MerchantWaveTime<0 && MerchantCapturedIdleFrames<4 && MerchantAnimationFrame==MerchantCapturedIdleFrames) {
+        Shot(*FString::Printf(TEXT("11_Idle%d.png"),MerchantCapturedIdleFrames));MerchantCapturedIdleFrames++;return;
+    }
     if(CaptureStep==0 && T>.5f) {
         Progress->TutorialComplete=true;StartRun();RunTime=80;NextMerchantTime=80;RunCoins=80;Inventory={3,4,2,1,0,0};
+        MerchantCapturedWaveFrames=MerchantCapturedIdleFrames=0;
         for(auto& E:Enemies){E.Body->Destroy();E.Shadow->Destroy();}Enemies.Empty();SpawnCD=10000;
         if(!SpawnMerchant()){FPlatformMisc::RequestExitWithStatus(false,1);return;}
         PlayerPos=MerchantPos+Camera->GetActorRightVector().GetSafeNormal2D()*220;UpdateCamera(0);UpdateCharacterVisual(0,false);
@@ -88,5 +111,5 @@ void AAlchemyWorld::MerchantCapture(float Dt) {
     else if(CaptureStep==7 && T>5.9f){Action(TEXT("merchantsellall0"));Shot(TEXT("04_ConfirmSale.png"));CaptureStep=8;}
     else if(CaptureStep==8 && T>7.1f){Action(TEXT("merchantconfirm"));Shot(TEXT("05_Sold.png"));CaptureStep=9;}
     else if(CaptureStep==9 && T>8){Action(TEXT("close"));Shot(TEXT("06_MerchantWorld.png"));CaptureStep=10;}
-    else if(CaptureStep==10 && T>9.2f){UE_LOG(LogTemp,Display,TEXT("ALCHEMY_MERCHANT_CAPTURE_PASS"));FPlatformMisc::RequestExitWithStatus(false,0);CaptureStep=11;}
+    else if(CaptureStep==10 && T>9.2f){const bool Complete=MerchantCapturedWaveFrames==6 && MerchantCapturedIdleFrames==4;UE_LOG(LogTemp,Display,TEXT("ALCHEMY_MERCHANT_CAPTURE_%s"),Complete?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,Complete?0:1);CaptureStep=11;}
 }

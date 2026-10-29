@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-29",
+  "provider": "Native ChatGPT GPT imagegen, no Grok or paid API fallback",
+  "reference": "../MerchantWanderer.png",
+  "originals": [
+    "idle-source.png",
+    "wave-source.png"
+  ],
+  "production": "MerchantAnimated.png",
+  "idle_prompt": "Create a game sprite animation strip using the attached merchant as the EXACT character identity reference. ONE horizontal row of exactly FOUR full-body pixel-art poses, left to right, on perfectly flat vivid chroma green #00FF00 background. Wide landscape canvas, four evenly spaced separated characters with generous green gaps, all fully visible from hat tip to boot soles. Absolutely same character proportions, orientation, scale, costume, face, backpack and three-bottle case as reference. Friendly older woman silver hair, round brass glasses, plum pointed hat and coat, mustard scarf, brown backpack; screen-right hand holds bottle display case, screen-left hand grips backpack strap. Front three-quarter slightly facing right. FOUR genuinely distinct subtle BREATHING IDLE poses: 1 neutral relaxed standing, 2 shoulders/chest/scarf rise a little while inhaling, 3 highest gentle inhale with eyes blinking and scarf slightly lifted, 4 exhale returning towards neutral. Boots stay planted at same x position within each cell and exactly same ground baseline; no walking, no foot lifts, no swaying translation, no body turning. Subtle variation only upper torso/scarf, keep head size constant. Four drawings of one character, not four different characters. Crisp clustered pixel art matching reference. No text, numbers, panel borders, grid lines, scenery, shadows, ground, auras or extra detached objects. All four characters must be complete and non-overlapping. Make the image a WIDE single row, NOT a square sheet.",
+  "wave_prompt": "Production sprite strip, six SMALL fully visible merchant figures in a SINGLE HORIZONTAL ROW. Canvas wide 3:1 landscape. BACKGROUND perfectly pure green #00FF00. The figures must occupy ONLY the middle 55 percent of image height: broad empty green band above their hats and below their boots. Keep the character drawings SMALL so there is ample room for six. Leave at least half-a-character-width GREEN SPACE BETWEEN EVERY adjacent figure and a large green margin on LEFT and RIGHT. No backpacks, scales or bottle cases touching another pose or canvas edges. Exact SIX full-body drawings with identical character identity as reference: friendly silver-haired older woman, plum pointed hat/coat, mustard scarf, brass glasses, brown boots and backpack; the same open three-bottle case held in SCREEN-RIGHT hand. Same three-quarter right direction and fixed planted boot baseline, same scale. Motion by the other SCREEN-LEFT hand: pose 1 hand on backpack strap; pose 2 elbow bent lifting hand; pose 3 open palm beside face; pose 4 palm tilted OUTWARD visibly waving; pose 5 palm tilted INWARD; pose 6 hand back on strap. Keep each pose's body and case steady. Match original pixel art. No turning, extra limbs, scenery, glow, floor, shadows, labels or panel dividers. SIX SMALL separated figures, not six large figures filling the height. Pay special attention to leaving the FIRST backpack and LAST bottle case completely inside the image. Full head-to-toes character in every pose.",
+  "retake": "First wave strip clipped equipment at image edges; regenerated with smaller figures and larger green margins. Rejected original stays only in ignored local run directory.",
+  "pipeline": "sprite-gen 3.5.0 prepare -> native GPT rows -> extract components without slot fallback -> compose-atlas -> compose-gif -> inspect -> inspect-motion",
+  "atlas": {
+    "width": 2304,
+    "height": 896,
+    "columns": 6,
+    "rows": 2,
+    "cell_width": 384,
+    "cell_height": 448,
+    "baseline_y": 432
+  },
+  "states": {
+    "idle": {
+      "row": 0,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    },
+    "wave": {
+      "row": 1,
+      "frames": 6,
+      "fps": 6,
+      "loop": false
+    }
+  },
+  "qa": {
+    "extract_errors": 0,
+    "extract_warnings": 0,
+    "atlas_errors": 0,
+    "inspect_errors": 0,
+    "inspect_warnings": 0,
+    "motion_present_both_states": true,
+    "motion_status": "needs-review: no manually calibrated single-foot contacts; wave neutral endpoints intentionally similar, all source durations preserved",
+    "review": "Full-body poses and planted baseline reviewed; runtime root anchoring and playback verified separately in release record"
+  },
+  "manifest_note": "Only published atlas/base image path metadata adapted; native frame_layout retained unchanged. Intermediate individual frames stay local and can be regenerated from originals and sprite-request.json.",
+  "sha256": {
+    "idle-source.png": "a51e2f63c5bdadd661aaea43b88121347591e4984cca1dc63308f32ccfeaa79d",
+    "wave-source.png": "872085ddbea04ea9fa35a6c0b34dd970adcf0b570fa7755a63d0c3ba2845fb90",
+    "MerchantAnimated.png": "62c3137aa1a440418e17166148a57db1d9c0650ab161212581748a2fef3ac7af",
+    "manifest.json": "28bb20635c2b62a009ae47181482d9a25e196c80fe2bfaeba9ed3e77fe9f9c78",
+    "sprite-request.json": "1c865419c08ed834a07f433560d71b4ff78fa86b1148656b4c720d69b318737f"
+  },
+  "frame_alpha_bottoms": [
+    432,
+    432,
+    432,
+    432,
+    432,
+    432,
+    432,
+    432,
+    432,
+    432
+  ]
+}

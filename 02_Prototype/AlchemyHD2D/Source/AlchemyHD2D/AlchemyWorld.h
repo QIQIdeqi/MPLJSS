@@ -180,6 +180,9 @@ public:
     bool bMerchantActive=false, MerchantEliteUnlocked[3]={false,false,false};
     FVector MerchantPos=FVector::ZeroVector;
     float MerchantRemaining=0,NextMerchantTime=80,MerchantArrivalAge=0;
+    float MerchantAnimClock=0,MerchantWaveTime=-1,MerchantGreetingCD=0;
+    int32 MerchantAnimationFrame=0,MerchantCapturedWaveFrames=0,MerchantCapturedIdleFrames=0;
+    bool bMerchantAnimationLit=false;
     int32 MerchantVisit=0,MerchantRerolls=0,MerchantStock[3]={0,1,2};
     bool MerchantSoldOut[3]={false,false,false};
     int32 MerchantSellKind=-1,MerchantSellCount=0;
@@ -189,6 +192,7 @@ public:
     UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantMarker;
     UPROPERTY() TArray<TObjectPtr<AStaticMeshActor>> MerchantArrivalParts;
     UPROPERTY() TObjectPtr<UNiagaraComponent> MerchantArrivalFX;
+    UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> MerchantAnimationMaterial;
     TArray<float> SkillCD,ChainCD;
     int32 EliteIndex=0, SmokeStep=0, CaptureStep=0;
     float SmokeTime=0;
@@ -198,7 +202,7 @@ public:
     AStaticMeshActor* Sprite(const FString& Name, FVector Pos, float Width, float Height);
     AStaticMeshActor* Sheet(const FString& Name, FVector Pos, float Width, float Height);
     UMaterialInterface* Material(const FString& Name);
-    void UpdateSprite(AStaticMeshActor* Body, const FString& Name, FVector Pos, float Width, float Height, bool Flip=false);
+    void UpdateSprite(AStaticMeshActor* Body, const FString& Name, FVector Pos, float Width, float Height, bool Flip=false, UMaterialInterface* OverrideMaterial=nullptr);
     void Tree(FVector Pos, float Size, bool Solid=true);
     void House(FVector Pos, FLinearColor Roof);
     void Ring(FVector Pos,float Radius,FLinearColor Color,float Duration=0.35);

@@ -81,3 +81,9 @@ Boss 规则、原玩法和人物 V3 回归通过，真实渲染核对 1280×720 
 - Tools/ImportMerchantArt.py导入生产图及Lit/Unlit材质，创建M_MerchantArrival/M_MerchantSpark两个可参数化原生材质。运行时替换Hero0/Lectern组合，脚底定位沿CameraUp乘208/448×当前高度；保留交互圈，新增柔和阴影。
 - 独立出场由两个动态炼金环、12枚聚拢光点及既有Niagara短促Burst组成，1.4秒显现落定；暂停跟随交易，完成或提前离场清理。单张立绘并非生成多帧动作。商人随机流与交易参数未改变。
 - 商人规则现34项（包含出场开始、暂停、落脚清理和中途取消），4000货位抽样保留。AlchemyMerchantCapture现每分辨率9帧，额外记录出场起始/聚拢/落定；不再按旧版6帧验证。最新Windows实包/ZIP/Git验证以memory/merchant-art-release-2026-10-29.json和当日日志为准，不将编辑器画面当实包证据。
+
+## 商人逐帧动作（2026-10-29，最新）
+- 当前商人已由单图升级为逐帧待机/招手。原静态图仍作生成参考；ArtSource/MerchantAnimation保留原生GPT两动作条、图集、manifest、request及提示词/哈希。Native components提取与原生compose产生6列2行2304x896，每格384x448、脚底432；待机4帧4fps，招手6帧6fps。未自行等宽切片或补绘帧。
+- ImportMerchantAnimation.py导入MerchantAnimated与Lit/Unlit材质；UpdateMerchantVisual按缓存MID更新UV，固定世界位置/脚底。入场招手一次、近距按8秒冷却再招手，交易与暂停冻结，结束恢复待机，离场重置。旧ImportMerchantArt.py维护静态参考与出场材质。
+- 当前MerchantSmoke42项，MerchantCapture每分辨率19帧（原9帧加6招手和4待机）。编辑器双分辨率、Windows实包回归与D3D12验证通过，最新分发摘要memory/merchant-animation-release-2026-10-29.json。GIF帧预览仅本地，wave GIF重复展示不改变运行时非循环招手/冷却规则。
+- inspect-motion对单脚接触仍needs-review，招手近似中立端点保留全部原时长；不把运动存在/脚底像素相同当成严格步态标定。源生成提示词与一次裁切重生成原因见provenance。

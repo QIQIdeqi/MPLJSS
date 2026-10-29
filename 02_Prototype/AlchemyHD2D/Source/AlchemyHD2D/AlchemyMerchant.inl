@@ -13,6 +13,7 @@ void AAlchemyWorld::CloseMerchant() {
     MerchantBody=MerchantShadow=MerchantMarker=nullptr;
     for(auto& A:MerchantArrivalParts) if(IsValid(A)) A->Destroy();
     MerchantArrivalParts.Empty();MerchantArrivalAge=0;
+    MerchantAnimationMaterial=nullptr;MerchantAnimClock=MerchantGreetingCD=0;MerchantWaveTime=-1;MerchantAnimationFrame=0;
     if(IsValid(MerchantArrivalFX)) MerchantArrivalFX->DestroyComponent();MerchantArrivalFX=nullptr;
     if(Panel==TEXT("merchant") || Panel==TEXT("merchantconfirm")) Panel.Empty();
 }
@@ -108,10 +109,26 @@ void AAlchemyWorld::UpdateMerchant(float Dt) {
 void AAlchemyWorld::UpdateMerchantVisual(float Dt) {
     if(!bMerchantActive || !IsValid(MerchantBody)) return;
     if(!Panel.IsEmpty()) Dt=0;
+    const float PreviousArrival=MerchantArrivalAge;
     MerchantArrivalAge=FMath::Min(1.4f,MerchantArrivalAge+Dt);
     const float T=MerchantArrivalAge/1.4f,Ease=1-FMath::Square(1-T);
+    if(T>=1 && Dt>0) {
+        MerchantGreetingCD=FMath::Max(0.f,MerchantGreetingCD-Dt);
+        if(MerchantWaveTime>=0) {
+            MerchantWaveTime+=Dt;
+            if(MerchantWaveTime>=1) {MerchantWaveTime=-1;MerchantAnimClock=0;}
+        } else if(PreviousArrival<1.4f || (MerchantGreetingCD<=0 && FVector::Dist2D(PlayerPos,MerchantPos)<=260)) {
+            MerchantWaveTime=0;MerchantGreetingCD=8;
+        } else MerchantAnimClock+=Dt;
+    }
+    MerchantAnimationFrame=MerchantWaveTime>=0?6+FMath::Min(5,int(MerchantWaveTime*6)):int(MerchantAnimClock*4)%4;
+    if(!IsValid(MerchantAnimationMaterial) || bMerchantAnimationLit!=bLitSprites) {
+        MerchantAnimationMaterial=UMaterialInstanceDynamic::Create(Material(bLitSprites?TEXT("M_MerchantAnimated_Lit"):TEXT("M_MerchantAnimated")),this);
+        bMerchantAnimationLit=bLitSprites;
+    }
+    MerchantAnimationMaterial->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor((MerchantAnimationFrame%6)/6.f,(MerchantAnimationFrame/6)/2.f,0,0));
     const float Height=260*(.82f+.18f*Ease);
-    UpdateSprite(MerchantBody,TEXT("MerchantWanderer"),MerchantPos,Height*384/448,Height,false);
+    UpdateSprite(MerchantBody,TEXT("MerchantWanderer"),MerchantPos,Height*384/448,Height,false,MerchantAnimationMaterial);
     MerchantBody->SetActorLocation(MerchantPos+Camera->GetActorUpVector()*(208.f/448*Height+18*(1-Ease)));
     for(int I=0;I<MerchantArrivalParts.Num();I++) {
         auto* A=MerchantArrivalParts[I].Get();
