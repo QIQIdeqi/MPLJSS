@@ -1,0 +1,140 @@
+<div id="alchemy-countdown-preview">
+  <div class="viz-carousel viz-dotted-background" aria-label="开战倒计时表现" data-previous-label="上一种" data-next-label="下一种">
+    <section data-variant="中上数字与细环" data-layout="ring" aria-label="中上数字与细环"></section>
+    <section data-variant="中央纯数字" data-layout="center" aria-label="中央纯数字" hidden></section>
+    <section data-variant="顶部短横条" data-layout="strip" aria-label="顶部短横条" hidden></section>
+  </div>
+  <template id="alchemy-countdown-stage">
+    <div class="game" role="group" aria-label="雾界草甸开场示意">
+      <div class="boss-hud"><span>Boss</span><div class="health"><div></div></div></div>
+      <div class="meadow" aria-hidden="true"></div>
+      <div class="actor boss"><span></span>Boss</div>
+      <div class="actor player"><span></span>玩家</div>
+      <div class="count-shell" aria-label="开战倒计时">
+        <span class="count-label">准备</span>
+        <div class="count-face"><span class="count-value" aria-hidden="true">2</span></div>
+        <span class="count-hint">可移动 · 双方暂不攻击</span>
+      </div>
+      <div class="phase" aria-live="polite">准备阶段</div>
+      <div class="scene-note">站位示意</div>
+    </div>
+    <div class="viz-controls playback">
+      <button type="button" class="btn btn-primary play">播放倒计时</button>
+      <button type="button" class="btn pause" disabled>暂停预览</button>
+      <span class="text-muted" aria-live="polite">2 秒准备</span>
+    </div>
+  </template>
+  <style>
+    #alchemy-countdown-preview .game {
+      --scene: light-dark(#748268, #2c4037); --ground: light-dark(#8e9473, #49634b);
+      --ink: light-dark(#19382e, #f1e5c6); --ui: light-dark(#ece3cd, #1d302a);
+      --brass: light-dark(#74602f, #d1c08f); --dim: light-dark(#425b4d, #c5d0b8);
+      --count-size: 40px;
+      position:relative; height:350px; overflow:hidden; isolation:isolate;
+      background:var(--scene); color:var(--ink); font:16px/1.4 'Microsoft YaHei',system-ui,sans-serif;
+    }
+    #alchemy-countdown-preview .boss-hud {position:absolute; z-index:3; top:16px; left:25%; width:50%; text-align:center; font-size:15px;}
+    #alchemy-countdown-preview .health {height:7px; margin-top:5px; background:light-dark(#aeb39a,#1c2e28);}
+    #alchemy-countdown-preview .health>div {height:100%; width:100%; background:light-dark(#8c4a3f,#bb7764);}
+    #alchemy-countdown-preview .meadow {position:absolute; inset:15% 6% 5%; border-radius:50%; background:var(--ground); box-shadow:0 0 0 13px light-dark(#809786,#3c6255);}
+    #alchemy-countdown-preview .actor {position:absolute; z-index:1; left:50%; transform:translate(-50%,-50%); text-align:center; font-size:14px; color:var(--ink);}
+    #alchemy-countdown-preview .actor span {display:block; width:22px; height:22px; margin:0 auto 4px; border:2px solid var(--ink);}
+    #alchemy-countdown-preview .actor.boss {top:51%;}
+    #alchemy-countdown-preview .actor.boss span {background:light-dark(#905248,#aa7264); transform:rotate(45deg); border-radius:4px;}
+    #alchemy-countdown-preview .actor.player {top:82%;}
+    #alchemy-countdown-preview .actor.player span {background:light-dark(#498e7f,#80c8b4); border-radius:50%; width:17px; height:17px;}
+    #alchemy-countdown-preview .count-shell {position:absolute; z-index:2; top:18%; left:50%; transform:translateX(-50%); width:210px; display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none; color:var(--ink);}
+    #alchemy-countdown-preview .count-shell[hidden] {display:none;}
+    #alchemy-countdown-preview .count-label {font-size:15px; letter-spacing:.14em;}
+    #alchemy-countdown-preview .count-face {display:grid; place-items:center; width:76px; height:76px; position:relative;}
+    #alchemy-countdown-preview .count-value {font-size:var(--count-size); font-weight:500; line-height:1; white-space:nowrap; font-variant-numeric:tabular-nums; z-index:1;}
+    #alchemy-countdown-preview .count-hint {font-size:13px; color:var(--ink); white-space:nowrap;}
+    #alchemy-countdown-preview [data-layout="ring"] .count-shell {top:17%;}
+    #alchemy-countdown-preview [data-layout="ring"] .count-label {display:none;}
+    #alchemy-countdown-preview [data-layout="ring"] .count-face {width:62px; height:62px; border-radius:50%; background:conic-gradient(var(--brass) var(--angle,360deg),transparent 0);}
+    #alchemy-countdown-preview [data-layout="ring"] .count-face::before {content:''; position:absolute; inset:2px; border-radius:50%; background:var(--ui);}
+    #alchemy-countdown-preview [data-layout="center"] .count-shell {top:55%;}
+    #alchemy-countdown-preview [data-layout="center"] .count-label, #alchemy-countdown-preview [data-layout="center"] .count-hint {display:none;}
+    #alchemy-countdown-preview [data-layout="center"] .count-face {height:58px; width:180px;}
+    #alchemy-countdown-preview [data-layout="strip"] .count-shell {top:20%; width:230px; padding:9px 12px; flex-flow:row wrap; justify-content:center; background:var(--ui); border-left:3px solid var(--brass);}
+    #alchemy-countdown-preview [data-layout="strip"] .count-face {width:80px; height:36px;}
+    #alchemy-countdown-preview [data-layout="strip"] .count-hint {flex-basis:100%; text-align:center;}
+    #alchemy-countdown-preview .game[data-phase="combat"] .count-face {background:none; width:auto; min-width:80px;}
+    #alchemy-countdown-preview .game[data-phase="combat"] .count-face::before {display:none;}
+    #alchemy-countdown-preview .phase {position:absolute; left:14px; bottom:12px; background:var(--ui); padding:4px 9px; font-size:14px;}
+    #alchemy-countdown-preview .scene-note {position:absolute; right:14px; bottom:14px; font-size:13px; color:var(--dim);}
+    #alchemy-countdown-preview .playback {display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; min-height:40px;}
+    @media(max-width:400px) {
+      #alchemy-countdown-preview .game {height:350px;}
+      #alchemy-countdown-preview .boss-hud {left:18%; width:64%;}
+    }
+  </style>
+  <script>
+    (() => {
+      const root = document.getElementById('alchemy-countdown-preview');
+      const template = root.querySelector('template');
+      const fonts = {ring:40, center:44, strip:28};
+      const saved = window.openai?.widgetState?.privateContent?.fonts;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const renderers = [];
+      function saveFonts() {
+        window.openai?.setWidgetState?.({modelContent:{previewOnly:true,countdownFontSamples:fonts},privateContent:{fonts}})?.catch(() => {});
+      }
+      root.querySelectorAll('[data-variant]').forEach(panel => {
+        panel.append(template.content.cloneNode(true));
+        const layout=panel.dataset.layout, game=panel.querySelector('.game');
+        const shell=panel.querySelector('.count-shell'), value=panel.querySelector('.count-value');
+        const phase=panel.querySelector('.phase'), label=panel.querySelector('.count-label');
+        const hint=panel.querySelector('.count-hint'), play=panel.querySelector('.play'), pause=panel.querySelector('.pause');
+        const state={elapsed:0,start:0,running:false,raf:0,hideTimer:0,key:''};
+        const style={size:Math.min(56,Math.max(24,Number(saved?.[layout])||fonts[layout]))};
+        function renderFont(){fonts[layout]=style.size;game.style.setProperty('--count-size',style.size+'px');}
+        renderers.push(data=>{if(Number.isFinite(data?.[layout])){style.size=Math.min(56,Math.max(24,data[layout]));renderFont();}});
+        renderFont();
+        if(globalThis.Tweak){const tweak=new Tweak({container:game,onChange:()=>{renderFont();saveFonts();}});tweak.addSlider(style,'size',{label:'倒计时字号（预览）',min:24,max:56,step:2,unit:'px'});}
+        function setValue(key){
+          if(state.key===key)return;
+          state.key=key; value.textContent=key;
+          if(key!=='开战')phase.textContent='准备：'+key+'秒';
+          value.getAnimations().forEach(a=>a.cancel());
+          if(!reduced.matches)value.animate([{transform:'scale(1.12)',opacity:.55},{transform:'scale(1)',opacity:1}],{duration:180,easing:'ease-out'});
+        }
+        function paint(){
+          const remaining=Math.max(0,2000-state.elapsed);
+          game.dataset.elapsed=String(Math.round(state.elapsed));
+          game.style.setProperty('--angle',(remaining/2000*360)+'deg');
+          if(remaining>0){setValue(String(Math.ceil(remaining/1000)));return;}
+          setValue('开战'); label.textContent=''; hint.textContent=''; phase.textContent='战斗开始';
+          state.running=false; pause.disabled=true; play.textContent='重新播放'; game.dataset.phase='combat';
+          if(!reduced.matches)shell.animate([{opacity:1},{opacity:0}],{delay:180,duration:250,fill:'forwards'});
+          state.hideTimer=setTimeout(()=>{shell.hidden=true;},450);
+        }
+        function frame(now){
+          if(!state.running)return;
+          state.elapsed=Math.min(2000,now-state.start); paint();
+          if(state.running)state.raf=requestAnimationFrame(frame);
+        }
+        function start(){
+          cancelAnimationFrame(state.raf); clearTimeout(state.hideTimer);
+          shell.getAnimations().forEach(a=>a.cancel()); shell.hidden=false;
+          state.elapsed=0;state.key='';state.start=performance.now();state.running=true;
+          label.textContent='准备';hint.textContent='可移动 · 双方暂不攻击';phase.textContent='准备阶段';
+          play.textContent='重新播放';pause.textContent='暂停预览';pause.disabled=false;game.dataset.phase='preparing';
+          paint();state.raf=requestAnimationFrame(frame);
+        }
+        function togglePause(){
+          if(state.elapsed>=2000)return;
+          if(state.running){
+            state.elapsed=Math.min(2000,performance.now()-state.start);cancelAnimationFrame(state.raf);state.running=false;paint();
+            if(state.elapsed>=2000)return;
+            phase.textContent='准备计时已暂停';pause.textContent='继续预览';game.dataset.phase='paused';
+          }else{state.start=performance.now()-state.elapsed;state.running=true;phase.textContent='准备阶段';pause.textContent='暂停预览';game.dataset.phase='preparing';state.raf=requestAnimationFrame(frame);}
+        }
+        play.addEventListener('click',start);pause.addEventListener('click',togglePause);
+        document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.running)togglePause();});
+        game.dataset.phase='idle';game.dataset.elapsed='0';
+      });
+      window.addEventListener('openai:set_globals',event=>{const data=event.detail?.globals?.widgetState?.privateContent?.fonts;if(data)renderers.forEach(render=>render(data));});
+    })();
+  </script>
+</div>
