@@ -58,5 +58,16 @@
     "Windows/AlchemyHD2D/Content/Paks/global.utoc": "81e218d70650b1009904fdc93e6a185483d7c751c1332da27a22922342c700ca",
     "Windows/AlchemyHD2D/Binaries/Win64/AlchemyHD2D.exe": "8daf7e85d7605689ac3778f98c1261974bd5ee2cfda5028e35cf4afbf168b055"
   },
-  "user_facing_bootstrap": "PASS: Windows/AlchemyHD2D.exe launched packaged PlannedBossTest, exit0 and PLANNED_BOSS_PASS"
+  "user_facing_bootstrap": "PASS: Windows/AlchemyHD2D.exe launched packaged PlannedBossTest, exit0 and PLANNED_BOSS_PASS",
+  "publication": {
+    "repository": "QIQIdeqi/MPLJSS",
+    "branch": "main",
+    "release_commit": "4ea3bed74c05e8f8ce7126848f14254865bc0af2",
+    "lfs_upload": "1/1, 320MB, completed",
+    "remote_head_request": {
+      "status": 200,
+      "content_length": 319960716,
+      "boundary": "HEAD metadata only; local ZIP CRC and content hashes verified separately"
+    }
+  }
 }
