@@ -1,0 +1,190 @@
+{
+  "kind": "sprite-gen-slice-sheet",
+  "version": 1,
+  "sheet": "P1ArchitectureNature.png",
+  "grid": [
+    3,
+    2
+  ],
+  "canvas": {
+    "w": 512,
+    "h": 512
+  },
+  "baseline_y": 488.0,
+  "target_height": 456.0,
+  "scale": "cell",
+  "fit": "contain",
+  "factor": null,
+  "factor_from": null,
+  "alpha_cleanup": "alpha-cleanup.json",
+  "cells": [
+    {
+      "name": "Cottage",
+      "file": "Cottage.png",
+      "factor": 1.1041162227602905,
+      "factor_from": "target_height",
+      "subject": {
+        "sheet": {
+          "w": 456,
+          "h": 413
+        },
+        "canvas": {
+          "w": 503,
+          "h": 456
+        }
+      },
+      "box": {
+        "x": 5,
+        "y": 32,
+        "w": 503,
+        "h": 456
+      },
+      "anchor": [
+        256.5,
+        488.0
+      ],
+      "clipped_px": 0,
+      "parts": 1
+    },
+    {
+      "name": "House",
+      "file": "House.png",
+      "factor": 1.2,
+      "factor_from": "target_height",
+      "subject": {
+        "sheet": {
+          "w": 410,
+          "h": 380
+        },
+        "canvas": {
+          "w": 492,
+          "h": 456
+        }
+      },
+      "box": {
+        "x": 11,
+        "y": 32,
+        "w": 492,
+        "h": 456
+      },
+      "anchor": [
+        257.0,
+        488.0
+      ],
+      "clipped_px": 0,
+      "parts": 1
+    },
+    {
+      "name": "Warehouse",
+      "file": "Warehouse.png",
+      "factor": 0.9552238805970149,
+      "factor_from": "fit",
+      "subject": {
+        "sheet": {
+          "w": 535,
+          "h": 458
+        },
+        "canvas": {
+          "w": 511,
+          "h": 437
+        }
+      },
+      "box": {
+        "x": 1,
+        "y": 51,
+        "w": 511,
+        "h": 437
+      },
+      "anchor": [
+        256.5,
+        488.0
+      ],
+      "clipped_px": 0,
+      "parts": 1
+    },
+    {
+      "name": "Oak",
+      "file": "Oak.png",
+      "factor": 0.9789674952198852,
+      "factor_from": "fit",
+      "subject": {
+        "sheet": {
+          "w": 522,
+          "h": 439
+        },
+        "canvas": {
+          "w": 511,
+          "h": 430
+        }
+      },
+      "box": {
+        "x": 1,
+        "y": 58,
+        "w": 511,
+        "h": 430
+      },
+      "anchor": [
+        256.5,
+        488.0
+      ],
+      "clipped_px": 0,
+      "parts": 1
+    },
+    {
+      "name": "Bush",
+      "file": "Bush.png",
+      "factor": 1.4883720930232558,
+      "factor_from": "fit",
+      "subject": {
+        "sheet": {
+          "w": 343,
+          "h": 289
+        },
+        "canvas": {
+          "w": 511,
+          "h": 430
+        }
+      },
+      "box": {
+        "x": 1,
+        "y": 58,
+        "w": 511,
+        "h": 430
+      },
+      "anchor": [
+        256.5,
+        488.0
+      ],
+      "clipped_px": 0,
+      "parts": 1
+    },
+    {
+      "name": "RuneStone",
+      "file": "RuneStone.png",
+      "factor": 1.3734939759036144,
+      "factor_from": "target_height",
+      "subject": {
+        "sheet": {
+          "w": 155,
+          "h": 332
+        },
+        "canvas": {
+          "w": 213,
+          "h": 456
+        }
+      },
+      "box": {
+        "x": 150,
+        "y": 32,
+        "w": 213,
+        "h": 456
+      },
+      "anchor": [
+        256.5,
+        488.0
+      ],
+      "clipped_px": 0,
+      "parts": 1
+    }
+  ]
+}

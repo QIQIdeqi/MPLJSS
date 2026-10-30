@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-30",
+  "pages": [
+    {
+      "id": "ef1SGR5vJUP5rLr8XceBy6",
+      "title": "格雷弗德边境村庄",
+      "url": "https://www.wolai.com/ef1SGR5vJUP5rLr8XceBy6",
+      "top_blocks": [
+        "qdDPWUVug7gD6crGPBqCcp",
+        "aPZ3BNWEPtd3ZCLkUaoQYo",
+        "veFVHJyXu2GdT64FUtu4Tr",
+        "pjnkaAiPAzJiLBkqgPA9eP",
+        "iS6UdXLHJvx3bDaHSYenYc",
+        "98yazphFVHkuA7Y8Z1LL5K",
+        "nebvQffdjNazaU6zqrjEHS",
+        "9gG8KPnKsvyHw8DRekBjEW"
+      ],
+      "asset_table": {
+        "id": "iS6UdXLHJvx3bDaHSYenYc",
+        "rows": 17,
+        "items": 16
+      }
+    },
+    {
+      "id": "7NzimKvPJwEFvNRJ1yhiWv",
+      "title": "村庄外围（第一关）",
+      "url": "https://www.wolai.com/7NzimKvPJwEFvNRJ1yhiWv",
+      "top_blocks": [
+        "st7a57M3aNF8ee28VKokuR",
+        "iBzzdQ7xgK43fNineoY1Yj",
+        "4MwmPKSmGCrRPbF7LTUkuf",
+        "x2KdNnVxzgbgEfTGjfJWCZ",
+        "9h59k2NXit4qppJbPUasN8",
+        "tUJMcFnZdvhGSjYTZ1gUu7",
+        "uuSLMepLNuDHeLRHFmRKcq",
+        "kSSNqTFYqAEQgoe86JCXwC",
+        "1PXikykCqhjt9LMgiqYXRq",
+        "aMWYC7mYxZj2LKMaZiJsic"
+      ],
+      "asset_table": {
+        "id": "uuSLMepLNuDHeLRHFmRKcq",
+        "rows": 17,
+        "items": 16
+      }
+    }
+  ]
+}

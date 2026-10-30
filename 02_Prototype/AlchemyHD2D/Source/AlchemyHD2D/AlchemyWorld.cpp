@@ -1,6 +1,8 @@
 #include "AlchemyWorld.h"
 #include "Modules/ModuleManager.h"
 #include "Engine/StaticMeshActor.h"
+#include "Engine/TargetPoint.h"
+#include "GameFramework/PlayerStart.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/Texture2D.h"
 #include "Sound/SoundBase.h"
@@ -113,6 +115,7 @@ float EnemyRadius(int Type) { return Type==10?110.f:Type>=7?70.f:35.f; }
 }
 
 #include "AlchemyDesignRuntime.inl"
+#include "GreyfordCombat.inl"
 
 AAlchemyMode::AAlchemyMode() { DefaultPawnClass=nullptr; HUDClass=AAlchemyHUD::StaticClass(); }
 void AAlchemyMode::StartPlay() { Super::StartPlay(); GetWorld()->SpawnActor<AAlchemyWorld>(); }
@@ -130,6 +133,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"));
+    bCapture |= bGreyfordScene;
     if(!LoadDesignConfig()) {
         SetActorTickEnabled(false);
 #if WITH_EDITOR
@@ -177,15 +181,21 @@ void AAlchemyWorld::BeginPlay() {
     PC->bShowMouseCursor=true; PC->bEnableClickEvents=true; PC->bEnableMouseOverEvents=true;
     PC->SetInputMode(FInputModeGameAndUI().SetHideCursorDuringCapture(false));
     Camera=GetWorld()->SpawnActor<ACameraActor>(); Camera->SetActorRotation(FRotator(-CameraPitch,90,0)); PC->SetViewTarget(Camera);
+    if(!bGreyfordScene) {
     auto Sun=GetWorld()->SpawnActor<ADirectionalLight>(FVector::ZeroVector,FRotator(-52,-35,0));
     Sun->GetLightComponent()->SetIntensity(3.5f); Sun->GetLightComponent()->SetLightColor(FLinearColor(1.0f,0.84f,0.64f));
     auto Sky=GetWorld()->SpawnActor<ASkyLight>(); Sky->GetLightComponent()->SetIntensity(0.9f);
     Sky->GetLightComponent()->SetLightColor(FLinearColor(0.42f,0.62f,0.73f));
+    }
     auto PP=GetWorld()->SpawnActor<APostProcessVolume>(); PP->bUnbound=true;
     PP->Settings.bOverride_VignetteIntensity=true; PP->Settings.VignetteIntensity=0.18f;
     PP->Settings.bOverride_BloomIntensity=true; PP->Settings.BloomIntensity=0.22f;
     BuildScene(false); UpdateCamera(1); Message(TEXT("欢迎来到烛苔村。WASD 移动，靠近设施按 F。"));
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_READY UE5.8 HD2D research; W0 initial=8; cap=300"));
+    if(bGreyfordScene) {
+        Progress->TutorialComplete=true;StartRun();
+        if(FParse::Param(FCommandLine::Get(),TEXT("GreyfordCombatTest")))StartGreyfordReview();
+    }
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyStartCombat")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) StartRun();
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview"))) {
         Progress->TutorialComplete=true;StartRun();RunTime=310;
@@ -254,8 +264,10 @@ void AAlchemyWorld::BuildScene(bool Combat) {
     Scene.Empty(); Obstacles.Empty(); Enemies.Empty(); Shots.Empty(); Drops.Empty(); Effects.Empty();
     bCombat=Combat; bRunEnded=false; PlayerPos=Combat?FVector::ZeroVector:FVector(0,-200,0); Panel.Empty();
     const bool Authored=Designer && Designer->bUseInGame;
-    if(Designer) Designer->SetRuntimeVisible(Combat && Authored);
+    if(Designer) Designer->SetRuntimeVisible(bGreyfordScene || (Combat && Authored));
     const float X=Combat?(Authored?(CombatHalfSize.X+51)*2:14222):4800, Y=Combat?(Authored?(CombatHalfSize.Y+50)*2:10760):3800;
+    if(bGreyfordScene) BuildGreyfordScene();
+    else {
     auto Floor=Mesh(TEXT("Cube"),FVector(0,0,0),FVector(X/100,Y/100,1),FLinearColor::White);
     Floor->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_Grass")));
     if(!Combat || !Authored) {
@@ -310,6 +322,7 @@ void AAlchemyWorld::BuildScene(bool Combat) {
     for(int Side:{-1,1}) {
         for(float YPos=-Y/2;YPos<=Y/2;YPos+=220) Sheet(TEXT("Rock"),FVector(Side*(X/2-40),YPos,0),260,180);
         for(float XPos=-X/2;XPos<=X/2;XPos+=220) Sheet(TEXT("Rock"),FVector(XPos,Side*(Y/2-40),0),260,180);
+    }
     }
     PlayerShadow=Mesh(TEXT("Sphere"),PlayerPos+FVector(0,0,5),FVector(0.85f,0.5f,0.04f),FLinearColor(0.015f,0.028f,0.025f));
     PlayerShadow->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_SoftShadow")));
@@ -421,6 +434,11 @@ void AAlchemyWorld::UpdateCamera(float Delta) {
     Camera->SetActorRotation(FRotator(-CameraPitch,90,0));
     int VX=1280,VY=720; GetWorld()->GetFirstPlayerController()->GetViewportSize(VX,VY);
     const float Aspect=VY>0?float(VX)/VY:16.f/9;
+    if(bGreyfordScene) {
+        C->bOverrideAspectRatioAxisConstraint=true;
+        C->SetAspectRatioAxisConstraint(EAspectRatioAxisConstraint::AspectRatio_MaintainXFOV);
+        C->SetAspectRatio(Aspect);
+    }
     const float HalfHeight=ViewWidth/(2*Aspect*FMath::Sin(FMath::DegreesToRadians(CameraPitch)));
     const float BoundX=bCombat?7111:2400, BoundY=bCombat?5380:1900;
     FVector Target=bBossArenaActive?BossArenaCenter:PlayerPos;
@@ -493,7 +511,7 @@ void AAlchemyWorld::StartRun() {
     BuildScene(true);
     UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
-    Message(TEXT("腐化林地 · 技能自动释放；Tab 打开炼金台。"));
+    Message(bGreyfordScene?TEXT("村庄外围试玩 · WASD移动 / 空格闪避 / Tab炼金 / R重新开始"):TEXT("腐化林地 · 技能自动释放；Tab 打开炼金台。"));
 }
 void AAlchemyWorld::EndRun(bool Won) {
     if(bRunEnded) return;
@@ -928,6 +946,7 @@ void AAlchemyWorld::Action(FString Id) {
     }
     if(Id==TEXT("start")) { StartRun(); return; }
     if(Id==TEXT("village")) {
+        if(bGreyfordScene) {StartRun();return;}
         if(bCombat && Panel!=TEXT("victory") && Panel!=TEXT("defeat")) { EndRun(false); if(Panel==TEXT("savefailed")) return; }
         Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty(); BuildScene(false); return;
     }
@@ -1003,6 +1022,9 @@ void AAlchemyWorld::Tick(float Dt) {
     UpdateMerchantFeedback();
     HitFXThisFrame=0;
     auto PC=GetWorld()->GetFirstPlayerController(); if(!PC || !Player) return;
+    if(bGreyfordScene && !GreyfordReviewActive && PC->WasInputKeyJustPressed(EKeys::R))StartRun();
+    if(GreyfordReviewActive && Panel==TEXT("levelup"))Action(FString::Printf(TEXT("pick%d"),LevelupChoices[0]));
+    if(GreyfordReviewActive && bRunEnded){GreyfordReviewOK=false;FinishGreyfordReview();return;}
     if(PC->WasInputKeyJustPressed(EKeys::F1)) Action(TEXT("ortho"));
     if(PC->WasInputKeyJustPressed(EKeys::F2)) Action(TEXT("lit"));
     if(PC->WasInputKeyJustPressed(EKeys::F3)) Action(TEXT("upright"));
@@ -1068,7 +1090,7 @@ void AAlchemyWorld::Tick(float Dt) {
         // Isolated interactive UI check: no real save load/write, no cheat path in ordinary play.
         if(CaptureStep==0 && VisualTime>2) {StartRun();Inventory={10,10,10,1,1,1};Panel=TEXT("alchemy");CaptureStep=1;}
     }
-    else if(bCapture && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"))) {
+    else if(bCapture && !bGreyfordScene && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"))) {
         const auto Capture=[this](const TCHAR* Name) {
             FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence")/Name,false,false);
         };
@@ -1101,9 +1123,14 @@ void AAlchemyWorld::Tick(float Dt) {
     const float Horizontal=(PC->IsInputKeyDown(EKeys::D)?1:0)-(PC->IsInputKeyDown(EKeys::A)?1:0);
     const float Vertical=(PC->IsInputKeyDown(EKeys::W)?1:0)-(PC->IsInputKeyDown(EKeys::S)?1:0);
     FVector Direction=Camera->GetActorRightVector().GetSafeNormal2D()*Horizontal+Camera->GetActorForwardVector().GetSafeNormal2D()*Vertical;
-    Direction=Direction.GetSafeNormal(); if(!Direction.IsNearlyZero()) LastDirection=Direction;
+    Direction=Direction.GetSafeNormal();
+    if(GreyfordReviewActive)Direction=UpdateGreyfordReview(Dt,Direction);
+    if(!Direction.IsNearlyZero()) LastDirection=Direction;
     DodgeCD=FMath::Max(0.f,DodgeCD-Dt); HurtInv=FMath::Max(0.f,HurtInv-Dt); DodgeInv=FMath::Max(0.f,DodgeInv-Dt);
-    if(PC->WasInputKeyJustPressed(EKeys::SpaceBar) && DodgeCD<=0) {DodgeCD=2; DodgeTime=0.24f; DodgeInv=0.65f; DodgeDirection=LastDirection;}
+    if((PC->WasInputKeyJustPressed(EKeys::SpaceBar) || GreyfordReviewDodge) && DodgeCD<=0) {
+        DodgeCD=2; DodgeTime=0.24f; DodgeInv=0.65f; DodgeDirection=LastDirection;
+        if(GreyfordReviewActive)GreyfordDodges++;
+    }
     FVector Delta=Direction*500*(1+0.03f*Progress->Talents[2]+0.05f*RunAttrs[2])*Dt;
     if(DodgeTime>0) {float Step=FMath::Min(Dt,DodgeTime); DodgeTime-=Step; Delta=DodgeDirection*(280/0.24f)*Step;}
     const FVector PreviousPos=PlayerPos;

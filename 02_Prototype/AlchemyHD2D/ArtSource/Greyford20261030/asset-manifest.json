@@ -1,0 +1,666 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "Grass",
+      "label": "草地",
+      "priority": "P0",
+      "kind": "ground",
+      "alpha": "opaque",
+      "source": "Grass.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 600,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "ground-center",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "imported-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bbox": [
+          0,
+          0,
+          512,
+          512
+        ]
+      },
+      "sha256": "4dd5ea703da7349657b66df335dc1ee682dfa60e13b4c9b204e8fd22fed18258",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Grass",
+      "material_path": "/Game/Greyford/Materials/M_GF_Grass",
+      "tile_report_status": "pass"
+    },
+    {
+      "id": "Dirt",
+      "label": "泥路",
+      "priority": "P0",
+      "kind": "ground",
+      "alpha": "opaque",
+      "source": "Dirt.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 600,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "ground-center",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "imported-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bbox": [
+          0,
+          0,
+          512,
+          512
+        ]
+      },
+      "sha256": "4e247527f066b83aacfe0acb73c77b1a71119d169a16c28afd96b89452d9cf28",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Dirt",
+      "material_path": "/Game/Greyford/Materials/M_GF_Dirt",
+      "tile_report_status": "needs-review"
+    },
+    {
+      "id": "Stone",
+      "label": "石路",
+      "priority": "P0",
+      "kind": "ground",
+      "alpha": "opaque",
+      "source": "Stone.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 600,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "ground-center",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "imported-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bbox": [
+          0,
+          0,
+          512,
+          512
+        ]
+      },
+      "sha256": "2745a1e13f93eaa0bb61f676428a7579b344138e77144561c1826382444c574e",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Stone",
+      "material_path": "/Game/Greyford/Materials/M_GF_Stone",
+      "tile_report_status": "needs-review"
+    },
+    {
+      "id": "Water",
+      "label": "溪水",
+      "priority": "P0",
+      "kind": "ground",
+      "alpha": "opaque",
+      "source": "Water.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 600,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "ground-center",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "imported-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          255,
+          255
+        ],
+        "bbox": [
+          0,
+          0,
+          512,
+          512
+        ]
+      },
+      "sha256": "cf8cb0ffd6e14a30a6e3b0aa0ac7f3dd69751339a883952b3f8c3a57975eafa8",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Water",
+      "material_path": "/Game/Greyford/Materials/M_GF_Water",
+      "tile_report_status": "needs-review"
+    },
+    {
+      "id": "Cottage",
+      "label": "炼金小屋",
+      "priority": "P1",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Cottage.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 900,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          5,
+          32,
+          508,
+          488
+        ]
+      },
+      "sha256": "9c0c74a5073ced618fa6350772349f30a923620e3797cddf3e1a5186bfe21f6b",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Cottage",
+      "material_path": "/Game/Greyford/Materials/M_GF_Cottage",
+      "scene_instances": {
+        "Village_Blockout": 1,
+        "Outskirts_Blockout": 0
+      }
+    },
+    {
+      "id": "House",
+      "label": "住宅",
+      "priority": "P1",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "House.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 900,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          11,
+          32,
+          503,
+          488
+        ]
+      },
+      "sha256": "85f824cecaf4c7bfd7b639f82487280ee5c6f6b2862950497a599347668ac898",
+      "texture_path": "/Game/Greyford/Textures/T_GF_House",
+      "material_path": "/Game/Greyford/Materials/M_GF_House",
+      "scene_instances": {
+        "Village_Blockout": 22,
+        "Outskirts_Blockout": 0
+      }
+    },
+    {
+      "id": "Warehouse",
+      "label": "粮仓",
+      "priority": "P1",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Warehouse.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 900,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          1,
+          51,
+          512,
+          488
+        ]
+      },
+      "sha256": "af6beb6d9f5b753cdcd41d59c6904cdf50260241ec84e2758aac760608ec7d8a",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Warehouse",
+      "material_path": "/Game/Greyford/Materials/M_GF_Warehouse",
+      "scene_instances": {
+        "Village_Blockout": 1,
+        "Outskirts_Blockout": 0
+      }
+    },
+    {
+      "id": "Oak",
+      "label": "橡树",
+      "priority": "P1",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Oak.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 900,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          253
+        ],
+        "bbox": [
+          1,
+          58,
+          512,
+          488
+        ]
+      },
+      "sha256": "d33e77901bfb4d9a5150cfdbd1b2f209bdcb3d87cb547718cd7c7693264ba1e6",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Oak",
+      "material_path": "/Game/Greyford/Materials/M_GF_Oak",
+      "scene_instances": {
+        "Village_Blockout": 2,
+        "Outskirts_Blockout": 3
+      }
+    },
+    {
+      "id": "Bush",
+      "label": "灌木",
+      "priority": "P1",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Bush.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 900,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          1,
+          58,
+          512,
+          488
+        ]
+      },
+      "sha256": "51e195605b7e476147f57bf0b9b081c88e1b689d5a3e2c64e8b650898b2d07e6",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Bush",
+      "material_path": "/Game/Greyford/Materials/M_GF_Bush",
+      "scene_instances": {
+        "Village_Blockout": 2,
+        "Outskirts_Blockout": 2
+      }
+    },
+    {
+      "id": "RuneStone",
+      "label": "阵石",
+      "priority": "P1",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "RuneStone.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 900,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          253
+        ],
+        "bbox": [
+          150,
+          32,
+          363,
+          488
+        ]
+      },
+      "sha256": "ff302fa310d83875f2301e125798c0025897f12beb45c06e962001d86cc429cd",
+      "texture_path": "/Game/Greyford/Textures/T_GF_RuneStone",
+      "material_path": "/Game/Greyford/Materials/M_GF_RuneStone",
+      "scene_instances": {
+        "Village_Blockout": 2,
+        "Outskirts_Blockout": 1
+      }
+    },
+    {
+      "id": "Well",
+      "label": "水井",
+      "priority": "P2",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Well.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 500,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          80,
+          32,
+          433,
+          488
+        ]
+      },
+      "sha256": "a4ad457155bf30721f15e5bbc1ab40a91dc126086a669b078614759606012c4b",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Well",
+      "material_path": "/Game/Greyford/Materials/M_GF_Well",
+      "scene_instances": {
+        "Village_Blockout": 1,
+        "Outskirts_Blockout": 0
+      }
+    },
+    {
+      "id": "Cart",
+      "label": "田车",
+      "priority": "P2",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Cart.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 500,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          1,
+          113,
+          512,
+          488
+        ]
+      },
+      "sha256": "7b88a1777f5fa80cb4bf56129fa6800600202e1bb6cd99d7cc4aa2f126143bba",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Cart",
+      "material_path": "/Game/Greyford/Materials/M_GF_Cart",
+      "scene_instances": {
+        "Village_Blockout": 0,
+        "Outskirts_Blockout": 1
+      }
+    },
+    {
+      "id": "Fence",
+      "label": "短篱笆",
+      "priority": "P2",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Fence.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 500,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          1,
+          95,
+          512,
+          488
+        ]
+      },
+      "sha256": "53278ac82ca483463bbe2ce9df5ddd86d8c64f72642d6a19914927af5cb59011",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Fence",
+      "material_path": "/Game/Greyford/Materials/M_GF_Fence",
+      "scene_instances": {
+        "Village_Blockout": 0,
+        "Outskirts_Blockout": 18
+      }
+    },
+    {
+      "id": "Bridge",
+      "label": "木桥",
+      "priority": "P2",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Bridge.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 500,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          1,
+          146,
+          512,
+          488
+        ]
+      },
+      "sha256": "25206c1582b7de7608fbe488d81aeb14a7f7ba0670b1d7606691b254d6553901",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Bridge",
+      "material_path": "/Game/Greyford/Materials/M_GF_Bridge",
+      "scene_instances": {
+        "Village_Blockout": 1,
+        "Outskirts_Blockout": 0
+      }
+    },
+    {
+      "id": "HerbRack",
+      "label": "晾药架",
+      "priority": "P2",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "HerbRack.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 500,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          1,
+          70,
+          512,
+          488
+        ]
+      },
+      "sha256": "37ce8e13ac04a092c4898ccf1493e7508768212644110a8c1b387a383950747a",
+      "texture_path": "/Game/Greyford/Textures/T_GF_HerbRack",
+      "material_path": "/Game/Greyford/Materials/M_GF_HerbRack",
+      "scene_instances": {
+        "Village_Blockout": 1,
+        "Outskirts_Blockout": 0
+      }
+    },
+    {
+      "id": "Crates",
+      "label": "箱袋",
+      "priority": "P2",
+      "kind": "sprite",
+      "alpha": "alpha",
+      "source": "Crates.png",
+      "size_px": [
+        512,
+        512
+      ],
+      "initial_world_size_cm": 500,
+      "filter": "nearest",
+      "mips": false,
+      "pivot": "bottom-center at y=488/512",
+      "collision": "separate authored footprint; no texture-derived collision",
+      "generation": "native ChatGPT imagegen -> sprite-gen 3.5.0",
+      "status": "placed-draft-final-art-review-pending",
+      "qa": {
+        "size": [
+          512,
+          512
+        ],
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "bbox": [
+          12,
+          32,
+          501,
+          488
+        ]
+      },
+      "sha256": "e1f8c1a0b620118f2f57424363a550868a1f7e699187032d554ad736ad18b898",
+      "texture_path": "/Game/Greyford/Textures/T_GF_Crates",
+      "material_path": "/Game/Greyford/Materials/M_GF_Crates",
+      "scene_instances": {
+        "Village_Blockout": 1,
+        "Outskirts_Blockout": 1
+      }
+    }
+  ],
+  "scope": "16 assets generated in P0 -> P1 -> P2 order; greybox footprints stay independent"
+}

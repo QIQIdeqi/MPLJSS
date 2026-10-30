@@ -1,0 +1,564 @@
+{
+  "date": "2026-10-30",
+  "scope": "Independent Greyford editable blockout, not production Research map",
+  "p1_replacement": [
+    {
+      "map": "Village_Blockout",
+      "visual_count": 30,
+      "entries": [
+        {
+          "label": "P1_格蕾丝小屋",
+          "asset": "Cottage",
+          "foot_cm": [
+            3600.0,
+            1800.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_38",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_0",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_粮仓",
+          "asset": "Warehouse",
+          "foot_cm": [
+            -3000.0,
+            1800.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_39",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_2",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_作坊",
+          "asset": "House",
+          "foot_cm": [
+            -5400.0,
+            600.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_40",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_3",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_北阵石",
+          "asset": "RuneStone",
+          "foot_cm": [
+            -6150.0,
+            450.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_41",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_10",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_南阵石",
+          "asset": "RuneStone",
+          "foot_cm": [
+            -6150.0,
+            -1650.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_42",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_11",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_小屋旁橡树",
+          "asset": "Oak",
+          "foot_cm": [
+            1619.9999999999995,
+            3120.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_44",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_43",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_广场南侧橡树",
+          "asset": "Oak",
+          "foot_cm": [
+            -2580.0000000000005,
+            -2280.0000000000005,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_46",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_45",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_药圃旁灌木",
+          "asset": "Bush",
+          "foot_cm": [
+            5100.0,
+            990.0000000000002,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_48",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_47",
+          "proxy_collision": "NoCollision"
+        },
+        {
+          "label": "P1_广场东侧灌木",
+          "asset": "Bush",
+          "foot_cm": [
+            -2700.0,
+            690.0000000000002,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_50",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_49",
+          "proxy_collision": "NoCollision"
+        },
+        {
+          "label": "P1_住宅_1_0",
+          "asset": "House",
+          "foot_cm": [
+            6000.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_51",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_12",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_4_0",
+          "asset": "House",
+          "foot_cm": [
+            4200.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_52",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_13",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_7_0",
+          "asset": "House",
+          "foot_cm": [
+            2400.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_53",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_14",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_10_0",
+          "asset": "House",
+          "foot_cm": [
+            600.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_54",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_15",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_13_0",
+          "asset": "House",
+          "foot_cm": [
+            -1200.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_55",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_16",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_16_0",
+          "asset": "House",
+          "foot_cm": [
+            -3000.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_56",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_17",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_19_0",
+          "asset": "House",
+          "foot_cm": [
+            -4800.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_57",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_18",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_22_0",
+          "asset": "House",
+          "foot_cm": [
+            -6600.0,
+            4200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_58",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_19",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_1_16",
+          "asset": "House",
+          "foot_cm": [
+            6000.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_59",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_20",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_4_16",
+          "asset": "House",
+          "foot_cm": [
+            4200.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_60",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_21",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_7_16",
+          "asset": "House",
+          "foot_cm": [
+            2400.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_61",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_22",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_10_16",
+          "asset": "House",
+          "foot_cm": [
+            600.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_62",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_23",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_13_16",
+          "asset": "House",
+          "foot_cm": [
+            -1200.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_63",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_24",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_16_16",
+          "asset": "House",
+          "foot_cm": [
+            -3000.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_64",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_25",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_19_16",
+          "asset": "House",
+          "foot_cm": [
+            -4800.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_65",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_26",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_22_16",
+          "asset": "House",
+          "foot_cm": [
+            -6600.0,
+            -5400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_66",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_27",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_0_6",
+          "asset": "House",
+          "foot_cm": [
+            6600.0,
+            600.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_67",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_28",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_0_9",
+          "asset": "House",
+          "foot_cm": [
+            6600.0,
+            -1200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_68",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_29",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_0_12",
+          "asset": "House",
+          "foot_cm": [
+            6600.0,
+            -3000.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_69",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_30",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_22_3",
+          "asset": "House",
+          "foot_cm": [
+            -6600.0,
+            2400.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_70",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_31",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_住宅_22_12",
+          "asset": "House",
+          "foot_cm": [
+            -6600.0,
+            -3000.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_71",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_32",
+          "proxy_collision": "BlockAll"
+        }
+      ]
+    },
+    {
+      "map": "Outskirts_Blockout",
+      "visual_count": 6,
+      "entries": [
+        {
+          "label": "P1_老橡树树干",
+          "asset": "Oak",
+          "foot_cm": [
+            5100.0,
+            3300.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_22",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_0",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_北侧树干",
+          "asset": "Oak",
+          "foot_cm": [
+            -3210.000000000001,
+            3990.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_23",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_5",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_东侧树干",
+          "asset": "Oak",
+          "foot_cm": [
+            -6210.000000000001,
+            -2009.9999999999998,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_24",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_6",
+          "proxy_collision": "BlockAll"
+        },
+        {
+          "label": "P1_西北灌木",
+          "asset": "Bush",
+          "foot_cm": [
+            5640.0,
+            2100.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_25",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_8",
+          "proxy_collision": "NoCollision"
+        },
+        {
+          "label": "P1_东边灌木",
+          "asset": "Bush",
+          "foot_cm": [
+            -5760.000000000001,
+            -1200.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_26",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_9",
+          "proxy_collision": "NoCollision"
+        },
+        {
+          "label": "P1_北阵标",
+          "asset": "RuneStone",
+          "foot_cm": [
+            450.0,
+            4350.0,
+            8.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_27",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_10",
+          "proxy_collision": "BlockAll"
+        }
+      ]
+    }
+  ],
+  "passages_after": {
+    "stage": "after",
+    "northwest_clear_width_cm": 900,
+    "eastern_clear_width_cm": 900,
+    "changes": [
+      {
+        "label": "西北短障碍",
+        "before_cm": [
+          4050.0,
+          2370.0,
+          175.0
+        ],
+        "after_cm": [
+          4050.0,
+          1950.0,
+          175.0
+        ]
+      },
+      {
+        "label": "东侧断篱",
+        "before_cm": [
+          -4350.0,
+          -150.0,
+          175.0
+        ],
+        "after_cm": [
+          -4350.0,
+          -450.0,
+          175.0
+        ]
+      }
+    ],
+    "route": [
+      [
+        3.5,
+        4.4
+      ],
+      [
+        7.5,
+        4.4
+      ],
+      [
+        7.5,
+        6
+      ],
+      [
+        16.5,
+        6
+      ],
+      [
+        18.5,
+        8.5
+      ],
+      [
+        21.8,
+        8.5
+      ],
+      [
+        21.8,
+        10.5
+      ],
+      [
+        17,
+        10.5
+      ],
+      [
+        12,
+        9
+      ]
+    ],
+    "note": "Nominal axis-aligned footprint gap; dynamic enemies and dodge envelopes not validated."
+  },
+  "native_walk_before": {
+    "evidence": "Evidence/Greyford/P1/walk-before.csv",
+    "reached": 8,
+    "total": 8,
+    "seconds": 39.557,
+    "image": "Evidence/Greyford/P1/walk-before-5.png",
+    "result": "PASS"
+  },
+  "native_walk_after": {
+    "reached": 8,
+    "total": 8,
+    "evidence": "Evidence/Greyford/P1/walk-after.csv",
+    "seconds": 39.543,
+    "result": "PASS"
+  },
+  "keyboard_check": {
+    "evidence": "Evidence/Greyford/P1/keyboard-walk.png",
+    "result": "Overview switched; route started; WASD interrupted it; normal view restored",
+    "method": "Agent operated visible Unreal game window via native keyboard",
+    "keys": [
+      "Tab",
+      "R",
+      "W",
+      "Tab",
+      "F9"
+    ]
+  },
+  "checks": {
+    "production_smoke": "PASS: ALCHEMY_SMOKE_PASS and ALCH002_TEST_PASS",
+    "map_reload": "PASS: 432 ground cells each, 16 palette entries, scoped GreyfordBlockoutMode",
+    "editor_build": "PASS",
+    "native_d3d12_screenshots": "Village_Blockout-overview.png and Outskirts_Blockout-overview.png inspected"
+  },
+  "wolai_receipt": "wolai-p1-sync-receipt.json",
+  "limitations": [
+    "P1 appearance is draft art; P2 visual proxies remain",
+    "Native route reachability and keyboard checks do not validate human combat balance",
+    "No baseline route failure: widened gaps provide more room",
+    "During keyboard R test a baseline first-point screenshot was replaced; moved to keyboard-route-overview.png; baseline fifth-point image and CSV retained",
+    "Manual R output now uses manual label so it cannot overwrite before/after runs; rebuilt successfully after commandlet DLL lock cleared",
+    "No new package, git commit or push"
+  ]
+}

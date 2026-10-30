@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-30",
+  "pages": [
+    {
+      "id": "ef1SGR5vJUP5rLr8XceBy6",
+      "url": "https://www.wolai.com/ef1SGR5vJUP5rLr8XceBy6",
+      "top_blocks": [
+        "qdDPWUVug7gD6crGPBqCcp",
+        "aHrsnVzrpWpinpuMUtz5YE",
+        "aPZ3BNWEPtd3ZCLkUaoQYo",
+        "pD4t6fSaPTXGRLeG8BAR2H",
+        "pjnkaAiPAzJiLBkqgPA9eP",
+        "iS6UdXLHJvx3bDaHSYenYc",
+        "a75zUkndy3xvp63N3eDeby",
+        "nebvQffdjNazaU6zqrjEHS",
+        "9gG8KPnKsvyHw8DRekBjEW",
+        "s4S1rVKDps2S38tQ7yzs5P"
+      ],
+      "layout_block": "pD4t6fSaPTXGRLeG8BAR2H",
+      "actual_image_block": "aHrsnVzrpWpinpuMUtz5YE",
+      "asset_table": "iS6UdXLHJvx3bDaHSYenYc",
+      "p2_rows": [
+        [
+          "P2",
+          "Well 水井",
+          "512×512／透明",
+          "已替换村庄水井外观；独立阻挡保留"
+        ],
+        [
+          "P2",
+          "Cart 田车",
+          "512×512／透明",
+          "已替换草原田车外观；独立阻挡保留"
+        ],
+        [
+          "P2",
+          "Fence 短篱笆",
+          "512×512／透明",
+          "已替换草原短篱笆；按原碰撞轴分段摆放"
+        ],
+        [
+          "P2",
+          "Bridge 木桥",
+          "512×512／透明",
+          "已替换村庄木桥外观；桥面可通行"
+        ],
+        [
+          "P2",
+          "HerbRack 晾药架",
+          "512×512／透明",
+          "已摆放小屋晾药架；装饰无碰撞"
+        ],
+        [
+          "P2",
+          "Crates 箱袋",
+          "512×512／透明",
+          "已摆放粮仓/田车旁箱袋；装饰无碰撞"
+        ]
+      ]
+    },
+    {
+      "id": "7NzimKvPJwEFvNRJ1yhiWv",
+      "url": "https://www.wolai.com/7NzimKvPJwEFvNRJ1yhiWv",
+      "top_blocks": [
+        "st7a57M3aNF8ee28VKokuR",
+        "8RNuxiPt8vnVMqevcaDUwo",
+        "iBzzdQ7xgK43fNineoY1Yj",
+        "bB1YzwUBCo6bqHbNBwSN7q",
+        "x2KdNnVxzgbgEfTGjfJWCZ",
+        "9h59k2NXit4qppJbPUasN8",
+        "oCQGq5YuVX3GsizQnm1akB",
+        "2dmg7RAbyU6GWdVkNSxSqU",
+        "tUJMcFnZdvhGSjYTZ1gUu7",
+        "uuSLMepLNuDHeLRHFmRKcq"
+      ],
+      "layout_block": "bB1YzwUBCo6bqHbNBwSN7q",
+      "actual_image_block": "8RNuxiPt8vnVMqevcaDUwo",
+      "asset_table": "uuSLMepLNuDHeLRHFmRKcq",
+      "p2_rows": [
+        [
+          "P2",
+          "Well 水井",
+          "512×512 透明",
+          "已替换村庄水井外观；独立阻挡保留"
+        ],
+        [
+          "P2",
+          "Cart 田车",
+          "512×512 透明",
+          "已替换草原田车外观；独立阻挡保留"
+        ],
+        [
+          "P2",
+          "Fence 短篱笆",
+          "512×512 透明",
+          "已替换草原短篱笆；按原碰撞轴分段摆放"
+        ],
+        [
+          "P2",
+          "Bridge 木桥",
+          "512×512 透明",
+          "已替换村庄木桥外观；桥面可通行"
+        ],
+        [
+          "P2",
+          "HerbRack 晾药架",
+          "512×512 透明",
+          "已摆放小屋晾药架；装饰无碰撞"
+        ],
+        [
+          "P2",
+          "Crates 箱袋",
+          "512×512 透明",
+          "已摆放粮仓/田车旁箱袋；装饰无碰撞"
+        ]
+      ]
+    }
+  ],
+  "note": "P2 table replacement returned 17011; existing status text children updated successfully instead."
+}

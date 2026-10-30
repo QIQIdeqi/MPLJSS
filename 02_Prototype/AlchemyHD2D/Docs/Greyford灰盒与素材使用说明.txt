@@ -1,0 +1,70 @@
+Greyford 场景布局、素材与关卡编辑器（2026-10-30）
+
+入口
+双击工程根目录“启动村庄灰盒编辑器.cmd”或“启动草原灰盒编辑器.cmd”。
+两图路径：/Game/Greyford/Maps/Village_Blockout、/Game/Greyford/Maps/Outskirts_Blockout。
+这是独立灰盒，生产Research地图、存档和Boss/商人/教学规则不被替换。
+村庄播放PIE后WASD移动，Tab切换俯视总览；检查球体半径35cm，移速500cm/s。
+草原现在直接进入正式战斗系统试玩：WASD移动，空格闪避，Tab炼金，B技能，C图鉴，
+Escape暂停，R重新开始。角色半径45cm，移速500cm/s，闪避2.8m。
+双击“启动草原战斗试玩.cmd”可直接进入；进度仅在内存中，不读取或写入正式存档。
+村庄仍为走查模式；草原已复用正式战斗与闪避，尚未接入跨地图传送。
+出生候选不是已改写的正式随机出生规则。
+
+用关卡编辑器编辑
+1. World Outliner 中 Greyford/GroundTiles：每张地图432块，每格600×600cm。
+   选择一块AlchemyTileCell，可直接改位置、Visual Size、Texture和Material Override。
+   Material Override优先于Texture：换图时一并换材质，或清空Override使用工具的纹理材质。
+   初始格全部Lock Random，避免点随机化破坏手工布置。要随机化指定格需先明确解锁。
+2. Greyford/Collision：建筑、短障碍、树干、溪水和边界的真实BlockAll碰撞占位体。
+   村庄检查Pawn用原生碰撞；草原战斗启动时读取这些碰撞体的实际世界AABB，供现有
+   Move/Walkable/FindPath/Chase使用。替换外观时保留/调整对应占位体，修改后重新播放。
+3. Greyford/ZoneMarkers：低位无碰撞区域标记；不能把药圃标记当新增采集玩法。
+4. Greyford/Spawns：PlayerStart和出生候选。村庄1处、草原5处。
+5. Greyford/EditorTools：“GF_关卡编辑器_地块与素材库”含16项新素材笔刷。
+   可在 Details 中选择Brush Index、移动Paint Cursor、使用“在光标格子应用笔刷并锁定”。
+   老工具的“读取全部图片素材”会导入旧/全项目素材；当前新素材库已经单独配好，无需再点。
+6. Content/Greyford/Textures：16张新纹理；Materials：对应材质及灰盒色材质。
+   512px、Nearest、无Mip；道具材质接透明Opacity Mask。地面与道具分开，碰撞独立。
+
+优先级与本轮产物（16项均已生成并导入）
+P0：Grass草地、Dirt泥路、Stone石路、Water溪水；原生background-tile处理双轴平铺。
+P1：Cottage炼金小屋、House住宅、Warehouse粮仓、Oak橡树、Bush灌木、RuneStone阵石。
+P2：Well水井、Cart田车、Fence短篱笆、Bridge木桥、HerbRack晾药架、Crates箱袋。
+P1/P2原生GPT静态道具图，经sprite-gen原生slice-sheet 3×2、contain、alpha-floor128规范化。
+原图、实际提示词、平铺/裁切报告与asset-manifest.json在ArtSource/Greyford20261030。
+P1更新：村庄已放入30个、草原6个建筑/植被视觉实例，原占位体隐藏但仍承担独立碰撞。
+外观在Greyford/P1Art文件夹，可单独移动、改尺寸和换材质；碰撞在Greyford/Collision。
+P2更新：村庄4个、草原20个实例，位于Greyford/P2Art。水井、田车、篱笆、木桥已替换；
+小屋旁补晾药架，粮仓和田车旁补箱袋。西侧竖向篱笆用4个短段，保留原连续碰撞体。
+装饰晾药架、散箱无碰撞；田车及篱笆保留原阻挡，木桥可通行。
+地表：M_GF_VillageSurfaceBlend/M_GF_OutskirtsSurfaceBlend，按每图24×18数据遮罩混合
+草地、泥路、石路、溪水，边缘过渡宽约84cm。每格仍可选中绘制，不是整图背景。
+绘制新地块或改变Texture后，重新运行DressGreyfordP2.py，按实际地块纹理刷新混合遮罩。
+GroundShadows：村庄68张/草原52张独立软阴影平面，可调整尺寸与位置；这是风格化
+地面阴影，不是动态太阳投影。LayerDetails：每图10个无碰撞边缘灌木，保留中央战斗空间。
+草原西北树旁净宽从4.8m调为9m；东侧田车/断篱净宽从6m调为9m。
+两次原生自动移动均8/8路线通过，约39.6秒；属于可达/碰撞复现，不是战斗平衡结论。
+
+范围和质量边界
+村庄草药仅作环境装饰；材料主要从战斗获得。
+1环不是几何环形；5分钟后独立Boss传送的规则不在本轮灰盒接入。
+Grass平铺自动检查pass；Dirt/Stone/Water保留needs-review，须继续看重复纹理与接缝。
+素材仍为首版；草原已接入真实战斗逻辑，自动检查和代理键盘操作不等于真人手感/平衡验收。
+地图地表总尺寸144×108m，角色近景镜头宽28.44m；俯视总览是检查模式。
+
+布局单一来源与重建
+Tools/GreyfordPlan.py：输出00_Doc/场景设计/2026-10-30_Greyford/layout.json、两张布局PNG及路径检查。
+Tools/BuildGreyfordBlockout.py：通过Unreal原生接口导入纹理/材质并保存地图；已有地图只读取验证，
+不会自动重新铺地覆盖编辑者调整。要修改已有地图，直接用编辑器保存；布局JSON的初始检查不代表编辑后结果。
+只需构建缺失关卡时，用现有Build.ps1编译后再运行PythonScript commandlet。
+Tools/OpenGreyford.ps1 -Scene Village/Outskirts -Play 可直接启动独立检查模式。
+Tools/DressGreyfordP2.py：更新P2、地表遮罩、软阴影和层次装饰；已有外观位置不强制归零。
+草原模式：GreyfordCombatMode；村庄：GreyfordBlockoutMode。Research仍为AlchemyMode。
+-GreyfordCombatTest：60秒自动绕障与闪避压力检查，复用正式敌群、自动技能、伤害和HP；
+开始时在西北路线起点配置一组普通敌人以复现压力，不修改角色/敌人的战斗数值。
+产出Evidence/Greyford/P2/combat-result.txt、combat-route.csv、combat-gap-1/5.png。
+
+验证证据：Evidence/Greyford、Evidence/Greyford-*.log。
+新增灰盒尚未重新打包到Windows试玩ZIP；本次Git整理发布包含工程、素材和说明，
+同步结果见项目根目录memory/2026-10-30.md。03_Build现有试玩包仍为此前版本。

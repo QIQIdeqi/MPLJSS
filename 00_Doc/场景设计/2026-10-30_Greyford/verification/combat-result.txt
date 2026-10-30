@@ -1,0 +1,12 @@
+result=PASS
+seconds=60.016
+primary_segments_reached=8/8
+route_segments_reached=13
+dodges=20
+kills=24
+peak_enemies=36
+attack_frames=2168
+minimum_hp=93.0
+final_hp=93.0
+walkable_checks=1
+method=automated movement through production combat simulation; seeded local enemy pressure; no HP/damage cheats; no human balance acceptance

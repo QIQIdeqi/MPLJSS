@@ -1,0 +1,362 @@
+{
+  "date": "2026-10-30",
+  "scope": "P2 scene dressing; authored meadow adapter to existing production combat; surface transition, shadows, layers",
+  "maps": [
+    {
+      "map": "Village_Blockout",
+      "visual_count": 4,
+      "entries": [
+        {
+          "label": "P2_水井",
+          "asset": "Well",
+          "foot_cm": [
+            300.0,
+            900.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_72",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_4"
+        },
+        {
+          "label": "P2_木桥",
+          "asset": "Bridge",
+          "foot_cm": [
+            2700.0,
+            -3300.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_73",
+          "collision_proxy": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_7"
+        },
+        {
+          "label": "P2_小屋晾药架",
+          "asset": "HerbRack",
+          "foot_cm": [
+            4200.0,
+            1410.0000000000002,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_74",
+          "collision_proxy": null
+        },
+        {
+          "label": "P2_粮仓箱袋",
+          "asset": "Crates",
+          "foot_cm": [
+            -3960.000000000001,
+            1380.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.StaticMeshActor_75",
+          "collision_proxy": null
+        }
+      ],
+      "surface_material": "/Game/Greyford/Materials/M_GF_VillageSurfaceBlend.M_GF_VillageSurfaceBlend",
+      "ground_cells": 432,
+      "soft_shadow_cards": 68,
+      "edge_detail_cards": 10
+    },
+    {
+      "map": "Outskirts_Blockout",
+      "visual_count": 20,
+      "entries": [
+        {
+          "label": "P2_西北短障碍_00",
+          "asset": "Fence",
+          "foot_cm": [
+            3450.0,
+            1949.9999999999998,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_77",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_1"
+        },
+        {
+          "label": "P2_西北短障碍_01",
+          "asset": "Fence",
+          "foot_cm": [
+            3750.0,
+            1949.9999999999998,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_78",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_1"
+        },
+        {
+          "label": "P2_西北短障碍_02",
+          "asset": "Fence",
+          "foot_cm": [
+            4050.0,
+            1949.9999999999998,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_79",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_1"
+        },
+        {
+          "label": "P2_西北短障碍_03",
+          "asset": "Fence",
+          "foot_cm": [
+            4350.0,
+            1949.9999999999998,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_80",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_1"
+        },
+        {
+          "label": "P2_西北短障碍_04",
+          "asset": "Fence",
+          "foot_cm": [
+            4650.0,
+            1949.9999999999998,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_81",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_1"
+        },
+        {
+          "label": "P2_西侧短障碍_00",
+          "asset": "Fence",
+          "foot_cm": [
+            5250.0,
+            -450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_29",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_2"
+        },
+        {
+          "label": "P2_西侧短障碍_01",
+          "asset": "Fence",
+          "foot_cm": [
+            5250.0,
+            -750.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_30",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_2"
+        },
+        {
+          "label": "P2_西侧短障碍_02",
+          "asset": "Fence",
+          "foot_cm": [
+            5250.0,
+            -1050.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_31",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_2"
+        },
+        {
+          "label": "P2_西侧短障碍_03",
+          "asset": "Fence",
+          "foot_cm": [
+            5250.0,
+            -1350.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_32",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_2"
+        },
+        {
+          "label": "P2_东侧断篱_00",
+          "asset": "Fence",
+          "foot_cm": [
+            -4950.0,
+            -450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_82",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_3"
+        },
+        {
+          "label": "P2_东侧断篱_01",
+          "asset": "Fence",
+          "foot_cm": [
+            -4650.0,
+            -450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_83",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_3"
+        },
+        {
+          "label": "P2_东侧断篱_02",
+          "asset": "Fence",
+          "foot_cm": [
+            -4350.0,
+            -450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_84",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_3"
+        },
+        {
+          "label": "P2_东侧断篱_03",
+          "asset": "Fence",
+          "foot_cm": [
+            -4050.0,
+            -450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_85",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_3"
+        },
+        {
+          "label": "P2_东侧断篱_04",
+          "asset": "Fence",
+          "foot_cm": [
+            -3750.0,
+            -450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_86",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_3"
+        },
+        {
+          "label": "P2_东侧田车",
+          "asset": "Cart",
+          "foot_cm": [
+            -5250.0,
+            900.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_34",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_4"
+        },
+        {
+          "label": "P2_西南短障碍_00",
+          "asset": "Fence",
+          "foot_cm": [
+            3150.0,
+            -3450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_87",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_7"
+        },
+        {
+          "label": "P2_西南短障碍_01",
+          "asset": "Fence",
+          "foot_cm": [
+            3450.0,
+            -3450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_88",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_7"
+        },
+        {
+          "label": "P2_西南短障碍_02",
+          "asset": "Fence",
+          "foot_cm": [
+            3750.0,
+            -3450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_89",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_7"
+        },
+        {
+          "label": "P2_西南短障碍_03",
+          "asset": "Fence",
+          "foot_cm": [
+            4050.0,
+            -3450.0,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_90",
+          "collision_proxy": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_7"
+        },
+        {
+          "label": "P2_田车旁散箱",
+          "asset": "Crates",
+          "foot_cm": [
+            -6239.999999999999,
+            1290.0000000000002,
+            12.0
+          ],
+          "visual": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.StaticMeshActor_36",
+          "collision_proxy": null
+        }
+      ],
+      "surface_material": "/Game/Greyford/Materials/M_GF_OutskirtsSurfaceBlend.M_GF_OutskirtsSurfaceBlend",
+      "ground_cells": 432,
+      "soft_shadow_cards": 52,
+      "edge_detail_cards": 10
+    }
+  ],
+  "combat": {
+    "method": "D3D12 rendered automated 60s pressure run through existing Move/Chase/CastSkills/Hurt",
+    "result": "PASS",
+    "seconds": 60.016,
+    "primary_segments": 8,
+    "primary_segments_total": 8,
+    "segments_with_return": 13,
+    "dodges": 20,
+    "kills": 24,
+    "peak_enemies": 36,
+    "minimum_hp": 93,
+    "final_hp": 93,
+    "max_hp": 120,
+    "player_radius_cm": 45,
+    "speed_cm_s": 500,
+    "dodge_distance_cm": 280,
+    "passage_clear_width_cm": [
+      900,
+      900
+    ],
+    "all_sampled_walkable_checks_passed": true,
+    "hp_or_damage_cheats": false,
+    "setup": "Initial ordinary enemies moved near northwest route start to reproduce pressure",
+    "evidence": [
+      "Evidence/Greyford/P2/combat-result.txt",
+      "Evidence/Greyford/P2/combat-route.csv",
+      "Evidence/Greyford/P2/combat-gap-1.png",
+      "Evidence/Greyford/P2/combat-gap-5.png"
+    ]
+  },
+  "keyboard": {
+    "method": "Agent-operated visible game window",
+    "keys": [
+      "R",
+      "Space",
+      "Tab",
+      "F9"
+    ],
+    "observed": [
+      "Restart resets HP, level and timer",
+      "Dodge cooldown changed to1.8s",
+      "Alchemy panel opened and paused combat"
+    ],
+    "evidence": "Evidence/Greyford/P2/keyboard-alchemy.png",
+    "final_editor_pie": "Launched from Play toolbar after final lighting fix, actual character, skills and enemies observed; no duplicate sun warning",
+    "final_editor_evidence": "Evidence/Greyford/P2/editor-final-combat.jpg"
+  },
+  "checks": {
+    "editor_build": "PASS after final authored-light reuse change",
+    "saved_p2_reload": "PASS script asserts per-map visual counts, materials and NoCollision",
+    "production_smoke": "PASS current ALCHEMY_SMOKE_PASS and ALCH002_TEST_PASS",
+    "map_cells_and_mode": "PASS 432 ground cells each,16 palette entries; field GreyfordCombatMode, village GreyfordBlockoutMode",
+    "python_syntax": "PASS"
+  },
+  "visual_changes": [
+    "Native RGB 24x18 mask from saved ground cells; editable world-coordinate four-surface blend",
+    "68 village and52 field editable soft shadow cards; stylized not dynamic sunlight projection",
+    "10 nonblocking edge shrub cards per map",
+    "Horizontal fence sprites split into shorter modules",
+    "XFOV and viewport aspect explicitly set for Greyford combat camera only; map-edge black reveal removed",
+    "Reused authored scene sunlight instead of adding duplicate production lights"
+  ],
+  "wolai": "wolai-p2-sync-receipt.json",
+  "limitations": [
+    "Automatic seeded pressure route and agent keyboard checks are not representative human balance acceptance",
+    "First art pass, source texture repeat/seam review remains",
+    "No new packaged build, commit or push; Research map untouched",
+    "Ground texture painting requires rerunning DressGreyfordP2.py to refresh transition masks"
+  ],
+  "references": [
+    "https://dev.epicgames.com/documentation/en-us/unreal-engine/custom-material-expressions-in-unreal-engine"
+  ]
+}

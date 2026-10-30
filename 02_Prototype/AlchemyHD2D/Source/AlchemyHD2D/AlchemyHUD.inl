@@ -79,7 +79,7 @@ void AAlchemyHUD::DrawHUD() {
     // Background bars cover the screen; content stays inside a centered 16:9 PC safe frame.
     Box(-OX/S,-OY/S,Canvas->SizeX/S,88+OY/S,Surface);
     Text(TEXT("冒牌炼金术士"),24,18,28,Gold);
-    Text(World->bCombat?TEXT("腐化林地"):TEXT("烛苔村 · 据点"),315,25,22,White);
+    Text(World->bGreyfordScene?TEXT("村庄外围 · 试玩"):World->bCombat?TEXT("腐化林地"):TEXT("烛苔村 · 据点"),315,25,22,White);
     if(World->bCombat) {
         Text(FString::Printf(TEXT("%02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),610,14,34,White);
         Text(FString::Printf(TEXT("击败 %d   金币 %d"),World->Kills,World->RunCoins),790,28,20,Gold);

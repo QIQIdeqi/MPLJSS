@@ -1,0 +1,83 @@
+{
+  "ui": "Native Unreal window activated, saved camera piloted through menu, an individual dirt cell selected and M_GF_Dirt material inspected. FocusGreyford.py executed from UE console and GREYFORD_EDITOR_FOCUSED logged.",
+  "status": "editable-greybox-and-generated-asset-library",
+  "regression": {
+    "ALCH002_TEST_PASS": true,
+    "ALCHEMY_SMOKE_PASS": true
+  },
+  "provenance": "6 native ChatGPT imagegen calls, 4 native background-tile outputs, 2 static prop sheets sliced by native sprite-gen",
+  "maps": [
+    "/Game/Greyford/Maps/Village_Blockout",
+    "/Game/Greyford/Maps/Outskirts_Blockout"
+  ],
+  "layout_validation": [
+    {
+      "id": "Village",
+      "connected_spawn_candidates": 1,
+      "reachable_cells": 4920,
+      "free_cells": 4920,
+      "grid_step_cm": 150.0,
+      "footprint_player_radius_cm": 35,
+      "free_area_fraction": 0.712,
+      "note": "2D occupancy connectivity only; engine collision/rendering tested separately"
+    },
+    {
+      "id": "Outskirts",
+      "connected_spawn_candidates": 5,
+      "reachable_cells": 6362,
+      "free_cells": 6362,
+      "grid_step_cm": 150.0,
+      "footprint_player_radius_cm": 35,
+      "free_area_fraction": 0.92,
+      "note": "2D occupancy connectivity only; engine collision/rendering tested separately"
+    }
+  ],
+  "textures": 16,
+  "date": "2026-10-30",
+  "priorities": {
+    "P0": 4,
+    "P1": 6,
+    "P2": 6
+  },
+  "build": "UE5.8.4 Editor compile exit0",
+  "sources": [
+    "scene-proposal.json",
+    "layout.json",
+    "Tools/GreyfordPlan.py",
+    "ArtSource/Greyford20261030/asset-manifest.json"
+  ],
+  "graphics": "D3D12 offscreen game captures, each map has 1280x720 view and overview",
+  "editor_build": [
+    {
+      "id": "Village",
+      "ground_tiles": 432,
+      "spawn_candidates": 1,
+      "blocking_actors": 33,
+      "editable_palette": 16,
+      "game_mode": "GreyfordBlockoutMode"
+    },
+    {
+      "id": "Outskirts",
+      "ground_tiles": 432,
+      "spawn_candidates": 5,
+      "blocking_actors": 15,
+      "editable_palette": 16,
+      "game_mode": "GreyfordBlockoutMode"
+    }
+  ],
+  "git": "not committed or pushed",
+  "assets": 16,
+  "materials": 26,
+  "limitations": [
+    "Not a new packaged build",
+    "No production combat integration or player save changes",
+    "No hand-played combat balance acceptance",
+    "P1/P2 imported into editor palette; greybox building/tree proxy visuals remain",
+    "Dirt/Stone/Water tile reports needs-review; Grass pass",
+    "Spawn-candidate markers do not implement the unconfirmed production random-start policy"
+  ],
+  "runtime_smoke": {
+    "Outskirts": "PASS: all 5 spawn overlaps and native blocking sweep",
+    "Village": "PASS: spawn overlap and native blocking sweep"
+  }
+}

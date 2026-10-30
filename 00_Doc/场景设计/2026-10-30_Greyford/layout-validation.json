@@ -1,0 +1,22 @@
+[
+  {
+    "id": "Village",
+    "connected_spawn_candidates": 1,
+    "reachable_cells": 4902,
+    "free_cells": 4902,
+    "grid_step_cm": 150.0,
+    "footprint_player_radius_cm": 35,
+    "free_area_fraction": 0.709,
+    "note": "2D occupancy connectivity only; engine collision/rendering tested separately"
+  },
+  {
+    "id": "Outskirts",
+    "connected_spawn_candidates": 5,
+    "reachable_cells": 6362,
+    "free_cells": 6362,
+    "grid_step_cm": 150.0,
+    "footprint_player_radius_cm": 45,
+    "free_area_fraction": 0.92,
+    "note": "2D occupancy connectivity only; engine collision/rendering tested separately"
+  }
+]

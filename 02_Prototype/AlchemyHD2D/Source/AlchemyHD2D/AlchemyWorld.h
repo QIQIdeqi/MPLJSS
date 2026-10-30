@@ -98,6 +98,17 @@ public:
     UPROPERTY(EditAnywhere, Category="HD2D") bool bLitSprites=false;
     UPROPERTY(EditAnywhere, Category="HD2D") bool bUprightSprites=false;
     UPROPERTY(EditAnywhere, Category="HD2D") bool bDepthOfField=false;
+    // Reuse combat in the authored Greyford map with temporary progress.
+    UPROPERTY(EditAnywhere, Category="HD2D") bool bGreyfordScene=false;
+    bool GreyfordReviewActive=false, GreyfordReviewDodge=false, GreyfordReviewOK=true;
+    int32 GreyfordWaypoint=1, GreyfordDodges=0, GreyfordPeakEnemies=0, GreyfordAttackFrames=0;
+    float GreyfordReviewTime=0, GreyfordSegmentTime=0, GreyfordMinHP=120;
+    TArray<FVector> GreyfordRoute, GreyfordPath;
+    FString GreyfordReviewCSV;
+    void BuildGreyfordScene();
+    void StartGreyfordReview();
+    FVector UpdateGreyfordReview(float Delta,FVector ManualDirection);
+    void FinishGreyfordReview();
     UPROPERTY(EditAnywhere, Category="Tuning") bool bTune001B=true;
     UPROPERTY(EditAnywhere, Category="Tuning") bool bDrop001=true;
     bool bCombat=false, bBossSpawned=false, bSmoke=false, bRunEnded=false, bWon=false, bCapture=false;
