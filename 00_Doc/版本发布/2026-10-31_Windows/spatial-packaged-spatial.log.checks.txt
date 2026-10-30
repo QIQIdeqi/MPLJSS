@@ -1,0 +1,167 @@
+[2026.10.30-16.28.59:857][  1]LogTemp: Display: SPATIAL_CASE plaza_spawn expected=1 actual=1 PASS
+[2026.10.30-16.28.59:857][  1]LogTemp: Display: SPATIAL_PATH plaza_spawn PASS
+[2026.10.30-16.28.59:857][  1]LogTemp: Display: SPATIAL_CASE well_back expected=1 actual=1 PASS
+[2026.10.30-16.28.59:915][  1]LogTemp: Display: SPATIAL_PATH well_back PASS
+[2026.10.30-16.28.59:915][  1]LogTemp: Display: SPATIAL_CASE well_front expected=1 actual=1 PASS
+[2026.10.30-16.28.59:917][  1]LogTemp: Display: SPATIAL_PATH well_front PASS
+[2026.10.30-16.28.59:917][  1]LogTemp: Display: SPATIAL_CASE well_left expected=1 actual=1 PASS
+[2026.10.30-16.28.59:920][  1]LogTemp: Display: SPATIAL_PATH well_left PASS
+[2026.10.30-16.28.59:920][  1]LogTemp: Display: SPATIAL_CASE well_right expected=1 actual=1 PASS
+[2026.10.30-16.28.59:922][  1]LogTemp: Display: SPATIAL_PATH well_right PASS
+[2026.10.30-16.28.59:922][  1]LogTemp: Display: SPATIAL_CASE well_body expected=0 actual=0 PASS
+[2026.10.30-16.28.59:922][  1]LogTemp: Display: SPATIAL_CASE well_back_rim expected=0 actual=0 PASS
+[2026.10.30-16.28.59:922][  1]LogTemp: Display: SPATIAL_CASE well_roof_back expected=1 actual=1 PASS
+[2026.10.30-16.29.00:074][  1]LogTemp: Display: SPATIAL_PATH well_roof_back PASS
+[2026.10.30-16.29.00:076][  1]LogTemp: Display: SPATIAL_CASE left_box_back expected=1 actual=1 PASS
+[2026.10.30-16.29.00:254][  1]LogTemp: Display: SPATIAL_PATH left_box_back PASS
+[2026.10.30-16.29.00:255][  1]LogTemp: Display: SPATIAL_CASE left_box_front expected=1 actual=1 PASS
+[2026.10.30-16.29.00:257][  1]LogTemp: Display: SPATIAL_PATH left_box_front PASS
+[2026.10.30-16.29.00:257][  1]LogTemp: Display: SPATIAL_CASE left_box_body expected=0 actual=0 PASS
+[2026.10.30-16.29.00:257][  1]LogTemp: Display: SPATIAL_CASE front_crate expected=0 actual=0 PASS
+[2026.10.30-16.29.00:257][  1]LogTemp: Display: SPATIAL_CASE front_crate_front expected=1 actual=1 PASS
+[2026.10.30-16.29.00:259][  1]LogTemp: Display: SPATIAL_PATH front_crate_front PASS
+[2026.10.30-16.29.00:259][  1]LogTemp: Display: SPATIAL_CASE right_box_back expected=1 actual=1 PASS
+[2026.10.30-16.29.00:408][  1]LogTemp: Display: SPATIAL_PATH right_box_back PASS
+[2026.10.30-16.29.00:408][  1]LogTemp: Display: SPATIAL_CASE right_box_front expected=1 actual=1 PASS
+[2026.10.30-16.29.00:410][  1]LogTemp: Display: SPATIAL_PATH right_box_front PASS
+[2026.10.30-16.29.00:410][  1]LogTemp: Display: SPATIAL_CASE right_box_body expected=0 actual=0 PASS
+[2026.10.30-16.29.00:410][  1]LogTemp: Display: SPATIAL_CASE bench_back expected=1 actual=1 PASS
+[2026.10.30-16.29.00:490][  1]LogTemp: Display: SPATIAL_PATH bench_back PASS
+[2026.10.30-16.29.00:490][  1]LogTemp: Display: SPATIAL_CASE bench_front expected=1 actual=1 PASS
+[2026.10.30-16.29.00:573][  1]LogTemp: Display: SPATIAL_PATH bench_front PASS
+[2026.10.30-16.29.00:573][  1]LogTemp: Display: SPATIAL_CASE bench_west expected=1 actual=1 PASS
+[2026.10.30-16.29.00:573][  1]LogTemp: Display: SPATIAL_PATH bench_west PASS
+[2026.10.30-16.29.00:574][  1]LogTemp: Display: SPATIAL_CASE bench_body expected=0 actual=0 PASS
+[2026.10.30-16.29.00:574][  1]LogTemp: Display: SPATIAL_CASE plaza_lamp expected=0 actual=0 PASS
+[2026.10.30-16.29.00:574][  1]LogTemp: Display: SPATIAL_CASE signpost expected=0 actual=0 PASS
+[2026.10.30-16.29.00:574][  1]LogTemp: Display: SPATIAL_CASE cottage_door expected=1 actual=1 PASS
+[2026.10.30-16.29.00:813][  1]LogTemp: Display: SPATIAL_PATH cottage_door PASS
+[2026.10.30-16.29.00:813][  1]LogTemp: Display: SPATIAL_CASE cottage_steps expected=1 actual=1 PASS
+[2026.10.30-16.29.01:069][  1]LogTemp: Display: SPATIAL_PATH cottage_steps PASS
+[2026.10.30-16.29.01:069][  1]LogTemp: Display: SPATIAL_CASE cottage_west expected=1 actual=1 PASS
+[2026.10.30-16.29.01:281][  1]LogTemp: Display: SPATIAL_PATH cottage_west PASS
+[2026.10.30-16.29.01:281][  1]LogTemp: Display: SPATIAL_CASE cottage_potion_table expected=0 actual=0 PASS
+[2026.10.30-16.29.01:281][  1]LogTemp: Display: SPATIAL_CASE cottage_barrels expected=0 actual=0 PASS
+[2026.10.30-16.29.01:281][  1]LogTemp: Display: SPATIAL_CASE cottage_front_box expected=0 actual=0 PASS
+[2026.10.30-16.29.01:281][  1]LogTemp: Display: SPATIAL_CASE cottage_box_front expected=1 actual=1 PASS
+[2026.10.30-16.29.01:508][  1]LogTemp: Display: SPATIAL_PATH cottage_box_front PASS
+[2026.10.30-16.29.01:508][  1]LogTemp: Display: SPATIAL_CASE cottage_east_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.01:508][  1]LogTemp: Display: SPATIAL_CASE cottage_garden_lane expected=0 actual=0 PASS
+[2026.10.30-16.29.01:508][  1]LogTemp: Display: SPATIAL_CASE cottage_fence_front expected=1 actual=1 PASS
+[2026.10.30-16.29.01:692][  1]LogTemp: Display: SPATIAL_PATH cottage_fence_front PASS
+[2026.10.30-16.29.01:692][  1]LogTemp: Display: SPATIAL_CASE cottage_fence_corner expected=0 actual=0 PASS
+[2026.10.30-16.29.01:692][  1]LogTemp: Display: SPATIAL_CASE north_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.01:970][  1]LogTemp: Display: SPATIAL_PATH north_lane PASS
+[2026.10.30-16.29.01:970][  1]LogTemp: Display: SPATIAL_CASE north_lane_gate expected=1 actual=1 PASS
+[2026.10.30-16.29.02:150][  1]LogTemp: Display: SPATIAL_PATH north_lane_gate PASS
+[2026.10.30-16.29.02:150][  1]LogTemp: Display: SPATIAL_CASE north_lane_south expected=1 actual=1 PASS
+[2026.10.30-16.29.02:333][  1]LogTemp: Display: SPATIAL_PATH north_lane_south PASS
+[2026.10.30-16.29.02:333][  1]LogTemp: Display: SPATIAL_CASE barn_yard_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.02:333][  1]LogTemp: Display: SPATIAL_CASE barn_bag_stand expected=0 actual=0 PASS
+[2026.10.30-16.29.02:333][  1]LogTemp: Display: SPATIAL_CASE barn_crate expected=0 actual=0 PASS
+[2026.10.30-16.29.02:333][  1]LogTemp: Display: SPATIAL_CASE barn_crate_front expected=1 actual=1 PASS
+[2026.10.30-16.29.02:481][  1]LogTemp: Display: SPATIAL_PATH barn_crate_front PASS
+[2026.10.30-16.29.02:482][  1]LogTemp: Display: SPATIAL_CASE barn_front expected=1 actual=1 PASS
+[2026.10.30-16.29.02:568][  1]LogTemp: Display: SPATIAL_PATH barn_front PASS
+[2026.10.30-16.29.02:568][  1]LogTemp: Display: SPATIAL_CASE barn_cart expected=0 actual=0 PASS
+[2026.10.30-16.29.02:568][  1]LogTemp: Display: SPATIAL_CASE barn_cart_back expected=0 actual=0 PASS
+[2026.10.30-16.29.02:568][  1]LogTemp: Display: SPATIAL_CASE barn_cart_front expected=1 actual=1 PASS
+[2026.10.30-16.29.02:571][  1]LogTemp: Display: SPATIAL_PATH barn_cart_front PASS
+[2026.10.30-16.29.02:571][  1]LogTemp: Display: SPATIAL_CASE barn_barrel expected=0 actual=0 PASS
+[2026.10.30-16.29.02:571][  1]LogTemp: Display: SPATIAL_CASE workshop_west expected=0 actual=0 PASS
+[2026.10.30-16.29.02:571][  1]LogTemp: Display: SPATIAL_CASE workshop_lumber expected=0 actual=0 PASS
+[2026.10.30-16.29.02:571][  1]LogTemp: Display: SPATIAL_CASE workshop_apron expected=1 actual=1 PASS
+[2026.10.30-16.29.02:720][  1]LogTemp: Display: SPATIAL_PATH workshop_apron PASS
+[2026.10.30-16.29.02:720][  1]LogTemp: Display: SPATIAL_CASE workshop_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.02:720][  1]LogTemp: Display: SPATIAL_CASE workshop_east expected=1 actual=1 PASS
+[2026.10.30-16.29.02:870][  1]LogTemp: Display: SPATIAL_PATH workshop_east PASS
+[2026.10.30-16.29.02:870][  1]LogTemp: Display: SPATIAL_CASE gate_west_stone expected=0 actual=0 PASS
+[2026.10.30-16.29.02:870][  1]LogTemp: Display: SPATIAL_CASE gate_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.03:076][  1]LogTemp: Display: SPATIAL_PATH gate_lane PASS
+[2026.10.30-16.29.03:076][  1]LogTemp: Display: SPATIAL_CASE gate_portal expected=1 actual=1 PASS
+[2026.10.30-16.29.03:264][  1]LogTemp: Display: SPATIAL_PATH gate_portal PASS
+[2026.10.30-16.29.03:264][  1]LogTemp: Display: SPATIAL_CASE gate_east_stone expected=0 actual=0 PASS
+[2026.10.30-16.29.03:264][  1]LogTemp: Display: SPATIAL_CASE gate_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.03:264][  1]LogTemp: Display: SPATIAL_CASE east_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.03:464][  1]LogTemp: Display: SPATIAL_PATH east_lane PASS
+[2026.10.30-16.29.03:464][  1]LogTemp: Display: SPATIAL_CASE bridge_east_entry expected=1 actual=1 PASS
+[2026.10.30-16.29.03:635][  1]LogTemp: Display: SPATIAL_PATH bridge_east_entry PASS
+[2026.10.30-16.29.03:635][  1]LogTemp: Display: SPATIAL_CASE bridge_east_post expected=0 actual=0 PASS
+[2026.10.30-16.29.03:635][  1]LogTemp: Display: SPATIAL_CASE bridge_east_deck expected=1 actual=1 PASS
+[2026.10.30-16.29.03:752][  1]LogTemp: Display: SPATIAL_PATH bridge_east_deck PASS
+[2026.10.30-16.29.03:752][  1]LogTemp: Display: SPATIAL_CASE bridge_mid_east expected=1 actual=1 PASS
+[2026.10.30-16.29.03:867][  1]LogTemp: Display: SPATIAL_PATH bridge_mid_east PASS
+[2026.10.30-16.29.03:867][  1]LogTemp: Display: SPATIAL_CASE bridge_middle expected=1 actual=1 PASS
+[2026.10.30-16.29.03:979][  1]LogTemp: Display: SPATIAL_PATH bridge_middle PASS
+[2026.10.30-16.29.03:979][  1]LogTemp: Display: SPATIAL_CASE bridge_mid_west expected=1 actual=1 PASS
+[2026.10.30-16.29.04:115][  1]LogTemp: Display: SPATIAL_PATH bridge_mid_west PASS
+[2026.10.30-16.29.04:115][  1]LogTemp: Display: SPATIAL_CASE bridge_west_deck expected=1 actual=1 PASS
+[2026.10.30-16.29.04:339][  1]LogTemp: Display: SPATIAL_PATH bridge_west_deck PASS
+[2026.10.30-16.29.04:339][  1]LogTemp: Display: SPATIAL_CASE bridge_west_entry expected=1 actual=1 PASS
+[2026.10.30-16.29.04:474][  1]LogTemp: Display: SPATIAL_PATH bridge_west_entry PASS
+[2026.10.30-16.29.04:474][  1]LogTemp: Display: SPATIAL_CASE bridge_back_rail expected=0 actual=0 PASS
+[2026.10.30-16.29.04:474][  1]LogTemp: Display: SPATIAL_CASE bridge_front_rail expected=0 actual=0 PASS
+[2026.10.30-16.29.04:474][  1]LogTemp: Display: SPATIAL_CASE bridge_river expected=0 actual=0 PASS
+[2026.10.30-16.29.04:474][  1]LogTemp: Display: SPATIAL_CASE farm_west expected=1 actual=1 PASS
+[2026.10.30-16.29.04:608][  1]LogTemp: Display: SPATIAL_PATH farm_west PASS
+[2026.10.30-16.29.04:608][  1]LogTemp: Display: SPATIAL_CASE farm_north_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.04:608][  1]LogTemp: Display: SPATIAL_CASE farm_sign expected=0 actual=0 PASS
+[2026.10.30-16.29.04:608][  1]LogTemp: Display: SPATIAL_CASE farm_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.04:730][  1]LogTemp: Display: SPATIAL_PATH farm_lane PASS
+[2026.10.30-16.29.04:731][  1]LogTemp: Display: SPATIAL_CASE farm_barrel expected=0 actual=0 PASS
+[2026.10.30-16.29.04:731][  1]LogTemp: Display: SPATIAL_CASE farm_south_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.04:881][  1]LogTemp: Display: SPATIAL_PATH farm_south_lane PASS
+[2026.10.30-16.29.04:882][  1]LogTemp: Display: SPATIAL_CASE farm_stonewall expected=0 actual=0 PASS
+[2026.10.30-16.29.04:882][  1]LogTemp: Display: SPATIAL_CASE farm_rune expected=0 actual=0 PASS
+[2026.10.30-16.29.04:882][  1]LogTemp: Display: SPATIAL_CASE farm_lower_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.05:026][  1]LogTemp: Display: SPATIAL_PATH farm_lower_lane PASS
+[2026.10.30-16.29.05:026][  1]LogTemp: Display: SPATIAL_CASE farm_bottom_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.05:155][  1]LogTemp: Display: SPATIAL_PATH farm_bottom_lane PASS
+[2026.10.30-16.29.05:155][  1]LogTemp: Display: SPATIAL_CASE farm_crop expected=0 actual=0 PASS
+[2026.10.30-16.29.05:155][  1]LogTemp: Display: SPATIAL_CASE north_river_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.05:155][  1]LogTemp: Display: SPATIAL_CASE north_river_tree expected=0 actual=0 PASS
+[2026.10.30-16.29.05:155][  1]LogTemp: Display: SPATIAL_CASE river_bank_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.05:270][  1]LogTemp: Display: SPATIAL_PATH river_bank_lane PASS
+[2026.10.30-16.29.05:270][  1]LogTemp: Display: SPATIAL_CASE south_bridge_tree expected=0 actual=0 PASS
+[2026.10.30-16.29.05:270][  1]LogTemp: Display: SPATIAL_CASE south_bridge_wall expected=0 actual=0 PASS
+[2026.10.30-16.29.05:270][  1]LogTemp: Display: SPATIAL_CASE bridge_tree_back expected=1 actual=1 PASS
+[2026.10.30-16.29.05:271][  1]LogTemp: Display: SPATIAL_PATH bridge_tree_back PASS
+[2026.10.30-16.29.05:271][  1]LogTemp: Display: SPATIAL_CASE creek_house expected=0 actual=0 PASS
+[2026.10.30-16.29.05:271][  1]LogTemp: Display: SPATIAL_CASE creek_house_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.05:271][  1]LogTemp: Display: SPATIAL_CASE creek_house_lantern expected=0 actual=0 PASS
+[2026.10.30-16.29.05:271][  1]LogTemp: Display: SPATIAL_CASE east_tree expected=0 actual=0 PASS
+[2026.10.30-16.29.05:271][  1]LogTemp: Display: SPATIAL_CASE east_tree_left_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.05:301][  1]LogTemp: Display: SPATIAL_PATH east_tree_left_lane PASS
+[2026.10.30-16.29.05:301][  1]LogTemp: Display: SPATIAL_CASE east_tree_front_lane expected=1 actual=1 PASS
+[2026.10.30-16.29.05:373][  1]LogTemp: Display: SPATIAL_PATH east_tree_front_lane PASS
+[2026.10.30-16.29.05:374][  1]LogTemp: Display: SPATIAL_CASE east_tree_crate expected=0 actual=0 PASS
+[2026.10.30-16.29.05:374][  1]LogTemp: Display: SPATIAL_CASE east_house_fence expected=0 actual=0 PASS
+[2026.10.30-16.29.05:374][  1]LogTemp: Display: SPATIAL_CASE east_house_porch expected=0 actual=0 PASS
+[2026.10.30-16.29.05:374][  1]LogTemp: Display: SPATIAL_CASE south_lane_upper expected=1 actual=1 PASS
+[2026.10.30-16.29.05:379][  1]LogTemp: Display: SPATIAL_PATH south_lane_upper PASS
+[2026.10.30-16.29.05:379][  1]LogTemp: Display: SPATIAL_CASE south_lantern expected=0 actual=0 PASS
+[2026.10.30-16.29.05:379][  1]LogTemp: Display: SPATIAL_CASE south_lane_mid expected=1 actual=1 PASS
+[2026.10.30-16.29.05:386][  1]LogTemp: Display: SPATIAL_PATH south_lane_mid PASS
+[2026.10.30-16.29.05:386][  1]LogTemp: Display: SPATIAL_CASE south_lane_planter expected=0 actual=0 PASS
+[2026.10.30-16.29.05:386][  1]LogTemp: Display: SPATIAL_CASE south_lane_low expected=1 actual=1 PASS
+[2026.10.30-16.29.05:485][  1]LogTemp: Display: SPATIAL_PATH south_lane_low PASS
+[2026.10.30-16.29.05:485][  1]LogTemp: Display: SPATIAL_CASE south_exit expected=1 actual=1 PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_PATH south_exit PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_CASE lower_house_barrel expected=0 actual=0 PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_CASE lower_house_door expected=0 actual=0 PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_CASE lower_house_wall expected=0 actual=0 PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_CASE mill_building expected=0 actual=0 PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_CASE northwest_stream expected=0 actual=0 PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_CASE southeast_stream expected=0 actual=0 PASS
+[2026.10.30-16.29.05:491][  1]LogTemp: Display: SPATIAL_CASE cottage_garden_front expected=1 actual=1 PASS
+[2026.10.30-16.29.05:570][  1]LogTemp: Display: SPATIAL_PATH cottage_garden_front PASS
+[2026.10.30-16.29.05:570][  1]LogTemp: Display: SPATIAL_CASE workshop_clear_apron expected=1 actual=1 PASS
+[2026.10.30-16.29.05:619][  1]LogTemp: Display: SPATIAL_PATH workshop_clear_apron PASS
+[2026.10.30-16.29.05:619][  1]LogTemp: Display: SPATIAL_CASE east_house_front expected=1 actual=1 PASS
+[2026.10.30-16.29.05:724][  1]LogTemp: Display: SPATIAL_PATH east_house_front PASS
+[2026.10.30-16.29.05:724][  1]LogTemp: Display: SPATIAL_CASE bridge_north_edge expected=1 actual=1 PASS
+[2026.10.30-16.29.05:874][  1]LogTemp: Display: SPATIAL_PATH bridge_north_edge PASS
+[2026.10.30-16.29.05:874][  1]LogTemp: Display: SPATIAL_CASE bridge_south_edge expected=1 actual=1 PASS
+[2026.10.30-16.29.06:030][  1]LogTemp: Display: SPATIAL_PATH bridge_south_edge PASS
+[2026.10.30-16.29.06:030][  1]LogTemp: Display: SPATIAL_CASE east_house_garden expected=0 actual=0 PASS
+[2026.10.30-16.29.56:728][840]LogTemp: Display: GREYFORD_SPATIAL_PASS

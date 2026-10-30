@@ -1,0 +1,43 @@
+[2026.10.30-16.30.02:365][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_character PASS
+[2026.10.30-16.30.02:545][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK facility_0_reachable PASS
+[2026.10.30-16.30.02:614][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK facility_1_reachable PASS
+[2026.10.30-16.30.02:725][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK facility_2_reachable PASS
+[2026.10.30-16.30.02:834][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_0 PASS
+[2026.10.30-16.30.02:891][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_1 PASS
+[2026.10.30-16.30.02:997][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_2 PASS
+[2026.10.30-16.30.03:058][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_3 PASS
+[2026.10.30-16.30.03:150][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_4 PASS
+[2026.10.30-16.30.03:228][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_5 PASS
+[2026.10.30-16.30.03:229][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_6 PASS
+[2026.10.30-16.30.03:229][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_7 PASS
+[2026.10.30-16.30.03:274][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_8 PASS
+[2026.10.30-16.30.03:397][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_9 PASS
+[2026.10.30-16.30.03:508][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_10 PASS
+[2026.10.30-16.30.03:602][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_11 PASS
+[2026.10.30-16.30.03:683][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_12 PASS
+[2026.10.30-16.30.03:756][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_13 PASS
+[2026.10.30-16.30.03:756][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_14 PASS
+[2026.10.30-16.30.03:809][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK village_route_15 PASS
+[2026.10.30-16.30.03:809][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK reference_regions_and_routes PASS
+[2026.10.30-16.30.03:809][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK river_house_blocked_bridge_open PASS
+[2026.10.30-16.30.07:077][ 61]LogTemp: Display: GREYFORD_FLOW_CHECK reference_paths_use_production_move PASS
+[2026.10.30-16.30.07:850][122]LogTemp: Display: GREYFORD_FLOW_CHECK bridge_walkable_surface PASS
+[2026.10.30-16.30.08:741][305]LogTemp: Display: GREYFORD_FLOW_CHECK village_to_field PASS
+[2026.10.30-16.30.08:741][305]LogTemp: Display: GREYFORD_FLOW_CHECK no_portal_before_300 PASS
+[2026.10.30-16.30.08:742][305]LogTemp: Display: GREYFORD_FLOW_CHECK portal_at_300_clearance PASS
+[2026.10.30-16.30.09:137][366]LogTemp: Display: GREYFORD_FLOW_CHECK portal_can_cancel_without_transition PASS
+[2026.10.30-16.30.09:424][427]LogTemp: Display: GREYFORD_FLOW_CHECK portal_confirmation_pauses_timer PASS
+[2026.10.30-16.30.09:432][427]LogTemp: Display: GREYFORD_FLOW_CHECK boss_preserves_hp_skills_cooldowns_capped_materials PASS
+[2026.10.30-16.30.09:432][427]LogTemp: Display: GREYFORD_FLOW_CHECK boss_ellipse_clear_arena PASS
+[2026.10.30-16.30.09:432][427]LogTemp: Display: GREYFORD_FLOW_CHECK boss_cannot_retreat PASS
+[2026.10.30-16.30.09:748][488]LogTemp: Display: GREYFORD_FLOW_CHECK preparation_boss_waits_without_attacks PASS
+[2026.10.30-16.30.09:991][549]LogTemp: Display: GREYFORD_FLOW_CHECK boss_skills_pause_battle_and_preparation PASS
+[2026.10.30-16.30.10:256][610]LogTemp: Display: GREYFORD_FLOW_CHECK boss_alchemy_pause_battle_and_preparation PASS
+[2026.10.30-16.30.10:915][731]LogTemp: Display: GREYFORD_FLOW_CHECK preparation_resumes_and_starts_combat PASS
+[2026.10.30-16.30.11:171][792]LogTemp: Display: GREYFORD_FLOW_CHECK boss_death_settles_once PASS
+[2026.10.30-16.30.11:172][792]LogTemp: Display: GREYFORD_FLOW_CHECK no_double_settlement PASS
+[2026.10.30-16.30.11:483][853]LogTemp: Display: GREYFORD_FLOW_CHECK victory_returns_village PASS
+[2026.10.30-16.30.11:790][914]LogTemp: Display: GREYFORD_FLOW_CHECK second_run_starts PASS
+[2026.10.30-16.30.11:790][914]LogTemp: Display: GREYFORD_FLOW_CHECK player_death_result PASS
+[2026.10.30-16.30.12:006][975]LogTemp: Display: GREYFORD_FLOW_CHECK defeat_returns_village PASS
+[2026.10.30-16.30.12:214][ 36]LogTemp: Display: GREYFORD_FLOW_PASS

@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-31",
+  "source_commit": "2826752afbdd6f38f8f70182129dfbd9e1c6b141",
+  "configuration": "Development Win64",
+  "engine": "UE5.8.4",
+  "entry_map": "/Game/Greyford/Maps/Greyford_Flow",
+  "tests": {
+    "spatial": {
+      "result": "PASS",
+      "marker": "GREYFORD_SPATIAL_PASS",
+      "check_count": 111
+    },
+    "flow_1280x720": {
+      "result": "PASS",
+      "marker": "GREYFORD_FLOW_PASS",
+      "check_count": 42
+    },
+    "flow_1024x768": {
+      "result": "PASS",
+      "marker": "GREYFORD_FLOW_PASS",
+      "check_count": 42
+    },
+    "smoke": {
+      "result": "PASS",
+      "marker": "ALCHEMY_SMOKE_PASS",
+      "check_count": 0
+    },
+    "boss_rules": {
+      "result": "PASS",
+      "marker": "PLANNED_BOSS_PASS",
+      "check_count": 28
+    },
+    "boss_visual": {
+      "result": "PASS",
+      "marker": "PLANNED_BOSS_CAPTURE_PASS",
+      "check_count": 0
+    }
+  },
+  "asset_validation": "295 assets; exit0; 0 errors,0 warnings",
+  "uat": "BUILD SUCCESSFUL, ExitCode=0",
+  "limits": [
+    "Automated accelerated state checks, not human balance or performance acceptance",
+    "Audio resource load checked; tests used nosound, no listening acceptance",
+    "Boss remaining-projectile fade 0.15s is an unconfirmed test default"
+  ],
+  "archive": "03_Build/冒牌炼金术士_最新试玩_Win64_2026-10-31.zip",
+  "archive_bytes": 319960716,
+  "archive_sha256": "0f6b1a510900a706542d5968fc9d420042bf49f6a8677508438e0c54715c0980",
+  "archive_crc": "PASS",
+  "files": 47,
+  "tested_binary_and_paks_match_zip": true,
+  "key_files_sha256": {
+    "Windows/AlchemyHD2D.exe": "e34fbdab66fd569885476fa5154c8c203ec0aa124acaf6e9b68beb6a9eaf04ab",
+    "Windows/AlchemyHD2D/Content/Paks/AlchemyHD2D-Windows.pak": "d86514456ffc86ac71d5a0543ca322c0b97ab3e386f9d4f7fe57224fc3c76825",
+    "Windows/AlchemyHD2D/Content/Paks/AlchemyHD2D-Windows.ucas": "daee03dfec9af3633bb4d3ea8371d19b1fb0fc033a1bde1b1d95021ba8c1e0d2",
+    "Windows/AlchemyHD2D/Content/Paks/AlchemyHD2D-Windows.utoc": "2199a9181c1aeed950dea1695437216edebb8a25ff3f711007396360d21a7464",
+    "Windows/AlchemyHD2D/Content/Paks/global.ucas": "ce56cc94e9a24c232d5f23ee2afef28c375909b3fbe8c52aec69282b31aaf45e",
+    "Windows/AlchemyHD2D/Content/Paks/global.utoc": "81e218d70650b1009904fdc93e6a185483d7c751c1332da27a22922342c700ca",
+    "Windows/AlchemyHD2D/Binaries/Win64/AlchemyHD2D.exe": "8daf7e85d7605689ac3778f98c1261974bd5ee2cfda5028e35cf4afbf168b055"
+  },
+  "user_facing_bootstrap": "PASS: Windows/AlchemyHD2D.exe launched packaged PlannedBossTest, exit0 and PLANNED_BOSS_PASS"
+}

@@ -1,0 +1,7 @@
+grid_points=24662
+walkable=3396
+movement_probes=27168
+swept_path_failures=0
+connected_components=1
+landmark_paths=55
+landmark_path_failures=0
