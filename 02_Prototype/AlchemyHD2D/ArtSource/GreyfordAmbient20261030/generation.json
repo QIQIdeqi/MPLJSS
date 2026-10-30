@@ -1,0 +1,15 @@
+{
+  "provider": "native ChatGPT imagegen",
+  "prompts": [
+    {
+      "key": "village_clean_motion",
+      "transparent_background": false,
+      "prompt": "Use case: precise-object-edit. Edit the supplied 1672x941 village image as an exact registered clean plate for a 2.5D game. CRITICAL: preserve the full original framing, aspect ratio, camera projection, architecture, foliage, objects, lighting, palette, every landmark location and scale. Do NOT redraw, zoom, crop or rearrange the village. Remove ONLY these items and plausibly reconstruct their small local backgrounds: all eight small human villagers and their shadows (near grain barn 950,265; NW plaza 608,377; well 755,478; bridge approach 582,515; bridge deck 338,613; farm 83,687; east gate 1448,429; southern road 1224,808; coordinates in the 1672x941 reference). Also remove the wispy chimney smoke above the cottage chimney at 435,62 and the foreground chimney at 850,790; retain the chimneys perfectly. Also remove ONLY the rotating wooden rim/spokes of the waterwheel at the extreme LEFT edge around x0..75,y460..575; preserve the mill building, bank stones, stationary axle support and water. These removals prepare separate animated overlays. Everything outside these tiny removal areas must remain as close to the original pixels as possible. No people anywhere. Keep all road, bridge and building edges aligned exactly with the reference. Return the entire landscape clean plate, not a closeup. No other additions or changes."
+    },
+    {
+      "key": "village_wheel_motion",
+      "transparent_background": true,
+      "prompt": "Use case: background-extraction / game animation asset. The supplied village image is a style and material reference. Generate ONLY a complete isolated circular medieval wooden waterwheel rotating assembly, seen perfectly straight on (NOT perspective/ellipse), centered with its axle at the exact center of the square canvas, true transparent RGBA background. Match the brown weathered wood, hand-drawn crisp pixel clusters and rim/spokes of the waterwheel at the far left of the supplied village. Complete full wheel, no cropping: sturdy double wooden rim, 10 radial spokes and small wooden paddle blocks around outer circumference, small central axle hub. Flat front-facing wheel circle so it can be rotated in engine then projected to the original elliptical side view. Do not include the mill, water, bank, people, supports, ground, drop shadow, glow, text or borders. Wheel occupies about 84 percent of square canvas with even transparent margin; all spokes and hub centered. Warm restrained colors consistent with original game scene."
+    }
+  ]
+}

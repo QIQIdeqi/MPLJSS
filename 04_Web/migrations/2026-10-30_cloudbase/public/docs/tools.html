@@ -1,0 +1,83 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UE 关卡与技能编辑器 · 冒牌炼金术士</title><meta name="description" content="原生编辑工具的操作说明。"><meta name="theme-color" content="#203d30"><link rel="icon" href="/assets/FirePowder.png"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><a class="skip" href="#main">跳到正文</a><header class="wrap topbar"><a class="brand" href="/" aria-label="冒牌炼金术士首页"><span class="sigil" aria-hidden="true">✧</span><span>冒牌炼金术士<small>THE IMPOSTOR ALCHEMIST</small></span></a><nav class="nav" aria-label="主导航"><a href="/#play">游戏玩法</a><a href="/#world">游戏影像</a><a href="/#download">下载试玩</a><a class="nav-docs" href="/docs/scene.html">策划档案 ↗</a></nav></header><main id="main" class="wrap"><div class="docs-banner"><span class="kicker">THE DESIGN ARCHIVE / 策划资料区</span><h1>让每一次决定，都有迹可循。</h1><p>阅读快照：2026-10-30 16:57（北京时间） · 原文中的已确认、历史提案与待验证状态均保留。</p></div><div class="docs-layout"><aside class="docs-sidebar"><label class="search-label" for="doc-search">检索全部策划与记录</label><input id="doc-search" class="search" type="search" placeholder="搜索 Boss、概率、场景…" autocomplete="off"><nav class="doc-nav" aria-label="策划分类"><span class="group">核心策划 / DESIGN</span><a href="/docs/scene.html">1.2 场景</a><a href="/docs/level.html">1.4 关卡</a><a href="/docs/system.html">1.5 系统</a><a href="/docs/balance.html">1.6 数值</a><span class="group">场景正文 / WORLD</span><a href="/docs/village.html">格雷弗德边境村庄</a><a href="/docs/outskirts.html">村庄外围（第一关）</a><span class="group">记录与工具 / RECORDS</span><a href="/docs/level-record.html">关卡持续确认记录</a><a href="/docs/system-record.html">系统持续设计记录</a><a href="/docs/balance-record.html">数值持续设计记录</a><a href="/docs/boss.html">雾界草甸 · Boss 场地</a><a class="active" aria-current="page" href="/docs/tools.html">UE 关卡与技能编辑器</a><a href="/docs/boss-proposal.html">Boss 场地历史提案</a></nav><p class="source-note">正文维护于 Git。此处为发布时的阅读快照，不自动写回仓库。<br>角色、怪物与原文案继续在 wolai 维护。文档记录的实现状态以各次核验时点为准。</p></aside><section class="doc-content"><div id="search-results" class="results" aria-live="polite" hidden></div><div class="doc-top"><span>UE 关卡与技能编辑器 · 阅读快照</span><a href="https://github.com/QIQIdeqi/MPLJSS/blob/main/00_Doc/%E5%B7%A5%E5%85%B7/UE%E5%85%B3%E5%8D%A1%E4%B8%8E%E6%8A%80%E8%83%BD%E7%BC%96%E8%BE%91%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md">在 GitHub 查看 / 编辑正文 ↗</a></div><article class="prose"><h1 id="ue">UE关卡与技能编辑器</h1>
+<p>适用当前UE5.8.4工程 <code>02_Prototype/AlchemyHD2D</code>。这是引擎编辑模式工具；Windows试玩包用于运行游戏，编辑工作使用完整UE工程。当前默认地图、技能表已放入工程，无需先手工搭建。</p>
+<h2 id="_1">第一次打开</h2>
+<ol>
+<li>双击工程目录中的 <code>打开关卡与技能编辑器.cmd</code>。它先编译编辑器模块，再打开Research地图并选中工具Actor。</li>
+<li>若自动查找不到引擎，在PowerShell执行 <code>Tools/OpenDesigner.ps1 -EngineRoot '你的UE5.8目录'</code>，或设置 <code>UE_ENGINE_ROOT</code>。支持本机D盘、已知F盘安装与UE5.8注册路径；需要UE和C++编译环境。</li>
+<li>世界大纲搜索 <code>Alchemy_Level_Designer</code>，选中它，在右侧Details使用“关卡工具”“技能工具”按钮。</li>
+<li>编辑前停止Play；改完保存，再按Play试玩。工具不会在修改参数时擅自随机重做关卡。</li>
+</ol>
+<h2 id="_2">关卡：生成后直接微调</h2>
+<p>默认24列×18行、每格600cm、Seed=77，共432个地面格；另有8个独立可编辑碰撞块，保留原Layout A的碰撞布局。</p>
+<ol>
+<li><strong>读取全部图片素材</strong>：把 <code>/Game/Art</code> 中所有贴图加入Palette，保留已有条目的设置。新图片先拖入该内容目录，再点击此按钮。</li>
+<li>展开Palette，按Name找到素材。<code>RandomWeight&gt;0</code> 才参与随机；默认Grass/Dirt/Stone权重75/20/5，其他角色、道具、建筑等图片为0，可手工使用。</li>
+<li>点击 <strong>一键随机生成</strong>：每次自动换一个与上次不同的新Seed，保留已锁格的位置与外观，重建其他格子。喜欢某次结果时记下Seed；想复现时填回该数值，点击 <strong>按当前Seed重新生成（复现布局）</strong>。相同Seed、行列、尺寸、笔刷权重及锁格状态会复现相同布局。</li>
+<li>在视口选中一个格子，或在世界大纲的 <code>Alchemy/EditableCells</code> 中按坐标查找。可直接移动、旋转、缩放；勾选 <code>Lock Random</code> 后，再次随机不会覆盖它。</li>
+<li>单格外观改 <code>Texture</code>、<code>Material Override</code>、<code>Ground</code>、<code>Visual Size</code>。<strong>自定义材质优先</strong>；想直接换图片时清空Material Override。Ground勾选为水平地格，取消为竖直图片摆件。工具提供默认透明图片材质。</li>
+<li>也可在工具Actor的“微调”中选BrushIndex，拖动PaintCursor三维手柄，再点 <strong>在光标格子应用笔刷并锁定</strong>。</li>
+<li>碰撞块位于 <code>Alchemy/EditableCollision</code>。勾选 <code>Blocks Movement</code> 并设置 <code>Collision Half Size</code>；实际运行会读取这些格子的碰撞。当前使用水平轴对齐包围盒，旋转后取外包矩形，不是贴图像素碰撞。</li>
+<li><code>Play Half Size</code> 控制以世界原点为中心的可通行半尺寸，默认7060×5330cm；它与美术格子的数量分开设置。默认出生点仍为(0,0)，修改布局时保留出生空间和可绕行路线。</li>
+<li>点击 <strong>保存当前关卡和技能表</strong> 或Ctrl+S，然后Play。编辑器的预览灯只用于编辑观察，试玩使用游戏自己的灯光。</li>
+</ol>
+<p>可以多选同类格子，批量改材质或锁定。随机生成保留手工锁格；八块默认碰撞块不属于随机地面格，不会被随机重建。图片摆件用于场景外观，怪物生成仍使用现有波次逻辑。</p>
+<h2 id="datatable">技能：原生DataTable编辑器</h2>
+<p>点击工具Actor的四个“打开”按钮，或在内容浏览器打开 <code>/Game/Design</code> 下的数据表。表格可检索行，选中一行后在行编辑器修改，支持UE原生CSV导入/导出。</p>
+<table>
+<thead>
+<tr>
+<th>表</th>
+<th>修改内容</th>
+<th>行编号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DT_Skills</td>
+<td>技能名称、伤害、冷却、搜索距离、半径、减速、施法类型、目标数、弹丸速度、Niagara、颜色、效果倍率与保留时间</td>
+<td>0–24为既有技能，可从25起连续追加</td>
+</tr>
+<tr>
+<td>DT_Recipes</td>
+<td>普通组合的三档技能结果；精英配方的六类材料数量和结果技能</td>
+<td>0–6普通，7起精英</td>
+</tr>
+<tr>
+<td>DT_Chains</td>
+<td>配对技能A/B、冷却、搜索距离、伤害、范围/目标数、减速和Niagara</td>
+<td>0–9为既有连锁，可从10起连续追加</td>
+</tr>
+<tr>
+<td>DT_Quality</td>
+<td>低/中/高权重，候选过滤后归一化显示</td>
+<td>0代表投入3个，依次至7代表投入10个</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_3">先改一个技能</h3>
+<ol>
+<li>打开DT_Skills，选行 <code>1</code>（炎弹）。<code>Damage</code>是基础伤害，<code>CD</code>单位秒，<code>Range/Radius</code>单位cm；100cm对应原案1设计单位。</li>
+<li><code>Cast</code>选择弹丸、直接命中、自身范围、目标范围或跳跃命中；<code>Targets</code>用于多目标，<code>Slow</code>为减速秒数，<code>Factor</code>为剩余移动速度倍率（0.65表示保留65%速度）。</li>
+<li><code>Hit Effect</code>选命中特效，<code>Trail Effect</code>选弹丸尾迹，<code>Cast Effect</code>用于范围施放。内置系统支持Color配色；自制Niagara系统可在自身资产中设置材质和颜色。</li>
+<li><code>Effect Scale</code>是本行Niagara整体倍率，设0关闭Niagara。<code>Cast Life/Hit Life</code>控制组件保留秒数，避免把长特效过早清掉。留空效果引用会使用原型默认效果。</li>
+<li>点击 <strong>校验技能与配方</strong>，通过后保存；重新Play观察实际伤害、施法和效果。数值表在Play开始时读取，不进行战斗中热更新。</li>
+</ol>
+<h3 id="_4">新增与配方连接</h3>
+<ol>
+<li>DT_Skills添加连续的新行，例如25，填写名称、施法方式、数值、特效。</li>
+<li>在DT_Recipes选择一个普通组合，把LowSkill/MidSkill/HighSkill中的一项改为25，即可在对应品质池获得新技能。三个结果需不同。</li>
+<li>普通组合Mask：火粉=1、露水=2、魔法碎片=4，混合相加；前七行须覆盖1–7，不能重复。投入比例不改变材料种类组合。</li>
+<li>精英行开启Elite，Costs依次为火粉、露水、魔法碎片、兽核、虚空晶、根须心，六项数量总和3–10，至少包含一种精英材料；LowSkill是固定结果。</li>
+<li>DT_Chains新增连续行，A/B填两个技能ID。装备齐全后自动按完整冷却触发；卸装暂停并保留剩余。Targets=0为目标位置范围，&gt;0为跳跃命中数。</li>
+<li>校验、保存，再Play。已有技能/配方/连锁编号关联存档，<strong>不要重排既有编号</strong>；追加行号需连续。教学三料组合继续保留范围技能，材料与同品质强度仍需策划试玩评估。</li>
+</ol>
+<p>原有CPP配置只用于首次生成默认表和历史基线检查；已经保存的数据表为运行时配置。再次运行CreateDesignTools.py只补缺失的表，不覆盖已改好的表和关卡。</p>
+<h2 id="_5">参考资料与验证</h2>
+<ul>
+<li><code>00_Doc/系统/ALCH-002_技能分配草案.md</code>：七组材料用途和21个普通技能的分配。</li>
+<li><code>00_Doc/系统/ALCH-002_规则确认与实施补充.md</code>：教学、品质、连锁冷却和存档规则。</li>
+<li><code>00_Doc/冒牌炼金术士_Demo数值策划案_V0.1.md</code>：历史基准数值；原型候选以当前表与实施补充为准。</li>
+<li>工程 <code>Docs/DesignerCSV</code> 保存四张默认表的CSV快照，后续修改后可用UE原生导出更新。</li>
+<li>编辑测试使用单独的 <code>/Game/Tests/DesignerVerification</code>，不修改Research正式关卡；最终编译、编辑器、运行包与Git验证结果见工程 <code>Docs/Verification.md</code> 和 <code>Evidence</code>。</li>
+</ul>
+<p>本轮支持场景图片/材质/碰撞与已有施法框架内的技能配置。数值有效不等于平衡合理，地图可保存不等于路线体验已验收；完整流程和满场性能仍需试玩测量。</p></article><div class="doc-top" style="margin-top:35px;margin-bottom:0;border-top:1px solid var(--line);border-bottom:0;padding-top:20px"><span>更新原文后，重新生成并发布网站以刷新快照。</span><a href="/docs/tools.md" download>下载 Markdown ↓</a></div></section></div></main><footer class="wrap"><span>✧ 冒牌炼金术士 · 一个仍在生长的炼金世界</span><span>开发中原型 · 2026 <a href="https://github.com/QIQIdeqi/MPLJSS">项目 GitHub ↗</a></span></footer></body></html>

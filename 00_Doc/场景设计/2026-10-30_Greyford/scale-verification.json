@@ -1,0 +1,1643 @@
+{
+  "date": "2026-10-30T18:28:57",
+  "status": "PASS",
+  "package": "D:\\06_独立游戏\\00_冒牌炼金术士\\03_Build\\冒牌炼金术士_比例调整_Win64_2026-10-30.zip",
+  "bytes": 304805006,
+  "entries": 43,
+  "crc": "PASS",
+  "sha256": "72dea6c289b46d2410a2ce256d54dba7953e3074086682837fbc8837aaa19cc5",
+  "checks": {
+    "source": [
+      "village_character",
+      "facility_0_reachable",
+      "facility_1_reachable",
+      "facility_2_reachable",
+      "bridge_surface_height",
+      "village_to_field",
+      "no_portal_before_300",
+      "portal_at_300_clearance",
+      "portal_can_cancel_without_transition",
+      "portal_confirmation_pauses_timer",
+      "boss_preserves_hp_skills_cooldowns_capped_materials",
+      "boss_ellipse_clear_arena",
+      "boss_cannot_retreat",
+      "preparation_boss_waits_without_attacks",
+      "boss_skills_pause_battle_and_preparation",
+      "boss_alchemy_pause_battle_and_preparation",
+      "preparation_resumes_and_starts_combat",
+      "boss_death_settles_once",
+      "no_double_settlement",
+      "victory_returns_village",
+      "second_run_starts",
+      "player_death_result",
+      "defeat_returns_village"
+    ],
+    "packaged": [
+      "village_character",
+      "facility_0_reachable",
+      "facility_1_reachable",
+      "facility_2_reachable",
+      "bridge_surface_height",
+      "village_to_field",
+      "no_portal_before_300",
+      "portal_at_300_clearance",
+      "portal_can_cancel_without_transition",
+      "portal_confirmation_pauses_timer",
+      "boss_preserves_hp_skills_cooldowns_capped_materials",
+      "boss_ellipse_clear_arena",
+      "boss_cannot_retreat",
+      "preparation_boss_waits_without_attacks",
+      "boss_skills_pause_battle_and_preparation",
+      "boss_alchemy_pause_battle_and_preparation",
+      "preparation_resumes_and_starts_combat",
+      "boss_death_settles_once",
+      "no_double_settlement",
+      "victory_returns_village",
+      "second_run_starts",
+      "player_death_result",
+      "defeat_returns_village"
+    ],
+    "4x3": [
+      "village_character",
+      "facility_0_reachable",
+      "facility_1_reachable",
+      "facility_2_reachable",
+      "bridge_surface_height",
+      "village_to_field",
+      "no_portal_before_300",
+      "portal_at_300_clearance",
+      "portal_can_cancel_without_transition",
+      "portal_confirmation_pauses_timer",
+      "boss_preserves_hp_skills_cooldowns_capped_materials",
+      "boss_ellipse_clear_arena",
+      "boss_cannot_retreat",
+      "preparation_boss_waits_without_attacks",
+      "boss_skills_pause_battle_and_preparation",
+      "boss_alchemy_pause_battle_and_preparation",
+      "preparation_resumes_and_starts_combat",
+      "boss_death_settles_once",
+      "no_double_settlement",
+      "victory_returns_village",
+      "second_run_starts",
+      "player_death_result",
+      "defeat_returns_village"
+    ]
+  },
+  "combat": "result=PASS\nseconds=60.016\nprimary_segments_reached=8/8\nroute_segments_reached=13\ndodges=20\nkills=21\npeak_enemies=40\nattack_frames=2070\nminimum_hp=99.0\nfinal_hp=99.0\nwalkable_checks=1\nmethod=automated movement through production combat simulation; seeded local enemy pressure; no HP/damage cheats; no human balance acceptance\n",
+  "production_smoke": "PASS",
+  "scale": {
+    "player_canvas_cm": 220,
+    "cottage_door_approx_cm": 230,
+    "target_sizes_cm": {
+      "Cottage": [
+        1040,
+        980
+      ],
+      "House": [
+        900,
+        1000
+      ],
+      "Warehouse": [
+        1250,
+        1150
+      ],
+      "Oak": [
+        780,
+        850
+      ],
+      "Bush": [
+        180,
+        130
+      ],
+      "RuneStone": [
+        150,
+        250
+      ],
+      "Well": [
+        300,
+        330
+      ],
+      "Cart": [
+        400,
+        300
+      ],
+      "HerbRack": [
+        300,
+        260
+      ],
+      "Crates": [
+        180,
+        180
+      ]
+    },
+    "surface_texture_repeat_cm": 200,
+    "logical_cell_cm": 600,
+    "world_bounds_changed": false,
+    "maps": [
+      {
+        "map": "Village_Blockout",
+        "entries": [
+          {
+            "label": "P1_格蕾丝小屋",
+            "asset": "Cottage",
+            "before_cm": [
+              2600.0,
+              2450.0
+            ],
+            "after_cm": [
+              1040,
+              980
+            ],
+            "foot_cm": [
+              3600.0,
+              1800.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_粮仓",
+            "asset": "Warehouse",
+            "before_cm": [
+              2700.0,
+              2550.0
+            ],
+            "after_cm": [
+              1250,
+              1150
+            ],
+            "foot_cm": [
+              -3000.0,
+              1799.9999999999998,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_作坊",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -5400.0,
+              600.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_北阵石",
+            "asset": "RuneStone",
+            "before_cm": [
+              430.0,
+              700.0
+            ],
+            "after_cm": [
+              150,
+              250
+            ],
+            "foot_cm": [
+              -6150.0,
+              449.99999999999994,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_南阵石",
+            "asset": "RuneStone",
+            "before_cm": [
+              430.0,
+              700.0
+            ],
+            "after_cm": [
+              150,
+              250
+            ],
+            "foot_cm": [
+              -6150.0,
+              -1650.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_小屋旁橡树",
+            "asset": "Oak",
+            "before_cm": [
+              1600.0,
+              1750.0
+            ],
+            "after_cm": [
+              780,
+              850
+            ],
+            "foot_cm": [
+              1619.9999999999995,
+              3120.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_广场南侧橡树",
+            "asset": "Oak",
+            "before_cm": [
+              1600.0,
+              1750.0
+            ],
+            "after_cm": [
+              780,
+              850
+            ],
+            "foot_cm": [
+              -2580.0000000000005,
+              -2280.0000000000005,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_药圃旁灌木",
+            "asset": "Bush",
+            "before_cm": [
+              700.0,
+              650.0
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              5100.0,
+              990.0000000000002,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_广场东侧灌木",
+            "asset": "Bush",
+            "before_cm": [
+              700.0,
+              650.0
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -2700.0,
+              690.0000000000002,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_1_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              6000.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_4_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              4200.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_7_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              2400.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_10_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              600.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_13_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -1200.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_16_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -3000.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_19_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -4800.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_22_0",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -6600.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_1_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              6000.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_4_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              4200.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_7_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              2400.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_10_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              600.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_13_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -1200.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_16_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -3000.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_19_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -4800.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_22_16",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -6600.0,
+              -5400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_0_6",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              6600.0,
+              600.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_0_9",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              6600.0,
+              -1200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_0_12",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              6600.0,
+              -3000.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_22_3",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -6600.0,
+              2400.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_住宅_22_12",
+            "asset": "House",
+            "before_cm": [
+              1250.0,
+              1350.0
+            ],
+            "after_cm": [
+              900,
+              1000
+            ],
+            "foot_cm": [
+              -6600.0,
+              -3000.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P2_水井",
+            "asset": "Well",
+            "before_cm": [
+              780.0,
+              850.0
+            ],
+            "after_cm": [
+              300,
+              330
+            ],
+            "foot_cm": [
+              300.0,
+              900.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_小屋晾药架",
+            "asset": "HerbRack",
+            "before_cm": [
+              900.0,
+              850.0
+            ],
+            "after_cm": [
+              300,
+              260
+            ],
+            "foot_cm": [
+              4200.0,
+              1410.0000000000002,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_粮仓箱袋",
+            "asset": "Crates",
+            "before_cm": [
+              700.0,
+              700.0
+            ],
+            "after_cm": [
+              180,
+              180
+            ],
+            "foot_cm": [
+              -3960.000000000001,
+              1380.0,
+              12.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_00",
+            "asset": "Bush",
+            "before_cm": [
+              432.6300574751675,
+              432.6300574751675
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              6480.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_01",
+            "asset": "Bush",
+            "before_cm": [
+              603.9085907581289,
+              603.9085907581289
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              6600.0,
+              -2280.0000000000005,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_02",
+            "asset": "Bush",
+            "before_cm": [
+              620.1101605999803,
+              620.1101605999803
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              4800.0,
+              -4620.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_03",
+            "asset": "Bush",
+            "before_cm": [
+              496.2730622445695,
+              496.2730622445695
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              1200.0,
+              -4800.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_04",
+            "asset": "Bush",
+            "before_cm": [
+              469.1406864265616,
+              469.1406864265616
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -3600.0,
+              -4800.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_05",
+            "asset": "Bush",
+            "before_cm": [
+              448.97042172032815,
+              448.97042172032815
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -6480.0,
+              3300.0,
+              8.000000000000028
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_06",
+            "asset": "Bush",
+            "before_cm": [
+              420.22802512988966,
+              420.22802512988966
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -6480.0,
+              -1200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_07",
+            "asset": "Bush",
+            "before_cm": [
+              453.70709892424685,
+              453.70709892424685
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              3600.0,
+              4980.0,
+              7.999999999999972
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_08",
+            "asset": "Bush",
+            "before_cm": [
+              450.50268156674224,
+              450.50268156674224
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -1200.0,
+              4980.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_09",
+            "asset": "Bush",
+            "before_cm": [
+              613.4599505323009,
+              613.4599505323009
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -4800.0,
+              4980.0,
+              8.0
+            ]
+          }
+        ]
+      },
+      {
+        "map": "Outskirts_Blockout",
+        "entries": [
+          {
+            "label": "P1_老橡树树干",
+            "asset": "Oak",
+            "before_cm": [
+              1600.0,
+              1750.0
+            ],
+            "after_cm": [
+              780,
+              850
+            ],
+            "foot_cm": [
+              5100.0,
+              3300.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_北侧树干",
+            "asset": "Oak",
+            "before_cm": [
+              1600.0,
+              1750.0
+            ],
+            "after_cm": [
+              780,
+              850
+            ],
+            "foot_cm": [
+              -3210.000000000001,
+              3990.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_东侧树干",
+            "asset": "Oak",
+            "before_cm": [
+              1600.0,
+              1750.0
+            ],
+            "after_cm": [
+              780,
+              850
+            ],
+            "foot_cm": [
+              -6210.000000000001,
+              -2009.9999999999998,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_西北灌木",
+            "asset": "Bush",
+            "before_cm": [
+              700.0,
+              650.0
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              5640.0,
+              2100.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_东边灌木",
+            "asset": "Bush",
+            "before_cm": [
+              700.0,
+              650.0
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -5760.000000000001,
+              -1200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P1_北阵标",
+            "asset": "RuneStone",
+            "before_cm": [
+              430.0,
+              700.0
+            ],
+            "after_cm": [
+              150,
+              250
+            ],
+            "foot_cm": [
+              450.0,
+              4350.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P2_西侧短障碍_00",
+            "asset": "Fence",
+            "before_cm": [
+              430.0,
+              450.0
+            ],
+            "after_cm": [
+              260,
+              230
+            ],
+            "foot_cm": [
+              5250.0,
+              -450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西侧短障碍_01",
+            "asset": "Fence",
+            "before_cm": [
+              430.0,
+              450.0
+            ],
+            "after_cm": [
+              260,
+              230
+            ],
+            "foot_cm": [
+              5250.0,
+              -750.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西侧短障碍_02",
+            "asset": "Fence",
+            "before_cm": [
+              430.0,
+              450.0
+            ],
+            "after_cm": [
+              260,
+              230
+            ],
+            "foot_cm": [
+              5250.0,
+              -1050.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西侧短障碍_03",
+            "asset": "Fence",
+            "before_cm": [
+              430.0,
+              450.0
+            ],
+            "after_cm": [
+              260,
+              230
+            ],
+            "foot_cm": [
+              5250.0,
+              -1350.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_东侧田车",
+            "asset": "Cart",
+            "before_cm": [
+              1100.0,
+              1000.0
+            ],
+            "after_cm": [
+              400,
+              300
+            ],
+            "foot_cm": [
+              -5250.0,
+              900.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_田车旁散箱",
+            "asset": "Crates",
+            "before_cm": [
+              700.0,
+              700.0
+            ],
+            "after_cm": [
+              180,
+              180
+            ],
+            "foot_cm": [
+              -6239.999999999999,
+              1290.0000000000002,
+              12.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_00",
+            "asset": "Bush",
+            "before_cm": [
+              469.76559669823166,
+              469.76559669823166
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              6480.0,
+              4200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_01",
+            "asset": "Bush",
+            "before_cm": [
+              595.1447430926935,
+              595.1447430926935
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              6600.0,
+              -2280.0000000000005,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_02",
+            "asset": "Bush",
+            "before_cm": [
+              413.9619290314139,
+              413.9619290314139
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              4800.0,
+              -4620.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_03",
+            "asset": "Bush",
+            "before_cm": [
+              599.3749133558133,
+              599.3749133558133
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              1200.0,
+              -4800.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_04",
+            "asset": "Bush",
+            "before_cm": [
+              463.6199467882184,
+              463.6199467882184
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -3600.0,
+              -4800.0,
+              8.000000000000028
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_05",
+            "asset": "Bush",
+            "before_cm": [
+              541.4024021892812,
+              541.4024021892812
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -6480.0,
+              3300.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_06",
+            "asset": "Bush",
+            "before_cm": [
+              607.1665161429987,
+              607.1665161429987
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -6480.0,
+              -1200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_07",
+            "asset": "Bush",
+            "before_cm": [
+              464.21645882942954,
+              464.21645882942954
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              3600.0,
+              4980.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_08",
+            "asset": "Bush",
+            "before_cm": [
+              569.9345963811336,
+              569.9345963811336
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -1200.0,
+              4980.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Layer_EdgeBush_09",
+            "asset": "Bush",
+            "before_cm": [
+              641.9664281895664,
+              641.9664281895664
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -4800.0,
+              4980.0,
+              8.0
+            ]
+          },
+          {
+            "label": "P2_西北短障碍_00",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              3450.0,
+              1949.9999999999998,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西北短障碍_01",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              3750.0,
+              1949.9999999999998,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西北短障碍_02",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              4050.0,
+              1949.9999999999998,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西北短障碍_03",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              4350.0,
+              1949.9999999999998,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西北短障碍_04",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              4650.0,
+              1949.9999999999998,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_东侧断篱_00",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              -4950.0,
+              -450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_东侧断篱_01",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              -4650.0,
+              -450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_东侧断篱_02",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              -4350.0,
+              -450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_东侧断篱_03",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              -4050.0,
+              -450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_东侧断篱_04",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              -3750.0,
+              -450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西南短障碍_00",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              3150.0,
+              -3450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西南短障碍_01",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              3450.0,
+              -3450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西南短障碍_02",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              3750.0,
+              -3450.0,
+              12.0
+            ]
+          },
+          {
+            "label": "P2_西南短障碍_03",
+            "asset": "Fence",
+            "before_cm": [
+              330.0,
+              350.0
+            ],
+            "after_cm": [
+              330.0,
+              200
+            ],
+            "foot_cm": [
+              4050.0,
+              -3450.0,
+              12.0
+            ]
+          }
+        ]
+      },
+      {
+        "map": "Greyford_Boss",
+        "entries": [
+          {
+            "label": "Boss_Rim_00",
+            "asset": "Oak",
+            "before_cm": [
+              1200.0,
+              1300.0
+            ],
+            "after_cm": [
+              780,
+              850
+            ],
+            "foot_cm": [
+              -2100.0,
+              950.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Boss_Rim_01",
+            "asset": "Oak",
+            "before_cm": [
+              1100.0,
+              1200.0
+            ],
+            "after_cm": [
+              780,
+              850
+            ],
+            "foot_cm": [
+              2050.0,
+              1000.0000000000001,
+              8.0
+            ]
+          },
+          {
+            "label": "Boss_Rim_02",
+            "asset": "Bush",
+            "before_cm": [
+              550.0,
+              600.0
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              -1800.0,
+              -650.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Boss_Rim_03",
+            "asset": "Bush",
+            "before_cm": [
+              550.0,
+              600.0
+            ],
+            "after_cm": [
+              180,
+              130
+            ],
+            "foot_cm": [
+              1750.0,
+              -650.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Boss_Rim_04",
+            "asset": "RuneStone",
+            "before_cm": [
+              350.0,
+              550.0
+            ],
+            "after_cm": [
+              150,
+              250
+            ],
+            "foot_cm": [
+              -800.0,
+              1550.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Boss_Rim_05",
+            "asset": "RuneStone",
+            "before_cm": [
+              350.0,
+              550.0
+            ],
+            "after_cm": [
+              150,
+              250
+            ],
+            "foot_cm": [
+              900.0,
+              1500.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Boss_Rim_06",
+            "asset": "Cart",
+            "before_cm": [
+              800.0,
+              750.0
+            ],
+            "after_cm": [
+              400,
+              300
+            ],
+            "foot_cm": [
+              -2300.0,
+              -1200.0,
+              8.0
+            ]
+          },
+          {
+            "label": "Boss_Rim_07",
+            "asset": "Fence",
+            "before_cm": [
+              600.0,
+              600.0
+            ],
+            "after_cm": [
+              260,
+              230
+            ],
+            "foot_cm": [
+              2000.0,
+              -1300.0,
+              8.0
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "village_view_width_cm": 2400,
+  "field_view_width_cm": 2844,
+  "camera_pitch": 48,
+  "character_collision_movement_stats_changed": false,
+  "early_spawn_density_changed": false,
+  "limits": [
+    "No human balance acceptance",
+    "Logical paint cells remain 600cm; visible surface repeat is 200cm",
+    "No Git commit or push"
+  ]
+}

@@ -95,7 +95,6 @@
         function setValue(key){
           if(state.key===key)return;
           state.key=key; value.textContent=key;
-          if(key!=='开战')phase.textContent='准备：'+key+'秒';
           value.getAnimations().forEach(a=>a.cancel());
           if(!reduced.matches)value.animate([{transform:'scale(1.12)',opacity:.55},{transform:'scale(1)',opacity:1}],{duration:180,easing:'ease-out'});
         }

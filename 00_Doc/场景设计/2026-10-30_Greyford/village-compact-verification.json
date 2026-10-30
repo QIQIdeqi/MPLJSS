@@ -1,0 +1,208 @@
+{
+  "date": "2026-10-30T18:54:23",
+  "status": "PASS",
+  "package": "D:\\06_独立游戏\\00_冒牌炼金术士\\03_Build\\冒牌炼金术士_村庄紧凑版_Win64_2026-10-30.zip",
+  "bytes": 304811027,
+  "entries": 43,
+  "crc": "PASS",
+  "sha256": "6c426d073705b3f27907e3ba0e6148e42868c512e02f300c5df59b9fc650940a",
+  "checks": {
+    "source": [
+      "village_character",
+      "facility_0_reachable",
+      "facility_1_reachable",
+      "facility_2_reachable",
+      "bridge_surface_height",
+      "village_to_field",
+      "no_portal_before_300",
+      "portal_at_300_clearance",
+      "portal_can_cancel_without_transition",
+      "portal_confirmation_pauses_timer",
+      "boss_preserves_hp_skills_cooldowns_capped_materials",
+      "boss_ellipse_clear_arena",
+      "boss_cannot_retreat",
+      "preparation_boss_waits_without_attacks",
+      "boss_skills_pause_battle_and_preparation",
+      "boss_alchemy_pause_battle_and_preparation",
+      "preparation_resumes_and_starts_combat",
+      "boss_death_settles_once",
+      "no_double_settlement",
+      "victory_returns_village",
+      "second_run_starts",
+      "player_death_result",
+      "defeat_returns_village"
+    ],
+    "16x9": [
+      "village_character",
+      "facility_0_reachable",
+      "facility_1_reachable",
+      "facility_2_reachable",
+      "bridge_surface_height",
+      "village_to_field",
+      "no_portal_before_300",
+      "portal_at_300_clearance",
+      "portal_can_cancel_without_transition",
+      "portal_confirmation_pauses_timer",
+      "boss_preserves_hp_skills_cooldowns_capped_materials",
+      "boss_ellipse_clear_arena",
+      "boss_cannot_retreat",
+      "preparation_boss_waits_without_attacks",
+      "boss_skills_pause_battle_and_preparation",
+      "boss_alchemy_pause_battle_and_preparation",
+      "preparation_resumes_and_starts_combat",
+      "boss_death_settles_once",
+      "no_double_settlement",
+      "victory_returns_village",
+      "second_run_starts",
+      "player_death_result",
+      "defeat_returns_village"
+    ],
+    "4x3": [
+      "village_character",
+      "facility_0_reachable",
+      "facility_1_reachable",
+      "facility_2_reachable",
+      "bridge_surface_height",
+      "village_to_field",
+      "no_portal_before_300",
+      "portal_at_300_clearance",
+      "portal_can_cancel_without_transition",
+      "portal_confirmation_pauses_timer",
+      "boss_preserves_hp_skills_cooldowns_capped_materials",
+      "boss_ellipse_clear_arena",
+      "boss_cannot_retreat",
+      "preparation_boss_waits_without_attacks",
+      "boss_skills_pause_battle_and_preparation",
+      "boss_alchemy_pause_battle_and_preparation",
+      "preparation_resumes_and_starts_combat",
+      "boss_death_settles_once",
+      "no_double_settlement",
+      "victory_returns_village",
+      "second_run_starts",
+      "player_death_result",
+      "defeat_returns_village"
+    ]
+  },
+  "production_smoke": "PASS",
+  "layout": {
+    "plaza_before_cm": [
+      3600,
+      3000
+    ],
+    "plaza_after_cm": [
+      0.0,
+      0.0,
+      1800.0,
+      1200.0
+    ],
+    "main_road_before_cm": 1200,
+    "road_markers": [
+      [
+        -1500.0,
+        -600.0,
+        11400.0,
+        400.0
+      ],
+      [
+        2400.0,
+        600.0,
+        300.0,
+        2400.0
+      ],
+      [
+        3000.0,
+        1800.0,
+        1500.0,
+        300.0
+      ],
+      [
+        -3000.0,
+        600.0,
+        300.0,
+        2400.0
+      ],
+      [
+        2700.0,
+        -1675.0,
+        300.0,
+        2150.0
+      ],
+      [
+        2700.0,
+        -3300.0,
+        360.0,
+        1100.0
+      ],
+      [
+        2700.0,
+        -4025.0,
+        300.0,
+        350.0
+      ],
+      [
+        3150.0,
+        -1800.0,
+        1200.0,
+        300.0
+      ]
+    ],
+    "facilities_cm": [
+      [
+        500.0,
+        0.0,
+        0.0
+      ],
+      [
+        -500.0,
+        0.0,
+        0.0
+      ],
+      [
+        -6300.0,
+        -600.0,
+        0.0
+      ]
+    ],
+    "mask_resolution": [
+      288,
+      216
+    ],
+    "mask_pixel_cm": 50,
+    "terrain_repeat_cm": 200,
+    "logical_cell_cm": 600,
+    "painted_cells": 432,
+    "pixel_counts": {
+      "Grass": 55072,
+      "Dirt": 4832,
+      "Stone": 1008,
+      "Water": 1296
+    },
+    "editable_markers": "Greyford/VillagePaving and Greyford/VillageFacilities",
+    "field_changed": false
+  },
+  "unchanged_asset_hashes": [
+    {
+      "Algorithm": "SHA256",
+      "Hash": "A842DB79B84BCF465DEAB3FFD70619F5218E68AE537EDBA42778E9406BAB27FF",
+      "Path": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\Content\\Greyford\\Maps\\Outskirts_Blockout.umap"
+    },
+    {
+      "Algorithm": "SHA256",
+      "Hash": "15306EC25FCC6C56B0A0F8646827EBDCE4A470790F75CF2869F7E985BC8B1D26",
+      "Path": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\Content\\Greyford\\Maps\\Greyford_Boss.umap"
+    },
+    {
+      "Algorithm": "SHA256",
+      "Hash": "23E0C2FCB77BB55E48B0F243DFCD3FB18639C9271914CF9B8DCA4FD1262F412F",
+      "Path": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\Content\\Greyford\\Materials\\M_GF_OutskirtsSurfaceBlend.uasset"
+    }
+  ],
+  "approved_object_sizes_preserved": true,
+  "character_and_combat_parameters_changed": false,
+  "limits": [
+    "Automated state/path and render checks, no human playtest claim",
+    "Grass remains walkable; paving is not a new movement restriction",
+    "Existing level markers are authoritative for rebakes",
+    "No Git commit, push, or public release"
+  ]
+}

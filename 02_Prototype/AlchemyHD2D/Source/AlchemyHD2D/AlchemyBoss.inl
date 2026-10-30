@@ -24,7 +24,8 @@ void AAlchemyWorld::RewardEnemy(const FAlchemyEnemy& E) {
     }
 }
 void AAlchemyWorld::EndBossArena() {
-    bBossArenaActive=false;
+    bBossArenaActive=false;BossKnockRemaining=0;SpentBossWaves.Empty();
+    for(auto A:PlannedBossLines)if(IsValid(A))A->Destroy();PlannedBossLines.Empty();
     if(IsValid(BossArenaRing)) BossArenaRing->Destroy();BossArenaRing=nullptr;
     ClearBossTelegraphs();
 }
@@ -59,6 +60,7 @@ bool AAlchemyWorld::StartBossEncounter() {
     return true;
 }
 void AAlchemyWorld::UpdateBoss(FAlchemyEnemy& E,float Dt) {
+    if(bGreyfordFlow && GreyfordStage==2){UpdatePlannedBoss(E,Dt);return;}
     if(!Panel.IsEmpty()) return;
     if(E.HP<=E.MaxHP*.5f && !E.Phase2) {
         E.Phase2=true;E.Transition=2;E.Windup=E.BossActive=0;
@@ -122,7 +124,8 @@ void AAlchemyWorld::UpdateBoss(FAlchemyEnemy& E,float Dt) {
 
 void AAlchemyWorld::UpdateBossVisual(FAlchemyEnemy& E) {
     const float Width=300*(1+.06f*E.HitFlash/.1f),Height=350*(1-.04f*E.HitFlash/.1f);
-    UpdateSprite(E.Body,TEXT("BossCorruption"),E.Pos,Width,Height,(PlayerPos-E.Pos).X<0);
+    const FVector Facing=(bGreyfordFlow && GreyfordStage==2 && (E.PlannedLocked || E.PlannedState==2))?E.DashDirection:PlayerPos-E.Pos;
+    UpdateSprite(E.Body,TEXT("BossCorruption"),E.Pos,Width,Height,Facing.X<0);
     // Sprite-gen's 432px baseline on a 448px canvas stays fixed during hit squash.
     E.Body->SetActorLocation(E.Pos+Camera->GetActorUpVector()*(208.f/448*Height));
     E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));

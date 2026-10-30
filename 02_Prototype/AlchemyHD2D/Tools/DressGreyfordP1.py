@@ -17,8 +17,7 @@ angle=math.radians(48)
 up=u.Vector(0,math.sin(angle),math.cos(angle))
 rotation=u.MathLibrary.make_rot_from_xz(u.Vector(-1,0,0),u.Vector(0,-math.cos(angle),math.sin(angle)))
 p1={'Cottage','House','Warehouse','Oak','Bush','RuneStone'}
-sizes={'Cottage':(2600,2450),'House':(1250,1350),'Warehouse':(2700,2550),
-       'Oak':(1600,1750),'Bush':(700,650),'RuneStone':(430,700)}
+sizes=json.loads((root/'Tools/GreyfordScale.json').read_text(encoding='utf-8'))['sprite_sizes']
 reports=[]
 
 def position(x,y,z=0):return u.Vector(-(x-12)*600,-(y-9)*600,z)

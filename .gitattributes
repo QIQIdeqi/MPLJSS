@@ -20,3 +20,8 @@
 02_Prototype/AlchemyHD2D/ArtSource/MerchantAudio/*.wav filter=lfs diff=lfs merge=lfs -text
 02_Prototype/AlchemyHD2D/ArtSource/Greyford20261030/**/*.png filter=lfs diff=lfs merge=lfs -text
 02_Prototype/AlchemyHD2D/ArtSource/Greyford20261030/*.png filter=lfs diff=lfs merge=lfs -text
+02_Prototype/AlchemyHD2D/ArtSource/Greyford*/*.png filter=lfs diff=lfs merge=lfs -text
+02_Prototype/AlchemyHD2D/ArtSource/Greyford*/**/*.png filter=lfs diff=lfs merge=lfs -text
+02_Prototype/AlchemyHD2D/ArtSource/BossPlan/*.wav filter=lfs diff=lfs merge=lfs -text
+00_Doc/协作策划/附件/*.png filter=lfs diff=lfs merge=lfs -text
+00_Doc/协作策划/附件/*.jpg filter=lfs diff=lfs merge=lfs -text

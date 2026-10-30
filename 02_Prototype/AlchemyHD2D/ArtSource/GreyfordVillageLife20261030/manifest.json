@@ -1,0 +1,278 @@
+[
+  {
+    "asset": "BankRocks",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      31,
+      1238,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "eef327c984237efc0d4a87050a8ca8a1f0abd26b0899dae3b04829589111c24d"
+  },
+  {
+    "asset": "Barrel",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      9,
+      1230,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "dd48d4bc3a920025943b653cb4810776fd652553894f44871af8b6c367fa0de8"
+  },
+  {
+    "asset": "Bench",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      0,
+      1235,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "2c1c87b1596694dde6ebef4b85e0c740f3fbd7fbfb46baf7406433c08e54f001"
+  },
+  {
+    "asset": "CropRow",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      17,
+      1254,
+      1238
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "fc91bd1565d6981ba7d34390eade77ccd1fb951eca388adf1f88705e025c412d"
+  },
+  {
+    "asset": "FogGate",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      7,
+      1234,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "6c15999c9199cf436d6d3d687c5221a091ed435fad4dc482f5cf6e6e1edf8611"
+  },
+  {
+    "asset": "HerbBed",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      45,
+      1210,
+      1238
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "0dfcf10f373308cd91ccd24f8ea92ef9fade9dc1d9a3e559fb6507db8eabc963"
+  },
+  {
+    "asset": "Lantern",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      25,
+      1234,
+      1238
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "cc3287ab9ffd4ee6772eeab95b8e85aa6ac9b534b7a0739a962d9f73a79df4aa"
+  },
+  {
+    "asset": "Planter",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      19,
+      1248,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "a09725543b407485a6dbdd9140d1f5b416d4c14c1635ccb1a735b1b8d6929c40"
+  },
+  {
+    "asset": "StoneWall",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      35,
+      1254,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "182fd3ac7d6df65db92df5bb35c7b1424d6cd0b5daae3e4e38367b27b8402d5a"
+  },
+  {
+    "asset": "Waterwheel",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      15,
+      1234,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "95c4c53e9bb9e3308eba21dc77f3766efc146dcebad01786483c53c369e4cf52"
+  },
+  {
+    "asset": "WoodGrain",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      0,
+      1254,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "29d4ae34dd83926aa5795cf7fa300d611476adf456106899efdd1d8b7a45df38"
+  },
+  {
+    "asset": "Workshop",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "source_alpha_bbox": [
+      0,
+      9,
+      1240,
+      1254
+    ],
+    "output_size": [
+      512,
+      512
+    ],
+    "pivot_pixel": [
+      256,
+      488
+    ],
+    "provider": "native image_gen, reference Cottage.png",
+    "source_sha256": "8e19704d2814c7c247c0a65d7862ab19ac95270c7d3ccfb86c290c16985c1458"
+  }
+]

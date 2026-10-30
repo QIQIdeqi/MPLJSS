@@ -1,0 +1,165 @@
+{
+  "date": "2026-10-30",
+  "scope": "Local UE implementation of confirmed planning; no human balance acceptance",
+  "package": "03_Build/Greyford_BossPlan_Win64_20261030",
+  "exe_sha256": "b6f2e720673ffd91491416a3429a4b2d2aa5816fc93f4cbd187ba11d5319f2eb",
+  "rules": {
+    "result": "PASS",
+    "checks": [
+      {
+        "name": "tutorial_floor_ignores_unreachable_material",
+        "result": "PASS"
+      },
+      {
+        "name": "first_aoe_accept_queues_melee_encounter",
+        "result": "PASS"
+      },
+      {
+        "name": "first_aoe_melee_pack_legal_spawn",
+        "result": "PASS"
+      },
+      {
+        "name": "enters_separate_scene",
+        "result": "PASS"
+      },
+      {
+        "name": "hp_cooldowns_capped_existing_materials_inherited",
+        "result": "PASS"
+      },
+      {
+        "name": "ten_meter_spacing_32x26_bound",
+        "result": "PASS"
+      },
+      {
+        "name": "preparation_prevents_early_attacks",
+        "result": "PASS"
+      },
+      {
+        "name": "first_attack_random_uses_both_two_entry_pool",
+        "result": "PASS"
+      },
+      {
+        "name": "dash_locks_at_point_six_with_one_cue",
+        "result": "PASS"
+      },
+      {
+        "name": "menu_freezes_boss_clock",
+        "result": "PASS"
+      },
+      {
+        "name": "dash_direction_fixed_last_point_four",
+        "result": "PASS"
+      },
+      {
+        "name": "dash_12m_point_six_24_damage_once_continues_after_hit",
+        "result": "PASS"
+      },
+      {
+        "name": "one_second_stationary_recovery",
+        "result": "PASS"
+      },
+      {
+        "name": "boundary_stops_without_sliding_or_distance_repayment",
+        "result": "PASS"
+      },
+      {
+        "name": "knockback_one_meter_point_fifteen_suppresses_walking",
+        "result": "PASS"
+      },
+      {
+        "name": "latest_input_resumes_without_release",
+        "result": "PASS"
+      },
+      {
+        "name": "blocked_knock_ends_early_resumes_current_input",
+        "result": "PASS"
+      },
+      {
+        "name": "first_fan_wave_five_projectiles",
+        "result": "PASS"
+      },
+      {
+        "name": "second_wave_reaim_at_point_five",
+        "result": "PASS"
+      },
+      {
+        "name": "two_waves_point_eight_interval_final_point_three_locked",
+        "result": "PASS"
+      },
+      {
+        "name": "sixty_degree_equal_fifteen_speed_eight_damage_eighteen_independent_wave_ids",
+        "result": "PASS"
+      },
+      {
+        "name": "same_frame_multi_bullet_one_hit_remaining_fade",
+        "result": "PASS"
+      },
+      {
+        "name": "pause_freezes_fade",
+        "result": "PASS"
+      },
+      {
+        "name": "two_wave_hit_cap_36_old_wave_not_reset",
+        "result": "PASS"
+      },
+      {
+        "name": "capped_wave_fade_recycles_without_extra_hits",
+        "result": "PASS"
+      },
+      {
+        "name": "invulnerable_contact_keeps_projectile_and_wave_eligibility",
+        "result": "PASS"
+      },
+      {
+        "name": "mitigation_rounds_eighteen_to_fourteen",
+        "result": "PASS"
+      },
+      {
+        "name": "lock_audio_and_fade_material_loaded",
+        "result": "PASS"
+      }
+    ]
+  },
+  "regression": "ALCHEMY_SMOKE_PASS and ALCH002_TEST_PASS",
+  "visual": {
+    "api": "D3D12",
+    "size": [
+      1280,
+      720
+    ],
+    "result": "PLANNED_BOSS_CAPTURE_PASS",
+    "images": [
+      "01-preparation.png",
+      "02-dash-aiming.png",
+      "03-dash-locked.png",
+      "05-second-wave-lock.png",
+      "06-two-wave-flight.png"
+    ]
+  },
+  "flow_regression": {
+    "size": [
+      1024,
+      768
+    ],
+    "result": "GREYFORD_FLOW_PASS"
+  },
+  "ui": {
+    "method": "Computer Use actual clicks in isolated -AlchemyUI packaged game",
+    "result": "three materials -> craft -> accept AoE -> FIRST_AOE_ENCOUNTER count=6 time=0.01 legal_offscreen_cluster=1",
+    "natural_40_to_60_seconds_verified": false
+  },
+  "test_defaults": {
+    "wave_fade_seconds": 0.15,
+    "fan_first_windup_seconds": 1.25,
+    "fan_recovery_seconds": 1,
+    "fan_lifetime_seconds": 5,
+    "tutorial_melee_count": 6,
+    "later_attack_loop": "alternating dash and fan",
+    "flight": "straight",
+    "fading_motion": "stationary"
+  },
+  "editor": {
+    "core_built": true,
+    "last_tutorial_reachability_fix": "Standalone game built and verified. Live editor hot-load not confirmed; preserve the open unsaved map."
+  }
+}

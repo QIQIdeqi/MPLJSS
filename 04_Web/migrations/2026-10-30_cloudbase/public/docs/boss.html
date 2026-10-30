@@ -1,0 +1,130 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>雾界草甸 · Boss 场地 · 冒牌炼金术士</title><meta name="description" content="Boss 场地方案与规格记录。"><meta name="theme-color" content="#203d30"><link rel="icon" href="/assets/FirePowder.png"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><a class="skip" href="#main">跳到正文</a><header class="wrap topbar"><a class="brand" href="/" aria-label="冒牌炼金术士首页"><span class="sigil" aria-hidden="true">✧</span><span>冒牌炼金术士<small>THE IMPOSTOR ALCHEMIST</small></span></a><nav class="nav" aria-label="主导航"><a href="/#play">游戏玩法</a><a href="/#world">游戏影像</a><a href="/#download">下载试玩</a><a class="nav-docs" href="/docs/scene.html">策划档案 ↗</a></nav></header><main id="main" class="wrap"><div class="docs-banner"><span class="kicker">THE DESIGN ARCHIVE / 策划资料区</span><h1>让每一次决定，都有迹可循。</h1><p>阅读快照：2026-10-30 16:57（北京时间） · 原文中的已确认、历史提案与待验证状态均保留。</p></div><div class="docs-layout"><aside class="docs-sidebar"><label class="search-label" for="doc-search">检索全部策划与记录</label><input id="doc-search" class="search" type="search" placeholder="搜索 Boss、概率、场景…" autocomplete="off"><nav class="doc-nav" aria-label="策划分类"><span class="group">核心策划 / DESIGN</span><a href="/docs/scene.html">1.2 场景</a><a href="/docs/level.html">1.4 关卡</a><a href="/docs/system.html">1.5 系统</a><a href="/docs/balance.html">1.6 数值</a><span class="group">场景正文 / WORLD</span><a href="/docs/village.html">格雷弗德边境村庄</a><a href="/docs/outskirts.html">村庄外围（第一关）</a><span class="group">记录与工具 / RECORDS</span><a href="/docs/level-record.html">关卡持续确认记录</a><a href="/docs/system-record.html">系统持续设计记录</a><a href="/docs/balance-record.html">数值持续设计记录</a><a class="active" aria-current="page" href="/docs/boss.html">雾界草甸 · Boss 场地</a><a href="/docs/tools.html">UE 关卡与技能编辑器</a><a href="/docs/boss-proposal.html">Boss 场地历史提案</a></nav><p class="source-note">正文维护于 Git。此处为发布时的阅读快照，不自动写回仓库。<br>角色、怪物与原文案继续在 wolai 维护。文档记录的实现状态以各次核验时点为准。</p></aside><section class="doc-content"><div id="search-results" class="results" aria-live="polite" hidden></div><div class="doc-top"><span>雾界草甸 · Boss 场地 · 阅读快照</span><a href="https://github.com/QIQIdeqi/MPLJSS/blob/main/00_Doc/%E5%9C%BA%E6%99%AF%E8%AE%BE%E8%AE%A1/2026-10-30_Greyford/Boss_%E9%9B%BE%E7%95%8C%E8%8D%89%E7%94%B8/README.md">在 GitHub 查看 / 编辑正文 ↗</a></div><article class="prose"><h1 id="boss">独立 Boss 场地提案：雾界草甸</h1>
+<p>日期：2026-10-30。状态：用户已确认“雾界草甸”美术与整体布局方向，并选择32×26m作为第一版可走区域测试尺寸。固定上下对位已确认：玩家南侧偏内、Boss北侧偏中；开场中心点平面间距已确认10m作为首轮测试值，具体坐标与碰撞仍待细化，战斗效果待试玩。补充第17问已确认可操作后2秒准备期与UI倒计时动画，准备期可移动、双方暂不攻击，暂停界面同步暂停倒计时，结束后自动开战。补充第18问确认中上方数字与细环，不能遮挡Boss血条和双方角色。补充第19问确认Boss准备期原地待机，倒计时结束后才开始移动和攻击。V0.1 草图作为深化依据；本轮确认Boss准备行为并更新策划，沿用已有预览，未修改 UE。</p>
+<h2 id="_1">设计结论</h2>
+<p>把独立 Boss 关卡设计为格雷弗德外围的一块<strong>被雾界围合的开阔草甸</strong>。可走区域采用平顺、接近椭圆的轮廓；外围植被、溪岸和断篱形成自然起伏，中央保持无障碍。横向略长，延续新草原场景的冷绿、旧木、灰石与淡青色魔法语言。</p>
+<p>“雾界草甸”是本方案暂名。雾幕如何隔离此处、Boss 与炼金阵的剧情关系尚未确认，本案不新增世界观结论。</p>
+<p>用户补充第13问确认采用近椭圆、中央净空、乡野景物与雾界布置于外围的整体方向；补充第14问选择1，确认32×26m（3200×2600cm）为第一版可走区域测试包围尺寸，不包含装饰带。该数值用于首轮灰盒，试玩后可调整；补充第15问已确认双方固定上下对位，玩家草图下方偏内、Boss上方偏中。补充第16问确认双方开场中心点平面间距10m（1000cm）作为首轮测试值，不是碰撞边缘净距；装饰带宽度、双方具体坐标与景物数量仍待细化。</p>
+<h2 id="_2">依据与沿用范围</h2>
+<ul>
+<li>wolai <a href="https://www.wolai.com/7NzimKvPJwEFvNRJ1yhiWv">村庄外围（第一关）</a>：开阔草原、少量树林、平缓地势；2026-10-30 俯视布局 V2 与共享素材清单。</li>
+<li>wolai <a href="https://www.wolai.com/ef1SGR5vJUP5rLr8XceBy6">格雷弗德边境村庄</a>：朴素乡野建筑、农事道具、溪流与炼金雾界。</li>
+<li>同目录上一级的 outskirts-concept.png、village-concept.png、outskirts-layout.png、asset-contact-wolai.jpg：本轮已实际查看。</li>
+<li>共享资源清单：<code>02_Prototype/AlchemyHD2D/ArtSource/Greyford20261030/asset-manifest.json</code>；使用说明：<code>02_Prototype/AlchemyHD2D/Docs/Greyford灰盒与素材使用说明.txt</code>。</li>
+</ul>
+<p>概念图的远景透视和纹理密度只作氛围参考，正式制作沿用当前已确认镜头。旧 scene-proposal.json 中“在大草甸临时划战圈”的条件性建议已被本聊天确认的独立 Boss 关卡替代。原场景档案与旧提案文件本轮保留，不覆盖历史。</p>
+<h2 id="_3">场地与景物安排</h2>
+<table>
+<thead>
+<tr>
+<th>区域</th>
+<th>本轮提案</th>
+<th>战斗要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>中央主体</td>
+<td>低对比冷绿短草，掺少量被踩实的泥地、浅车辙</td>
+<td>全部可通行；泥痕是平面装饰，不新增减速、采集或伤害效果</td>
+</tr>
+<tr>
+<td>西北外缘</td>
+<td>一棵老橡树与两小簇灌木，呼应普通草原的地标</td>
+<td>树干和树冠置于可走边界外；斜俯视下不能盖住战斗区域</td>
+</tr>
+<tr>
+<td>东侧外缘</td>
+<td>弃置田车和两段旧木篱，保留乡野生产痕迹</td>
+<td>作为外围剪影，不伸入场内形成卡点，不提供材料补给</td>
+</tr>
+<tr>
+<td>东南外缘</td>
+<td>短段浅溪与低石岸</td>
+<td>溪水留在可走边界外；不把中心切成两半，不安排必经窄桥</td>
+</tr>
+<tr>
+<td>北侧外缘</td>
+<td>一块低亮度旧阵石，作为 Boss 一侧的方位参照</td>
+<td>避开 Boss 轮廓和危险预警；不默认可破坏或可交互</td>
+</tr>
+<tr>
+<td>南侧落点</td>
+<td>一小块平坦泥草地；两块阵石位于外围装饰带</td>
+<td>玩家落点位于净空区；落点标记不构成返回传送功能</td>
+</tr>
+<tr>
+<td>场地边界</td>
+<td>低矮草岸、灰石与淡青雾幕共同勾勒外缘</td>
+<td>可走边界平顺，没有伸入内场的凹袋；视觉提示与实际阻挡对齐</td>
+</tr>
+</tbody>
+</table>
+<p>外观可以不规则，行走轮廓要平顺。雾只在外围，人物脚下、Boss 前摇与弹幕路径保持清楚。靠近镜头的南缘只使用低矮景物，避免前景树冠挡住角色。</p>
+<h2 id="_4">与普通草原拉开层次</h2>
+<ul>
+<li>保留同一套材质和植被，Boss 场中央的草更短、花更少、踩踏痕迹更集中；地面纹理降低对比。</li>
+<li>环境光比普通草原稍冷，外围雾更聚拢；战斗地面仍清晰可见。浓度与亮度以实机读招为准。</li>
+<li>阵石的青色发光只作小面积点缀，把高亮和强对比留给角色、Boss 与危险预警。</li>
+<li>不用中央高台、大型石圈或整片发光法阵改变已确认的中央净空；危险提示不可被装饰性符号混淆。</li>
+</ul>
+<h2 id="_5">第一版灰盒测试尺寸（已确认）</h2>
+<p>第一版采用已确认的 <strong>32m × 26m 可走区域包围尺寸</strong>，不是地表总尺寸。外围约4—6m装饰带仍是候选，不计入可走尺寸。图中玩家南侧偏内、Boss北侧偏中的固定上下对位已确认；开场中心点平面间距已确认10m起测；草图点位仅作布局示意，不按比例代表该间距，实际坐标尚未冻结；开战流程已在补充第17问确认可操作后2秒准备并配UI倒计时。图内“候选”为初版标记，最新状态以本段为准。</p>
+<p>按现有灰盒基准移速 5m/s 粗算，直穿长边约 6.4 秒、短边约 5.2 秒；这只说明尺度，不证明能躲开技能。角色成长、正式闪避、Boss 碰撞与攻击范围均需进入试玩验证。</p>
+<p>镜头依据修正（2026-10-30源码核对）：ViewWidth默认2844cm用于普通战斗；UpdateCamera在bBossArenaActive时实际采用max(ViewWidth,3600cm)，并将目标点设为BossArenaCenter后进行边界约束，因此不能直接用28.44m普通镜头推断Boss场地的可见范围。固定斜俯视方向保留，本轮不改镜头程序。32×26m新场地及双方间距需在实际Boss镜头、屏幕比例、边界约束和HUD遮挡下验证；此为代码核对，不是新场地同屏或读招试玩通过。</p>
+<p>28m × 24m与38m × 30m保留为未采用的历史备选。当前先按32m × 26m测试；这是已确认的首轮尺寸，仍需实际验证读招、接战与闪避空间，不能视为最终平衡结论。</p>
+<h2 id="_6">素材复用与实际状态</h2>
+<table>
+<thead>
+<tr>
+<th>素材</th>
+<th>在本方案中的用途</th>
+<th>当前证据边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grass / Dirt</td>
+<td>中央短草与压实泥地</td>
+<td>已有材质；Grass 自动拼接检查通过，Dirt 仍需美术复查</td>
+</tr>
+<tr>
+<td>Oak / Bush / RuneStone</td>
+<td>外缘地标、草木、雾界参照</td>
+<td>P1 已在独立草原灰盒应用，仍属首版素材</td>
+</tr>
+<tr>
+<td>Water / Stone</td>
+<td>外缘溪流、石岸基础</td>
+<td>已有材质，平铺仍需复查；不直接假定石路贴图就是可用石岸模型</td>
+</tr>
+<tr>
+<td>Cart / Fence</td>
+<td>东侧田车与断篱</td>
+<td>P2 已导入素材库，现有场景仍有灰盒占位，需实际摆放适配</td>
+</tr>
+<tr>
+<td>雾幕 / 短草稀疏变体 / 泥地过渡</td>
+<td>氛围与地面可读性</td>
+<td>本案提出制作或调整需求，未宣称已有可直接复用的 Niagara 雾系统或混合材质</td>
+</tr>
+</tbody>
+</table>
+<p>材质位于 <code>/Game/Greyford/Materials/M_GF_*</code>。外观与碰撞分别制作。不会把整棵树的贴片矩形直接当作树干阻挡。</p>
+<h2 id="_7">与已确认玩法的衔接</h2>
+<p>仍通过原地图随机避障且可达的传送阵进入；原地图 5:00 开放传送、UI 箭头引导、阵内按交互键确认。进入前按库存上限回收全图已有材料，当前生命不恢复；进入后至胜负前不能返回。</p>
+<p>Boss 战中可暂停调整技能、暂停炼金；场内不新增材料补给。因此本场的田车、木篱、草木、阵石都是环境构图，不放诱导拾取的材料宝箱或药圃。是否安排非补给用途的战斗小怪仍由 Boss 设计决定。</p>
+<h2 id="_8">需要验证的项目</h2>
+<ol>
+<li>用正式角色在中央和边缘连续走位、闪避，确认没有被景物或边界凹角卡住；特别检查南缘前景遮挡。</li>
+<li>使用正式角色与 Boss 招式，在当前镜头下验证前摇、Boss 轮廓和躲避空间；图中尺寸只是起测值，不能仅凭草图判定战斗平衡。</li>
+<li>雾、树影、草地纹理、阵石发光与实际危险预警同屏时仍容易区分；Boss 场没有新增材料掉落或可疑可采集装饰。</li>
+<li>从画面稳定且可操作起算2秒准备期，验证玩家可移动，Boss原地待机、不移动、不启动攻击或攻击前摇；打开配置/炼金/结果界面暂停计时，关闭后续算；计时结束立即开战，Boss此时才进入正常移动/攻击流程，不等待UI退场，也不提前完成攻击前摇。UI采用已确认的中上方数字与细环；检查实际PC窗口尺寸与现行字号倍率下，数字2、1以及“开战”文字均不遮挡Boss血条和双方角色，检查范围包括准备期玩家移动。</li>
+</ol>
+<p>本轮更新已确认的Boss准备行为与待办，沿用既有俯视示意图及倒计时预览。Git策划文档随本轮同步；未修改UE代码、地图、镜头或构建包，也未把其他会话的工程改动当成本条规则已实现的证据。</p>
+<h2 id="ui">开战准备期与倒计时UI</h2>
+<p>Boss场地补充第17问已确认（2026-10-30，选择1，并要求UI倒计时动画）：画面稳定且玩家可操作后开始2秒准备期，玩家可以移动，双方攻击暂不开始；累计2秒未暂停的准备时间后自动开战。打开已允许的技能配置、炼金及结果界面时，准备计时与战斗一起暂停，关闭后从剩余时间继续。准备期不额外恢复生命，也不开放返回原地图。UI倒计时动画需求已确认，显示方式已在第18问选定中上方数字与细环，具体参数待实机细化；开战时点不等待提示文字淡出。状态：规则已确认，已有交互预览；本轮仅更新策划，UE实现和实机效果尚未在本轮核验。</p>
+<p>UI表现状态（补充第18问已确认方向）：采用屏幕中上方数字与细环，按2→1→开战展示准备过程；Boss血条与双方角色不能被覆盖，2秒结束即进入战斗，开战文字退场不能增加准备时间。中央纯数字与顶部短横条保留为未采用的历史备选。已有预览支持重播、暂停/继续、减少动态效果及字号调节；预览中的像素位置、字号、环径、配色和缓动仍是候选，不更改现行游戏全局字体倍率。文件：00_Doc/场景设计/2026-10-30_Greyford/Boss_雾界草甸/UI/boss-countdown.html。角色与地形只是站位示意，不是UE截图或按比例场地图。本轮只更新策划记录，沿用已有预览。</p>
+<p>此前离线逻辑检查（第17问当时版本）：三种预览均覆盖第1秒从2切换到1、第2秒进入战斗、长时间暂停后续算、重播、页面隐藏暂停和减少动态效果。该检查执行实际预览脚本，但使用模拟DOM；不代表浏览器画面检查或UE实测通过。浏览器因本地文件协议限制未完成画面检查。</p>
+<p>Boss场地补充第18问已确认（2026-10-30，选择1）：UI倒计时采用屏幕中上方的数字加细环，必须避开Boss血条及玩家、Boss角色主体；沿用2→1→开战和2秒准备期，暂停配置/炼金界面时计时同步暂停，2秒结束立即开战，不等待提示文字退场。遮挡检查应覆盖2、1和较宽的“开战”文字，并覆盖准备期玩家移动、PC分辨率与窗口比例变化，不能只检查开场静止画面。此次确认显示方式与不遮挡要求；具体锚点、字号、环径、颜色、缓动和避让间距仍需实机细化，不改现行全局字体倍率。状态：策划已确认，本轮未修改UE或重新验收实机画面。</p>
+<p>Boss场地补充第19问已确认（2026-10-30，选择1）：2秒准备期内Boss原地待机，不主动移动，不启动攻击或攻击前摇；玩家仍可移动，双方暂不攻击。倒计时累计2秒未暂停时间后正式开战，Boss此时才进入正常移动与攻击流程；倒计时结束不等于立即造成伤害，也不把准备时间用作提前蓄力。沿用配置/炼金/结果界面暂停准备计时、关闭后续算的规则。未采用准备期缓慢靠近或额外示威动作。首招选择、具体前摇与移速仍需细化；状态：策划已确认，本轮仅更新文档，未修改或验收UE。</p>
+<p>Boss场地补充第20问（待回答）：开战后的第一招如何安排？选项1（推荐）：固定使用一种预警清晰、容易判断躲避方向的基础招式，让新手先学会读招。选项2：从两种基础招式中随机选择，增加每局变化。选项3：根据玩家与Boss的距离选择招式，让Boss根据站位作出反应。本问只确定首招选择规则，具体招式需结合怪物策划另行确定；不默认修改后续整套攻击循环、伤害、范围或前摇时长。所有选项均在准备期结束后才启动攻击流程，推荐尚未确认。</p></article><div class="doc-top" style="margin-top:35px;margin-bottom:0;border-top:1px solid var(--line);border-bottom:0;padding-top:20px"><span>更新原文后，重新生成并发布网站以刷新快照。</span><a href="/docs/boss.md" download>下载 Markdown ↓</a></div></section></div></main><footer class="wrap"><span>✧ 冒牌炼金术士 · 一个仍在生长的炼金世界</span><span>开发中原型 · 2026 <a href="https://github.com/QIQIdeqi/MPLJSS">项目 GitHub ↗</a></span></footer></body></html>

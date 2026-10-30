@@ -1,0 +1,156 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>格雷弗德边境村庄 · 冒牌炼金术士</title><meta name="description" content="村庄设定、布局与场景素材。"><meta name="theme-color" content="#203d30"><link rel="icon" href="/assets/FirePowder.png"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body><a class="skip" href="#main">跳到正文</a><header class="wrap topbar"><a class="brand" href="/" aria-label="冒牌炼金术士首页"><span class="sigil" aria-hidden="true">✧</span><span>冒牌炼金术士<small>THE IMPOSTOR ALCHEMIST</small></span></a><nav class="nav" aria-label="主导航"><a href="/#play">游戏玩法</a><a href="/#world">游戏影像</a><a href="/#download">下载试玩</a><a class="nav-docs" href="/docs/scene.html">策划档案 ↗</a></nav></header><main id="main" class="wrap"><div class="docs-banner"><span class="kicker">THE DESIGN ARCHIVE / 策划资料区</span><h1>让每一次决定，都有迹可循。</h1><p>阅读快照：2026-10-30 16:57（北京时间） · 原文中的已确认、历史提案与待验证状态均保留。</p></div><div class="docs-layout"><aside class="docs-sidebar"><label class="search-label" for="doc-search">检索全部策划与记录</label><input id="doc-search" class="search" type="search" placeholder="搜索 Boss、概率、场景…" autocomplete="off"><nav class="doc-nav" aria-label="策划分类"><span class="group">核心策划 / DESIGN</span><a href="/docs/scene.html">1.2 场景</a><a href="/docs/level.html">1.4 关卡</a><a href="/docs/system.html">1.5 系统</a><a href="/docs/balance.html">1.6 数值</a><span class="group">场景正文 / WORLD</span><a class="active" aria-current="page" href="/docs/village.html">格雷弗德边境村庄</a><a href="/docs/outskirts.html">村庄外围（第一关）</a><span class="group">记录与工具 / RECORDS</span><a href="/docs/level-record.html">关卡持续确认记录</a><a href="/docs/system-record.html">系统持续设计记录</a><a href="/docs/balance-record.html">数值持续设计记录</a><a href="/docs/boss.html">雾界草甸 · Boss 场地</a><a href="/docs/tools.html">UE 关卡与技能编辑器</a><a href="/docs/boss-proposal.html">Boss 场地历史提案</a></nav><p class="source-note">正文维护于 Git。此处为发布时的阅读快照，不自动写回仓库。<br>角色、怪物与原文案继续在 wolai 维护。文档记录的实现状态以各次核验时点为准。</p></aside><section class="doc-content"><div id="search-results" class="results" aria-live="polite" hidden></div><div class="doc-top"><span>格雷弗德边境村庄 · 阅读快照</span><a href="https://github.com/QIQIdeqi/MPLJSS/blob/main/00_Doc/%E5%8D%8F%E4%BD%9C%E7%AD%96%E5%88%92/%E5%9C%BA%E6%99%AF_%E6%A0%BC%E9%9B%B7%E5%BC%97%E5%BE%B7%E8%BE%B9%E5%A2%83%E6%9D%91%E5%BA%84.md">在 GitHub 查看 / 编辑正文 ↗</a></div><article class="prose"><h1 id="_1">格雷弗德边境村庄</h1>
+<p>维护位置：Git 仓库中的本文。原 wolai 页面只保留 Git 链接。迁移日期：2026-10-30。已确认规则、历史提案和待验证状态沿用原文，迁移不代表工程实现或平衡验收。</p>
+<p><img alt="格雷弗德边境村庄｜局外场景设计提案（2026-10-30）；氛围与分区参考，非游戏实机画面。" src="/assets/qdDPWUVug7gD6crGPBqCcp_village-concept-wolai.jpg" /></p>
+<p><img alt="Unreal D3D12实机总览：P1建筑植被、P2水井/木桥/晾药架/箱袋、地表混合过渡与软阴影。黑色区域为检查镜头画框外。" src="/assets/aHrsnVzrpWpinpuMUtz5YE_village-overview-wolai.jpg" /></p>
+<h2 id="2026-10-30">俯视布局与素材清单 · 2026-10-30</h2>
+<p><img alt="村庄俯视布局V3：P1建筑植被与P2水井、木桥、晾药架、箱袋已应用；保留432个可编辑地块。" src="/assets/pD4t6fSaPTXGRLeG8BAR2H_village-layout.png" /></p>
+<p>Unreal已保存独立Village_Blockout：432个可编辑地块，P1 30个、P2 4个实例。水井和木桥已替换；小屋旁补晾药架，粮仓旁补箱袋。补68张可编辑软阴影、10处边缘灌木，地表采用草/泥/石/水混合过渡。格蕾丝本人缺席，药圃仅装饰，不新增固定采集玩法。</p>
+<table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>素材</th>
+<th>规格</th>
+<th>当前状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0</td>
+<td>Grass 草地</td>
+<td>512×512／不透明</td>
+<td>已导入地块材质；拼接自动检查 pass</td>
+</tr>
+<tr>
+<td>P0</td>
+<td>Dirt 泥路</td>
+<td>512×512／不透明</td>
+<td>已铺设；拼接仍需美术复查</td>
+</tr>
+<tr>
+<td>P0</td>
+<td>Stone 石路</td>
+<td>512×512／不透明</td>
+<td>已铺设；拼接仍需美术复查</td>
+</tr>
+<tr>
+<td>P0</td>
+<td>Water 溪水</td>
+<td>512×512／不透明</td>
+<td>已导入并分配；溪岸阻挡独立，拼接待复查</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Cottage 炼金小屋</td>
+<td>512×512／透明</td>
+<td>已替换村庄对应占位外观</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>House 住宅</td>
+<td>512×512／透明</td>
+<td>已替换村庄住宅及作坊外观</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Warehouse 粮仓</td>
+<td>512×512／透明</td>
+<td>已替换村庄粮仓外观</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Oak 橡树</td>
+<td>512×512／透明</td>
+<td>已放入村庄与草原；树干碰撞独立</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Bush 灌木</td>
+<td>512×512／透明</td>
+<td>已放入两图；装饰无碰撞</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>RuneStone 阵石</td>
+<td>512×512／透明</td>
+<td>已替换村口与草原阵标外观</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Well 水井</td>
+<td>512×512／透明</td>
+<td>已替换村庄水井外观；独立阻挡保留</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Cart 田车</td>
+<td>512×512／透明</td>
+<td>已替换草原田车外观；独立阻挡保留</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Fence 短篱笆</td>
+<td>512×512／透明</td>
+<td>已替换草原短篱笆；按原碰撞轴分段摆放</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Bridge 木桥</td>
+<td>512×512／透明</td>
+<td>已替换村庄木桥外观；桥面可通行</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>HerbRack 晾药架</td>
+<td>512×512／透明</td>
+<td>已摆放小屋晾药架；装饰无碰撞</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Crates 箱袋</td>
+<td>512×512／透明</td>
+<td>已摆放粮仓/田车旁箱袋；装饰无碰撞</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="共享首版素材16项：P0地表4项、P1建筑植被6项、P2道具6项。P1和P2均已应用；地表加入混合过渡。" src="/assets/a75zUkndy3xvp63N3eDeby_asset-contact-wolai.jpg" /></p>
+<p>资源位于Content/Greyford；原始图与提示词位于ArtSource/Greyford20261030。新增两张24×18地表数据遮罩与混合材质，地块仍可编辑；改画地表后运行DressGreyfordP2.py刷新遮罩。阴影为独立风格化软阴影卡片。原图平铺接缝仍需美术复查，本轮未重新打包Windows试玩版。</p>
+<hr />
+<h1 id="greyford">格雷弗德边境村庄（Greyford）</h1>
+<p><strong>村庄类型：</strong> 西方奇幻世界中的边境村庄</p>
+<h3 id="_2">一、基础信息</h3>
+<ul>
+<li>
+<p><strong>地理位置：</strong> 位于国家边境地区，远离主要城市。</p>
+</li>
+<li>
+<p><strong>区域类型：</strong> 局外安全区</p>
+</li>
+<li>
+<p><strong>村庄规模：</strong> 二十多户人家，整体面积不大。</p>
+</li>
+<li>
+<p><strong>自然环境：</strong> 周边分布着树林、农田、草地与溪流，适合农业生产和草药采集。</p>
+</li>
+<li>
+<p><strong>资源状况：</strong> 日常生活资源充足，基本能够自给自足。</p>
+</li>
+<li>
+<p><strong>主要产业：</strong> 农业、畜牧、手工业及少量对外贸易。</p>
+</li>
+</ul>
+<h3 id="_3">二、村庄特点</h3>
+<p>虽然地处偏远，但由于格蕾丝长期利用炼金术帮助村民，改善农业生产效率、减轻日常劳作负担，因此村庄的生活条件相当不错，不会轻易陷入资源短缺。</p>
+<p>村庄规模虽小，却拥有住宅、农田、仓库及公共活动区域。村民彼此熟悉，整体氛围宁静、友善，生活节奏缓慢。</p>
+<h3 id="_4">三、重要人物</h3>
+<ul>
+<li>
+<p><strong>格蕾丝·米尔德梅：</strong> 长期居住于此的天生魔女与炼金术士，为村庄提供了许多帮助。</p>
+</li>
+<li>
+<p><strong>莉莉塔：</strong> 被格蕾丝收留后，在这里生活并学习炼金术。</p>
+</li>
+</ul>
+<h3 id="_5">四、剧情背景</h3>
+<p>全国猎巫行动开始后，格蕾丝突然离开村庄。随后，守护多个国家的结界魔女遭到杀害，魔物开始大规模入侵。</p>
+<p>由于格雷弗德缺乏抵御大规模魔物的力量，莉莉塔只能依靠格蕾丝留下的炼金笔记与预先准备好的炼金阵，在村庄外围制造大雾，争取抵挡魔物入侵的时间。</p></article><div class="doc-top" style="margin-top:35px;margin-bottom:0;border-top:1px solid var(--line);border-bottom:0;padding-top:20px"><span>更新原文后，重新生成并发布网站以刷新快照。</span><a href="/docs/village.md" download>下载 Markdown ↓</a></div></section></div></main><footer class="wrap"><span>✧ 冒牌炼金术士 · 一个仍在生长的炼金世界</span><span>开发中原型 · 2026 <a href="https://github.com/QIQIdeqi/MPLJSS">项目 GitHub ↗</a></span></footer></body></html>

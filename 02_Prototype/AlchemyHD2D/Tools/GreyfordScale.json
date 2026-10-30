@@ -1,0 +1,9 @@
+{
+  "units": "cm", "player_canvas": 220, "cottage_door_approx": 230,
+  "surface_texture_repeat": 200, "logical_cell": 600,
+  "sprite_sizes": {
+    "Cottage": [1040, 980], "House": [900, 1000], "Warehouse": [1250, 1150],
+    "Oak": [780, 850], "Bush": [180, 130], "RuneStone": [150, 250],
+    "Well": [300, 330], "Cart": [400, 300], "HerbRack": [300, 260], "Crates": [180, 180]
+  }
+}

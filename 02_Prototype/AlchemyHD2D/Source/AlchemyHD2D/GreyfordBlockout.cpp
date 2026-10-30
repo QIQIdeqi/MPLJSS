@@ -23,6 +23,11 @@ void AGreyfordCombatMode::StartPlay() {
     auto* Combat=GetWorld()->SpawnActorDeferred<AAlchemyWorld>(AAlchemyWorld::StaticClass(),FTransform::Identity);
     Combat->bGreyfordScene=true;Combat->FinishSpawning(FTransform::Identity);
 }
+void AGreyfordFlowMode::StartPlay() {
+    AGameModeBase::StartPlay();
+    auto* Flow=GetWorld()->SpawnActorDeferred<AAlchemyWorld>(AAlchemyWorld::StaticClass(),FTransform::Identity);
+    Flow->bGreyfordScene=Flow->bGreyfordFlow=true;Flow->FinishSpawning(FTransform::Identity);
+}
 
 AGreyfordBlockoutPawn::AGreyfordBlockoutPawn() {
     PrimaryActorTick.bCanEverTick=true;

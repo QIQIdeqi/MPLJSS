@@ -66,5 +66,25 @@ Tools/DressGreyfordP2.py：更新P2、地表遮罩、软阴影和层次装饰；
 产出Evidence/Greyford/P2/combat-result.txt、combat-route.csv、combat-gap-1/5.png。
 
 验证证据：Evidence/Greyford、Evidence/Greyford-*.log。
-新增灰盒尚未重新打包到Windows试玩ZIP；本次Git整理发布包含工程、素材和说明，
-同步结果见项目根目录memory/2026-10-30.md。03_Build现有试玩包仍为此前版本。
+2026-10-30独立Windows试玩已打包到03_Build/Greyford_Win64_20261030；
+便携包：03_Build/冒牌炼金术士_Greyford_Win64_2026-10-30.zip。
+完整解压后运行“启动草原试玩.cmd”；“查看村庄.cmd”用于场景走查。
+打包版D3D12战斗压力、村庄原生碰撞与画面、原系统冒烟测试通过。
+用户尚未首次试玩；敌群密度保持原值，等待实际体验后调整。
+详见Greyford_Windows试玩说明.txt；打包与校验记录见Evidence/Greyford/Packaging。
+
+### 2026-10-30 完整流程更新
+
+主入口改为03_Build/Greyford_Flow_Win64_20261030/启动完整试玩.cmd。
+主地图/Game/Greyford/Maps/Greyford_Flow，GreyfordFlowMode复用现有生产战斗系统。
+三张子关卡Village_Blockout、Outskirts_Blockout、Greyford_Boss通过关卡流送切换。
+村庄角色和交互、随机进入外围、300秒可选Boss传送阵、独立Boss、胜负结算回村已接入。
+木桥为可编辑的桥面、坡道与栏杆/立柱Plane卡片，桥面高度36cm；高度引导网格隐藏。
+Tools/BuildGreyfordFlow.py可重建流程地图与桥梁；首次修改前备份保留在01_Skill/tmp/greyford-flow-20261030。
+-GreyfordFlowTest检查场景衔接、设施可达性、暂停、容量、Boss死亡/玩家死亡与再次出发；
+该测试加速计时并使用测试伤害，不构成人工通关/平衡验收。截图等待相机和渲染资源更新后采集。
+前文“村庄仅走查/草原独立预览”仅适用于旧入口；Standalone预览地图仍保留，完整流程使用独立GreyfordDemo_v1存档。
+
+比例调整入口：03_Build/冒牌炼金术士_比例调整_Win64_2026-10-30.zip；全部解压后运行启动完整试玩.cmd。人物、建筑/植被/道具、桥宽、地表重复已按共同标尺调整；逻辑格和地图范围保留。尺寸表Tools/GreyfordScale.json，运行BuildGreyfordFlow.py会在最终保存阶段调用NormalizeGreyfordScale.py。独立执行旧P1/P2替换后需执行NormalizeGreyfordScale.py同步已有实例与碰撞。原完整流程包保留对照。
+
+村庄铺装收紧：主路4m、支路3m、广场18×12m。编辑Greyford/VillagePaving标记后运行Tools/CompactGreyfordVillage.py；设施位置由Greyford/VillageFacilities标记驱动。0.5m遮罩烘焙精度与6m编辑逻辑地块分离，地表纹理仍2m重复。已认可物件尺寸、相机、世界边界和草原场景保持。

@@ -1,7 +1,16 @@
 #include "AlchemyWorld.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "HAL/IConsoleManager.h"
 #include "Modules/ModuleManager.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/TargetPoint.h"
+#include "Engine/LevelStreaming.h"
+#include "TimerManager.h"
+#if WITH_EDITOR
+#include "ShaderCompiler.h"
+#include "AssetCompilingManager.h"
+#endif
 #include "GameFramework/PlayerStart.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/Texture2D.h"
@@ -116,6 +125,7 @@ float EnemyRadius(int Type) { return Type==10?110.f:Type>=7?70.f:35.f; }
 
 #include "AlchemyDesignRuntime.inl"
 #include "GreyfordCombat.inl"
+#include "GreyfordFlow.inl"
 
 AAlchemyMode::AAlchemyMode() { DefaultPawnClass=nullptr; HUDClass=AAlchemyHUD::StaticClass(); }
 void AAlchemyMode::StartPlay() { Super::StartPlay(); GetWorld()->SpawnActor<AAlchemyWorld>(); }
@@ -131,9 +141,12 @@ void AAlchemyWorld::BeginPlay() {
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture"));
-    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview")) || FParse::Param(FCommandLine::Get(),TEXT("PlannedBossTest")) || FParse::Param(FCommandLine::Get(),TEXT("PlannedBossPreview")) || FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"));
-    bCapture |= bGreyfordScene;
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("GreyfordSpatialTest"));
+    bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
+    const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
+    const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
     if(!LoadDesignConfig()) {
         SetActorTickEnabled(false);
 #if WITH_EDITOR
@@ -141,10 +154,10 @@ void AAlchemyWorld::BeginPlay() {
 #endif
         FPlatformMisc::RequestExitWithStatus(false,1);return;
     }
-    Progress=(bSmoke || bCapture)?nullptr:Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_v1"),0));
+    Progress=(bSmoke || bCapture)?nullptr:Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(SaveSlot,0));
     const bool HadSave=Progress!=nullptr;
-    if(!Progress && !bSmoke && !bCapture) Progress=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(TEXT("AlchemyResearch_backup"),0));
-    if(!Progress && !bSmoke && !bCapture && UGameplayStatics::DoesSaveGameExist(TEXT("AlchemyResearch_v1"),0)) {
+    if(!Progress && !bSmoke && !bCapture) Progress=Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromSlot(BackupSlot,0));
+    if(!Progress && !bSmoke && !bCapture && UGameplayStatics::DoesSaveGameExist(SaveSlot,0)) {
         UE_LOG(LogTemp,Error,TEXT("ALCH002 cannot load primary or backup save; refusing to overwrite player progress"));
         FPlatformMisc::RequestExitWithStatus(false,1);return;
     }
@@ -158,7 +171,7 @@ void AAlchemyWorld::BeginPlay() {
     if(Progress->SchemaVersion<2) {
         const bool Played=Progress->Coins>0 || !Progress->Recipes.IsEmpty() || !Progress->Chains.IsEmpty() || Progress->Talents.ContainsByPredicate([](int32 L){return L>0;});
         // Back up the old object before adding new semantic records; isolated QA never writes player saves.
-        if(HadSave && !bSmoke && !bCapture && !UGameplayStatics::SaveGameToSlot(Progress,TEXT("AlchemyResearch_backup"),0)) {
+        if(HadSave && !bSmoke && !bCapture && !UGameplayStatics::SaveGameToSlot(Progress,BackupSlot,0)) {
             UE_LOG(LogTemp,Error,TEXT("ALCH002 migration backup failed; primary save left unchanged"));
             FPlatformMisc::RequestExitWithStatus(false,1);return;
         }
@@ -167,6 +180,7 @@ void AAlchemyWorld::BeginPlay() {
     PotionBreakAtlas=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Art/T_PotionBreakAtlas.T_PotionBreakAtlas"));
     Levels.Init(0,NumSkills());Levels[0]=1;
     ImpactFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyImpact.NS_AlchemyImpact"));
+    BossLockSound=LoadObject<USoundBase>(nullptr,TEXT("/Game/Art/Audio/S_BossLock.S_BossLock"));
     MerchantBuySound=LoadObject<USoundBase>(nullptr,TEXT("/Game/Art/Audio/S_MerchantBuy.S_MerchantBuy"));
     MerchantSellSound=LoadObject<USoundBase>(nullptr,TEXT("/Game/Art/Audio/S_MerchantSell.S_MerchantSell"));
     MerchantCoinTexture=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Art/Coin.Coin"));
@@ -193,13 +207,18 @@ void AAlchemyWorld::BeginPlay() {
     BuildScene(false); UpdateCamera(1); Message(TEXT("欢迎来到烛苔村。WASD 移动，靠近设施按 F。"));
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_READY UE5.8 HD2D research; W0 initial=8; cap=300"));
     if(bGreyfordScene) {
-        Progress->TutorialComplete=true;StartRun();
+        if(!bGreyfordFlow){Progress->TutorialComplete=true;StartRun();}
+        else Message(TEXT("格雷弗德村庄 · WASD移动，靠近设施按F；前往村口雾门出发。"));
         if(FParse::Param(FCommandLine::Get(),TEXT("GreyfordCombatTest")))StartGreyfordReview();
     }
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyStartCombat")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"))) StartRun();
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview"))) {
         Progress->TutorialComplete=true;StartRun();RunTime=310;
         Inventory={6,6,6,1,1,1};Equipped={0,1,2,3};for(int S:Equipped) Levels[S]=2;
+    }
+    if(bGreyfordFlow && (FParse::Param(FCommandLine::Get(),TEXT("PlannedBossPreview")) || FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture")))) {
+        Progress->TutorialComplete=true;StartRun();GreyfordPortalReady=true;GreyfordPortalPos=PlayerPos;EnterGreyfordBoss();
+        if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture"))){Enemies[0].BossSequence=1;Enemies[0].BossAttack=1;for(float& CD:SkillCD)CD=10000;}
     }
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"))) {
         Progress->TutorialComplete=true;StartRun();RunTime=80;NextMerchantTime=80;RunCoins=80;Inventory={3,4,2,1,0,0};
@@ -235,7 +254,7 @@ AStaticMeshActor* AAlchemyWorld::Sheet(const FString& Name,FVector Pos,float Wid
     return A;
 }
 void AAlchemyWorld::UpdateSprite(AStaticMeshActor* Body,const FString& Name,FVector Pos,float Width,float Height,bool Flip,UMaterialInterface* OverrideMaterial) {
-    Body->SetActorLocation(Pos+FVector(0,0,Height*0.46f));
+    Body->SetActorLocation(Pos+(bGreyfordFlow?Camera->GetActorUpVector()*(Height*.46f):FVector(0,0,Height*.46f)));
     const FVector Normal=bUprightSprites?FVector(0,-1,0):-Camera->GetActorForwardVector();
     Body->SetActorRotation(FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),Normal).Rotator());
     Body->SetActorScale3D(FVector((Flip?-1:1)*Width/100,Height/100,1));
@@ -333,9 +352,11 @@ void AAlchemyWorld::BuildScene(bool Combat) {
 }
 
 bool AAlchemyWorld::Walkable(FVector P,float Radius) const {
-    const float X=bCombat?CombatHalfSize.X:2350,Y=bCombat?CombatHalfSize.Y:1850;
+    if(bGreyfordReference)return ReferenceWalkable(P,Radius);
+    const float X=(bCombat || bGreyfordFlow)?CombatHalfSize.X:2350,Y=(bCombat || bGreyfordFlow)?CombatHalfSize.Y:1850;
     if(FMath::Abs(P.X)>X-Radius || FMath::Abs(P.Y)>Y-Radius) return false;
-    if(bBossArenaActive && FVector::DistSquared2D(P,BossArenaCenter)>FMath::Square(FMath::Max(0.f,BossArenaRadius-Radius))) return false;
+    if(bGreyfordFlow && GreyfordStage==2 && FMath::Square(P.X/(1600-Radius))+FMath::Square(P.Y/(1300-Radius))>1) return false;
+    if(bBossArenaActive && !(bGreyfordFlow && GreyfordStage==2) && FVector::DistSquared2D(P,BossArenaCenter)>FMath::Square(FMath::Max(0.f,BossArenaRadius-Radius))) return false;
     for(const auto& O:Obstacles) if(FMath::Abs(P.X-O.Center.X)<O.Half.X+Radius && FMath::Abs(P.Y-O.Center.Y)<O.Half.Y+Radius) return false;
     return true;
 }
@@ -343,13 +364,17 @@ FVector AAlchemyWorld::Move(FVector P,FVector Delta,float Radius) const {
     // Substeps keep dash movement from tunnelling through narrow scene obstacles.
     int Steps=FMath::Max(1,FMath::CeilToInt(Delta.Size()/25)); Delta/=Steps;
     for(int i=0;i<Steps;i++) {
-        if(Walkable(P+FVector(Delta.X,0,0),Radius)) P.X+=Delta.X;
-        if(Walkable(P+FVector(0,Delta.Y,0),Radius)) P.Y+=Delta.Y;
+        const auto Clear=[&](FVector End){return bGreyfordReference?ReferenceSweep(P,End,Radius):Walkable(End,Radius);};
+        if(bGreyfordReference && Clear(P+Delta)){P+=Delta;continue;}
+        if(Clear(P+FVector(Delta.X,0,0))) P.X+=Delta.X;
+        if(Clear(P+FVector(0,Delta.Y,0))) P.Y+=Delta.Y;
     }
+    if(bGreyfordFlow)P.Z=GreyfordSurfaceHeight(P);
     return P;
 }
 bool AAlchemyWorld::SegmentClear(FVector A,FVector B,float Radius) const {
     if(!Walkable(A,Radius) || !Walkable(B,Radius)) return false;
+    if(bGreyfordReference)return ReferenceSweep(A,B,Radius);
     for(const auto& O:Obstacles) {
         float Near=0,Far=1;
         bool Hit=true;
@@ -373,6 +398,7 @@ bool AAlchemyWorld::FindPath(FVector From,FVector To,float Radius,TArray<FVector
     if(!Walkable(From,Radius) || !Walkable(To,Radius)) return false;
     if(SegmentClear(From,To,Radius)) {Path.Add(To);return true;}
     TArray<FVector> Nodes={From,To};
+    if(bGreyfordReference)for(auto P:ReferenceNodes)if(Walkable(P,Radius))Nodes.Add(P);
     for(const auto& O:Obstacles) for(int X:{-1,1}) for(int Y:{-1,1}) {
         FVector P(O.Center.X+X*(O.Half.X+Radius+20),O.Center.Y+Y*(O.Half.Y+Radius+20),0);
         if(Walkable(P,Radius)) Nodes.Add(P);
@@ -426,6 +452,34 @@ void AAlchemyWorld::Chase(FAlchemyEnemy& E,float Dt) {
 }
 void AAlchemyWorld::UpdateCamera(float Delta) {
     auto C=Camera->GetCameraComponent();
+    C->SetAutoCalculateOrthoPlanes(!bGreyfordReference);
+    C->PostProcessSettings.bOverride_AutoExposureBias=bGreyfordReference;C->PostProcessSettings.AutoExposureBias=0;
+    C->PostProcessSettings.bOverride_VignetteIntensity=true;C->PostProcessSettings.VignetteIntensity=bGreyfordReference?0:.18f;
+    C->PostProcessSettings.bOverride_BloomIntensity=true;C->PostProcessSettings.BloomIntensity=bGreyfordReference?0:.22f;
+    C->PostProcessSettings.bOverride_ToneCurveAmount=true;C->PostProcessSettings.ToneCurveAmount=bGreyfordReference?0:1;
+    if(bGreyfordReference){
+        C->SetUpdateOrthoPlanes(false);C->SetOrthoNearClipPlane(0);C->SetOrthoFarClipPlane(50000);
+        CameraPitch=48;
+        int VX=1280,VY=720;GetWorld()->GetFirstPlayerController()->GetViewportSize(VX,VY);
+        const float Aspect=VX>0 && VY>0?float(VX)/VY:16.f/9;
+        const bool Overview=FParse::Param(FCommandLine::Get(),TEXT("GreyfordReferenceOverview"));
+        const float FullWidth=1672*180.f/52,FullHeight=941*180.f/52,Sin=FMath::Sin(FMath::DegreesToRadians(48.f));
+        ViewWidth=FMath::Min(FullWidth/(Overview?1:FMath::Max(1.f,ReferenceZoom)),FullHeight*Aspect);
+        C->ProjectionMode=ECameraProjectionMode::Orthographic;C->SetOrthoWidth(ViewWidth);
+        C->bConstrainAspectRatio=false;C->SetAspectRatio(Aspect);
+        C->bOverrideAspectRatioAxisConstraint=true;C->SetAspectRatioAxisConstraint(EAspectRatioAxisConstraint::AspectRatio_MaintainXFOV);
+        const float BX=FMath::Max(0.f,(FullWidth-ViewWidth)/2),BY=FMath::Max(0.f,(FullHeight-ViewWidth/Aspect)/(2*Sin));
+        FVector Goal=Overview?FVector::ZeroVector:PlayerPos+FVector(0,100,0);Goal.Z=0;
+        Goal.X=FMath::Clamp(Goal.X,-BX,BX);Goal.Y=FMath::Clamp(Goal.Y,-BY,BY);
+        if(!ReferenceCameraReady || Delta<=0){ReferenceCameraFocus=Goal;ReferenceCameraReady=true;}
+        else {
+            FVector Desired=ReferenceCameraFocus;
+            for(int Axis=0;Axis<2;Axis++){const float D=Goal[Axis]-Desired[Axis];Desired[Axis]+=FMath::Sign(D)*FMath::Max(0.f,FMath::Abs(D)-30.f);}
+            ReferenceCameraFocus=FMath::Lerp(ReferenceCameraFocus,Desired,1-FMath::Exp(-10*Delta));
+        }
+        ReferenceCameraFocus.X=FMath::Clamp(ReferenceCameraFocus.X,-BX,BX);ReferenceCameraFocus.Y=FMath::Clamp(ReferenceCameraFocus.Y,-BY,BY);
+        Camera->SetActorRotation(FRotator(-48,90,0));Camera->SetActorLocation(ReferenceCameraFocus-Camera->GetActorForwardVector()*9000);return;
+    }
     C->ProjectionMode=bPerspective?ECameraProjectionMode::Perspective:ECameraProjectionMode::Orthographic;
     C->SetOrthoWidth(bBossArenaActive?FMath::Max(ViewWidth,3600.f):ViewWidth); C->SetFieldOfView(50); C->bConstrainAspectRatio=false;
     C->PostProcessSettings.bOverride_DepthOfFieldFocalDistance=true;
@@ -440,7 +494,8 @@ void AAlchemyWorld::UpdateCamera(float Delta) {
         C->SetAspectRatio(Aspect);
     }
     const float HalfHeight=ViewWidth/(2*Aspect*FMath::Sin(FMath::DegreesToRadians(CameraPitch)));
-    const float BoundX=bCombat?7111:2400, BoundY=bCombat?5380:1900;
+    const float BoundX=bGreyfordFlow?(GreyfordStage==2?1600:7111):bCombat?7111:2400;
+    const float BoundY=bGreyfordFlow?(GreyfordStage==2?1300:5380):bCombat?5380:1900;
     FVector Target=bBossArenaActive?BossArenaCenter:PlayerPos;
     Target.X=FMath::Clamp(Target.X,-FMath::Max(0.f,BoundX-ViewWidth/2),FMath::Max(0.f,BoundX-ViewWidth/2));
     Target.Y=FMath::Clamp(Target.Y,-FMath::Max(0.f,BoundY-HalfHeight),FMath::Max(0.f,BoundY-HalfHeight));
@@ -458,7 +513,7 @@ void AAlchemyWorld::Ring(FVector P,float Radius,FLinearColor Color,float Duratio
 void AAlchemyWorld::Message(FString Value) { Toast=Value; ToastTime=4; }
 bool AAlchemyWorld::SaveProgress() {
     if(bSmoke || bCapture) return true;
-    bool OK=UGameplayStatics::SaveGameToSlot(Progress,TEXT("AlchemyResearch_v1"),0);
+    bool OK=UGameplayStatics::SaveGameToSlot(Progress,bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1"),0);
     if(!OK) Message(TEXT("保存失败，进度仍在内存中。请重试。"));
     return OK;
 }
@@ -472,8 +527,9 @@ void AAlchemyWorld::TutorialSupply(FVector Position) {
     if(!TutorialActive() || TutorialSkill>=0 || bTutorialSupplyDone || RunTime<35) return;
     for(int M=0;M<3;M++) {
         bool Available=Inventory[M]>0;
-        for(const auto& D:Drops) if(D.Kind==M && D.Count>0 && Walkable(D.Pos,18)) Available=true;
-        if(!Available) {Drop(Position,M);return;}
+        TArray<FVector> Path;
+        for(const auto& D:Drops) if(D.Kind==M && D.Count>0 && FindPath(PlayerPos,D.Pos,45,Path)) Available=true;
+        if(!Available) {Drop(FindPath(PlayerPos,Position,45,Path)?Position:PlayerPos,M);return;}
     }
     bTutorialSupplyDone=true;
 }
@@ -496,7 +552,7 @@ void AAlchemyWorld::StartRun() {
     ResetMerchant();
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
     Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
-    TutorialSkill=-1;bTutorialSupplyDone=false;
+    TutorialSkill=-1;bTutorialSupplyDone=false;TutorialEncounterPending=false;TutorialEncounterRetry=0;
     // RESULT-001/EXP-001 run-local state resets.
     PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=0; PendingIsNuclear=false; PendingRefreshed=false;
     RunLevel=1; RunXP=0; PendingLevelUps=0;LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;for(int A=0;A<7;A++) RunAttrs[A]=0;
@@ -509,6 +565,7 @@ void AAlchemyWorld::StartRun() {
     for(float& T:SkillCD) T=0;
     for(int C=0;C<NumChains();C++) ChainCD[C]=ChainConfig(C).CD;
     BuildScene(true);
+    GreyfordPortalReady=false;GreyfordPortal=nullptr;GreyfordPortalRetry=300;
     UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
     Message(bGreyfordScene?TEXT("村庄外围试玩 · WASD移动 / 空格闪避 / Tab炼金 / R重新开始"):TEXT("腐化林地 · 技能自动释放；Tab 打开炼金台。"));
@@ -613,7 +670,7 @@ void AAlchemyWorld::AcceptPendingResult() {
     if(Levels[Match]==0) { if(Equipped.Num()<6) Equipped.Add(Match); else Bag.Add(Match); }
     Levels[Match]++;
     if(PendingResultCombination>=0) Progress->Combinations.AddUnique(PendingResultCombination);
-    if(TutorialActive()) {TutorialSkill=Match;bTutorialSupplyDone=true;}
+    if(TutorialActive()) {TutorialSkill=Match;bTutorialSupplyDone=true;if(bGreyfordFlow && GreyfordStage==1)TutorialEncounterPending=true;}
     Progress->Recipes.AddUnique(Match); SaveProgress();
     Message(FString::Printf(TEXT("已接收：%s · Lv.%d"),SkillName(Match),Levels[Match]));
     PendingResultSkill=-1; PendingResultCombination=-1; PendingIsNuclear=false; Panel.Empty();
@@ -778,6 +835,7 @@ void AAlchemyWorld::SpawnWave() {
     if(bBossSpawned) return;
     const int W=FMath::Min(5,int(RunTime/60));
     int Count=Enemies.Num()<Minimum[W]?FMath::Min(Refill[W],Minimum[W]-Enemies.Num()):Batch[W];
+    if(bGreyfordFlow && RunTime>=300)Count=FMath::CeilToInt(Count*(1+.2f*(1+FMath::FloorToInt((RunTime-300)/30))));
     Count=FMath::Min(Count,300-Enemies.Num());
     for(int i=0;i<Count;i++) { int Roll=Random.RandRange(1,100),Type=0; while(Type<6 && (Roll-=Weights[W][Type])>0) Type++; SpawnEnemy(Type); }
 }
@@ -912,6 +970,7 @@ void AAlchemyWorld::CastSkills(float Dt) {
 }
 
 void AAlchemyWorld::Action(FString Id) {
+    if(bGreyfordFlow && GreyfordFlowAction(Id))return;
     if(Id==TEXT("merchantopen")) {OpenMerchant();return;}
     if(Id.StartsWith(TEXT("merchantbuy"))) {BuyMerchant(FCString::Atoi(*Id.Mid(11)));return;}
     if(Id==TEXT("merchantrefresh")) {RefreshMerchant();return;}
@@ -1022,7 +1081,10 @@ void AAlchemyWorld::Tick(float Dt) {
     UpdateMerchantFeedback();
     HitFXThisFrame=0;
     auto PC=GetWorld()->GetFirstPlayerController(); if(!PC || !Player) return;
-    if(bGreyfordScene && !GreyfordReviewActive && PC->WasInputKeyJustPressed(EKeys::R))StartRun();
+    if(bGreyfordScene && !bGreyfordFlow && !GreyfordReviewActive && PC->WasInputKeyJustPressed(EKeys::R))StartRun();
+    if(bGreyfordReference && FParse::Param(FCommandLine::Get(),TEXT("GreyfordSpatialTest"))){GreyfordSpatialCheck(Dt);return;}
+    if(bGreyfordReference && FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest"))){GreyfordAmbientCheck(Dt);return;}
+    if(bGreyfordFlow && FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")))GreyfordFlowCheck(Dt);
     if(GreyfordReviewActive && Panel==TEXT("levelup"))Action(FString::Printf(TEXT("pick%d"),LevelupChoices[0]));
     if(GreyfordReviewActive && bRunEnded){GreyfordReviewOK=false;FinishGreyfordReview();return;}
     if(PC->WasInputKeyJustPressed(EKeys::F1)) Action(TEXT("ortho"));
@@ -1041,6 +1103,8 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::Tab)) Panel=Panel==TEXT("alchemy")?TEXT(""):TEXT("alchemy");
     if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) Panel=Panel==TEXT("skills")?TEXT(""):TEXT("skills");
+    if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossTest"))){PlannedBossCheck(Dt);return;}
+    if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture")))PlannedBossCapture();
     if(bSmoke) SmokeCheck(Dt);
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke"))) {MerchantSmoke(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture"))) MerchantCapture(Dt);
@@ -1112,9 +1176,10 @@ void AAlchemyWorld::Tick(float Dt) {
         else if(CaptureStep==10 && VisualTime>16) {UE_LOG(LogTemp,Display,TEXT("ALCHEMY_CAPTURE_DONE")); FPlatformMisc::RequestExit(false); CaptureStep++;}
     }
     if(PendingLevelUps>0 && Panel.IsEmpty()) RollLevelupChoices();
-    UpdateCamera(Dt);
+    if(!bGreyfordReference)UpdateCamera(Dt);
     UpdateFeedback(Dt);
     if(!Panel.IsEmpty()) {
+        if(bGreyfordReference)UpdateCamera(Dt);
         Player->SetActorHiddenInGame(false);
         UpdateCharacterVisual(CharacterAnimation.Dead?Dt:0,false);
         for(auto& E:Enemies) {if(E.Type==10) {UpdateBossVisual(E);continue;}float Scale=E.Type>=7?2:1;UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),E.Type),E.Pos,100*Scale,100*Scale);}
@@ -1134,29 +1199,51 @@ void AAlchemyWorld::Tick(float Dt) {
     FVector Delta=Direction*500*(1+0.03f*Progress->Talents[2]+0.05f*RunAttrs[2])*Dt;
     if(DodgeTime>0) {float Step=FMath::Min(Dt,DodgeTime); DodgeTime-=Step; Delta=DodgeDirection*(280/0.24f)*Step;}
     const FVector PreviousPos=PlayerPos;
-    PlayerPos=Move(PlayerPos,Delta);
+    PlayerPos=PlannedPlayerMove(Delta,Dt);
+    if(bGreyfordReference)UpdateCamera(Dt);
     UpdateCharacterVisual(Dt,!PlayerPos.Equals(PreviousPos));
     Player->SetActorHiddenInGame(!CharacterAnimation.Hurting && (HurtInv>0 || DodgeInv>0) && int(VisualTime*16)%2==0);
     PlayerShadow->SetActorLocation(PlayerPos+FVector(0,0,5));
+    if(bGreyfordFlow && GreyfordPortalReady && GreyfordStage==1 && PC->WasInputKeyJustPressed(EKeys::F) && FVector::Dist2D(PlayerPos,GreyfordPortalPos)<=220){Panel=TEXT("bossportal");return;}
     if(bCombat && PC->WasInputKeyJustPressed(EKeys::F) && OpenMerchant()) return;
     if(!bCombat) {
         if(PC->WasInputKeyJustPressed(EKeys::F)) {
-            if(FVector::Dist2D(PlayerPos,FVector(-600,100,0))<280) Panel=TEXT("talents");
-            else if(FVector::Dist2D(PlayerPos,FVector(600,100,0))<280) Panel=TEXT("codex");
-            else if(FVector::Dist2D(PlayerPos,FVector(0,1050,0))<300) Panel=TEXT("level");
+            if(FVector::Dist2D(PlayerPos,FacilityPosition(0))<280) Panel=TEXT("talents");
+            else if(FVector::Dist2D(PlayerPos,FacilityPosition(1))<280) Panel=TEXT("codex");
+            else if(FVector::Dist2D(PlayerPos,FacilityPosition(2))<300) Panel=TEXT("level");
         }
         return;
     }
+    if(bGreyfordFlow && GreyfordStage==2) {
+        GreyfordBossStartFlash=FMath::Max(0.f,GreyfordBossStartFlash-Dt);
+        if(GreyfordBossPreparation>0) {
+            if(GreyfordBossWarmupFrames>0)--GreyfordBossWarmupFrames;
+            else GreyfordBossPreparation=FMath::Max(0.f,GreyfordBossPreparation-Dt);
+            if(GreyfordBossPreparation==0)GreyfordBossStartFlash=.35f;
+            if(FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest"))) {
+                const int Digit=FMath::CeilToInt(GreyfordBossPreparation);
+                if(Digit!=GreyfordCountdownCapture) {
+                    GreyfordCountdownCapture=Digit;const FString Path=FPaths::ProjectDir()/TEXT("Evidence/Greyford/Flow")/FString::Printf(TEXT("countdown-%d.png"),Digit);FTimerHandle Timer;
+                    GetWorld()->GetTimerManager().SetTimer(Timer,[Path](){FScreenshotRequest::RequestScreenshot(Path,false,false);},.1f,false);
+                }
+            }
+            if(GreyfordBossPreparation>0)return;
+        }
+    }
     RunTime+=Dt; SpawnCD-=Dt; ContactCD-=Dt;
+    if(TutorialEncounterPending && bGreyfordFlow && GreyfordStage==1 && RunTime>=TutorialEncounterRetry)SpawnTutorialEncounter();
     UpdateMerchant(Dt);
     // EXP-001: in-run HP regen (1/sec per stack), capped at max HP.
     if(RunAttrs[6]>0) HP=FMath::Min(MaxHP,HP+RunAttrs[6]*Dt);
-    if(RunTime>=300 && RunTime-Dt<300) Message(TEXT("最终 BOSS 即将出现 · 10 秒预警"));
-    if(RunTime>=310 && !bBossSpawned) StartBossEncounter();
+    if(bGreyfordFlow)UpdateGreyfordPortal();
+    else {
+        if(RunTime>=300 && RunTime-Dt<300) Message(TEXT("最终 BOSS 即将出现 · 10 秒预警"));
+        if(RunTime>=310 && !bBossSpawned) StartBossEncounter();
+    }
     // SPAWN-002: once the final boss appears, stop new normal-wave and elite spawns.
     // Boss entry settles all remaining enemies and drops exactly once.
     if(!bBossSpawned) {
-        if(SpawnCD<=0) {SpawnWave(); SpawnCD=Interval[FMath::Min(5,int(RunTime/60))];}
+        if(SpawnCD<=0) {SpawnWave(); SpawnCD=Interval[FMath::Min(5,int(RunTime/60))];if(bGreyfordFlow && RunTime>=300)SpawnCD/=1+.2f*(1+FMath::FloorToInt((RunTime-300)/30));}
         if(RunTime>=NextElite && NextElite<1800) {int Before=Enemies.Num(); SpawnEnemy(7+EliteIndex%3); if(Enemies.Num()>Before) {NextElite+=90; EliteIndex++;}}
     }
     if(!Panel.IsEmpty()) return;
@@ -1198,36 +1285,8 @@ void AAlchemyWorld::Tick(float Dt) {
         E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));
     }
     if(!Panel.IsEmpty()) return;
-    for(int i=Shots.Num()-1;i>=0;i--) {
-        auto& S=Shots[i];
-        if(S.NewPotion) {S.NewPotion=false;continue;}
-        if(S.ReleaseDelay>0) {
-            S.ReleaseDelay-=Dt;
-            if(S.ReleaseDelay>0) continue;
-            S.Pos=PlayerPos;
-            S.Body->SetActorHiddenInGame(false);
-            if(S.Trail.IsValid()) S.Trail->SetVisibility(true);
-            UE_LOG(LogTemp,Display,TEXT("ALCHEMIST_POTION_RELEASE frame=%d time=%.3f"),CharacterAnimation.Frame,CharacterAnimation.Time);
-        }
-        S.Age+=Dt;S.Life-=Dt;
-        // Segment substeps also protect fast projectile hits at lower frame rates.
-        const int Steps=FMath::Max(1,FMath::CeilToInt(S.Velocity.Size()*Dt/20));
-        for(int j=0;j<Steps && S.Life>0;j++) {
-            S.Pos+=S.Velocity*Dt/Steps;
-            if(!Walkable(S.Pos,18)) {S.Life=0; break;}
-            if(S.Hostile) {if(FVector::Dist2D(S.Pos,PlayerPos)<63) {Hurt(S.Damage); S.Life=0;}}
-            else {int N=Nearest(S.Pos,55); if(N>=0) {DamageEnemy(N,S.Damage,S.Color,S.HitEffect.Get(),S.EffectScale,S.HitLife);SlowEnemy(N,S.Slow,S.SlowFactor);S.Life=0;}}
-        }
-        if(!Panel.IsEmpty()) return;
-        if(S.Potion) {
-            const float Arc=65.f*FMath::Sin(PI*FMath::Min(1.f,S.Age/.6f));
-            S.Body->SetActorLocation(S.Pos+FVector(0,0,90+Arc));
-            const FQuat Billboard=FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),-Camera->GetActorForwardVector()).ToQuat();
-            S.Body->SetActorRotation((Billboard*FQuat(FVector::UpVector,S.Age*8)).Rotator());
-        } else S.Body->SetActorLocation(S.Pos+FVector(0,0,65));
-        if(S.Trail.IsValid()) S.Trail->SetWorldLocation(S.Body->GetActorLocation());
-        if(S.Life<=0) {if(S.Potion) SpawnPotionBreak(S.Pos);if(S.Trail.IsValid()) S.Trail->DestroyComponent();S.Body->Destroy(); Shots.RemoveAtSwap(i);}
-    }
+    UpdateShots(Dt);
+    if(!Panel.IsEmpty())return;
     for(int i=Enemies.Num()-1;i>=0;i--) if(Enemies[i].HP<=0) {
         auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
         SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
@@ -1435,6 +1494,45 @@ void AAlchemyWorld::SmokeCheck(float Dt) {
 }
 
 #include "AlchemyBoss.inl"
+#include "AlchemyPlannedBoss.inl"
+#include "AlchemyPlannedBossChecks.inl"
+
+void AAlchemyWorld::UpdateShots(float Dt) {
+    if(!Panel.IsEmpty())return;
+    for(int i=Shots.Num()-1;i>=0;i--) {
+        auto& S=Shots[i];
+        if(S.NewPotion) {S.NewPotion=false;continue;}
+        if(S.ReleaseDelay>0) {
+            S.ReleaseDelay-=Dt;
+            if(S.ReleaseDelay>0) continue;
+            S.Pos=PlayerPos;
+            S.Body->SetActorHiddenInGame(false);
+            if(S.Trail.IsValid()) S.Trail->SetVisibility(true);
+            UE_LOG(LogTemp,Display,TEXT("ALCHEMIST_POTION_RELEASE frame=%d time=%.3f"),CharacterAnimation.Frame,CharacterAnimation.Time);
+        }
+        const float ShotDt=FMath::Max(0.f,Dt-S.SpawnDelay);S.SpawnDelay=0;
+        S.Age+=ShotDt;S.Life-=ShotDt;
+        // Segment substeps also protect fast projectile hits at lower frame rates.
+        if(S.BossWave>=0)UpdatePlannedShot(S,ShotDt);
+        const int Steps=FMath::Max(1,FMath::CeilToInt(S.Velocity.Size()*ShotDt/20));
+        for(int j=0;j<Steps && S.Life>0 && S.BossWave<0;j++) {
+            S.Pos+=S.Velocity*ShotDt/Steps;
+            if(!Walkable(S.Pos,18)) {S.Life=0; break;}
+            if(S.Hostile) {if(FVector::Dist2D(S.Pos,PlayerPos)<63) {Hurt(S.Damage); S.Life=0;}}
+            else {int N=Nearest(S.Pos,55); if(N>=0) {DamageEnemy(N,S.Damage,S.Color,S.HitEffect.Get(),S.EffectScale,S.HitLife);SlowEnemy(N,S.Slow,S.SlowFactor);S.Life=0;}}
+        }
+        if(!Panel.IsEmpty()) return;
+        if(S.Potion) {
+            const float Arc=65.f*FMath::Sin(PI*FMath::Min(1.f,S.Age/.6f));
+            S.Body->SetActorLocation(S.Pos+FVector(0,0,90+Arc));
+            const FQuat Billboard=FRotationMatrix::MakeFromXZ(Camera->GetActorRightVector(),-Camera->GetActorForwardVector()).ToQuat();
+            S.Body->SetActorRotation((Billboard*FQuat(FVector::UpVector,S.Age*8)).Rotator());
+        } else S.Body->SetActorLocation(S.Pos+FVector(0,0,65));
+        if(S.Trail.IsValid()) S.Trail->SetWorldLocation(S.Body->GetActorLocation());
+        if(S.Life<=0) {if(S.Potion) SpawnPotionBreak(S.Pos);if(S.Trail.IsValid()) S.Trail->DestroyComponent();S.Body->Destroy(); Shots.RemoveAtSwap(i);}
+    }
+}
+
 #include "AlchemyMerchant.inl"
 #include "AlchemyMerchantChecks.inl"
 #include "AlchemyMerchantHUD.inl"
@@ -1448,7 +1546,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
     const FVector2D Direction(FVector::DotProduct(LastDirection,Right.GetSafeNormal2D()),FVector::DotProduct(LastDirection,Forward.GetSafeNormal2D()));
     CharacterAnimation.Advance(Delta,Direction,Moving);
     const auto Rotation=FRotationMatrix::MakeFromXZ(Right,bUprightSprites?FVector(0,-1,0):-Forward);
-    const float Size=220;
+    const float Size=bGreyfordReference?224:220;
     // Plane UV V grows downward: its local Y points opposite the visual up direction.
     Player->SetActorLocation(PlayerPos-Rotation.GetUnitAxis(EAxis::Y)*(104.f/256*Size));
     Player->SetActorRotation(Rotation.Rotator());
@@ -1471,3 +1569,5 @@ void AAlchemyWorld::SpawnPotionBreak(FVector Position) {
     FAlchemyFX FX;FX.Body=Body;FX.Life=FX.Total=4.f/12;FX.PotionBreak=true;Effects.Add(FX);PotionBreakCount++;
 }
 #include "AlchemistCharacterV3Smoke.inl"
+
+#include "GreyfordSpatial.inl"

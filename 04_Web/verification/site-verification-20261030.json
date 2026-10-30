@@ -1,0 +1,20 @@
+{
+  "site_id": "appgprj_6ae45ae926b8819186c01268cb9f23ae",
+  "source_commit": "796131af38048566567c2b5b4d6203e1ba2f22e3",
+  "version_id": "appgprj_6ae45ae926b8819186c01268cb9f23ae~appgver_b1dffea53e488191a5032d7217e24586",
+  "deployment_id": "appgdep_6ae45c84534c8191baaf3f48c8871622",
+  "checks": {
+    "local_links": "PASS / 13 HTML pages",
+    "search_index": "PASS / 12 source snapshots",
+    "javascript_syntax": "PASS",
+    "browser_gallery": "PASS",
+    "browser_search": "PASS / match, empty, cleared",
+    "mobile": "390x844 / no horizontal document overflow",
+    "download_head": "200 / application/zip / 353578045 bytes"
+  },
+  "preview_images": [
+    "home-desktop.png",
+    "docs-desktop.png",
+    "home-mobile.png"
+  ]
+}

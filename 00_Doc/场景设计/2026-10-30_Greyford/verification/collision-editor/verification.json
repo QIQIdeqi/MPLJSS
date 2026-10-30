@@ -1,0 +1,55 @@
+{
+  "result": "PASS",
+  "time": "2026-10-31T00:05:25.977877+08:00",
+  "regions": 46,
+  "walk_regions": 13,
+  "blocked_regions": 33,
+  "editor_build": "collision-editor-build-final.log",
+  "editor_tests": {
+    "result": "PASS",
+    "regions": 46,
+    "legacy_migration": true,
+    "vertex_move": true,
+    "insert_remove": true,
+    "json_export": true,
+    "other_source_fields_preserved": true,
+    "edited_map_save_reload": true,
+    "final_geometry_unchanged": true
+  },
+  "ui": {
+    "launcher": true,
+    "numeric_vertex_edit": true,
+    "undo": true,
+    "redo": true,
+    "json_export_button": true,
+    "save_and_independent_reopen": true,
+    "undo_dirty_flag_fixed": true,
+    "mouse_drag_commit": "not asserted by UI automation"
+  },
+  "game": {
+    "baseline_semantic_cases": 111,
+    "baseline_paths": 55,
+    "edited_grid_cells": 21,
+    "probe_pixel": [
+      700,
+      404
+    ],
+    "before_edit": 1,
+    "after_edit": 0,
+    "after_undo_save": 1,
+    "grid_points": 24662,
+    "walkable": 3396,
+    "movement_probes": 27168,
+    "sweep_failures": 0,
+    "connected_components": 1,
+    "final_grid_identical_to_baseline": true
+  },
+  "new_windows_package": false,
+  "hashes": {
+    "Tools\\GreyfordReference.json": "0a5607d8cfd2799c05e023d4e48ec35b16f4a94761b4bd1cd6e6ae6fed4a881f",
+    "Content\\Greyford\\Maps\\Village_Reference.umap": "3e5801c0e850fac8187226244970c93a1d449ae167e48fa60de550ce155f0cab",
+    "Source\\AlchemyHD2D\\GreyfordReferenceRegion.cpp": "0c33cb6e979b4b239eb6277647dfb78ce86a0c698ca642b7c07c80c7b2823b3d",
+    "Source\\AlchemyHD2D\\GreyfordReferenceRegion.h": "2e33352de2c61ad8f110072cacbee61f991f706dd790c26e3658478ae2301d46",
+    "Source\\AlchemyHD2D\\GreyfordFlow.inl": "e96727cef22263704d2ad89ceeb83716691933ada5a3a697b4c3f8e33fb6e18d"
+  }
+}

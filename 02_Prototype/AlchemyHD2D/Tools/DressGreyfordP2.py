@@ -91,10 +91,10 @@ float3 b=Texture2DSampleLevel(Layout,LayoutSampler,(cell+float2(side.x,0)+0.5)/d
 float3 c=Texture2DSampleLevel(Layout,LayoutSampler,(cell+float2(0,side.y)+0.5)/dim,0).rgb;
 float3 d=Texture2DSampleLevel(Layout,LayoutSampler,(cell+side+0.5)/dim,0).rgb;
 float3 w=lerp(lerp(a,b,t.x),lerp(c,d,t.x),t.y);
-float3 grass=Texture2DSample(Grass,GrassSampler,p).rgb;
-float3 dirt=Texture2DSample(Dirt,DirtSampler,p).rgb;
-float3 stone=Texture2DSample(Stone,StoneSampler,p).rgb;
-float3 water=Texture2DSample(Water,WaterSampler,p).rgb;
+float3 grass=Texture2DSample(Grass,GrassSampler,p*3).rgb;
+float3 dirt=Texture2DSample(Dirt,DirtSampler,p*3).rgb;
+float3 stone=Texture2DSample(Stone,StoneSampler,p*3).rgb;
+float3 water=Texture2DSample(Water,WaterSampler,p*3).rgb;
 float shade=0.96+0.04*sin(World.x/1200)*sin(World.y/850);
 return (grass*w.r+dirt*w.g+stone*w.b+water*saturate(1-w.r-w.g-w.b))*shade;
 ''')
@@ -124,8 +124,9 @@ for scene in plan['maps']:
                 actor=existing.get(obsolete)
                 if actor and (actor.actor_has_tag('GreyfordP2Visual') or actor.actor_has_tag('GreyfordGroundShadow')):
                     actors.destroy_actor(actor);del existing[obsolete]
-        dims={'Well':(780,850),'Cart':(1100,1000),'Bridge':(930,800),'HerbRack':(900,850),'Crates':(700,700)}
-        width,height=dims.get(asset,(430,450)) if count==1 else ((w*600/count*1.10,350) if w>=h else (430,450))
+        dims=json.loads((root/'Tools/GreyfordScale.json').read_text(encoding='utf-8'))['sprite_sizes']
+        dims['Bridge']=(930,800)
+        width,height=dims.get(asset,(260,230)) if count==1 else ((w*600/count*1.10,200) if w>=h else (260,230))
         for i in range(count):
             p=foot if count==1 else u.Vector(foot.x+((i+.5)/count-.5)*w*600,foot.y,12) if w>=h else u.Vector(foot.x,foot.y+((i+.5)/count-.5)*h*600,12)
             label='P2_'+obj['name']+('_%02d'%i if count>1 else '')
@@ -167,3 +168,8 @@ for scene in plan['maps']:
 
 (evidence/'replacement-report.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2),encoding='utf-8')
 u.log('GREYFORD_P2_DRESS_PASS '+str([(r['map'],r['visual_count']) for r in reports]))
+
+# Restore the compact village paving after regenerating the shared P2 surface materials.
+if lib.does_asset_exist('/Game/Greyford/Maps/Greyford_Flow'):
+    import runpy
+    runpy.run_path(str(root/'Tools/CompactGreyfordVillage.py'))

@@ -1,13 +1,25 @@
 // Authored scene adapter; movement, skills, enemies and damage remain the production simulation.
 void AAlchemyWorld::BuildGreyfordScene() {
+    if(bGreyfordFlow && !SwitchGreyfordStage(bCombat?1:0)){SetActorTickEnabled(false);FPlatformMisc::RequestExitWithStatus(false,1);return;}
     CombatHalfSize=FVector2D(7200,5400);
-    for(TActorIterator<APlayerStart> It(GetWorld());It;++It){PlayerPos=It->GetActorLocation();PlayerPos.Z=0;break;}
-    for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It) {
+    for(TActorIterator<APlayerStart> It(GetWorld());It;++It){if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;PlayerPos=It->GetActorLocation();PlayerPos.Z=0;break;}
+    if(!bGreyfordFlow)for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It) {
+        if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;
         if(!It->ActorHasTag(TEXT("GreyfordBlocker")))continue;
         FVector Center,Extent;It->GetActorBounds(true,Center,Extent);
         Obstacles.Add({FVector2D(Center),FVector2D(Extent)});
     }
-    UE_LOG(LogTemp,Display,TEXT("GREYFORD_COMBAT_SCENE blockers=%d spawn_clear=%d no_save=1"),Obstacles.Num(),Walkable(PlayerPos));
+    if(bGreyfordFlow && !bCombat && !bGreyfordReference) {
+        Sprite(TEXT("Cauldron"),GreyfordFacilities[0],210,250);
+        Sprite(TEXT("Lectern"),GreyfordFacilities[1],180,230);
+        bool AuthoredGate=false;for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It)if(It->GetLevel()==GreyfordActiveLevel && It->ActorHasTag(TEXT("GreyfordVillageFogGate"))){AuthoredGate=true;break;}
+        if(!AuthoredGate)Sprite(TEXT("Portal"),GreyfordFacilities[2],420,560);
+    }
+    if(bGreyfordFlow && bCombat)for(int I=0;I<64;I++) {
+        const FVector Candidate(Random.FRandRange(-6800,6800),Random.FRandRange(-5000,5000),0);TArray<FVector> Path;
+        if(Walkable(Candidate,45) && FindPath(PlayerPos,Candidate,45,Path)){PlayerPos=Candidate;break;}
+    }
+    UE_LOG(LogTemp,Display,TEXT("GREYFORD_COMBAT_SCENE blockers=%d spawn_clear=%d no_save=%d"),Obstacles.Num(),Walkable(PlayerPos),bCapture);
 }
 
 void AAlchemyWorld::StartGreyfordReview() {

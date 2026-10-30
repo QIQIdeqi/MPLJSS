@@ -6,9 +6,11 @@
 #include "GameFramework/SaveGame.h"
 #include "AlchemyDesignTools.h"
 #include "AlchemistSpriteAnimation.h"
+#include "GreyfordReferenceRegion.h"
 #include "AlchemyWorld.generated.h"
 
 class AStaticMeshActor;
+class ULevel;
 class ACameraActor;
 class UMaterialInterface;
 class UNiagaraSystem;
@@ -52,6 +54,9 @@ struct FAlchemyEnemy {
     bool Phase2=false;
     int32 BossAttack=0, BossSequence=0;
     float BossActive=0;
+    int32 PlannedState=0;
+    float PlannedTime=0, PlannedDistance=0;
+    bool PlannedLocked=false;
     bool BossDashHit=false;
     FVector DashDirection=FVector::ZeroVector;
     TArray<FVector> Path;
@@ -65,6 +70,8 @@ struct FAlchemyShot {
     float Life=4, Damage=0;
     bool Hostile=false, Potion=false, NewPotion=false;
     float ReleaseDelay=0, Age=0;
+    int32 BossWave=-1;
+    float FadeRemaining=-1,SpawnDelay=0;
     FLinearColor Color=FLinearColor::White;
     TWeakObjectPtr<UNiagaraComponent> Trail;
     TWeakObjectPtr<UNiagaraSystem> HitEffect;
@@ -92,6 +99,7 @@ public:
     AAlchemyWorld();
     virtual void BeginPlay() override;
     virtual void Tick(float Delta) override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
     UPROPERTY(EditAnywhere, Category="HD2D") float CameraPitch=48;
     UPROPERTY(EditAnywhere, Category="HD2D") float ViewWidth=2844;
     UPROPERTY(EditAnywhere, Category="HD2D") bool bPerspective=false;
@@ -100,6 +108,50 @@ public:
     UPROPERTY(EditAnywhere, Category="HD2D") bool bDepthOfField=false;
     // Reuse combat in the authored Greyford map with temporary progress.
     UPROPERTY(EditAnywhere, Category="HD2D") bool bGreyfordScene=false;
+    UPROPERTY(EditAnywhere, Category="HD2D") bool bGreyfordFlow=false;
+    UPROPERTY() TObjectPtr<ULevel> GreyfordActiveLevel;
+    int32 GreyfordStage=0;
+    bool bGreyfordReference=false;
+    int32 ReferencePreviousAA=-1;
+    UPROPERTY(EditAnywhere,Category="Reference") float ReferenceZoom=2;
+    UPROPERTY(EditAnywhere,Category="Reference") float ReferencePlayerRadius=30;
+    FVector ReferenceCameraFocus=FVector::ZeroVector;
+    bool ReferenceCameraReady=false;
+    void GreyfordAmbientCheck(float Dt);
+    void GreyfordSpatialCheck(float Dt);
+    int32 SpatialCase=-1;float SpatialTime=0;bool SpatialOK=true;
+    FString SpatialDir;TArray<FVector> SpatialPoints;TArray<FString> SpatialNames;
+    float AmbientTime=0,AmbientPause=2,AmbientCaptureTime=0;
+    int32 AmbientWaypoint=0,AmbientFrame=0;
+    bool AmbientOK=true;
+    TArray<FVector> AmbientPath;
+    FString AmbientCSV;
+    UPROPERTY() TArray<TObjectPtr<AGreyfordReferenceRegion>> ReferenceRegions;
+    TArray<FVector> ReferenceNodes;
+    TArray<TPair<FVector,FVector>> ReferenceBoundary;
+    void BuildReferenceBoundary();
+    bool ReferenceSweep(FVector A,FVector B,float Radius) const;
+    bool ReferenceWalkable(FVector P,float Radius) const;
+    static FVector ReferencePoint(float X,float Y){return FVector((836-X)*(180.f/52),(470.5f-Y)*(180.f/52)/FMath::Sin(FMath::DegreesToRadians(48.f)),0);}
+    bool GreyfordPortalReady=false;
+    FVector GreyfordPortalPos=FVector::ZeroVector;
+    float GreyfordPortalRetry=300;
+    UPROPERTY() TObjectPtr<AStaticMeshActor> GreyfordPortal;
+    TArray<FVector> GreyfordFacilities={FVector(1800,0,0),FVector(-1200,0,0),FVector(-6300,-600,0)};
+    bool SwitchGreyfordStage(int32 Stage);
+    void UpdateGreyfordPortal();
+    bool EnterGreyfordBoss();
+    FVector FacilityPosition(int32 Index) const;
+    float GreyfordSurfaceHeight(FVector Position) const;
+    bool GreyfordFlowAction(const FString& Id);
+    void GreyfordFlowCheck(float Delta);
+    int32 GreyfordFlowTestStep=0;
+    int32 GreyfordFlowExpectedCoins=0;
+    float GreyfordFlowTestTime=0;
+    float GreyfordPausedTime=0;
+    float GreyfordBossPreparation=0, GreyfordBossStartFlash=0, GreyfordPausedPreparation=0;
+    int32 GreyfordBossWarmupFrames=0, GreyfordCountdownCapture=-1;
+    bool GreyfordFlowTestOK=true;
     bool GreyfordReviewActive=false, GreyfordReviewDodge=false, GreyfordReviewOK=true;
     int32 GreyfordWaypoint=1, GreyfordDodges=0, GreyfordPeakEnemies=0, GreyfordAttackFrames=0;
     float GreyfordReviewTime=0, GreyfordSegmentTime=0, GreyfordMinHP=120;
@@ -260,6 +312,30 @@ public:
     void SpawnEnemy(int32 Type);
     bool StartBossEncounter();
     void UpdateBoss(FAlchemyEnemy& Enemy,float Delta);
+    void UpdatePlannedBoss(FAlchemyEnemy& Enemy,float Delta);
+    void UpdateShots(float Delta);
+    void UpdatePlannedShot(FAlchemyShot& Shot,float Delta);
+    FVector BossStraightMove(FVector From,FVector Delta,float Radius) const;
+    FVector PlannedPlayerMove(FVector ManualDelta,float Delta);
+    void ShowPlannedBossLines(FAlchemyEnemy& Enemy,bool Dash,bool Locked);
+    void FirePlannedBossWave(FAlchemyEnemy& Enemy,float FrameOffset);
+    void BossLockCue();
+    void PlannedBossCheck(float Delta);
+    void PlannedBossCapture();
+    void SpawnTutorialEncounter();
+    bool TutorialEncounterPending=false;
+    float TutorialEncounterRetry=0;
+    UPROPERTY(EditAnywhere,Category="Level|Unconfirmed Test Defaults",meta=(ClampMin="1",ClampMax="12")) int32 TutorialEncounterCount=6;
+    UPROPERTY(EditAnywhere,Category="Boss|Unconfirmed Test Defaults",meta=(ClampMin="0.01")) float PlannedWaveFade=.15f;
+    UPROPERTY(EditAnywhere,Category="Boss|Unconfirmed Test Defaults",meta=(ClampMin="0.35")) float PlannedFanWindup=1.25f;
+    UPROPERTY(EditAnywhere,Category="Boss|Unconfirmed Test Defaults",meta=(ClampMin="0.1")) float PlannedFanRecovery=1;
+    UPROPERTY(EditAnywhere,Category="Boss|Unconfirmed Test Defaults",meta=(ClampMin="0.1")) float PlannedFanLifetime=5;
+    UPROPERTY() TObjectPtr<USoundBase> BossLockSound;
+    UPROPERTY() TArray<TObjectPtr<AStaticMeshActor>> PlannedBossLines;
+    TSet<int32> SpentBossWaves;
+    int32 PlannedBossWaveSerial=0,PlannedBossWavesFired=0,PlannedBossLockSounds=0;
+    float BossKnockRemaining=0;
+    FVector BossKnockDirection=FVector::ZeroVector;
     void UpdateBossVisual(FAlchemyEnemy& Enemy);
     void EndBossArena();
     void ClearBossTelegraphs();
@@ -334,6 +410,7 @@ public:
     void Box(float X,float Y,float W,float H,FLinearColor Color);
     void Button(const FString& Id,const FString& Label,float X,float Y,float W=180,bool Enabled=true,float Height=48);
     void DrawMerchant();
+    void DrawGreyfordFlow();
     void DrawMerchantFeedback();
 };
 

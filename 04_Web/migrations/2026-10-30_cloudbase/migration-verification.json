@@ -1,0 +1,30 @@
+{
+  "status": "prepared_not_deployed",
+  "recommended_host": "Tencent CloudBase static hosting in a mainland China region with a custom domain",
+  "html_pages": 13,
+  "searchable_documents": 12,
+  "preserved_snapshot_files": 43,
+  "demo": {
+    "version": "2026-10-29",
+    "bytes": 353578045,
+    "sha256": "cc2f043adbfa30c8eb3763158c00999350ca8a4c8a97461f66d3cb30396fdcc9",
+    "download_path": "/downloads/alchemy-demo-win64-2026-10-29.zip"
+  },
+  "checks": {
+    "local_links": "PASS",
+    "document_and_asset_preservation": "PASS",
+    "no_external_runtime_assets": "PASS",
+    "demo_integrity": "PASS",
+    "zip_integrity": "PASS"
+  },
+  "archive": "冒牌炼金术士_官网与策划_大陆托管完整包_2026-10-30.zip",
+  "archive_bytes": 358850388,
+  "archive_sha256": "929d40dbfcf4f9cc9ff45c9d9ff2dc358c86767e6b21a0a445f6c1240922ed4d",
+  "remaining": [
+    "User creates and signs into a Tencent Cloud account",
+    "User completes identity verification and approves any paid plan",
+    "Create hosting environment and deploy public/",
+    "Register and file a custom domain for a mainland production endpoint",
+    "Configure HTTPS and test the real mainland phone networks"
+  ]
+}

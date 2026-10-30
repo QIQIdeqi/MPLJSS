@@ -55,6 +55,7 @@ memory/archives/2026-10-27-old-build-saves/
 /02_Prototype/AlchemyHD2D/Build/Windows/FileOpenOrder/
 /02_Prototype/AlchemyHD2D/Content/Tests/
 /02_Prototype/AlchemyHD2D/Tools/Test*.py
+!/02_Prototype/AlchemyHD2D/Tools/TestGreyfordCollisionEditor.py
 /02_Prototype/AlchemyHD2D/Tools/Diagnose*.py
 /02_Prototype/AlchemyHD2D/Tools/Smoke.ps1
 /02_Prototype/AlchemyHD2D/Tools/CleanHistoricalSpriteAssets.py
@@ -70,3 +71,19 @@ memory/archives/2026-10-27-old-build-saves/
 **/.venv/
 **/.pytest_cache/
 *.pyc
+
+# Local site runtime, nested Sites checkout and reproducible deployment archives.
+/04_Web/alchemy-official/
+/04_Web/tooling/
+/04_Web/source/dist/
+/04_Web/releases/
+/04_Web/migrations/2026-10-30_cloudbase/public/downloads/*.zip
+/04_Web/migrations/2026-10-30_cloudbase/*.zip
+/04_Web/migrations/2026-10-30_cloudbase/*.zip.sha256
+# Historical Wolai backups and superseded local build copies stay on this SSD.
+/04_工具与协作/wolai/备份/
+/03_Build/Greyford_Ambient_Win64_20261030/
+/03_Build/Greyford_BossPlan_Win64_20261030/
+/03_Build/Greyford_Spatial_Win64_20261030/
+/03_Build/冒牌炼金术士_动态村庄_Win64_2026-10-30.zip
+/03_Build/冒牌炼金术士_动态村庄_Win64_2026-10-30.zip.sha256

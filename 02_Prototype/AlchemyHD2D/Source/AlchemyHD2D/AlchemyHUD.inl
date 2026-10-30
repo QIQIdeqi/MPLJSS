@@ -75,15 +75,25 @@ void AAlchemyHUD::DrawHUD() {
     }
     if(World->Panel!=TEXT("alchemy")) DragMaterial=-1;
     FocusOrder.Empty();ButtonRects.Empty();
+    if(World->bGreyfordReference && World->Panel.IsEmpty()){
+        if(FParse::Param(FCommandLine::Get(),TEXT("GreyfordReferenceCapture")))return;
+        Box(12,678,680,30,FLinearColor(0,0,0,.6f));Text(TEXT("WASD 移动 · Space 闪避 · 小屋强化 / 作坊图鉴 / 雾门出发：靠近按 F"),22,684,16,FLinearColor::White);
+        for(int I=0;I<3;I++)if(FVector::Dist2D(World->PlayerPos,World->FacilityPosition(I))<220)Text(I==0?TEXT("F · 小屋强化"):I==1?TEXT("F · 作坊图鉴"):TEXT("F · 雾门出发"),525,637,22,Gold);
+        return;
+    }
     const FLinearColor White(.94f,.95f,.93f),Dim(.72f,.79f,.8f),Surface(.035f,.06f,.075f,.97f);
+    const bool FlowBoss=World->bGreyfordFlow && World->GreyfordStage==2 && World->Panel.IsEmpty();
     // Background bars cover the screen; content stays inside a centered 16:9 PC safe frame.
     Box(-OX/S,-OY/S,Canvas->SizeX/S,88+OY/S,Surface);
     Text(TEXT("冒牌炼金术士"),24,18,28,Gold);
-    Text(World->bGreyfordScene?TEXT("村庄外围 · 试玩"):World->bCombat?TEXT("腐化林地"):TEXT("烛苔村 · 据点"),315,25,22,White);
+    if(FlowBoss) {Text(TEXT("雾界草甸 · Boss战"),24,54,18,White);Text(FString::Printf(TEXT("%02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),965,22,24,White);}
+    else {
+    Text(World->bGreyfordFlow?(World->GreyfordStage==0?TEXT("格雷弗德村庄"):World->GreyfordStage==2?TEXT("雾界草甸"):TEXT("村庄外围")):World->bGreyfordScene?TEXT("村庄外围 · 试玩"):World->bCombat?TEXT("腐化林地"):TEXT("烛苔村 · 据点"),315,25,22,White);
     if(World->bCombat) {
         Text(FString::Printf(TEXT("%02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),610,14,34,White);
         Text(FString::Printf(TEXT("击败 %d   金币 %d"),World->Kills,World->RunCoins),790,28,20,Gold);
     } else Text(FString::Printf(TEXT("金币 %d"),World->Progress->Coins),720,27,22,Gold);
+    }
     if(World->Panel.IsEmpty()) Button(TEXT("research"),TEXT("F6 画面"),1070,20,185);
     Box(-OX/S,668,Canvas->SizeX/S,52+OY/S,Surface);
     Paragraph(TEXT("WASD 移动    Space 闪避    F 交互    Tab 炼金    C 图鉴    B 技能    Esc 返回"),24,680,1232,16,Dim);
@@ -126,14 +136,14 @@ void AAlchemyHUD::DrawHUD() {
             Paragraph(World->TutorialSkill>=0?TEXT("让新技能一次命中至少2个敌人，完成首次教学。"):Ready?TEXT("材料已齐！按 Tab，尝试第一次炼金。"):TEXT("战斗收集三类材料，准备第一次炼金。"),370,TY+14,610,20,Gold);
             if(Ready && World->TutorialSkill<0) Button(TEXT("alchemy"),TEXT("Tab 开始炼金"),370,TY+63,340);
         }
-        if(World->RunTime>=300 && !World->bBossSpawned) {Box(340,102,600,68,Surface);Text(FString::Printf(TEXT("BOSS 即将出现：%.1f秒"),310-World->RunTime),360,120,26,Gold);}
+        if(!World->bGreyfordFlow && World->RunTime>=300 && !World->bBossSpawned) {Box(340,102,600,68,Surface);Text(FString::Printf(TEXT("BOSS 即将出现：%.1f秒"),310-World->RunTime),360,120,26,Gold);}
         for(const auto& E:World->Enemies) if(E.Type==10) {
-            World->RenderedBossBarY=102;
-            Box(340,102,600,104,Surface);Box(340,102,600,3,Gold);
-            Text(E.Phase2?TEXT("腐化之源 · 二阶段"):TEXT("腐化之源 · 封锁战场"),360,112,24,Gold);
-            Box(360,150,560,12,Ink);Box(360,150,560*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);
+            const float Y=FlowBoss?8:102;World->RenderedBossBarY=Y;
+            Box(340,Y,600,FlowBoss?70:104,Surface);Box(340,Y,600,3,Gold);
+            Text(E.Phase2?TEXT("腐化之源 · 二阶段"):World->bGreyfordFlow?TEXT("腐化之源 · 雾界草甸"):TEXT("腐化之源 · 封锁战场"),360,Y+10,FlowBoss?20:24,Gold);
+            Box(360,Y+(FlowBoss?36:48),560,12,Ink);Box(360,Y+(FlowBoss?36:48),560*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);
             const TCHAR* Names[]={TEXT("冲刺 · 离开橙色直线"),TEXT("弹幕 · 从扇形间隙穿过"),TEXT("冲击波 · 向侧面闪避")};
-            Text(E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:TEXT("保持移动 · 金色边界不可越过"),360,174,18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
+            Text(FlowBoss?(E.PlannedState==1?TEXT("冲刺蓄力 · 方向锁定后向侧面躲开"):E.PlannedState==2?TEXT("冲刺中 · 避开橙色路线"):E.PlannedState==3?TEXT("收招停顿 · 调整站位并输出"):TEXT("两波弹幕 · 观察青色弹道间隙")):E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:World->bGreyfordFlow?TEXT("保持移动 · 雾界边界不可越过"):TEXT("保持移动 · 金色边界不可越过"),360,Y+(FlowBoss?50:72),FlowBoss?16:18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
         }
         if(World->bMerchantActive && !World->bBossSpawned) {
             const FVector D=World->MerchantPos-World->PlayerPos;
@@ -144,9 +154,9 @@ void AAlchemyHUD::DrawHUD() {
             Text(FString::Printf(TEXT("%s %.1f米 · 金色标记"),Way,D.Size2D()/100),982,158,18,White);
             Button(TEXT("merchantopen"),World->bMerchantLeaving?TEXT("正在收摊，暂不交易"):World->CanTrade()?TEXT("F 打开交易"):TEXT("靠近商人后按 F"),982,199,256,World->CanTrade(),42);
         }
-    } else if(!World->bCombat && World->Panel.IsEmpty()) {
+    } else if(!World->bCombat && World->Panel.IsEmpty() && !World->bGreyfordFlow) {
         for(int I=0;I<3;I++) {
-            FVector P=I==0?FVector(-600,100,180):I==1?FVector(600,100,180):FVector(0,1050,410);FVector2D Screen;
+            FVector P=World->FacilityPosition(I);if(World->bGreyfordFlow && FVector::Dist2D(P,World->PlayerPos)>2000)continue;P.Z+=I==2?410:180;FVector2D Screen;
             PC->ProjectWorldLocationToScreen(P,Screen);float X=(Screen.X-OX)/S-125,Y=(Screen.Y-OY)/S-42;
             X=FMath::Clamp(X,34.f,960.f);Y=FMath::Clamp(Y,110.f,540.f);
             Box(X-10,Y-6,280,48,Surface);Text(I==0?TEXT("[F] 强化台"):I==1?TEXT("[F] 配方图鉴"):TEXT("[F] 进入林地"),X,Y,22,Gold);
@@ -158,10 +168,16 @@ void AAlchemyHUD::DrawHUD() {
         FString Title=P==TEXT("alchemy")?TEXT("炼金 · 战斗已暂停"):P==TEXT("codex")?TEXT("发现图鉴"):P==TEXT("skills")?TEXT("装备与储备"):P==TEXT("talents")?TEXT("永久强化"):P==TEXT("fonts")?TEXT("字体调试 · 即时预览"):P==TEXT("research")?TEXT("画面与可读性"):P==TEXT("level")?TEXT("选择关卡"):P==TEXT("result")?TEXT("炼金结果"):P==TEXT("levelup")?TEXT("升级强化"):P==TEXT("victory")?TEXT("胜利 · 已结算"):P==TEXT("defeat")?TEXT("本局结束"):P==TEXT("confirmbuy")?TEXT("确认购买"):P==TEXT("confirmreturn")?TEXT("返回据点？"):P==TEXT("savefailed")?TEXT("保存失败"):TEXT("暂停");
         if(P==TEXT("merchant")) Title=TEXT("流浪商人 · 战斗已暂停");
         if(P==TEXT("merchantconfirm")) Title=TEXT("确认出售全部材料");
+        if(P==TEXT("bossportal"))Title=TEXT("进入雾界草甸？");
         Text(Title,104,118,28,Gold);
         Button(TEXT("close"),TEXT("Esc 返回"),1018,114,160);
         Button(TEXT("textsize"),TEXT("F7 字体调试"),778,114,220);
-        if(P==TEXT("merchant") || P==TEXT("merchantconfirm")) DrawMerchant();
+        if(P==TEXT("bossportal")) {
+            Paragraph(TEXT("保留当前生命、技能与冷却。自动回收已有地面材料，背包每种最多10个；不自动回收金币。进入后至胜负结算前不能返回。"),104,220,1000,24,White);
+            Text(FString::Printf(TEXT("当前生命 %.0f / %.0f"),World->HP,World->MaxHP),104,370,26,Gold);
+            Button(TEXT("enterboss"),TEXT("确认挑战Boss"),104,500,524);Button(TEXT("bossportalstay"),TEXT("继续在草原成长"),654,500,524);
+        }
+        else if(P==TEXT("merchant") || P==TEXT("merchantconfirm")) DrawMerchant();
         else if(P==TEXT("alchemy")) {
             Text(TEXT("点击或拖入材料；点击炉内材料取回。"),104,181,18,Dim);
             Furnace=FBox2D(FVector2D(104,220),FVector2D(704,490));Box(104,220,600,270,FLinearColor(.055f,.105f,.12f));
@@ -250,7 +266,7 @@ void AAlchemyHUD::DrawHUD() {
                 if(Open && !Done) Button(FString::Printf(TEXT("buy%d"),I),Label,808,Y,370);
             }
         } else if(P==TEXT("level")) {
-            Text(TEXT("腐化林地"),104,245,32,Gold);Text(TEXT("自动战斗 · 材料炼金 · 固定地图"),104,305,23,White);
+            Text(World->bGreyfordFlow?TEXT("村庄外围"):TEXT("腐化林地"),104,245,32,Gold);Text(TEXT("自动战斗 · 材料炼金 · 固定地图"),104,305,23,White);
             if(World->Progress->StartMaterialUnlocked) {
                 Text(TEXT("开局高级材料（选择一种，本局获得1个）："),104,370,20,White);
                 for(int I=0;I<3;I++) {
@@ -258,7 +274,7 @@ void AAlchemyHUD::DrawHUD() {
                     Button(FString::Printf(TEXT("startmat%d"),I),FString::Printf(TEXT("%s%s"),World->StartMaterialChoice==I?TEXT("→ "):TEXT(""),Names[I]),104+I*366,410,340);
                 }
             }
-            Paragraph(TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,500,1000,20,Dim);Button(TEXT("start"),TEXT("进入关卡"),104,545,460);
+            Paragraph(World->bGreyfordFlow?TEXT("5:00开放Boss传送阵。跟随箭头，在阵内按F确认进入；可继续成长，压力逐步增加。"):TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,500,1000,20,Dim);Button(TEXT("start"),TEXT("进入关卡"),104,545,460);
         } else if(P==TEXT("confirmbuy") && World->PendingTalent>=0) {
             int I=World->PendingTalent;const auto& N=TalentSequence[I];
             FString Desc;
@@ -306,10 +322,11 @@ void AAlchemyHUD::DrawHUD() {
             Paragraph(TEXT("本局金币仍待保存。重试成功后才能离开。"),104,270,1000,25,Gold);Button(TEXT("retry"),TEXT("重试保存"),104,460,524);
         } else {
             Button(TEXT("close"),TEXT("继续游戏"),104,245,524);Button(TEXT("codex"),TEXT("发现图鉴"),654,245,524);
-            Button(World->bCombat?TEXT("alchemy"):TEXT("talents"),World->bCombat?TEXT("炼金"):TEXT("永久强化"),104,325,524);Button(World->bCombat?TEXT("return"):TEXT("level"),World->bCombat?TEXT("返回据点"):TEXT("选择关卡"),654,325,524);
+            Button(World->bCombat?TEXT("alchemy"):TEXT("talents"),World->bCombat?TEXT("炼金"):TEXT("永久强化"),104,325,524);Button(World->bCombat?TEXT("return"):TEXT("level"),World->bCombat?TEXT("返回据点"):TEXT("选择关卡"),654,325,524,!(World->bGreyfordFlow && World->GreyfordStage==2));
             Text(TEXT("↑ ↓ 选择    Enter 确认    Esc 返回"),104,480,22,Dim);
         }
     }
-    if(World->ToastTime>0) {Box(-OX/S,-OY/S,Canvas->SizeX/S,88+OY/S,FLinearColor(.025f,.075f,.085f,.99f));Paragraph(World->Toast,24,16,1232,20,Gold);}
+    if(World->ToastTime>0 && !FlowBoss) {Box(-OX/S,-OY/S,Canvas->SizeX/S,88+OY/S,FLinearColor(.025f,.075f,.085f,.99f));Paragraph(World->Toast,24,16,1232,20,Gold);}
     DrawMerchantFeedback();
+    if(World->bGreyfordFlow)DrawGreyfordFlow();
 }

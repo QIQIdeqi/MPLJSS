@@ -1,0 +1,11 @@
+{
+  "result": "PASS",
+  "regions": 46,
+  "legacy_migration": true,
+  "vertex_move": true,
+  "insert_remove": true,
+  "json_export": true,
+  "other_source_fields_preserved": true,
+  "edited_map_save_reload": true,
+  "final_geometry_unchanged": true
+}

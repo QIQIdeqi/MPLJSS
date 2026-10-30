@@ -49,3 +49,10 @@ public:
     AGreyfordCombatMode();
     virtual void StartPlay() override;
 };
+
+UCLASS()
+class ALCHEMYHD2D_API AGreyfordFlowMode : public AGreyfordCombatMode {
+    GENERATED_BODY()
+public:
+    virtual void StartPlay() override;
+};

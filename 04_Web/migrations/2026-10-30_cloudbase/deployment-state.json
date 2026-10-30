@@ -1,0 +1,26 @@
+{
+  "provider": "Tencent CloudBase",
+  "environment_name": "alchemy-site",
+  "environment_id": "alchemy-site-d8ghthwlp66ecd074",
+  "region": "ap-shanghai",
+  "plan": "free trial, 6 months",
+  "initial_order_cny": 0,
+  "hosting_status": "success",
+  "deployed": true,
+  "domain": "https://alchemy-site-d8ghthwlp66ecd074-1258895351.tcloudbaseapp.com/",
+  "domain_type": "development_test_domain_with_provider_notice",
+  "source_directory": "public",
+  "service_name": "alchemy-web",
+  "version_name": "alchemy-web-001",
+  "build_id": "2609980059",
+  "uploaded_files": 46,
+  "verification": {
+    "browser_home": "PASS after acknowledging provider test-domain notice",
+    "browser_search": "PASS: probability query returns 4 documents",
+    "browser_gallery": "PASS",
+    "mobile_viewport": "390px, no horizontal overflow, no broken loaded images",
+    "download_head": "200, application/zip, 353578045 bytes",
+    "real_mainland_mobile_network": "not yet verified"
+  },
+  "remaining": ["Bind a filed production domain", "Verify the actual mainland phone networks"]
+}

@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-30",
+  "source_head": "73be394",
+  "configuration": "Win64 Development",
+  "archive": {
+    "archive": "D:\\06_独立游戏\\00_冒牌炼金术士\\03_Build\\冒牌炼金术士_Greyford_Win64_2026-10-30.zip",
+    "bytes": 304784620,
+    "entries": 47,
+    "crc": "PASS",
+    "sha256": "22a72b3a8303b71b2d56c7c37c2c76d0a3e821f74d731ab40969520714b9503e",
+    "excluded": "QA Evidence/Saved and unrelated debug launchers"
+  },
+  "validation": "DataValidation exit0,0 errors,0 warnings",
+  "build_cook_stage_archive": "PASS, UAT exit0",
+  "maps_cooked": [
+    "/Game/Maps/Research",
+    "/Game/Greyford/Maps/Outskirts_Blockout",
+    "/Game/Greyford/Maps/Village_Blockout"
+  ],
+  "packaged_production_smoke": "PASS ALCHEMY_SMOKE_PASS and ALCH002_TEST_PASS",
+  "packaged_d3d12_combat": "PASS 60.016s,8/8 primary segments,13 with return,20 dodges,24 kills,36 peak enemies,minimum/final HP93/120",
+  "packaged_village": "PASS spawn_count1 and native collision sweep, D3D12 overview inspected",
+  "launcher_ui": "PlayGreyford/启动草原试玩 opened actual packaged AlchemyHD2D.exe; field map,HUD,levelup and R reset observed; left paused for user",
+  "enemy_density": "UNCHANGED; user has not played yet and asked to try package before tuning",
+  "evidence": "02_Prototype/AlchemyHD2D/Evidence/Greyford/Packaging",
+  "notes": [
+    "Both authored Greyford scenes included in cook; original Research default map preserved",
+    "Main Greyford launcher passes explicit field map before other flags",
+    "ZIP CRC full read passed; SHA256 recorded",
+    "QA Evidence/Saved and unrelated debug launchers excluded from ZIP",
+    "Not committed,pushed or published"
+  ]
+}
