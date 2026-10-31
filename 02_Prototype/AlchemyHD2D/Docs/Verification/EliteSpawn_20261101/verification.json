@@ -1,0 +1,87 @@
+{
+  "base": "c05d402",
+  "actual_player_saves_unchanged": 11,
+  "native_spawn": {
+    "2560x1080": {
+      "result": "PASS",
+      "branch": "visible_warning",
+      "logged_assertions": 33,
+      "unique_check_names": 26,
+      "log_sha256": "fdb2d7ab9875e1e9f2cecaf853f38eab103f01d22a03f3aaacfe5b7aa069beed",
+      "screenshots": [
+        "01-pre-spawn-state.png",
+        "02-reposition-or-recheck.png",
+        "03-actual-elite.png"
+      ]
+    },
+    "1280x720": {
+      "result": "PASS",
+      "branch": "strict_offscreen",
+      "logged_assertions": 27,
+      "unique_check_names": 20,
+      "log_sha256": "503be01e58ab63ef46c00a81b2858381e91f2832869d35a8b1ad641ff5fcd6a7",
+      "screenshots": [
+        "01-pre-spawn-state.png",
+        "02-reposition-or-recheck.png",
+        "03-actual-elite.png"
+      ]
+    },
+    "1024x768": {
+      "result": "PASS",
+      "branch": "strict_offscreen",
+      "logged_assertions": 27,
+      "unique_check_names": 20,
+      "log_sha256": "03600a49f2f146b2728b9539858d19757231405bd8e7bf52bfd69bf048cff06e",
+      "screenshots": [
+        "01-pre-spawn-state.png",
+        "02-reposition-or-recheck.png",
+        "03-actual-elite.png"
+      ]
+    }
+  },
+  "UIV02": {
+    "result": "PASS",
+    "logged_assertions": 129,
+    "unique_check_names": 26,
+    "log_sha256": "2b9f648a3697fe0fa2bca710a8ae025cab5a2818211012757921646934c6849c"
+  },
+  "codex": {
+    "result": "PASS",
+    "logged_assertions": 113,
+    "unique_check_names": 23,
+    "log_sha256": "58c01543c7fc08cf104ee82177a411236654675d7a1176e72e51d09fb2f4b435"
+  },
+  "producer": {
+    "result": "PASS",
+    "logged_assertions": 39,
+    "unique_check_names": 33,
+    "log_sha256": "5a95f8448b4d19808681fac0369afd675975f0995070dae09f15e52512f92061"
+  },
+  "flow": {
+    "result": "PASS",
+    "logged_assertions": 42,
+    "unique_check_names": 42,
+    "log_sha256": "df86be5923a3ffc87b65a78f31918de3692f1c06ae73f3601d1677fee8d483d2"
+  },
+  "boss": {
+    "result": "PASS",
+    "logged_assertions": 28,
+    "unique_check_names": 28,
+    "log_sha256": "412c96e20c263c6260d151dcda5ac6d9b8db9cb60d3d25ff9f72204206e929ab"
+  },
+  "unified_wide": {
+    "result": "PASS",
+    "logged_assertions": 70,
+    "unique_check_names": 31,
+    "log_sha256": "3092d9ae247e2c81e0495afefb33e71b5c4146143ce57bc36ad56b27e10b67a6"
+  },
+  "editor_build": {
+    "result": "PASS",
+    "log_sha256": "f96f20194964217786f88b4eca4845e16db207f569fba001af3a352911438384"
+  },
+  "game_build": {
+    "result": "PASS",
+    "log_sha256": "f66541042ecd47dd6e5ea4cd21e9bb1c9ac2dbc6a7594cc5297359d42a1dccb3"
+  },
+  "art": "Existing ground Disc and enemy materials; no new production art/DT fields."
+}

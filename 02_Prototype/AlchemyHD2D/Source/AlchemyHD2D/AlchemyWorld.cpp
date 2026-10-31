@@ -169,7 +169,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("GreyfordSpatialTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("PixelFXCapture"));
-    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression")) || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression")) || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) || FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("UnifiedPresentationTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("Reference60Test"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
@@ -314,6 +314,7 @@ void AAlchemyWorld::House(FVector P,FLinearColor Roof) {
 }
 
 void AAlchemyWorld::BuildScene(bool Combat) {
+    ClearEliteWarning();
     ClearBattleReferenceScene();
     ClearPixelFX();
     CloseMerchant();
@@ -658,6 +659,7 @@ void AAlchemyWorld::StartRun() {
     Message(bGreyfordScene?TEXT("村庄外围试玩 · WASD移动 / 空格闪避 / Q炼金 / R重新开始"):TEXT("腐化林地 · 技能自动释放；Q 打开炼金台。"));
 }
 void AAlchemyWorld::EndRun(bool Won) {
+    ClearEliteWarning();
     if(bRunEnded) return;
     CloseMerchant();
     EndBossArena();PendingLevelUps=0;
@@ -905,6 +907,12 @@ void AAlchemyWorld::SpawnEnemy(int Type) {
     if(bBossSpawned && K.Archetype!=10) return;
     FVector P;
     if(!FindSpawnPoint(Type,P)) {UE_LOG(LogTemp,Warning,TEXT("ALCHEMY_SPAWN_NO_LEGAL_POINT type=%d time=%.2f"),Type,RunTime);return;}
+    SpawnEnemyAt(Type,P);
+}
+void AAlchemyWorld::SpawnEnemyAt(int Type,FVector P) {
+    if(!RuntimeEnemies.IsValidIndex(Type))return;
+    const auto& K=EnemyDefinition(Type);
+    if(bBossSpawned && K.Archetype!=10)return;
     FAlchemyEnemy E;E.Type=K.Archetype;E.Definition=Type;E.Pos=P;
     const int Minute=FMath::Max(0,int(RunTime/60));
     const float HPBase=bTune001B && K.TunedHP>=0?K.TunedHP:K.HP;
@@ -1215,6 +1223,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::Q)) TogglePanel(TEXT("alchemy"));
     if(!bRunEnded && !bCombat && PC->WasInputKeyJustPressed(EKeys::C)) TogglePanel(TEXT("codex"));
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) TogglePanel(TEXT("skills"));
+    if(FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) && EliteSpawnCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1366,7 +1375,7 @@ void AAlchemyWorld::Tick(float Dt) {
     // Boss entry settles all remaining enemies and drops exactly once.
     if(!bBossSpawned) {
         if(SpawnCD<=0) {SpawnWave(); SpawnCD=Interval[FMath::Min(5,int(RunTime/60))];if(bGreyfordFlow && RunTime>=300)SpawnCD/=1+.2f*(1+FMath::FloorToInt((RunTime-300)/30));}
-        if(RunTime>=NextElite && NextElite<1800) {const int ID=ChooseEliteDefinition();if(ID<0)NextElite+=90;else{int Before=Enemies.Num();SpawnEnemy(ID);if(Enemies.Num()>Before){NextElite+=90;EliteIndex++;}}}
+        UpdateEliteSpawning(Dt);
     }
     if(!Panel.IsEmpty()) return;
     CastSkills(Dt);
@@ -1683,6 +1692,8 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "UnifiedPresentationChecks.inl"
 #include "UIV02Checks.inl"
 #include "EnemyCodexChecks.inl"
+#include "EliteSpawning.inl"
+#include "EliteSpawnChecks.inl"
 #include "PixelFXChecks.inl"
 
 void AAlchemyWorld::SpawnPotionBreak(FVector Position) {

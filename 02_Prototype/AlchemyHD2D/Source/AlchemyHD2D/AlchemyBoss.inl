@@ -46,6 +46,7 @@ bool AAlchemyWorld::StartBossEncounter() {
     // Find a legal boss position before granting any rewards: a retry cannot pay twice.
     const int Before=Enemies.Num();SpawnEnemy(10);
     if(Enemies.Num()==Before) return false;
+    ClearEliteWarning();
     CloseMerchant();
     bBossSpawned=true;BossClearCount=0;bCollectBossRewards=true;
     for(int I=Enemies.Num()-1;I>=0;I--) if(Enemies[I].Type!=10) {

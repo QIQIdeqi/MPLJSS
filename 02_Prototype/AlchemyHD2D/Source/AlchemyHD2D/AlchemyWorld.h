@@ -71,6 +71,12 @@ public:
     float FontSize(float Size) const { return Size*(Size<=18?1.f:Size<26?MediumTextScale:LargeTextScale); }
 };
 
+struct FAlchemyEliteWarning {
+    int32 Definition=-1;
+    FVector Position=FVector::ZeroVector;
+    float Remaining=0,Retry=0;
+    TWeakObjectPtr<AStaticMeshActor> Marker;
+};
 struct FAlchemyEnemy {
     AStaticMeshActor* Body=nullptr;
     AStaticMeshActor* Shadow=nullptr;
@@ -259,6 +265,12 @@ public:
     FVector PlayerPos=FVector::ZeroVector;
     FVector LastDirection=FVector(0,1,0), DodgeDirection=FVector(0,1,0);
     TArray<FAlchemyEnemy> Enemies;
+    FAlchemyEliteWarning EliteWarning;
+    void ClearEliteWarning();
+    bool EliteWarningPointSafe(int32 Definition,FVector Position,float MinDistance) const;
+    bool FindVisibleEliteSpawn(int32 Definition,FVector& Position);
+    void UpdateEliteSpawning(float Delta);
+    bool EliteSpawnCheck(float Delta);
     TArray<FAlchemyShot> Shots;
     TArray<FAlchemyDrop> Drops;
     TArray<FAlchemyFX> Effects;
@@ -394,6 +406,7 @@ public:
     FString ChainHintFor(int32 Skill) const;
     float MaterialDropChance() const;
     void SpawnEnemy(int32 Type);
+    void SpawnEnemyAt(int32 Definition,FVector Position);
     bool StartBossEncounter();
     void UpdateBoss(FAlchemyEnemy& Enemy,float Delta);
     void UpdatePlannedBoss(FAlchemyEnemy& Enemy,float Delta);

@@ -1,5 +1,6 @@
 // A persistent world streams the three authored scenes; run state never crosses a reset boundary.
 bool AAlchemyWorld::SwitchGreyfordStage(int32 Stage) {
+    ClearEliteWarning();
     if(bGreyfordReference)UpdateVillagePerspectiveCards(false);
     ClearBattleReferenceScene();
     const TCHAR* Names[]={TEXT("Village_Reference"),TEXT("Outskirts_Blockout"),TEXT("Greyford_Boss")};
@@ -99,6 +100,7 @@ bool AAlchemyWorld::ReferenceSweep(FVector A,FVector B,float Radius) const {
 }
 
 void AAlchemyWorld::EndPlay(const EEndPlayReason::Type Reason){
+    ClearEliteWarning();
     if(ReferencePreviousAA>=0)if(auto AA=IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))AA->Set(ReferencePreviousAA,ECVF_SetByCode);
     Super::EndPlay(Reason);
 }

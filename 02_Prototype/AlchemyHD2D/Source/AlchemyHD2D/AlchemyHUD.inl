@@ -4,7 +4,7 @@ float AAlchemyHUD::Measure(const FString& Value,float Size) const {
     return FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(Value,Font).X/S;
 }
 void AAlchemyHUD::Text(const FString& Value,float X,float Y,float Size,FLinearColor Color) {
-    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")))UIV02DrawnText.Add(Value);
+    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")))UIV02DrawnText.Add(Value);
     // Font size is rasterized at the display size, rather than stretching UFont's default 9pt glyphs.
     FSlateFontInfo Font(World->UIFont,FMath::Max(1,FMath::RoundToInt(World->Progress->FontSize(Size)*S*.75f)));
     FCanvasTextItem Item(FVector2D(OX+X*S,OY+Y*S),FText::FromString(Value),Font,Color);
@@ -176,6 +176,17 @@ void AAlchemyHUD::DrawHUD() {
             Box(416,Y+(FlowBoss?36:48),448,12,Ink);Box(416,Y+(FlowBoss?36:48),448*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);
             const TCHAR* Names[]={TEXT("冲刺 · 离开橙色直线"),TEXT("弹幕 · 从扇形间隙穿过"),TEXT("冲击波 · 向侧面闪避")};
             Text(FlowBoss?(E.PlannedState==1?TEXT("冲刺蓄力 · 方向锁定后向侧面躲开"):E.PlannedState==2?TEXT("冲刺中 · 避开橙色路线"):E.PlannedState==3?TEXT("收招停顿 · 调整站位并输出"):TEXT("两波弹幕 · 观察青色弹道间隙")):E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:World->bGreyfordFlow?TEXT("保持移动 · 雾界边界不可越过"):TEXT("保持移动 · 金色边界不可越过"),416,Y+(FlowBoss?50:72),FlowBoss?16:18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
+        }
+        if(World->EliteWarning.Marker.IsValid()) {
+            FVector2D Screen;
+            if(PC->ProjectWorldLocationToScreen(World->EliteWarning.Position,Screen)) {
+                const FString Label=FString::Printf(TEXT("精英将至 %.1f秒"),FMath::Max(0.f,World->EliteWarning.Remaining));
+                const float Size=18,W=Measure(Label,Size),H=World->Progress->FontSize(Size)+6;
+                const float X=FMath::Clamp(float((Screen.X-OX)/S-W*.5f),24.f,1256.f-W);
+                const float Preferred=FMath::Clamp(float((Screen.Y-OY)/S-H-12),104.f,580.f-H);
+                const float Y=FMath::Clamp(ClearPanelY(X,W,H,Preferred,true),104.f,580.f-H);
+                Text(Label,X,Y,Size,Gold);
+            }
         }
         if(World->bMerchantActive && !World->bBossSpawned) {
             const FVector D=World->MerchantPos-World->PlayerPos;
