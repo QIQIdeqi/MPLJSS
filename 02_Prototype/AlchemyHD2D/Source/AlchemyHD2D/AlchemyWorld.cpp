@@ -173,6 +173,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) || FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("UnifiedPresentationTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("Reference60Test"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest"));
     bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
     const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
     const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
@@ -946,7 +947,7 @@ int32 AAlchemyWorld::Nearest(FVector P,float Range,const TArray<int32>& Exclude)
 void AAlchemyWorld::Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile,float Speed,UNiagaraSystem* TrailSystem,UNiagaraSystem* HitSystem,float Lifetime,float EffectScale,float HitLife,bool Potion) {
     FAlchemyShot S; S.Pos=From; S.Velocity=(Target-From).GetSafeNormal2D()*Speed; S.Damage=Damage; S.Hostile=Hostile;
     S.Life=Lifetime;S.EffectScale=EffectScale;S.HitLife=HitLife;S.Color=Color;S.HitEffect=HitSystem?HitSystem:ImpactFX.Get();
-    S.Trail=SpawnVFX(TrailSystem?TrailSystem:TrailFX.Get(),From+FVector(0,0,65),Color,.6f*EffectScale,Lifetime+(Potion?.35f:.1f));
+    S.Trail=SpawnVFX(TrailSystem?TrailSystem:TrailFX.Get(),From+FVector(0,0,65),Color,.6f*EffectScale,Lifetime+(Potion?CharacterAnimation.ReleaseTime()+.1f:.1f));
     S.Potion=Potion;S.NewPotion=Potion;S.ReleaseDelay=Potion?CharacterAnimation.ReleaseTime():0;
     if(Potion) {
         const FVector D=(Target-From).GetSafeNormal2D();
@@ -1222,6 +1223,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && !bCombat && PC->WasInputKeyJustPressed(EKeys::C)) TogglePanel(TEXT("codex"));
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) TogglePanel(TEXT("skills"));
     if(FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) && EliteSpawnCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest")) && CombatFeedbackCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1429,8 +1431,8 @@ void AAlchemyWorld::Tick(float Dt) {
     }
     for(int i=Effects.Num()-1;i>=0;i--) {
         auto& E=Effects[i];
-        if(E.PotionBreak && E.New) {E.New=false;continue;}
-        E.Life-=Dt;
+        const float EffectDt=E.New?0.f:Dt;E.New=false;
+        E.Life-=EffectDt;
         if(E.PotionBreak) {
             auto M=Cast<UMaterialInstanceDynamic>(E.Body->GetStaticMeshComponent()->GetMaterial(0));
             M->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(FMath::Min(3,FMath::FloorToInt((E.Total-E.Life)*12))/4.f,0,0,0));
@@ -1628,15 +1630,17 @@ void AAlchemyWorld::UpdateShots(float Dt) {
     for(int i=Shots.Num()-1;i>=0;i--) {
         auto& S=Shots[i];
         if(S.NewPotion) {S.NewPotion=false;continue;}
+        float AvailableDt=Dt;
         if(S.ReleaseDelay>0) {
-            S.ReleaseDelay-=Dt;
+            AvailableDt=FMath::Max(0.f,Dt-S.ReleaseDelay);
+            S.ReleaseDelay=FMath::Max(0.f,S.ReleaseDelay-Dt);
             if(S.ReleaseDelay>0) continue;
             S.Pos=PlayerPos;
             S.Body->SetActorHiddenInGame(false);
             if(S.Trail.IsValid()) S.Trail->SetVisibility(true);
             UE_LOG(LogTemp,Display,TEXT("ALCHEMIST_POTION_RELEASE frame=%d time=%.3f"),CharacterAnimation.Frame,CharacterAnimation.Time);
         }
-        const float ShotDt=FMath::Max(0.f,Dt-S.SpawnDelay);S.SpawnDelay=0;
+        const float ShotDt=FMath::Max(0.f,AvailableDt-S.SpawnDelay);S.SpawnDelay=0;
         S.Age+=ShotDt;S.Life-=ShotDt;
         // Segment substeps also protect fast projectile hits at lower frame rates.
         if(S.BossWave>=0)UpdatePlannedShot(S,ShotDt);
@@ -1684,6 +1688,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "AlchemistCharacterSmoke.inl"
 #include "ProducerRegression.inl"
 #include "BattlePresentationChecks.inl"
+#include "CombatFeedbackChecks.inl"
 #include "Reference60Checks.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"

@@ -1,0 +1,230 @@
+{
+  "base_commit": "20199ab1ca695ab3c9c07386c7c28b7198f9b698",
+  "verified_at": "2026-11-01T05:15:18.713729+08:00",
+  "baseline": {
+    "check_lines": 23,
+    "failed_checks": [
+      "release_boundary_dt_0.01667_fraction_0.5_uses_only_remaining_time",
+      "release_boundary_dt_0.01667_fraction_1.0_uses_only_remaining_time",
+      "release_boundary_dt_0.03333_fraction_0.5_uses_only_remaining_time",
+      "release_boundary_dt_0.03333_fraction_1.0_uses_only_remaining_time",
+      "release_boundary_dt_0.10000_fraction_0.5_uses_only_remaining_time",
+      "release_boundary_dt_0.10000_fraction_1.0_uses_only_remaining_time",
+      "partial_release_tick_does_not_hit_150_target_early",
+      "Rose_trail_manager_survives_until_last_flight_frames",
+      "birth_frame_warning_life_matches_actual_enemy_windup",
+      "last_positive_windup_tick_still_has_matching_warning_and_no_damage",
+      "actual_pause_Tick_freezes_warning_windup_HP_and_battle_clock"
+    ]
+  },
+  "final": {
+    "60fps": {
+      "check_lines": 23,
+      "unique_checks": 23,
+      "check_names": [
+        "Rose_potion_eventually_expires_and_removes_body",
+        "Rose_potion_has_actual_Niagara_trail_component",
+        "Rose_trail_manager_survives_until_last_flight_frames",
+        "actual_pause_Tick_freezes_warning_windup_HP_and_battle_clock",
+        "actual_runtime_table_has_normal_Area_or_Hybrid_row",
+        "area_birth_frame_has_no_early_damage",
+        "birth_frame_warning_life_matches_actual_enemy_windup",
+        "fixture_has_legal_clear_ground_segment",
+        "fixture_uses_real_Rose_and_enabled_Niagara",
+        "last_positive_windup_tick_still_has_matching_warning_and_no_damage",
+        "legacy_quarter_second_release_keeps_point_35_trail_allowance",
+        "native_last_positive_windup_frame_written",
+        "partial_release_tick_does_not_hit_150_target_early",
+        "production_close_resumes_combat",
+        "real_normal_area_attacker_spawned",
+        "release_boundary_dt_0.01667_fraction_0.5_uses_only_remaining_time",
+        "release_boundary_dt_0.01667_fraction_1.0_uses_only_remaining_time",
+        "release_boundary_dt_0.03333_fraction_0.5_uses_only_remaining_time",
+        "release_boundary_dt_0.03333_fraction_1.0_uses_only_remaining_time",
+        "release_boundary_dt_0.10000_fraction_0.5_uses_only_remaining_time",
+        "release_boundary_dt_0.10000_fraction_1.0_uses_only_remaining_time",
+        "release_collision_fixture_has_real_target_at_150",
+        "resumed_real_Tick_applies_area_damage_then_retires_warning"
+      ]
+    },
+    "10fps": {
+      "check_lines": 23,
+      "unique_checks": 23,
+      "check_names": [
+        "Rose_potion_eventually_expires_and_removes_body",
+        "Rose_potion_has_actual_Niagara_trail_component",
+        "Rose_trail_manager_survives_until_last_flight_frames",
+        "actual_pause_Tick_freezes_warning_windup_HP_and_battle_clock",
+        "actual_runtime_table_has_normal_Area_or_Hybrid_row",
+        "area_birth_frame_has_no_early_damage",
+        "birth_frame_warning_life_matches_actual_enemy_windup",
+        "fixture_has_legal_clear_ground_segment",
+        "fixture_uses_real_Rose_and_enabled_Niagara",
+        "last_positive_windup_tick_still_has_matching_warning_and_no_damage",
+        "legacy_quarter_second_release_keeps_point_35_trail_allowance",
+        "native_last_positive_windup_frame_written",
+        "partial_release_tick_does_not_hit_150_target_early",
+        "production_close_resumes_combat",
+        "real_normal_area_attacker_spawned",
+        "release_boundary_dt_0.01667_fraction_0.5_uses_only_remaining_time",
+        "release_boundary_dt_0.01667_fraction_1.0_uses_only_remaining_time",
+        "release_boundary_dt_0.03333_fraction_0.5_uses_only_remaining_time",
+        "release_boundary_dt_0.03333_fraction_1.0_uses_only_remaining_time",
+        "release_boundary_dt_0.10000_fraction_0.5_uses_only_remaining_time",
+        "release_boundary_dt_0.10000_fraction_1.0_uses_only_remaining_time",
+        "release_collision_fixture_has_real_target_at_150",
+        "resumed_real_Tick_applies_area_damage_then_retires_warning"
+      ]
+    }
+  },
+  "regressions": {
+    "Rose": {
+      "check_lines": 43,
+      "unique_checks": 37,
+      "check_names": [
+        "actual_pause_Tick_freezes_release_animation_clock_and_damage",
+        "all_three_attack_views_play_eight_frames_and_release_once_at_point_four",
+        "appended_elite_participates_in_weighted_selection",
+        "appended_elite_preserves_valid_chest_and_unlock",
+        "appended_normal_not_misclassified_as_elite",
+        "appended_normal_uses_existing_navigation",
+        "appended_row_keeps_normal_identity_and_own_stats",
+        "appended_row_participates_in_configured_waves",
+        "authored_enemy_table_loaded",
+        "authored_side_front_back_attack_atlases_loaded",
+        "baseline_profile_preserved",
+        "configured_visual_size_applied",
+        "death_overrides_hurt_movement_and_attack_and_holds_last_frame",
+        "each_attack_facing_selects_real_material_texture_and_eight_cell_layout",
+        "elite_reward_fixture_uses_authored_legal_ground",
+        "hero_visible_height_180cm",
+        "hurt_overrides_attack_and_blocks_new_attack_pose",
+        "invalid_authored_weights_are_rejected",
+        "left_attack_mirrors_same_side_atlas",
+        "legacy_initialization_clears_all_rose_motion_and_attack_state",
+        "missing_directional_attack_pack_falls_back_to_original_attack",
+        "moving_keeps_existing_gait_instead_of_starting_attack",
+        "native_Rose_attack_screenshot_written",
+        "no_duplicate_projectile_or_hit_after_release",
+        "previous_rose_mage_and_portrait_loaded",
+        "production_target_spawned",
+        "production_windup_has_hidden_projectile_and_no_early_damage",
+        "real_CastSkills_stages_hidden_Rose_potion_and_attack_pose",
+        "real_Rose_three_direction_attack_pack_active",
+        "real_projectile_visibility_waits_for_point_four_battle_seconds",
+        "rendered_attack_release_frame_and_facing_match_capture",
+        "resumed_production_potion_becomes_visible_and_hits_once_for_expected_damage",
+        "rose_attack_releases_at_authored_swing",
+        "starting_movement_still_cancels_attack_pose",
+        "stationary_hit_target_has_legal_nearby_ground",
+        "tuned_profile_preserved",
+        "zero_elite_weights_disable_selection"
+      ]
+    },
+    "Boss": {
+      "check_lines": 28,
+      "unique_checks": 28,
+      "check_names": [
+        "blocked_knock_ends_early_resumes_current_input",
+        "boundary_stops_without_sliding_or_distance_repayment",
+        "capped_wave_fade_recycles_without_extra_hits",
+        "dash_12m_point_six_24_damage_once_continues_after_hit",
+        "dash_direction_fixed_last_point_four",
+        "dash_locks_at_point_six_with_one_cue",
+        "enters_separate_scene",
+        "first_aoe_accept_queues_melee_encounter",
+        "first_aoe_melee_pack_legal_spawn",
+        "first_attack_random_uses_both_two_entry_pool",
+        "first_fan_wave_five_projectiles",
+        "hp_cooldowns_capped_existing_materials_inherited",
+        "invulnerable_contact_keeps_projectile_and_wave_eligibility",
+        "knockback_one_meter_point_fifteen_suppresses_walking",
+        "latest_input_resumes_without_release",
+        "lock_audio_and_fade_material_loaded",
+        "menu_freezes_boss_clock",
+        "mitigation_rounds_eighteen_to_fourteen",
+        "one_second_stationary_recovery",
+        "pause_freezes_fade",
+        "preparation_prevents_early_attacks",
+        "same_frame_multi_bullet_one_hit_remaining_fade",
+        "second_wave_reaim_at_point_five",
+        "sixty_degree_equal_fifteen_speed_eight_damage_eighteen_independent_wave_ids",
+        "ten_meter_spacing_32x26_bound",
+        "tutorial_floor_ignores_unreachable_material",
+        "two_wave_hit_cap_36_old_wave_not_reset",
+        "two_waves_point_eight_interval_final_point_three_locked"
+      ]
+    },
+    "Producer": {
+      "check_lines": 39,
+      "unique_checks": 33,
+      "check_names": [
+        "Tab_C_B_F7_F6_Esc_and_UI_actions_preserve_result",
+        "all_8_nuclear_rows_lower_mid_high_without_changing_base",
+        "all_candidates_blocked_no_material_cost",
+        "boss_allows_free_pour_before_tutorial_complete",
+        "boss_can_equip_without_faking_tutorial_completion",
+        "boss_entry_preserves_result_without_auto_receive",
+        "boss_only_nuclear_costs_once_and_gives_skill",
+        "boss_only_nuclear_keeps_boss_hp_and_creates_no_materials",
+        "boss_only_nuclear_scenario_enters_freely",
+        "boss_only_nuclear_skill_received_without_completing_tutorial",
+        "boss_temporarily_lifts_tutorial_without_extra_enemies",
+        "boss_unfinished_tutorial_can_craft",
+        "direct_boss_entry_with_pending_result",
+        "direct_second_craft_has_no_cost_or_overwrite",
+        "elite_recipe_never_nuclear",
+        "following_ordinary_craft_has_no_nuclear_flag",
+        "locked_refresh_no_change",
+        "next_field_run_resumes_unfinished_tutorial",
+        "no_alternative_refresh_keeps_result",
+        "nuclear_capacity_filter_allows_existing_upgrade",
+        "nuclear_clears_normal_once",
+        "nuclear_elite_boss_unchanged_single_cost",
+        "nuclear_receive_grants_skill_and_discovery",
+        "nuclear_refresh_once_same_craft_no_second_clear_or_cost",
+        "nuclear_still_stages_receivable_skill",
+        "nuclear_weights_lower_before_maxlevel_filter_normalize",
+        "ordinary_result_staged",
+        "pending_nuclear_before_direct_boss_entry",
+        "queued_levelup_available_after_receive",
+        "queued_levelup_does_not_replace_result",
+        "receive_exactly_once_after_navigation",
+        "second_refresh_rejected",
+        "unfinished_tutorial_freely_enters_boss"
+      ]
+    }
+  },
+  "builds": {
+    "editor": {
+      "result": "Succeeded",
+      "log_sha256": "e4c823443f4b90b91d78c636e34c3eb83b05dd60231a24e97360f3857be65db6"
+    },
+    "game": {
+      "result": "Succeeded",
+      "log_sha256": "4d36cede08f31649411d0ced777e6b31fce9faf382f146f376b2056dc11dd8eb"
+    }
+  },
+  "protected_files": {
+    "total": 376,
+    "assets_maps": 364,
+    "saves": 11,
+    "production_quality_csv": 1,
+    "changed": [],
+    "before_manifest_sha256": "ed7944f4b9ce872e02e2366c6301c456807a14e0fa0ede793e863c561470ef8c"
+  },
+  "images": [
+    {
+      "file": "baseline-60fps.png",
+      "sha256": "4ae29965bc38cd3cc5718d061ad82224428047e5efa88a7e5bc83d51643f7449"
+    },
+    {
+      "file": "fixed-60fps.png",
+      "sha256": "b5607d5506aa2f549499b6c20f690179c3b4cb80038ce441079de1873b2631fe"
+    },
+    {
+      "file": "fixed-10fps.png",
+      "sha256": "82b2412905e8ce6abacae01769a0712ec606cb0f48f142ce6768ab3856ae6241"
+    }
+  ]
+}

@@ -297,6 +297,7 @@ public:
     void UpdateEnemyVisual(FAlchemyEnemy& E,bool Mirror=false);
     int32 ChooseEliteDefinition();
     bool BattlePresentationCheck(float Delta);
+    bool CombatFeedbackCheck(float Delta);
     bool Reference60Check(float Delta);
     UPROPERTY() TObjectPtr<AAlchemyLevelDesigner> Designer;
     UPROPERTY() TObjectPtr<UDataTable> SkillTable;
