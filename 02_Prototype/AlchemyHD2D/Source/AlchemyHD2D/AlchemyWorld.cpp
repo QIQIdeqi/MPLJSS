@@ -175,6 +175,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest"));
     bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
     const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
     const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
@@ -326,6 +327,7 @@ void AAlchemyWorld::BuildScene(bool Combat) {
     for(auto A:Scene) if(IsValid(A)) A->Destroy();
     Scene.Empty(); Obstacles.Empty(); Enemies.Empty(); Shots.Empty(); Drops.Empty(); Effects.Empty();
     bCombat=Combat; bRunEnded=false; PlayerPos=Combat?FVector::ZeroVector:FVector(0,-200,0); Panel.Empty();
+    if(!Combat)DodgeCD=DodgeTime=HurtInv=DodgeInv=0;
     const bool Authored=Designer && Designer->bUseInGame;
     if(Designer) Designer->SetRuntimeVisible(bGreyfordScene || (Combat && Authored));
     const float X=Combat?(Authored?(CombatHalfSize.X+51)*2:14222):4800, Y=Combat?(Authored?(CombatHalfSize.Y+50)*2:10760):3800;
@@ -1227,6 +1229,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) && EliteSpawnCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest")) && CombatFeedbackCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest")) && StateFlowCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest")) && ReturnControlCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1693,6 +1696,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "BattlePresentationChecks.inl"
 #include "CombatFeedbackChecks.inl"
 #include "StateFlowChecks.inl"
+#include "ReturnControlChecks.inl"
 #include "Reference60Checks.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"

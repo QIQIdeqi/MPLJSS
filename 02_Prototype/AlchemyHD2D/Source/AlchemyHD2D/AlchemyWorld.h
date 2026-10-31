@@ -190,6 +190,7 @@ public:
     void UIV02Check(float Delta);
     void UIAccessCheck(float Delta);
     bool StateFlowCheck(float Delta);
+    bool ReturnControlCheck(float Delta);
     bool EnemyCodexCheck(float Delta);
     bool bReferenceBossScene=false,CombatCameraReady=false;
     FVector2D CombatCameraSourceFocus=FVector2D(836,470.5);
