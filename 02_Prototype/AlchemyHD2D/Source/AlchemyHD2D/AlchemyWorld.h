@@ -191,6 +191,7 @@ public:
     void UIAccessCheck(float Delta);
     bool StateFlowCheck(float Delta);
     bool ReturnControlCheck(float Delta);
+    bool TutorialPlacementCheck(float Delta);
     bool EnemyCodexCheck(float Delta);
     bool bReferenceBossScene=false,CombatCameraReady=false;
     FVector2D CombatCameraSourceFocus=FVector2D(836,470.5);
@@ -424,6 +425,9 @@ public:
     void PlannedBossCheck(float Delta);
     void PlannedBossCapture();
     void SpawnTutorialEncounter();
+    void ClearTutorialEncounter();
+    TArray<FVector> TutorialEncounterPositions;
+    TWeakObjectPtr<AStaticMeshActor> TutorialEncounterMarker;
     bool TutorialEncounterPending=false;
     float TutorialEncounterRetry=0;
     UPROPERTY(EditAnywhere,Category="Level|Unconfirmed Test Defaults",meta=(ClampMin="1",ClampMax="12")) int32 TutorialEncounterCount=6;

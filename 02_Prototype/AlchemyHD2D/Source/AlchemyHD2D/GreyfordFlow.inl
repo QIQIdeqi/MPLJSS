@@ -129,6 +129,7 @@ void AAlchemyWorld::UpdateGreyfordPortal() {
 bool AAlchemyWorld::EnterGreyfordBoss() {
     if(!GreyfordPortalReady || GreyfordStage!=1 || FVector::Dist2D(PlayerPos,GreyfordPortalPos)>220 || bRunEnded)return false;
     const float BeforeHP=HP;
+    ClearTutorialEncounter();
     // Only already-generated material drops transfer, and never beyond inventory capacity.
     for(const auto& D:Drops)if(D.Kind>=0 && D.Kind<6)CollectDrop(D.Kind,D.Count,false);
     for(const auto& D:Drops)if(IsValid(D.Body))D.Body->Destroy();Drops.Empty();

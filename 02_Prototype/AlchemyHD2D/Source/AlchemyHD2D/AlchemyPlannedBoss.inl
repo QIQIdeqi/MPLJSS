@@ -1,6 +1,32 @@
 ﻿// Confirmed Greyford Boss rules. Unconfirmed presentation/loop defaults are editor tunables.
+void AAlchemyWorld::ClearTutorialEncounter() {
+    if(auto Marker=TutorialEncounterMarker.Get()){Scene.Remove(Marker);Marker->Destroy();}
+    TutorialEncounterMarker.Reset();TutorialEncounterPositions.Empty();TutorialEncounterPending=false;TutorialEncounterRetry=0;
+}
 void AAlchemyWorld::SpawnTutorialEncounter() {
-    TutorialEncounterRetry=RunTime+1;
+    if(!TutorialEncounterPending || !TutorialActive() || TutorialSkill<0 || bBossSpawned){ClearTutorialEncounter();return;}
+    if(!Panel.IsEmpty() || RunTime<TutorialEncounterRetry)return;
+    const float Speed=500*(1+.03f*Progress->Talents[2]+.05f*RunAttrs[2]);
+    const auto Safe=[&](FVector P,int ID,float Distance){
+        const auto& K=EnemyDefinition(ID);TArray<FVector> Path;
+        return FVector::Dist2D(P,PlayerPos)>=Distance && Walkable(P,FMath::Max(45.f,K.CollisionRadius)) && FindPath(PlayerPos,P,FMath::Max(45.f,K.CollisionRadius),Path);
+    };
+    const auto SpawnPack=[&](const TArray<FVector>& Pack,bool Warned){
+        const int Count=Pack.Num();for(int I=0;I<Count;I++)SpawnEnemyAt(I%2,Pack[I]);
+        ClearTutorialEncounter();
+        UE_LOG(LogTemp,Display,TEXT("FIRST_AOE_ENCOUNTER count=%d time=%.2f legal_offscreen_cluster=%d warned=%d"),Count,RunTime,!Warned,Warned);
+    };
+    if(TutorialEncounterMarker.IsValid()){
+        bool Legal=TutorialEncounterPositions.Num()==TutorialEncounterCount;
+        for(int I=0;I<TutorialEncounterPositions.Num();I++){
+            const auto& K=EnemyDefinition(I%2);
+            Legal &= Safe(TutorialEncounterPositions[I],I%2,FMath::Max(450.f,K.CollisionRadius+45+Speed*.5f));
+        }
+        if(Legal){SpawnPack(TutorialEncounterPositions,true);return;}
+        // A moved player always gets a fresh full warning after relocation, never an instant arrival.
+        ClearTutorialEncounter();TutorialEncounterPending=true;TutorialEncounterRetry=RunTime+1;return;
+    }
+    TutorialEncounterPositions.Empty();TutorialEncounterRetry=RunTime+1;
     TArray<FVector> Positions;
     const int Authored=bBattleReference?BattleSpawnPixels.Num():0;
     for(int Try=0;Try<32+Authored && Positions.IsEmpty();Try++) {
@@ -11,23 +37,49 @@ void AAlchemyWorld::SpawnTutorialEncounter() {
         TArray<FVector> Candidates;
         for(int I=0;I<TutorialEncounterCount;I++) {
             const FVector P=Anchor+FVector((I%3-1)*55,(I/3)*60,0);
-            bool Legal=Walkable(P,45) && FindPath(PlayerPos,P,45,Path);
+            bool Legal=Safe(P,I%2,0);
             if(Legal && bBattleReference){
                 const auto& K=EnemyDefinition(I%2);TArray<FVector> Corners;
                 for(int X:{-1,1})for(int Y:{-1,1})Corners.Add(P+Camera->GetActorUpVector()*(K.VisualSize.Y*.46)+Camera->GetActorRightVector()*(X*K.VisualSize.X*.5)+(bUprightSprites?FVector::UpVector:Camera->GetActorUpVector())*(Y*K.VisualSize.Y*.5));
-                Legal=BattleOffscreen(P,45) && BattleProjectedOutside(GetWorld()->GetFirstPlayerController(),Corners);
+                Legal=BattleOffscreen(P,FMath::Max(45.f,K.CollisionRadius)) && BattleProjectedOutside(GetWorld()->GetFirstPlayerController(),Corners);
             }
             if(Legal)Candidates.Add(P);
         }
         if(Candidates.Num()==TutorialEncounterCount)Positions=MoveTemp(Candidates);
     }
-    if(Positions.IsEmpty())return;
-    for(int I=0;I<Positions.Num();I++) {
-        const int Before=Enemies.Num();SpawnEnemy(I%2);
-        if(Enemies.Num()>Before){Enemies.Last().Pos=Positions[I];UpdateEnemyVisual(Enemies.Last());}
+    if(!Positions.IsEmpty()){SpawnPack(Positions,false);return;}
+    if(!bBattleReference)return;
+    auto PC=GetWorld()->GetFirstPlayerController();int VX=0,VY=0;if(!PC)return;PC->GetViewportSize(VX,VY);if(VX<=0 || VY<=0)return;
+    const auto AcceptVisible=[&](FVector2D Pixel){
+        const FVector Anchor=BattleReferencePoint(Pixel);TArray<FVector> Pack;
+        for(int I=0;I<TutorialEncounterCount;I++){
+            const auto& K=EnemyDefinition(I%2);const FVector P=Anchor+FVector((I%3-1)*55,(I/3)*60,0);
+            if(!Safe(P,I%2,FMath::Max(900.f,K.CollisionRadius+45+Speed*1.5f+280)))return false;
+            FBox2D Bounds(ForceInit);
+            for(int X:{-1,1})for(int Y:{-1,1}){
+                FVector2D Screen;
+                if(!PC->ProjectWorldLocationToScreen(P+Camera->GetActorUpVector()*(K.VisualSize.Y*.46)+Camera->GetActorRightVector()*(X*K.VisualSize.X*.5)+(bUprightSprites?FVector::UpVector:Camera->GetActorUpVector())*(Y*K.VisualSize.Y*.5),Screen))return false;
+                Bounds+=Screen;
+            }
+            if(Bounds.Min.X<VX*.08f || Bounds.Max.X>VX*.92f || Bounds.Min.Y<VY*.22f || Bounds.Max.Y>VY*.78f)return false;
+            Pack.Add(P);
+        }
+        TutorialEncounterPositions=MoveTemp(Pack);return true;
+    };
+    for(int I=0;I<Authored && TutorialEncounterPositions.IsEmpty();I++)AcceptVisible(BattleSpawnPixels[I]);
+    constexpr int Cols=52,Rows=24,Count=Cols*Rows;
+    for(int I=0;I<Count && TutorialEncounterPositions.IsEmpty();I++)AcceptVisible({16.+32*(I%Cols),160.+32*(I/Cols)});
+    if(TutorialEncounterPositions.IsEmpty())return;
+    // Reuse the natural elite warning's existing orange marker and resource residency policy.
+    for(int ID:{0,1}){
+        const auto& K=EnemyDefinition(ID);auto M=K.MaterialOverride?K.MaterialOverride.Get():Material(TEXT("M_")+K.SpriteKey+(bLitSprites?TEXT("_Lit"):TEXT("")));
+        if(M)M->SetForceMipLevelsToBeResident(false,false,2.5f);
     }
-    TutorialEncounterPending=false;
-    UE_LOG(LogTemp,Display,TEXT("FIRST_AOE_ENCOUNTER count=%d time=%.2f legal_offscreen_cluster=1"),Positions.Num(),RunTime);
+    FVector Center=FVector::ZeroVector;for(const FVector P:TutorialEncounterPositions)Center+=P;Center/=TutorialEncounterPositions.Num();
+    float Radius=110;for(int I=0;I<TutorialEncounterPositions.Num();I++)Radius=FMath::Max(Radius,float(FVector::Dist2D(Center,TutorialEncounterPositions[I]))+FMath::Max(45.f,EnemyDefinition(I%2).CollisionRadius));
+    TutorialEncounterMarker=Mesh(TEXT("Cylinder"),Center+FVector(0,0,-6),FVector(Radius/50,Radius/50,.015f),FLinearColor(1,.48f,.08f,.7f));
+    TutorialEncounterRetry=RunTime+1.5f;
+    UE_LOG(LogTemp,Display,TEXT("FIRST_AOE_WARNING count=%d time=%.2f expires=%.2f radius=%.1f"),TutorialEncounterPositions.Num(),RunTime,TutorialEncounterRetry,Radius);
 }
 
 FVector AAlchemyWorld::BossStraightMove(FVector From,FVector Delta,float Radius) const {

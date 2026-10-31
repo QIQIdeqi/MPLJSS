@@ -1,0 +1,644 @@
+{
+  "base_commit": "e4b3e69e33b58fa72018d380c2537855b8ff42c5",
+  "verified_at": "2026-11-01T06:51:25.932488+08:00",
+  "baseline": {
+    "check_lines": 19,
+    "failed_checks": [
+      {
+        "case": 1,
+        "name": "production_attempt_spawns_exactly_six_and_resolves_pending"
+      },
+      {
+        "case": 1,
+        "name": "spawned_monsters_keep_alternating_actual_definitions_zero_and_one"
+      },
+      {
+        "case": 1,
+        "name": "all_six_positions_are_Walkable_and_native_FindPath_radius45_reachable"
+      },
+      {
+        "case": 1,
+        "name": "all_six_collision_and_actual_data_sprite_bounds_are_fully_offscreen"
+      },
+      {
+        "case": 1,
+        "name": "all_six_remain_one_compact_cluster_diameter_at_most_330cm"
+      }
+    ]
+  },
+  "final": {
+    "1280x720": {
+      "check_lines": 19,
+      "checks": [
+        {
+          "case": 0,
+          "name": "isolated_capture_prevents_real_player_save_IO"
+        },
+        {
+          "case": 0,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 0,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 0,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 0,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 0,
+          "name": "spawned_pack_has_exactly_six_alternating_actual_definitions_zero_and_one"
+        },
+        {
+          "case": 0,
+          "name": "all_six_actual_positions_are_Walkable_and_native_FindPath_radius45_reachable"
+        },
+        {
+          "case": 0,
+          "name": "all_six_actual_enemies_remain_one_compact_cluster_at_most_330cm"
+        },
+        {
+          "case": 0,
+          "name": "strict_branch_keeps_all_six_collision_and_actual_sprite_bounds_fully_offscreen"
+        },
+        {
+          "case": 0,
+          "name": "completed_pack_resolves_pending_marker_and_reserved_positions"
+        },
+        {
+          "case": 1,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 1,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 1,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 1,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 1,
+          "name": "spawned_pack_has_exactly_six_alternating_actual_definitions_zero_and_one"
+        },
+        {
+          "case": 1,
+          "name": "all_six_actual_positions_are_Walkable_and_native_FindPath_radius45_reachable"
+        },
+        {
+          "case": 1,
+          "name": "all_six_actual_enemies_remain_one_compact_cluster_at_most_330cm"
+        },
+        {
+          "case": 1,
+          "name": "strict_branch_keeps_all_six_collision_and_actual_sprite_bounds_fully_offscreen"
+        },
+        {
+          "case": 1,
+          "name": "completed_pack_resolves_pending_marker_and_reserved_positions"
+        }
+      ],
+      "strict_cases": 2,
+      "warning_cases": 0,
+      "cleanup_skips": 3,
+      "log_sha256": "089062e035d90ec52705bb69e8761d7cafba8ba1559e91b8d6c71b87f277bd3b"
+    },
+    "1024x768": {
+      "check_lines": 19,
+      "checks": [
+        {
+          "case": 0,
+          "name": "isolated_capture_prevents_real_player_save_IO"
+        },
+        {
+          "case": 0,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 0,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 0,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 0,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 0,
+          "name": "spawned_pack_has_exactly_six_alternating_actual_definitions_zero_and_one"
+        },
+        {
+          "case": 0,
+          "name": "all_six_actual_positions_are_Walkable_and_native_FindPath_radius45_reachable"
+        },
+        {
+          "case": 0,
+          "name": "all_six_actual_enemies_remain_one_compact_cluster_at_most_330cm"
+        },
+        {
+          "case": 0,
+          "name": "strict_branch_keeps_all_six_collision_and_actual_sprite_bounds_fully_offscreen"
+        },
+        {
+          "case": 0,
+          "name": "completed_pack_resolves_pending_marker_and_reserved_positions"
+        },
+        {
+          "case": 1,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 1,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 1,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 1,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 1,
+          "name": "spawned_pack_has_exactly_six_alternating_actual_definitions_zero_and_one"
+        },
+        {
+          "case": 1,
+          "name": "all_six_actual_positions_are_Walkable_and_native_FindPath_radius45_reachable"
+        },
+        {
+          "case": 1,
+          "name": "all_six_actual_enemies_remain_one_compact_cluster_at_most_330cm"
+        },
+        {
+          "case": 1,
+          "name": "strict_branch_keeps_all_six_collision_and_actual_sprite_bounds_fully_offscreen"
+        },
+        {
+          "case": 1,
+          "name": "completed_pack_resolves_pending_marker_and_reserved_positions"
+        }
+      ],
+      "strict_cases": 2,
+      "warning_cases": 0,
+      "cleanup_skips": 3,
+      "log_sha256": "452912a6529c89a96a2385a7ac606e77ddf5cd15d2149cc5b7938a424409ed6a"
+    },
+    "2560x1080": {
+      "check_lines": 71,
+      "checks": [
+        {
+          "case": 0,
+          "name": "isolated_capture_prevents_real_player_save_IO"
+        },
+        {
+          "case": 0,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 0,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 0,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 0,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 0,
+          "name": "spawned_pack_has_exactly_six_alternating_actual_definitions_zero_and_one"
+        },
+        {
+          "case": 0,
+          "name": "all_six_actual_positions_are_Walkable_and_native_FindPath_radius45_reachable"
+        },
+        {
+          "case": 0,
+          "name": "all_six_actual_enemies_remain_one_compact_cluster_at_most_330cm"
+        },
+        {
+          "case": 0,
+          "name": "strict_branch_keeps_all_six_collision_and_actual_sprite_bounds_fully_offscreen"
+        },
+        {
+          "case": 0,
+          "name": "completed_pack_resolves_pending_marker_and_reserved_positions"
+        },
+        {
+          "case": 1,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 1,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 1,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 1,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 1,
+          "name": "visible_warning_reserves_six_without_creating_targetable_enemies"
+        },
+        {
+          "case": 1,
+          "name": "reservation_starts_a_full_one_point_five_seconds_of_combat_time"
+        },
+        {
+          "case": 1,
+          "name": "six_reserved_points_have_real_radius45_ground_and_native_paths"
+        },
+        {
+          "case": 1,
+          "name": "all_reserved_points_include_actual_player_speed_warning_and_dodge_clearance"
+        },
+        {
+          "case": 1,
+          "name": "complete_future_sprites_stay_inside_actual_viewport_HUD_safe_rectangle"
+        },
+        {
+          "case": 1,
+          "name": "six_reserved_positions_remain_one_compact_cluster"
+        },
+        {
+          "case": 1,
+          "name": "native_warning_screenshot_includes_UI_and_is_written"
+        },
+        {
+          "case": 1,
+          "name": "real_menu_Tick_freezes_clock_deadline_marker_reserved_positions_and_enemy_count"
+        },
+        {
+          "case": 1,
+          "name": "existing_close_action_resumes_from_warning_pause"
+        },
+        {
+          "case": 1,
+          "name": "real_production_ticks_never_materialize_before_absolute_warning_deadline"
+        },
+        {
+          "case": 1,
+          "name": "spawned_pack_has_exactly_six_alternating_actual_definitions_zero_and_one"
+        },
+        {
+          "case": 1,
+          "name": "all_six_actual_positions_are_Walkable_and_native_FindPath_radius45_reachable"
+        },
+        {
+          "case": 1,
+          "name": "all_six_actual_enemies_remain_one_compact_cluster_at_most_330cm"
+        },
+        {
+          "case": 1,
+          "name": "materialized_pack_passes_current_player_speed_materialization_clearance"
+        },
+        {
+          "case": 1,
+          "name": "actual_pack_uses_reserved_positions_with_at_most_one_production_tick_of_chase"
+        },
+        {
+          "case": 1,
+          "name": "completed_pack_resolves_pending_marker_and_reserved_positions"
+        },
+        {
+          "case": 2,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 2,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 2,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 2,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 2,
+          "name": "visible_warning_reserves_six_without_creating_targetable_enemies"
+        },
+        {
+          "case": 2,
+          "name": "reservation_starts_a_full_one_point_five_seconds_of_combat_time"
+        },
+        {
+          "case": 2,
+          "name": "six_reserved_points_have_real_radius45_ground_and_native_paths"
+        },
+        {
+          "case": 2,
+          "name": "all_reserved_points_include_actual_player_speed_warning_and_dodge_clearance"
+        },
+        {
+          "case": 2,
+          "name": "complete_future_sprites_stay_inside_actual_viewport_HUD_safe_rectangle"
+        },
+        {
+          "case": 2,
+          "name": "six_reserved_positions_remain_one_compact_cluster"
+        },
+        {
+          "case": 2,
+          "name": "real_Boss_entry_remains_free_for_unfinished_tutorial"
+        },
+        {
+          "case": 2,
+          "name": "real_Boss_transition_clears_warning_and_does_not_materialize_tutorial_pack"
+        },
+        {
+          "case": 3,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 3,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 3,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 3,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 3,
+          "name": "visible_warning_reserves_six_without_creating_targetable_enemies"
+        },
+        {
+          "case": 3,
+          "name": "reservation_starts_a_full_one_point_five_seconds_of_combat_time"
+        },
+        {
+          "case": 3,
+          "name": "six_reserved_points_have_real_radius45_ground_and_native_paths"
+        },
+        {
+          "case": 3,
+          "name": "all_reserved_points_include_actual_player_speed_warning_and_dodge_clearance"
+        },
+        {
+          "case": 3,
+          "name": "complete_future_sprites_stay_inside_actual_viewport_HUD_safe_rectangle"
+        },
+        {
+          "case": 3,
+          "name": "six_reserved_positions_remain_one_compact_cluster"
+        },
+        {
+          "case": 3,
+          "name": "production_TutorialHit_completion_hook_records_completion_not_a_real_AoE_test"
+        },
+        {
+          "case": 3,
+          "name": "tutorial_completion_clears_warning_without_spawning_pending_pack"
+        },
+        {
+          "case": 4,
+          "name": "real_incomplete_tutorial_and_player_ground_are_valid"
+        },
+        {
+          "case": 4,
+          "name": "configured_encounter_still_contains_six_monsters"
+        },
+        {
+          "case": 4,
+          "name": "production_first_three_material_Craft_stages_non_nuclear_skill"
+        },
+        {
+          "case": 4,
+          "name": "production_Accept_queues_encounter_without_completing_tutorial"
+        },
+        {
+          "case": 4,
+          "name": "visible_warning_reserves_six_without_creating_targetable_enemies"
+        },
+        {
+          "case": 4,
+          "name": "reservation_starts_a_full_one_point_five_seconds_of_combat_time"
+        },
+        {
+          "case": 4,
+          "name": "six_reserved_points_have_real_radius45_ground_and_native_paths"
+        },
+        {
+          "case": 4,
+          "name": "all_reserved_points_include_actual_player_speed_warning_and_dodge_clearance"
+        },
+        {
+          "case": 4,
+          "name": "complete_future_sprites_stay_inside_actual_viewport_HUD_safe_rectangle"
+        },
+        {
+          "case": 4,
+          "name": "six_reserved_positions_remain_one_compact_cluster"
+        },
+        {
+          "case": 4,
+          "name": "approaching_reserved_point_cancels_old_marker_at_deadline_and_schedules_one_second_retry_without_enemies"
+        },
+        {
+          "case": 4,
+          "name": "real_retry_creates_a_new_marker_with_full_warning_and_no_same_frame_spawn"
+        },
+        {
+          "case": 4,
+          "name": "six_reserved_points_have_real_radius45_ground_and_native_paths"
+        },
+        {
+          "case": 4,
+          "name": "all_reserved_points_include_actual_player_speed_warning_and_dodge_clearance"
+        },
+        {
+          "case": 4,
+          "name": "complete_future_sprites_stay_inside_actual_viewport_HUD_safe_rectangle"
+        },
+        {
+          "case": 4,
+          "name": "six_reserved_positions_remain_one_compact_cluster"
+        },
+        {
+          "case": 4,
+          "name": "real_EndRun_clears_retry_warning_and_reserved_pack"
+        }
+      ],
+      "strict_cases": 1,
+      "warning_cases": 4,
+      "cleanup_skips": 0,
+      "log_sha256": "47a6375ee231ca5589e89287937df1bdf2618be91fa4df1e706df67deb93013b"
+    }
+  },
+  "regressions": {
+    "Producer": {
+      "check_lines": 39,
+      "unique_checks": 33,
+      "check_names": [
+        "Tab_C_B_F7_F6_Esc_and_UI_actions_preserve_result",
+        "all_8_nuclear_rows_lower_mid_high_without_changing_base",
+        "all_candidates_blocked_no_material_cost",
+        "boss_allows_free_pour_before_tutorial_complete",
+        "boss_can_equip_without_faking_tutorial_completion",
+        "boss_entry_preserves_result_without_auto_receive",
+        "boss_only_nuclear_costs_once_and_gives_skill",
+        "boss_only_nuclear_keeps_boss_hp_and_creates_no_materials",
+        "boss_only_nuclear_scenario_enters_freely",
+        "boss_only_nuclear_skill_received_without_completing_tutorial",
+        "boss_temporarily_lifts_tutorial_without_extra_enemies",
+        "boss_unfinished_tutorial_can_craft",
+        "direct_boss_entry_with_pending_result",
+        "direct_second_craft_has_no_cost_or_overwrite",
+        "elite_recipe_never_nuclear",
+        "following_ordinary_craft_has_no_nuclear_flag",
+        "locked_refresh_no_change",
+        "next_field_run_resumes_unfinished_tutorial",
+        "no_alternative_refresh_keeps_result",
+        "nuclear_capacity_filter_allows_existing_upgrade",
+        "nuclear_clears_normal_once",
+        "nuclear_elite_boss_unchanged_single_cost",
+        "nuclear_receive_grants_skill_and_discovery",
+        "nuclear_refresh_once_same_craft_no_second_clear_or_cost",
+        "nuclear_still_stages_receivable_skill",
+        "nuclear_weights_lower_before_maxlevel_filter_normalize",
+        "ordinary_result_staged",
+        "pending_nuclear_before_direct_boss_entry",
+        "queued_levelup_available_after_receive",
+        "queued_levelup_does_not_replace_result",
+        "receive_exactly_once_after_navigation",
+        "second_refresh_rejected",
+        "unfinished_tutorial_freely_enters_boss"
+      ],
+      "log_sha256": "72f4102b5cd473e89767e8cce9459973f7db3444b01b11638b93407c37a006b1"
+    },
+    "Boss": {
+      "check_lines": 28,
+      "unique_checks": 28,
+      "check_names": [
+        "blocked_knock_ends_early_resumes_current_input",
+        "boundary_stops_without_sliding_or_distance_repayment",
+        "capped_wave_fade_recycles_without_extra_hits",
+        "dash_12m_point_six_24_damage_once_continues_after_hit",
+        "dash_direction_fixed_last_point_four",
+        "dash_locks_at_point_six_with_one_cue",
+        "enters_separate_scene",
+        "first_aoe_accept_queues_melee_encounter",
+        "first_aoe_melee_pack_legal_spawn",
+        "first_attack_random_uses_both_two_entry_pool",
+        "first_fan_wave_five_projectiles",
+        "hp_cooldowns_capped_existing_materials_inherited",
+        "invulnerable_contact_keeps_projectile_and_wave_eligibility",
+        "knockback_one_meter_point_fifteen_suppresses_walking",
+        "latest_input_resumes_without_release",
+        "lock_audio_and_fade_material_loaded",
+        "menu_freezes_boss_clock",
+        "mitigation_rounds_eighteen_to_fourteen",
+        "one_second_stationary_recovery",
+        "pause_freezes_fade",
+        "preparation_prevents_early_attacks",
+        "same_frame_multi_bullet_one_hit_remaining_fade",
+        "second_wave_reaim_at_point_five",
+        "sixty_degree_equal_fifteen_speed_eight_damage_eighteen_independent_wave_ids",
+        "ten_meter_spacing_32x26_bound",
+        "tutorial_floor_ignores_unreachable_material",
+        "two_wave_hit_cap_36_old_wave_not_reset",
+        "two_waves_point_eight_interval_final_point_three_locked"
+      ],
+      "log_sha256": "8676810f375b6562f2ec973ef67230073fc77de4313f4ba781541e999e28915c"
+    },
+    "Flow": {
+      "check_lines": 42,
+      "unique_checks": 42,
+      "check_names": [
+        "boss_alchemy_pause_battle_and_preparation",
+        "boss_cannot_retreat",
+        "boss_death_settles_once",
+        "boss_ellipse_clear_arena",
+        "boss_preserves_hp_skills_cooldowns_capped_materials",
+        "boss_skills_pause_battle_and_preparation",
+        "bridge_walkable_surface",
+        "defeat_returns_village",
+        "facility_0_reachable",
+        "facility_1_reachable",
+        "facility_2_reachable",
+        "no_double_settlement",
+        "no_portal_before_300",
+        "player_death_result",
+        "portal_at_300_clearance",
+        "portal_can_cancel_without_transition",
+        "portal_confirmation_pauses_timer",
+        "preparation_boss_waits_without_attacks",
+        "preparation_resumes_and_starts_combat",
+        "reference_paths_use_production_move",
+        "reference_regions_and_routes",
+        "river_house_blocked_bridge_open",
+        "second_run_starts",
+        "victory_returns_village",
+        "village_character",
+        "village_route_0",
+        "village_route_1",
+        "village_route_10",
+        "village_route_11",
+        "village_route_12",
+        "village_route_13",
+        "village_route_14",
+        "village_route_15",
+        "village_route_2",
+        "village_route_3",
+        "village_route_4",
+        "village_route_5",
+        "village_route_6",
+        "village_route_7",
+        "village_route_8",
+        "village_route_9",
+        "village_to_field"
+      ],
+      "log_sha256": "3aea39cd3e6b14fdd826edea3d21e47b3e370247957d8303764c6915400dcda0"
+    }
+  },
+  "builds": {
+    "editor": {
+      "result": "Succeeded",
+      "log_sha256": "17a22e078a4b22a245595ce87f6df75cee08c25e51b66c13235f87dbf032bb68"
+    },
+    "game": {
+      "result": "Succeeded",
+      "log_sha256": "74dd1c0759be8f70822e9ca2e8fa8cc5e235231fede0d8adcdabcae1ede0c8b8"
+    }
+  },
+  "protected_files": {
+    "total": 376,
+    "assets_maps": 364,
+    "saves": 11,
+    "production_quality_csv": 1,
+    "changed": [],
+    "before_manifest_sha256": "ed7944f4b9ce872e02e2366c6301c456807a14e0fa0ede793e863c561470ef8c"
+  },
+  "images": [
+    {
+      "file": "warning-2560x1080.png",
+      "sha256": "33c86478663b0428524958236e0643e087604665893e3fd7feb0769272d75eea"
+    }
+  ]
+}

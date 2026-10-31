@@ -176,6 +176,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest"));
     bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
     const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
     const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
@@ -318,6 +319,7 @@ void AAlchemyWorld::House(FVector P,FLinearColor Roof) {
 
 void AAlchemyWorld::BuildScene(bool Combat) {
     ClearEliteWarning();
+    ClearTutorialEncounter();
     ClearBattleReferenceScene();
     ClearPixelFX();
     CloseMerchant();
@@ -629,6 +631,7 @@ void AAlchemyWorld::TutorialSupply(FVector Position) {
 void AAlchemyWorld::TutorialHit(int32 Skill,int32 Hits) {
     if(TutorialActive() && Skill==TutorialSkill && Hits>=2) {
         Progress->TutorialComplete=true;SaveProgress();
+        ClearTutorialEncounter();
         Message(TEXT("首次教学完成！自由投料已开放，可尝试更多材料组合。"));
     }
 }
@@ -664,6 +667,7 @@ void AAlchemyWorld::StartRun() {
 }
 void AAlchemyWorld::EndRun(bool Won) {
     ClearEliteWarning();
+    ClearTutorialEncounter();
     if(bRunEnded) return;
     CloseMerchant();
     EndBossArena();PendingLevelUps=0;
@@ -1230,6 +1234,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest")) && CombatFeedbackCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest")) && StateFlowCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest")) && ReturnControlCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")) && TutorialPlacementCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1697,6 +1702,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "CombatFeedbackChecks.inl"
 #include "StateFlowChecks.inl"
 #include "ReturnControlChecks.inl"
+#include "TutorialPlacementChecks.inl"
 #include "Reference60Checks.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"
