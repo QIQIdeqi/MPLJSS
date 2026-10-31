@@ -1,0 +1,255 @@
+{
+  "base_commit": "4b84ffefab9867148dcb08f2b0ca95c964a1be15",
+  "suite": "UIV02Test extended UI interactions",
+  "resolutions": [
+    {
+      "resolution": "1280x720",
+      "check_lines": 159,
+      "unique_checks": 47,
+      "check_names": [
+        "Activate_and_confirm_purchase_all_ten_real_nodes",
+        "Boss_discovery_and_settlement_survive_memory_save_roundtrip",
+        "actual_filtered_probabilities_draw_zero_and_rounded_two_decimals",
+        "actual_legacy_save_deserializes_four_talents",
+        "actual_victory_settlement_discovers_Boss",
+        "actual_victory_settlement_transfers_coins_once",
+        "alchemy_notes_fill_routes_to_real_action_and_selects_recipe",
+        "all_7x3_actual_normal_skill_IDs_including_high_IDs_reachable_in_codex",
+        "all_ten_enabled_upgrade_buttons_inside_safe_frame",
+        "all_ten_native_furnace_hit_queries_resolve_unique_slot_names",
+        "all_three_quality_percentages_draw_two_decimal_places",
+        "battle_Q_alchemy_hint_actually_drawn",
+        "each_native_furnace_click_returns_only_its_material_without_changing_inventory",
+        "first_recipe_fill_hitbox_clear_of_action_buttons",
+        "header_return_and_pause_resume_have_distinct_nonoverlapping_hitboxes",
+        "isolated_no_player_save_IO",
+        "known_recipe_fill_button_is_drawn_and_in_bounds",
+        "legacy_four_talent_save_serializes",
+        "migration_preserves_coins_and_converts_one_shot_flags",
+        "native_AHUD_hit_query_resolves_distinct_header_return",
+        "native_AHUD_hit_query_resolves_pause_text",
+        "native_AHUD_hit_query_resolves_resume_button",
+        "native_HUD_available",
+        "native_hitbox_click_callback_opens_pause_action",
+        "native_resume_click_callback_closes_pause",
+        "native_screenshot_written",
+        "new_native_screenshot_written",
+        "notes_page_real_fill_actions_visible_nonoverlapping_and_correct",
+        "pause_callback_reopens_after_resume",
+        "pause_menu_title_and_resume_button_actually_drawn",
+        "pause_text_hitbox_does_not_capture_adjacent_Q_B_hints",
+        "pause_text_hitbox_inside_actual_viewport",
+        "pending_result_has_no_stale_pause_hitbox",
+        "production_Message_toast_actually_drawn",
+        "queried_header_return_callback_also_closes_pause",
+        "real_widget_battle_exposes_pause_text_hitbox",
+        "repeated_victory_does_not_repeat_coins_or_discovery",
+        "schema3_memory_save_roundtrip_preserves_migrated_state",
+        "schema3_migration_is_idempotent",
+        "stale_pause_callback_cannot_override_pending_result",
+        "ten_furnace_slots_have_in_bounds_nonoverlapping_rectangles",
+        "three_material_runtime_weights_remain_unchanged",
+        "upgrade_capture_matches_rendered_panel_title_and_ten_buttons",
+        "upgrade_panel_stays_rendered_until_capture_completes",
+        "upgrade_purchase_hitboxes_do_not_overlap",
+        "v2_migration_does_not_complete_tutorial_or_erase_discoveries",
+        "v2_to_v3_preserves_three_purchased_attributes"
+      ],
+      "log_sha256": "1f9371b4a7c91072e09c194e34a752a69d6ddc9f0bf3b78dec0197c90bd2243b",
+      "duplicate_hitbox_warnings": 0,
+      "screenshots": [
+        {
+          "path": "1280x720/03-battle-guidance-toast.png",
+          "width": 1280,
+          "height": 720,
+          "sha256": "457e168fd9a469b66897a023f2ab73380f06ed3437efa71dd06327ec9ca2b22f"
+        },
+        {
+          "path": "1280x720/05-pause-menu.png",
+          "width": 1280,
+          "height": 720,
+          "sha256": "afc464f69666c3c3abc32c0cf3f8d3262fb3d83e3ea3786dfd386e1c288400de"
+        },
+        {
+          "path": "1280x720/06-filtered-probabilities.png",
+          "width": 1280,
+          "height": 720,
+          "sha256": "77edcdddbfa6300afe41a773622b9fdc50f48c2babf0d224278bf3a163677f45"
+        }
+      ]
+    },
+    {
+      "resolution": "1024x768",
+      "check_lines": 159,
+      "unique_checks": 47,
+      "check_names": [
+        "Activate_and_confirm_purchase_all_ten_real_nodes",
+        "Boss_discovery_and_settlement_survive_memory_save_roundtrip",
+        "actual_filtered_probabilities_draw_zero_and_rounded_two_decimals",
+        "actual_legacy_save_deserializes_four_talents",
+        "actual_victory_settlement_discovers_Boss",
+        "actual_victory_settlement_transfers_coins_once",
+        "alchemy_notes_fill_routes_to_real_action_and_selects_recipe",
+        "all_7x3_actual_normal_skill_IDs_including_high_IDs_reachable_in_codex",
+        "all_ten_enabled_upgrade_buttons_inside_safe_frame",
+        "all_ten_native_furnace_hit_queries_resolve_unique_slot_names",
+        "all_three_quality_percentages_draw_two_decimal_places",
+        "battle_Q_alchemy_hint_actually_drawn",
+        "each_native_furnace_click_returns_only_its_material_without_changing_inventory",
+        "first_recipe_fill_hitbox_clear_of_action_buttons",
+        "header_return_and_pause_resume_have_distinct_nonoverlapping_hitboxes",
+        "isolated_no_player_save_IO",
+        "known_recipe_fill_button_is_drawn_and_in_bounds",
+        "legacy_four_talent_save_serializes",
+        "migration_preserves_coins_and_converts_one_shot_flags",
+        "native_AHUD_hit_query_resolves_distinct_header_return",
+        "native_AHUD_hit_query_resolves_pause_text",
+        "native_AHUD_hit_query_resolves_resume_button",
+        "native_HUD_available",
+        "native_hitbox_click_callback_opens_pause_action",
+        "native_resume_click_callback_closes_pause",
+        "native_screenshot_written",
+        "new_native_screenshot_written",
+        "notes_page_real_fill_actions_visible_nonoverlapping_and_correct",
+        "pause_callback_reopens_after_resume",
+        "pause_menu_title_and_resume_button_actually_drawn",
+        "pause_text_hitbox_does_not_capture_adjacent_Q_B_hints",
+        "pause_text_hitbox_inside_actual_viewport",
+        "pending_result_has_no_stale_pause_hitbox",
+        "production_Message_toast_actually_drawn",
+        "queried_header_return_callback_also_closes_pause",
+        "real_widget_battle_exposes_pause_text_hitbox",
+        "repeated_victory_does_not_repeat_coins_or_discovery",
+        "schema3_memory_save_roundtrip_preserves_migrated_state",
+        "schema3_migration_is_idempotent",
+        "stale_pause_callback_cannot_override_pending_result",
+        "ten_furnace_slots_have_in_bounds_nonoverlapping_rectangles",
+        "three_material_runtime_weights_remain_unchanged",
+        "upgrade_capture_matches_rendered_panel_title_and_ten_buttons",
+        "upgrade_panel_stays_rendered_until_capture_completes",
+        "upgrade_purchase_hitboxes_do_not_overlap",
+        "v2_migration_does_not_complete_tutorial_or_erase_discoveries",
+        "v2_to_v3_preserves_three_purchased_attributes"
+      ],
+      "log_sha256": "bbba4e75efe7c50a7a65d69a0d742b014cf45ab5c91b27a27be8032639730569",
+      "duplicate_hitbox_warnings": 0,
+      "screenshots": [
+        {
+          "path": "1024x768/03-battle-guidance-toast.png",
+          "width": 1024,
+          "height": 768,
+          "sha256": "11868ca46fc8d4c378603b772d3033ed474009556ec0d535c88bf26ea455cda5"
+        },
+        {
+          "path": "1024x768/05-pause-menu.png",
+          "width": 1024,
+          "height": 768,
+          "sha256": "cadae2d6dcbe8d1983d25d52086e5b3cd53f23f157cb9783346bbfcdb9b33134"
+        },
+        {
+          "path": "1024x768/06-filtered-probabilities.png",
+          "width": 1024,
+          "height": 768,
+          "sha256": "a0c937ddcd41420abe6d066e1b23adeb6c700637a808885df26d45cac11fbf7a"
+        }
+      ]
+    },
+    {
+      "resolution": "2560x1080",
+      "check_lines": 159,
+      "unique_checks": 47,
+      "check_names": [
+        "Activate_and_confirm_purchase_all_ten_real_nodes",
+        "Boss_discovery_and_settlement_survive_memory_save_roundtrip",
+        "actual_filtered_probabilities_draw_zero_and_rounded_two_decimals",
+        "actual_legacy_save_deserializes_four_talents",
+        "actual_victory_settlement_discovers_Boss",
+        "actual_victory_settlement_transfers_coins_once",
+        "alchemy_notes_fill_routes_to_real_action_and_selects_recipe",
+        "all_7x3_actual_normal_skill_IDs_including_high_IDs_reachable_in_codex",
+        "all_ten_enabled_upgrade_buttons_inside_safe_frame",
+        "all_ten_native_furnace_hit_queries_resolve_unique_slot_names",
+        "all_three_quality_percentages_draw_two_decimal_places",
+        "battle_Q_alchemy_hint_actually_drawn",
+        "each_native_furnace_click_returns_only_its_material_without_changing_inventory",
+        "first_recipe_fill_hitbox_clear_of_action_buttons",
+        "header_return_and_pause_resume_have_distinct_nonoverlapping_hitboxes",
+        "isolated_no_player_save_IO",
+        "known_recipe_fill_button_is_drawn_and_in_bounds",
+        "legacy_four_talent_save_serializes",
+        "migration_preserves_coins_and_converts_one_shot_flags",
+        "native_AHUD_hit_query_resolves_distinct_header_return",
+        "native_AHUD_hit_query_resolves_pause_text",
+        "native_AHUD_hit_query_resolves_resume_button",
+        "native_HUD_available",
+        "native_hitbox_click_callback_opens_pause_action",
+        "native_resume_click_callback_closes_pause",
+        "native_screenshot_written",
+        "new_native_screenshot_written",
+        "notes_page_real_fill_actions_visible_nonoverlapping_and_correct",
+        "pause_callback_reopens_after_resume",
+        "pause_menu_title_and_resume_button_actually_drawn",
+        "pause_text_hitbox_does_not_capture_adjacent_Q_B_hints",
+        "pause_text_hitbox_inside_actual_viewport",
+        "pending_result_has_no_stale_pause_hitbox",
+        "production_Message_toast_actually_drawn",
+        "queried_header_return_callback_also_closes_pause",
+        "real_widget_battle_exposes_pause_text_hitbox",
+        "repeated_victory_does_not_repeat_coins_or_discovery",
+        "schema3_memory_save_roundtrip_preserves_migrated_state",
+        "schema3_migration_is_idempotent",
+        "stale_pause_callback_cannot_override_pending_result",
+        "ten_furnace_slots_have_in_bounds_nonoverlapping_rectangles",
+        "three_material_runtime_weights_remain_unchanged",
+        "upgrade_capture_matches_rendered_panel_title_and_ten_buttons",
+        "upgrade_panel_stays_rendered_until_capture_completes",
+        "upgrade_purchase_hitboxes_do_not_overlap",
+        "v2_migration_does_not_complete_tutorial_or_erase_discoveries",
+        "v2_to_v3_preserves_three_purchased_attributes"
+      ],
+      "log_sha256": "df6f4447b99cd99b4b8d06fdf53d5b4075988623984695f73641523c3584a36c",
+      "duplicate_hitbox_warnings": 0,
+      "screenshots": [
+        {
+          "path": "2560x1080/03-battle-guidance-toast.png",
+          "width": 2560,
+          "height": 1080,
+          "sha256": "84df79542b859b50a90d308954996cba646b38e8109f50d8c2c8d01dce568f62"
+        },
+        {
+          "path": "2560x1080/05-pause-menu.png",
+          "width": 2560,
+          "height": 1080,
+          "sha256": "ef7ccf41c71c1a8eb750b3ea149e3524c3f3bdda3cc800bf5b4996677fcdb7d3"
+        },
+        {
+          "path": "2560x1080/06-filtered-probabilities.png",
+          "width": 2560,
+          "height": 1080,
+          "sha256": "633dcdea3ec0c3b0e628da8743578656642f34b63e4e19242ff54c7561660c58"
+        }
+      ]
+    }
+  ],
+  "producer_regression": {
+    "check_lines": 39,
+    "unique_checks": 33,
+    "log_sha256": "ce311e8093285d3f33b03f987735b8acaf681616268a31d9c883ab5683615f77",
+    "passed": true
+  },
+  "protected_files": {
+    "unchanged": true,
+    "player_saves": 11,
+    "quality_files": 2
+  },
+  "builds": {
+    "editor-final": {
+      "passed": true,
+      "log_sha256": "419037b70bf55ec194421c26a73190438e9348d329efa66f69b2f27ea68f0d42"
+    },
+    "game": {
+      "passed": true,
+      "log_sha256": "d24a69c837855e9a4881f6f8548e79441f1503097d9c023d32006afadaf3241a"
+    }
+  }
+}

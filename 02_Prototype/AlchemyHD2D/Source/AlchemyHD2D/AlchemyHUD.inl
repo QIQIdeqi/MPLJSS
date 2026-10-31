@@ -45,6 +45,7 @@ void AAlchemyHUD::Button(const FString& Id,const FString& Label,float X,float Y,
     }
 }
 void AAlchemyHUD::Activate(const FString& Id) {
+    if(Id==TEXT("modalclose")){World->Action(TEXT("close"));return;}
     if((Id==TEXT("noteprev") || Id==TEXT("notenext")) && World->Panel==TEXT("alchemy")) {
         DetailPage=FMath::Max(0,DetailPage+(Id==TEXT("notenext")?1:-1));FocusIndex=0;FocusOrder.Empty();return;
     }
@@ -158,7 +159,15 @@ void AAlchemyHUD::DrawHUD() {
         Box(500,666,280,8,Ink);Box(500,666,280*FMath::Clamp(World->RunXP/NeedXP,0.f,1.f),8,Gold);
         } else {
             const float HintX=HUDLeft+18,HintY=ClearPanelY(HintX,264,26,HUDBottom-36,true);
-            Text(TEXT("Q 炼金 · B 技能 · Esc 暂停"),HintX,HintY+4,16,Dim);
+            const FString Prefix=TEXT("Q 炼金 · B 技能 · "),Pause=TEXT("Esc 暂停");
+            const float PauseX=HintX+Measure(Prefix,16),PauseW=Measure(Pause,16);
+            // Padding is above/below and to the right, never over the Q/B prefix.
+            const FBox2D PauseRect(FVector2D(PauseX,HintY),FVector2D(PauseX+PauseW+4,HintY+26));
+            ButtonRects.Add(TEXT("pausebtn"),PauseRect);
+            AddHitBox(FVector2D(OX+PauseX*S,OY+HintY*S),FVector2D((PauseW+4)*S,26*S),FName(TEXT("pausebtn")),true);
+            float MX=0,MY=0;PC->GetMousePosition(MX,MY);
+            const bool Hover=PauseRect.IsInsideOrOn(FVector2D((MX-OX)/S,(MY-OY)/S));
+            Text(Prefix,HintX,HintY+4,16,Dim);Text(Pause,PauseX,HintY+4,16,Hover?Gold:Dim);
         }
         if(World->TutorialActive() && !World->bBossArenaActive) {
             bool Ready=World->Inventory[0]>0 && World->Inventory[1]>0 && World->Inventory[2]>0;
@@ -214,7 +223,7 @@ void AAlchemyHUD::DrawHUD() {
         if(P==TEXT("merchantconfirm")) Title=TEXT("确认出售全部材料");
         if(P==TEXT("bossportal"))Title=TEXT("进入雾界草甸？");
         Text(Title,104,118,28,Gold);
-        Button(TEXT("close"),TEXT("Esc 返回"),1018,114,160);
+        Button(TEXT("modalclose"),TEXT("Esc 返回"),1018,114,160);
         Button(TEXT("textsize"),TEXT("F7 字体调试"),778,114,220);
         if(P==TEXT("bossportal")) {
             Paragraph(TEXT("保留当前生命、技能与冷却。自动回收已有地面材料，背包每种最多10个；不自动回收金币。进入后至胜负结算前不能返回。"),104,220,1000,24,White);
@@ -236,7 +245,8 @@ void AAlchemyHUD::DrawHUD() {
                 if(Slot<Total) {
                     // 找到第 Slot 份投入的材料种类。
                     int M=-1,Acc=0;for(int I=0;I<6;I++){Acc+=World->Selected[I];if(Slot<Acc){M=I;break;}}
-                    if(M>=0) Button(FString::Printf(TEXT("furnace%d"),M),FString::Printf(TEXT("%s"),MaterialNames[M]),X,Y,100,true,80);
+                    // Suffix makes each slot hitbox unique; the leading integer remains the material type for Action.
+                    if(M>=0) Button(FString::Printf(TEXT("furnace%d_%d"),M,Slot),FString::Printf(TEXT("%s"),MaterialNames[M]),X,Y,100,true,80);
                     else Box(X,Y,100,80,FLinearColor(.08f,.14f,.16f));
                 } else {
                     Box(X,Y,100,80,FLinearColor(.08f,.14f,.16f));
@@ -246,7 +256,7 @@ void AAlchemyHUD::DrawHUD() {
             // 品质概率（不显示核弹概率）。
             TArray<int32> Options;TArray<float> Chances;FString Reason;int Combination;bool Valid=World->CraftOptions(Options,Chances,Reason,Combination);FString Probability;
             if(Valid && Combination>=0) {
-                for(int Q=0;Q<3;Q++) {int I=Options.Find(World->CombinationSkill(Combination,Q));Probability+=FString::Printf(TEXT("%s %.1f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
+                for(int Q=0;Q<3;Q++) {int I=Options.Find(World->CombinationSkill(Combination,Q));Probability+=FString::Printf(TEXT("%s %.2f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
             } else Probability=Valid?TEXT("精英专属配方 · 固定产出"):TEXT("满足投料条件后显示实际品质概率");
             Text(Probability,124,480,17,Teal);
             // 材料背包：3 启用普通材料 + 3 禁用占位（精英材料不可获取）。

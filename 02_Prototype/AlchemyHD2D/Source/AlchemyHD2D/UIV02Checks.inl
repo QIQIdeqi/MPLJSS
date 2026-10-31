@@ -3,6 +3,7 @@ void AAlchemyWorld::UIV02Check(float Dt) {
     static bool UIQAOK=true;
     static int UINotePage=0,UICodexPage=0;
     static TSet<int32> UISeenSkills;
+    static FBox2D UIPauseRect;
     const FString Dir=FPaths::ProjectDir()/TEXT("Evidence/UIV02_20261031");
     auto* PC=GetWorld()->GetFirstPlayerController();
     auto* HUD=PC?Cast<AAlchemyHUD>(PC->GetHUD()):nullptr;
@@ -12,6 +13,7 @@ void AAlchemyWorld::UIV02Check(float Dt) {
     const auto Shot=[&](const TCHAR* Name){FScreenshotRequest::RequestScreenshot(Dir/Name,true,false);};
     const auto Finish=[&](){UE_LOG(LogTemp,Display,TEXT("UIV02_%s"),UIQAOK?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,UIQAOK?0:1);};
     const auto Onscreen=[&](const FBox2D& R){return R.bIsValid && R.Min.X>=0 && R.Min.Y>=0 && R.Max.X<=1280 && R.Max.Y<=720;};
+    const auto HitAt=[&](FVector2D Logical){return HUD->GetHitBoxAtCoordinates({HUD->OX+Logical.X*HUD->S,HUD->OY+Logical.Y*HUD->S},true);};
     if(CaptureStep==0) {
         UIQAOK=true;UINotePage=UICodexPage=0;UISeenSkills.Empty();Check(bCapture,TEXT("isolated_no_player_save_IO"));if(!bCapture){Finish();return;}
         IFileManager::Get().MakeDirectory(*Dir,true);
@@ -112,6 +114,81 @@ void AAlchemyWorld::UIV02Check(float Dt) {
         Check(VictoryLoaded && VictoryLoaded->Monsters.Contains(10) && VictoryLoaded->Coins==CoinsBeforeVictory+37,TEXT("Boss_discovery_and_settlement_survive_memory_save_roundtrip"));
         const auto DiscoveredMonsters=Progress->Monsters;EndRun(true);
         Check(Progress->Coins==CoinsBeforeVictory+37 && ResultCoins==37 && RunCoins==0 && Progress->Monsters==DiscoveredMonsters,TEXT("repeated_victory_does_not_repeat_coins_or_discovery"));
+        StartRun();for(auto& E:Enemies){if(IsValid(E.Body))E.Body->Destroy();if(IsValid(E.Shadow))E.Shadow->Destroy();}Enemies.Empty();
+        Progress->TutorialComplete=true;SpawnCD=NextElite=NextMerchantTime=10000;for(float& CD:SkillCD)CD=10000;Panel.Empty();ToastTime=0;
+        Next(20);return;
+    }
+    if(CaptureStep==20){
+        const auto* R=HUD->ButtonRects.Find(TEXT("pausebtn"));Check(BattleWidget && R,TEXT("real_widget_battle_exposes_pause_text_hitbox"));
+        if(!R){Finish();return;}UIPauseRect=*R;
+        int VX=0,VY=0;PC->GetViewportSize(VX,VY);
+        Check(HUD->OX+R->Min.X*HUD->S>=0 && HUD->OY+R->Min.Y*HUD->S>=0 && HUD->OX+R->Max.X*HUD->S<=VX && HUD->OY+R->Max.Y*HUD->S<=VY,TEXT("pause_text_hitbox_inside_actual_viewport"));
+        const FVector2D Center=R->GetCenter();const auto* Hit=HitAt(Center);
+        Check(Hit && Hit->GetName()==FName(TEXT("pausebtn")),TEXT("native_AHUD_hit_query_resolves_pause_text"));
+        const float HintX=R->Min.X-HUD->Measure(TEXT("Q 炼金 · B 技能 · "),16);
+        const auto* QHit=HitAt({HintX+HUD->Measure(TEXT("Q 炼金"),16)*.5f,Center.Y});
+        const auto* BHit=HitAt({HintX+HUD->Measure(TEXT("Q 炼金 · "),16)+HUD->Measure(TEXT("B 技能"),16)*.5f,Center.Y});
+        Check((!BHit || BHit->GetName()!=FName(TEXT("pausebtn"))) && (!QHit || QHit->GetName()!=FName(TEXT("pausebtn"))),TEXT("pause_text_hitbox_does_not_capture_adjacent_Q_B_hints"));
+        if(Hit)HUD->NotifyHitBoxClick(Hit->GetName());Check(Panel==TEXT("pause"),TEXT("native_hitbox_click_callback_opens_pause_action"));Next(21);return;
+    }
+    if(CaptureStep==21){
+        Check(Panel==TEXT("pause") && HUD->UIV02DrawnText.Contains(TEXT("暂停")) && HUD->ButtonRects.Contains(TEXT("close")),TEXT("pause_menu_title_and_resume_button_actually_drawn"));
+        const auto* Header=HUD->ButtonRects.Find(TEXT("modalclose"));const auto* Resume=HUD->ButtonRects.Find(TEXT("close"));
+        Check(Header && Resume && !Header->Intersect(*Resume),TEXT("header_return_and_pause_resume_have_distinct_nonoverlapping_hitboxes"));
+        Shot(TEXT("05-pause-menu.png"));Next(22);return;
+    }
+    if(CaptureStep==22){
+        if(FScreenshotRequest::IsScreenshotRequested())return;
+        const auto* Header=HUD->ButtonRects.Find(TEXT("modalclose"));const auto* HeaderHit=Header?HitAt(Header->GetCenter()):nullptr;
+        Check(HeaderHit && HeaderHit->GetName()==FName(TEXT("modalclose")),TEXT("native_AHUD_hit_query_resolves_distinct_header_return"));
+        const FName HeaderName=HeaderHit?HeaderHit->GetName():NAME_None;
+        const auto* R=HUD->ButtonRects.Find(TEXT("close"));const auto* Hit=R?HitAt(R->GetCenter()):nullptr;
+        Check(Hit && Hit->GetName()==FName(TEXT("close")),TEXT("native_AHUD_hit_query_resolves_resume_button"));
+        if(Hit)HUD->NotifyHitBoxClick(Hit->GetName());Check(Panel.IsEmpty(),TEXT("native_resume_click_callback_closes_pause"));
+        HUD->NotifyHitBoxClick(FName(TEXT("pausebtn")));Check(Panel==TEXT("pause"),TEXT("pause_callback_reopens_after_resume"));
+        if(!HeaderName.IsNone())HUD->NotifyHitBoxClick(HeaderName);Check(Panel.IsEmpty(),TEXT("queried_header_return_callback_also_closes_pause"));
+        PendingResultSkill=CombinationSkill(6,0);PendingResultCombination=6;PendingResultTotal=3;PendingIsNuclear=false;PendingRefreshed=false;Panel=TEXT("result");Next(23);return;
+    }
+    if(CaptureStep==23){
+        const int Staged=PendingResultSkill;const auto* OldHit=HitAt(UIPauseRect.GetCenter());
+        Check(!HUD->ButtonRects.Contains(TEXT("pausebtn")) && (!OldHit || OldHit->GetName()!=FName(TEXT("pausebtn"))),TEXT("pending_result_has_no_stale_pause_hitbox"));
+        HUD->NotifyHitBoxClick(FName(TEXT("pausebtn")));Check(Panel==TEXT("result") && PendingResultSkill==Staged,TEXT("stale_pause_callback_cannot_override_pending_result"));
+        AcceptPendingResult();Levels.Init(0,NumSkills());Levels[0]=1;Equipped={0};Bag.Empty();Inventory={10,10,10,0,0,0};Selected={1,1,1,0,0,0};Action(TEXT("alchemy"));Next(24);return;
+    }
+    if(CaptureStep==24){
+        Check(QualityWeight(0,0)==70 && QualityWeight(0,1)==20 && QualityWeight(0,2)==10,TEXT("three_material_runtime_weights_remain_unchanged"));
+        const FString Drawn=FString::Join(HUD->UIV02DrawnText,TEXT(" "));
+        Check(Drawn.Contains(TEXT("70.00%")) && Drawn.Contains(TEXT("20.00%")) && Drawn.Contains(TEXT("10.00%")),TEXT("all_three_quality_percentages_draw_two_decimal_places"));
+        Levels[CombinationSkill(6,0)]=5;Next(25);return;
+    }
+    if(CaptureStep==25){
+        const FString Drawn=FString::Join(HUD->UIV02DrawnText,TEXT(" "));
+        Check(Drawn.Contains(TEXT("低 0.00%")) && Drawn.Contains(TEXT("中 66.67%")) && Drawn.Contains(TEXT("高 33.33%")),TEXT("actual_filtered_probabilities_draw_zero_and_rounded_two_decimals"));
+        Shot(TEXT("06-filtered-probabilities.png"));Next(26);return;
+    }
+    if(CaptureStep==26){
+        if(FScreenshotRequest::IsScreenshotRequested())return;
+        for(const TCHAR* Name:{TEXT("05-pause-menu.png"),TEXT("06-filtered-probabilities.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("new_native_screenshot_written"));
+        Selected={4,3,3,0,0,0};Next(27);return;
+    }
+    if(CaptureStep==27){
+        const TArray<int32> Baseline={4,3,3,0,0,0};const auto BeforeInventory=Inventory;
+        bool Geometry=true,Names=true,Returns=true;TArray<FBox2D> Slots;
+        for(int Slot=0;Slot<10;Slot++){
+            Selected=Baseline;const int M=Slot<4?0:Slot<7?1:2;
+            const FString ID=FString::Printf(TEXT("furnace%d_%d"),M,Slot);const auto* R=HUD->ButtonRects.Find(ID);
+            Geometry &= R && Onscreen(*R);
+            if(!R){Names=false;Returns=false;continue;}
+            for(const auto& Other:Slots)Geometry &= !R->Intersect(Other);Slots.Add(*R);
+            const auto* Hit=HitAt(R->GetCenter());Names &= Hit && Hit->GetName()==FName(*ID);
+            if(Hit)HUD->NotifyHitBoxClick(Hit->GetName());
+            for(int I=0;I<Baseline.Num();I++)Returns &= Selected[I]==Baseline[I]-(I==M?1:0);
+            Returns &= Inventory==BeforeInventory;
+        }
+        Selected=Baseline;
+        Check(Slots.Num()==10 && Geometry,TEXT("ten_furnace_slots_have_in_bounds_nonoverlapping_rectangles"));
+        Check(Names,TEXT("all_ten_native_furnace_hit_queries_resolve_unique_slot_names"));
+        Check(Returns,TEXT("each_native_furnace_click_returns_only_its_material_without_changing_inventory"));
         Finish();return;
     }
 }
