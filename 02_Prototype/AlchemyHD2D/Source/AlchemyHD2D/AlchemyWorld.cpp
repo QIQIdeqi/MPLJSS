@@ -178,6 +178,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("EnemyBehaviorTest"));
     bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
     const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
     const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
@@ -1024,7 +1025,7 @@ int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color
     return Hits;
 }
 void AAlchemyWorld::Hurt(float Damage) {
-    if(HurtInv>0 || DodgeInv>0 || HP<=0) return;
+    if(Damage<=0 || HurtInv>0 || DodgeInv>0 || HP<=0) return;
     // Defense reduction: 防御增加 (Talents[7]) 2%/level + 局内伤害减少 (RunAttrs[4]) 5%/level.
     float Reduction=0.02f*Progress->Talents[7]+0.05f*RunAttrs[4];
     float Reduced=FMath::Max(1.f,FMath::RoundToFloat(Damage*(1.f-FMath::Min(0.95f,Reduction))));
@@ -1241,6 +1242,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest")) && ReturnControlCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")) && TutorialPlacementCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")) && TeachingJourneyCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("EnemyBehaviorTest")) && EnemyBehaviorCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1418,7 +1420,7 @@ void AAlchemyWorld::Tick(float Dt) {
             E.Windup=K.AreaWindup;E.Aim=K.AreaAimAtPlayer?PlayerPos:E.Pos;
             Ring(E.Aim,K.AreaRadius,FLinearColor(.4f,.15f,.08f),E.Windup);
         }else{
-            if(Ranged && Dist<K.RangedMax && Dist>K.RangedMin && E.AttackCD<=0){
+            if(Ranged && Dist<=K.RangedMax && Dist>=K.RangedMin && E.AttackCD<=0){
                 const float Damage=bTune001B && K.TunedRangedDamage>=0?K.TunedRangedDamage:K.RangedDamage;
                 Fire(E.Pos,PlayerPos,Damage,FLinearColor(.7f,.22f,.5f),true,K.RangedSpeed);E.AttackCD=K.RangedCD;
             }
@@ -1711,6 +1713,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "ReturnControlChecks.inl"
 #include "TutorialPlacementChecks.inl"
 #include "TeachingJourney.inl"
+#include "EnemyBehaviorChecks.inl"
 #include "Reference60Checks.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"

@@ -1,0 +1,1287 @@
+{
+  "base_commit": "3c480cc7938bfc70b8c473b82a9c648f04b0645f",
+  "modes": {
+    "baseline60": {
+      "logged_checks": 79,
+      "cases": 10,
+      "failed": 36,
+      "native_log_sha256": "1b1772bc405d7e75604897b45abb5cfedb24be962757825c64e920787ef93eb2",
+      "configuration_log_lines": [
+        "[2026.10.31-23.45.33:225][  2]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_contact_zero definition=11 tuned=0 distance=50.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.45.33:227][  4]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_contact_zero definition=11 tuned=1 distance=50.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.45.33:230][  6]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_area_zero definition=11 tuned=0 distance=100.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.45.33:251][ 41]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_area_zero definition=11 tuned=1 distance=100.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.45.33:270][ 76]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_ranged_zero definition=11 tuned=0 distance=500.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.45.33:289][104]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_ranged_zero definition=11 tuned=1 distance=500.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.45.33:303][132]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_keep_equals_min definition=11 tuned=0 distance=200.000000000 min=200.0 keep=200.0 max=750.0",
+        "[2026.10.31-23.45.33:354][242]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_keep_equals_max definition=11 tuned=0 distance=750.000000000 min=200.0 keep=750.0 max=750.0",
+        "[2026.10.31-23.45.33:401][352]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_below_min definition=11 tuned=0 distance=199.000000000 min=200.0 keep=200.0 max=750.0",
+        "[2026.10.31-23.45.33:415][377]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_above_max definition=11 tuned=0 distance=751.000000000 min=200.0 keep=750.0 max=750.0"
+      ],
+      "checks": [
+        {
+          "case": "base_contact_zero",
+          "check": "isolated_capture_prevents_player_save_IO",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_runtime_table_has_original_compatible_rows",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "integer_axis_aligned_750cm_fixture_corridor_is_legal",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "FAIL"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "FAIL"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "FAIL"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "FAIL"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "accepted_keep_distance_endpoint_fires_once",
+          "result": "FAIL"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "ranged_cooldown_counts_down_without_refiring_early",
+          "result": "FAIL"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "FAIL"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "accepted_keep_distance_endpoint_fires_once",
+          "result": "FAIL"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "ranged_cooldown_counts_down_without_refiring_early",
+          "result": "FAIL"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "outside_min_max_does_not_fire_or_consume_attack_cooldown",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "outside_min_max_does_not_fire_or_consume_attack_cooldown",
+          "result": "PASS"
+        }
+      ]
+    },
+    "60fps": {
+      "logged_checks": 79,
+      "cases": 10,
+      "failed": 0,
+      "native_log_sha256": "c68219c932f56f7902f5b1abbfad05893e11c2e583f71390c909868f3561ba7e",
+      "configuration_log_lines": [
+        "[2026.10.31-23.47.43:602][  2]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_contact_zero definition=11 tuned=0 distance=50.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.47.43:605][  4]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_contact_zero definition=11 tuned=1 distance=50.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.47.43:607][  6]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_area_zero definition=11 tuned=0 distance=100.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.47.43:637][ 41]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_area_zero definition=11 tuned=1 distance=100.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.47.43:663][ 76]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_ranged_zero definition=11 tuned=0 distance=500.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.47.43:689][104]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_ranged_zero definition=11 tuned=1 distance=500.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.47.43:714][132]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_keep_equals_min definition=11 tuned=0 distance=200.000000000 min=200.0 keep=200.0 max=750.0",
+        "[2026.10.31-23.47.43:730][153]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_keep_equals_max definition=11 tuned=0 distance=750.000000000 min=200.0 keep=750.0 max=750.0",
+        "[2026.10.31-23.47.43:747][174]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_below_min definition=11 tuned=0 distance=199.000000000 min=200.0 keep=200.0 max=750.0",
+        "[2026.10.31-23.47.43:765][199]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_above_max definition=11 tuned=0 distance=751.000000000 min=200.0 keep=750.0 max=750.0"
+      ],
+      "checks": [
+        {
+          "case": "base_contact_zero",
+          "check": "isolated_capture_prevents_player_save_IO",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_runtime_table_has_original_compatible_rows",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "integer_axis_aligned_750cm_fixture_corridor_is_legal",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "accepted_keep_distance_endpoint_fires_once",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "ranged_cooldown_counts_down_without_refiring_early",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "accepted_keep_distance_endpoint_fires_once",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "ranged_cooldown_counts_down_without_refiring_early",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "outside_min_max_does_not_fire_or_consume_attack_cooldown",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "outside_min_max_does_not_fire_or_consume_attack_cooldown",
+          "result": "PASS"
+        }
+      ]
+    },
+    "10fps": {
+      "logged_checks": 79,
+      "cases": 10,
+      "failed": 0,
+      "native_log_sha256": "f7ce39a18a1a1782d4b76bca250b5a5e60835057bc190a41629a901293eecf82",
+      "configuration_log_lines": [
+        "[2026.10.31-23.48.23:241][  2]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_contact_zero definition=11 tuned=0 distance=50.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.48.23:243][  4]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_contact_zero definition=11 tuned=1 distance=50.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.48.23:245][  6]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_area_zero definition=11 tuned=0 distance=100.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.48.23:254][ 14]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_area_zero definition=11 tuned=1 distance=100.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.48.23:260][ 22]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=base_ranged_zero definition=11 tuned=0 distance=500.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.48.23:265][ 28]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=tuned_ranged_zero definition=11 tuned=1 distance=500.000000000 min=200.0 keep=550.0 max=750.0",
+        "[2026.10.31-23.48.23:269][ 34]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_keep_equals_min definition=11 tuned=0 distance=200.000000000 min=200.0 keep=200.0 max=750.0",
+        "[2026.10.31-23.48.23:273][ 40]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_keep_equals_max definition=11 tuned=0 distance=750.000000000 min=200.0 keep=750.0 max=750.0",
+        "[2026.10.31-23.48.23:276][ 46]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_below_min definition=11 tuned=0 distance=199.000000000 min=200.0 keep=200.0 max=750.0",
+        "[2026.10.31-23.48.23:280][ 51]LogTemp: Display: ENEMY_BEHAVIOR_CONFIG case=ranged_above_max definition=11 tuned=0 distance=751.000000000 min=200.0 keep=750.0 max=750.0"
+      ],
+      "checks": [
+        {
+          "case": "base_contact_zero",
+          "check": "isolated_capture_prevents_player_save_IO",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_runtime_table_has_original_compatible_rows",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "integer_axis_aligned_750cm_fixture_corridor_is_legal",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "base_contact_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_contact_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "base_area_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_area_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "base_ranged_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_reduce_HP",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_grant_hurt_invulnerability",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "zero_damage_AI_does_not_start_hurt_animation",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "direct_tiny_positive_Hurt_after_zero_AI_still_deals_minimum_one",
+          "result": "PASS"
+        },
+        {
+          "case": "tuned_ranged_zero",
+          "check": "direct_positive_Hurt_respects_normal_protection_after_real_hit",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "accepted_keep_distance_endpoint_fires_once",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_min",
+          "check": "ranged_cooldown_counts_down_without_refiring_early",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "accepted_keep_distance_endpoint_fires_once",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_keep_equals_max",
+          "check": "ranged_cooldown_counts_down_without_refiring_early",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_below_min",
+          "check": "outside_min_max_does_not_fire_or_consume_attack_cooldown",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "in_memory_appended_row_passes_real_ReadEnemyDefinitions",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "actual_configured_enemy_spawned",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "actual_AI_distance_equals_exact_integer_fixture_distance",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "production_AI_case_completes_within_bounded_time",
+          "result": "PASS"
+        },
+        {
+          "case": "ranged_above_max",
+          "check": "outside_min_max_does_not_fire_or_consume_attack_cooldown",
+          "result": "PASS"
+        }
+      ]
+    }
+  },
+  "scope": "Synthetic validated in-memory appended DT row, fixed legal integer corridor, real enemy/projectile Tick; direct tiny-positive/protection controls are separately named. Not natural gameplay, screenshots or balance acceptance.",
+  "verified_at": "2026-11-01T07:52:38.749547+08:00",
+  "regressions": {
+    "producer": {
+      "result": "PASS",
+      "logged_checks": 39,
+      "native_log_sha256": "fecbf63d4d45cb14e86cc70b42817fcffef5b738dc99151df21ebfc6e21ce63c"
+    },
+    "boss": {
+      "result": "PASS",
+      "logged_checks": 28,
+      "native_log_sha256": "a7661caeeff05a94899edeb8669f04e622c5c47a4e3f1f11d39b71bd3aaff364"
+    }
+  },
+  "builds": {
+    "editor-baseline": {
+      "result": "PASS",
+      "log_sha256": "ab7422ccb4f80b39fae2d0c3c8b5cca29df53b1413b459f211907488d0eaed63"
+    },
+    "editor-final": {
+      "result": "PASS",
+      "log_sha256": "726b3bea87380868c2cc05cbbff1d3afb6bb4b3ed6cb340fae7856a9ff9b108b"
+    },
+    "game-final": {
+      "result": "PASS",
+      "log_sha256": "34b9a6fe1dda25ff70aebb73e9f6cbbfb1732a7279912489b2a8d33db78d1187"
+    }
+  },
+  "protected_files": {
+    "total": 377,
+    "assets_maps": 364,
+    "saves": 11,
+    "quality_csv": 1,
+    "enemy_csv": 1,
+    "changed": [],
+    "before_manifest_sha256": "524959bca54f9a46bbcba423be94473d6faa09c5d6198413bdb790ea51122705"
+  }
+}
