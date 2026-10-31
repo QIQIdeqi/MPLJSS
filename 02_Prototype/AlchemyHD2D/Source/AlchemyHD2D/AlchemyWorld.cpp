@@ -127,20 +127,6 @@ const TCHAR* TalentDescriptions[10]={
 };
 constexpr int32 TalentNodeCount=10;
 // Codex: monster and material codex data (system UI V0.2 §4.6). Elite materials are disabled.
-const TCHAR* MonsterNames[]={TEXT("腐化鼠"),TEXT("泥团怪"),TEXT("游荡骷髅"),TEXT("毒囊虫"),TEXT("暗影猎犬"),TEXT("游荡术徒"),TEXT("石甲蛮徒"),TEXT("腐化巨蜥"),TEXT("蚀雾术士"),TEXT("根须守卫"),TEXT("腐化之源")};
-const TCHAR* MonsterDescriptions[]={
-    TEXT("成群的腐化啮齿动物，行动迅速，成群结队逼近玩家。"),
-    TEXT("缓慢但耐打的泥沼生物，靠接触造成持续伤害。"),
-    TEXT("游荡的骸骨战士，靠近后用近战挥击攻击。"),
-    TEXT("会喷射毒液的虫类，远程投射攻击。"),
-    TEXT("行动迅速的猎犬，负责逼迫玩家走位。"),
-    TEXT("使用远程法术的术徒，发射投射物。"),
-    TEXT("身披石甲的蛮徒，行动缓慢但重击凶猛。"),
-    TEXT("体型庞大的巨蜥精英，拥有扫尾强力攻击。"),
-    TEXT("释放蚀雾弹的术士精英，腐蚀爆发范围攻击。"),
-    TEXT("盘踞的根须守卫精英，地裂强力攻击。"),
-    TEXT("Demo 唯一最终 BOSS，双阶段战斗，击败后胜利。")
-};
 const TCHAR* MaterialCodexNames[]={TEXT("火粉"),TEXT("露水"),TEXT("魔法碎片")};
 const TCHAR* MaterialCodexDescriptions[]={
     TEXT("橙红色粉末，带少量火星，用于火焰、爆炸类炼金。"),
@@ -183,7 +169,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("GreyfordSpatialTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("PixelFXCapture"));
-    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression")) || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression")) || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) || FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("UnifiedPresentationTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("Reference60Test"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
@@ -676,7 +662,6 @@ void AAlchemyWorld::EndRun(bool Won) {
     CloseMerchant();
     EndBossArena();PendingLevelUps=0;
     bRunEnded=true; bWon=Won;
-    if(Won) Progress->Monsters.AddUnique(10); // Discover the defeated Boss; use this settlement save, without adding drops.
     // EXP-001/PAUSE-001: clear run-local xp/attributes and pending results on run end.
     RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
     PendingResultSkill=-1; PendingIsNuclear=false; StartMaterialChoice=-1;
@@ -750,10 +735,10 @@ bool AAlchemyWorld::Craft() {
 void AAlchemyWorld::TriggerNuclear() {
     // ALCH-003: instantly kill every surviving normal enemy (types 0..6), one death event each.
     // Elites (7..9) and the final boss (10) are untouched. Kill, stat and drops all run normally.
-    int Cleared=0;
+    int Cleared=0;bool Discovered=false;
     for(int i=Enemies.Num()-1;i>=0;i--) {
         if(Enemies[i].HP<=0 || Enemies[i].Type>=7) continue;
-        auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++; Cleared++;
+        auto E=Enemies[i];Discovered |= DiscoverEnemy(E); E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++; Cleared++;
         SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
         TutorialSupply(E.Pos);
         // EXP-001: normal enemy always drops one XP orb (Kind -2).
@@ -762,6 +747,7 @@ void AAlchemyWorld::TriggerNuclear() {
         if(Random.FRand()<MaterialDropChance()) {float R=Random.FRand(); Drop(E.Pos,R<0.4f?0:R<0.75f?1:2);}
     }
     Message(FString::Printf(TEXT("核弹炼金！清除普通怪 ×%d"),Cleared));
+    if(Discovered)SaveProgress();
 }
 
 void AAlchemyWorld::AcceptPendingResult() {
@@ -1229,6 +1215,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::Q)) TogglePanel(TEXT("alchemy"));
     if(!bRunEnded && !bCombat && PC->WasInputKeyJustPressed(EKeys::C)) TogglePanel(TEXT("codex"));
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) TogglePanel(TEXT("skills"));
+    if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UnifiedPresentationTest")) && UnifiedPresentationCheck(Dt))return;
@@ -1423,7 +1410,7 @@ void AAlchemyWorld::Tick(float Dt) {
         auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
         SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
         TutorialSupply(E.Pos);
-        if(E.Type==10) {EndRun(true); break;}
+        if(E.Type==10) {DiscoverEnemy(E);EndRun(true); break;}
         RewardEnemy(E);
     }
     if(!Panel.IsEmpty()) return;
@@ -1695,6 +1682,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "VillagePresentationChecks.inl"
 #include "UnifiedPresentationChecks.inl"
 #include "UIV02Checks.inl"
+#include "EnemyCodexChecks.inl"
 #include "PixelFXChecks.inl"
 
 void AAlchemyWorld::SpawnPotionBreak(FVector Position) {

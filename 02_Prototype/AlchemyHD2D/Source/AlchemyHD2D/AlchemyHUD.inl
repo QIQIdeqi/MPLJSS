@@ -4,7 +4,7 @@ float AAlchemyHUD::Measure(const FString& Value,float Size) const {
     return FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(Value,Font).X/S;
 }
 void AAlchemyHUD::Text(const FString& Value,float X,float Y,float Size,FLinearColor Color) {
-    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")))UIV02DrawnText.Add(Value);
+    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")))UIV02DrawnText.Add(Value);
     // Font size is rasterized at the display size, rather than stretching UFont's default 9pt glyphs.
     FSlateFontInfo Font(World->UIFont,FMath::Max(1,FMath::RoundToInt(World->Progress->FontSize(Size)*S*.75f)));
     FCanvasTextItem Item(FVector2D(OX+X*S,OY+Y*S),FText::FromString(Value),Font,Color);
@@ -291,14 +291,25 @@ void AAlchemyHUD::DrawHUD() {
                 }
                 Button(TEXT("detailprev"),TEXT("上一页"),104,580,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,580,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,590,20,Dim);
             } else if(World->CodexPage==1) {
-                // 怪物图鉴：11 种怪物，首次击败解锁。
-                int PerPage=6; int Count=11; int Pages=(Count+PerPage-1)/PerPage;DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
+                // Each row is a codex identity; Archetype only controls rewards and special behavior.
+                const auto SingleLine=[&](FString Value,float Size,float Width){
+                    Value.ReplaceInline(TEXT("\r"),TEXT(" "));Value.ReplaceInline(TEXT("\n"),TEXT(" "));Value.ReplaceInline(TEXT("\t"),TEXT(" "));
+                    if(Measure(Value,Size)<=Width)return Value;
+                    const FString Suffix=TEXT("…");
+                    while(!Value.IsEmpty() && Measure(Value+Suffix,Size)>Width){
+                        Value=Value.LeftChop(1);
+                        if(!Value.IsEmpty() && Value[Value.Len()-1]>=0xD800 && Value[Value.Len()-1]<=0xDBFF)Value=Value.LeftChop(1);
+                    }
+                    return Value+Suffix;
+                };
+                const int PerPage=6,Count=World->RuntimeEnemies.Num(),Pages=FMath::Max(1,(Count+PerPage-1)/PerPage);
+                DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
                 for(int Row=0;Row<PerPage;Row++) {
-                    int I=DetailPage*PerPage+Row; if(I>=Count) break; float Y=238+Row*54;
-                    bool Known=World->Progress->Monsters.Contains(I);
+                    const int I=DetailPage*PerPage+Row;if(I>=Count)break;const float Y=238+Row*54;
+                    const bool Known=World->Progress->Monsters.Contains(I);
                     Box(104,Y,1074,48,FLinearColor(.055f,.095f,.11f));
-                    Text(Known?MonsterNames[I]:TEXT("??? 未发现"),120,Y+13,20,Known?Gold:Dim);
-                    if(Known) Text(MonsterDescriptions[I],360,Y+15,18,Dim);
+                    Text(Known?SingleLine(World->RuntimeEnemies[I].Name,20,224):TEXT("??? 未发现"),120,Y+13,20,Known?Gold:Dim);
+                    if(Known)Text(SingleLine(World->EnemyCodexDescription(I),18,802),360,Y+15,18,Dim);
                 }
                 Button(TEXT("detailprev"),TEXT("上一页"),104,580,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,580,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,590,20,Dim);
             } else {

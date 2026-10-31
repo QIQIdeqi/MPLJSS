@@ -103,6 +103,7 @@ void AAlchemyWorld::UIV02Check(float Dt) {
     if(CaptureStep==5) {
         for(const TCHAR* Name:{TEXT("01-ten-upgrades.png"),TEXT("02-alchemy-notes.png"),TEXT("03-battle-guidance-toast.png"),TEXT("04-codex-high-IDs.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("native_screenshot_written"));
         Progress->Monsters.Remove(10);RunCoins=37;const int CoinsBeforeVictory=Progress->Coins;
+        FAlchemyEnemy BossDiscovery;BossDiscovery.Type=10;BossDiscovery.Definition=10;DiscoverEnemy(BossDiscovery);
         EndRun(true);
         Check(bRunEnded && bWon && Panel==TEXT("victory") && Progress->Monsters.Contains(10),TEXT("actual_victory_settlement_discovers_Boss"));
         Check(Progress->Coins==CoinsBeforeVictory+37 && ResultCoins==37 && RunCoins==0,TEXT("actual_victory_settlement_transfers_coins_once"));

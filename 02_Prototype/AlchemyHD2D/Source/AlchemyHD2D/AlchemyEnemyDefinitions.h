@@ -19,6 +19,7 @@ USTRUCT(BlueprintType)
 struct ALCHEMYHD2D_API FAlchemyEnemyRow : public FTableRowBase {
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FString Name;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FString CodexDescription;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0",ClampMax="10",ToolTip="稳定兼容模板：0–6普通、7–9对应三种精英奖励、10现有Boss。不是本行ID。")) int32 Archetype=0;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) EAlchemyEnemyBehavior Behavior=EAlchemyEnemyBehavior::Contact;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="1")) float HP=16;

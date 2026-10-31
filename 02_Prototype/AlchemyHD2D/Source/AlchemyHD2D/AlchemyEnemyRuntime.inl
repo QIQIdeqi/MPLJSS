@@ -2,6 +2,23 @@
 const FAlchemyEnemyRow& AAlchemyWorld::EnemyDefinition(const FAlchemyEnemy& E) const {
     return EnemyDefinition(E.Definition>=0?E.Definition:E.Type);
 }
+bool AAlchemyWorld::DiscoverEnemy(const FAlchemyEnemy& E) {
+    const int32 ID=E.Definition>=0?E.Definition:E.Type;
+    if(!Progress || !RuntimeEnemies.IsValidIndex(ID) || Progress->Monsters.Contains(ID))return false;
+    Progress->Monsters.Add(ID);return true;
+}
+FString AAlchemyWorld::EnemyCodexDescription(int32 ID) const {
+    const auto& K=EnemyDefinition(ID);
+    if(!K.CodexDescription.TrimStartAndEnd().IsEmpty())return K.CodexDescription;
+    switch(K.Behavior) {
+    case EAlchemyEnemyBehavior::Contact:return TEXT("主动靠近，接触时造成伤害。");
+    case EAlchemyEnemyBehavior::Ranged:return TEXT("保持距离，发射投射物攻击。");
+    case EAlchemyEnemyBehavior::Area:return TEXT("蓄力后发动范围攻击，留意地面预警。");
+    case EAlchemyEnemyBehavior::Hybrid:return TEXT("兼有远程与范围攻击，留意站位。");
+    case EAlchemyEnemyBehavior::Boss:return TEXT("强大的敌人，会使用多种招式。");
+    default:return TEXT("详细记录尚未补充。");
+    }
+}
 float AAlchemyWorld::EnemyRadius(int32 DefinitionID) const {return EnemyDefinition(DefinitionID).CollisionRadius;}
 float AAlchemyWorld::EnemyRadius(const FAlchemyEnemy& E) const {return EnemyDefinition(E).CollisionRadius;}
 void AAlchemyWorld::UpdateEnemyVisual(FAlchemyEnemy& E,bool Mirror) {

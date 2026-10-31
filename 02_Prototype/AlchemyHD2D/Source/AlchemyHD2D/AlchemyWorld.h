@@ -182,6 +182,7 @@ public:
     bool BuildBossReferenceScene();
     bool UnifiedPresentationCheck(float Delta);
     void UIV02Check(float Delta);
+    bool EnemyCodexCheck(float Delta);
     bool bReferenceBossScene=false,CombatCameraReady=false;
     FVector2D CombatCameraSourceFocus=FVector2D(836,470.5);
     double CombatCameraTangent=.466307658;
@@ -277,6 +278,8 @@ public:
     UPROPERTY() TArray<FAlchemyEnemyRow> RuntimeEnemies;
     const FAlchemyEnemyRow& EnemyDefinition(int32 ID) const {return RuntimeEnemies[ID];}
     const FAlchemyEnemyRow& EnemyDefinition(const FAlchemyEnemy& E) const;
+    bool DiscoverEnemy(const FAlchemyEnemy& E);
+    FString EnemyCodexDescription(int32 ID) const;
     float EnemyRadius(int32 DefinitionID) const;
     float EnemyRadius(const FAlchemyEnemy& E) const;
     void UpdateEnemyVisual(FAlchemyEnemy& E,bool Mirror=false);

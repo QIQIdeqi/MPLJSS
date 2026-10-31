@@ -22,7 +22,7 @@ void AAlchemyWorld::RewardEnemy(const FAlchemyEnemy& E) {
     if(E.Type>=7 && E.Type<=9) MerchantEliteUnlocked[E.Type-7]=true;
     if(E.Type==10) return;
     // Codex: record first defeat of this monster type permanently.
-    if(Progress && !Progress->Monsters.Contains(E.Type)) { Progress->Monsters.Add(E.Type); SaveProgress(); }
+    if(DiscoverEnemy(E))SaveProgress();
     if(E.Type>=7) {Drop(E.Pos,6+E.Type-7);Drop(E.Pos,-1,10);}
     else {
         Drop(E.Pos,-2,E.Type);

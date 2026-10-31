@@ -1,0 +1,97 @@
+{
+  "base": "b2d1391",
+  "actual_player_saves_unchanged": 11,
+  "native_ui": {
+    "1280x720": {
+      "result": "PASS",
+      "logged_assertions": 113,
+      "unique_check_names": 23,
+      "log_sha256": "a4e83bf28e8001ca368896cb1146f21edc93ceea29e3a9f54faea05422f0d85c",
+      "screenshots": [
+        "01-third-page-unknown.png",
+        "02-third-page-known-long-text.png",
+        "03-new-normal-second-page.png",
+        "04-new-Boss-victory.png"
+      ]
+    },
+    "1024x768": {
+      "result": "PASS",
+      "logged_assertions": 113,
+      "unique_check_names": 23,
+      "log_sha256": "6881be921a53a655dda2b7663c95c656b67f19349a64bfc489ab0552d116add8",
+      "screenshots": [
+        "01-third-page-unknown.png",
+        "02-third-page-known-long-text.png",
+        "03-new-normal-second-page.png",
+        "04-new-Boss-victory.png"
+      ]
+    },
+    "2560x1080": {
+      "result": "PASS",
+      "logged_assertions": 113,
+      "unique_check_names": 23,
+      "log_sha256": "8563e6f35805575d1c9643adfcbda05a72a227bdccdf1c4c4f135b7e410169d7",
+      "screenshots": [
+        "01-third-page-unknown.png",
+        "02-third-page-known-long-text.png",
+        "03-new-normal-second-page.png",
+        "04-new-Boss-victory.png"
+      ]
+    }
+  },
+  "UIV02": {
+    "result": "PASS",
+    "logged_assertions": 129,
+    "unique_check_names": 26,
+    "log_sha256": "3fa9a84d15f2944792191edbb1e1a92252d134aefc8a4bea30d34c4257637b15"
+  },
+  "producer": {
+    "result": "PASS",
+    "logged_assertions": 39,
+    "unique_check_names": 33,
+    "log_sha256": "1d7d17d778323ed9ad9010d47a3013ffb175d019de9aa4e7357ba664d4825319"
+  },
+  "flow": {
+    "result": "PASS",
+    "logged_assertions": 42,
+    "unique_check_names": 42,
+    "log_sha256": "3e9a1534f0908f0d107dadc3bd44199edb509a5085670c3ad9a2d136842bf575"
+  },
+  "boss": {
+    "result": "PASS",
+    "logged_assertions": 28,
+    "unique_check_names": 28,
+    "log_sha256": "ea83818ce94c387f160db25ec2da634efbd3731541cd22dcbc2b53a30aba346b"
+  },
+  "editor_build": {
+    "result": "PASS",
+    "log_sha256": "dbf395797a307d670f29b4c9b7bede027036cf222fe9f2ef09a159097716783c"
+  },
+  "game_build": {
+    "result": "PASS",
+    "log_sha256": "62a49175528990d7c5c81bde072bc3ec06316e630b19bbb5e1bd83d2e3a52f57"
+  },
+  "runtime_DT_upgrade": {
+    "result": "ENEMY_CODEX_UPGRADE_PASS",
+    "rows": 11,
+    "renamed_rows": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "preserved": "All other fields and custom/empty descriptions; names are existing UI labels, not approved story species.",
+    "original_asset_sha256": "998ddb8460c86bb2ec18cce3b2f0ebae8ab9dd0bda9ccda276d723b85d1560d1"
+  },
+  "known_limitation": {
+    "log_sha256": "c8ede2a494105122c6a7c311d7ef34aeb9d3786a6299361ea02eba124d0e51b7",
+    "observed": "Wide center view rejected appended elite 12; final spawn test uses authored upper_meadow with all production checks retained.",
+    "status": "Open: production retries pending elite; not fixed by codex work."
+  }
+}
