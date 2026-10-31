@@ -1,0 +1,142 @@
+{
+  "result": "QUALITY_BASELINE_READONLY_PASS",
+  "maps": [
+    {
+      "map": "/Game/Greyford/Maps/BattleReference",
+      "loaded_designers": [],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Greyford/Maps/Greyford_Boss",
+      "loaded_designers": [],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Greyford/Maps/Greyford_Flow",
+      "loaded_designers": [],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Greyford/Maps/Outskirts_Blockout",
+      "loaded_designers": [
+        {
+          "actor": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.AlchemyLevelDesigner_0",
+          "level": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel",
+          "quality_table_property": null,
+          "effective_if_selected_at_initial_load": "/Game/Design/DT_Quality.DT_Quality",
+          "use_in_game": false
+        }
+      ],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Greyford/Maps/Village_Blockout",
+      "loaded_designers": [
+        {
+          "actor": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel.AlchemyLevelDesigner_0",
+          "level": "/Game/Greyford/Maps/Village_Blockout.Village_Blockout:PersistentLevel",
+          "quality_table_property": null,
+          "effective_if_selected_at_initial_load": "/Game/Design/DT_Quality.DT_Quality",
+          "use_in_game": false
+        }
+      ],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Greyford/Maps/Village_Reference",
+      "loaded_designers": [],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Maps/Research",
+      "loaded_designers": [
+        {
+          "actor": "/Game/Maps/Research.Research:PersistentLevel.AlchemyLevelDesigner_0",
+          "level": "/Game/Maps/Research.Research:PersistentLevel",
+          "quality_table_property": "/Game/Design/DT_Quality.DT_Quality",
+          "effective_if_selected_at_initial_load": "/Game/Design/DT_Quality.DT_Quality",
+          "use_in_game": true
+        }
+      ],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Tests/AlchemistSpriteLab/L_AlchemistSpriteLab",
+      "loaded_designers": [],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    },
+    {
+      "map": "/Game/Tests/DesignerVerification",
+      "loaded_designers": [
+        {
+          "actor": "/Game/Tests/DesignerVerification.DesignerVerification:PersistentLevel.AlchemyLevelDesigner_0",
+          "level": "/Game/Tests/DesignerVerification.DesignerVerification:PersistentLevel",
+          "quality_table_property": "/Game/Design/DT_Quality.DT_Quality",
+          "effective_if_selected_at_initial_load": "/Game/Design/DT_Quality.DT_Quality",
+          "use_in_game": true
+        }
+      ],
+      "fallback_if_no_designer_table": "/Game/Design/DT_Quality.DT_Quality"
+    }
+  ],
+  "tables": [
+    {
+      "asset": "/Game/Design/DT_Quality.DT_Quality",
+      "csv": "DT_Quality.csv",
+      "rows": [
+        {
+          "---": "0",
+          "Low": "70.000000",
+          "Mid": "20.000000",
+          "High": "10.000000"
+        },
+        {
+          "---": "1",
+          "Low": "65.000000",
+          "Mid": "22.000000",
+          "High": "13.000000"
+        },
+        {
+          "---": "2",
+          "Low": "60.000000",
+          "Mid": "25.000000",
+          "High": "15.000000"
+        },
+        {
+          "---": "3",
+          "Low": "50.000000",
+          "Mid": "30.000000",
+          "High": "20.000000"
+        },
+        {
+          "---": "4",
+          "Low": "45.000000",
+          "Mid": "32.000000",
+          "High": "23.000000"
+        },
+        {
+          "---": "5",
+          "Low": "40.000000",
+          "Mid": "33.000000",
+          "High": "27.000000"
+        },
+        {
+          "---": "6",
+          "Low": "35.000000",
+          "Mid": "34.000000",
+          "High": "31.000000"
+        },
+        {
+          "---": "7",
+          "Low": "30.000000",
+          "Mid": "35.000000",
+          "High": "35.000000"
+        }
+      ],
+      "csv_sha256": "0964f4ee9cad67cb3ca19e14436901c723a9c941231292248d1c9f7369749908"
+    }
+  ],
+  "content_and_save_files_unchanged": 373,
+  "player_save_files_unchanged": 11,
+  "selection_scope": "LoadDesignConfig chooses the first loaded designer at BeginPlay, with DT_Quality fallback; switching Greyford stages changes Designer but does not reload RuntimeQuality. Map properties below are not proof of stage-time reload."
+}
