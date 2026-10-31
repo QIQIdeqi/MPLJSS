@@ -174,6 +174,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("Reference60Test"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest"));
     bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
     const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
     const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
@@ -1085,6 +1086,7 @@ void AAlchemyWorld::TogglePanel(const FString& Id) {
 }
 
 void AAlchemyWorld::Action(FString Id) {
+    if(bRunEnded && CharacterAnimation.Dead && !CharacterAnimation.DeathFinished())return;
     if((PendingResultSkill>=0 || PendingIsNuclear) && Id!=TEXT("acceptresult") && Id!=TEXT("reroll")) {Panel=TEXT("result");return;}
     if(bRunEnded && Panel==TEXT("savefailed")) {
         if(Id==TEXT("retry")){bRunEnded=false;EndRun(bWon);}return;
@@ -1224,6 +1226,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) TogglePanel(TEXT("skills"));
     if(FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) && EliteSpawnCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest")) && CombatFeedbackCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest")) && StateFlowCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1689,6 +1692,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "ProducerRegression.inl"
 #include "BattlePresentationChecks.inl"
 #include "CombatFeedbackChecks.inl"
+#include "StateFlowChecks.inl"
 #include "Reference60Checks.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"
