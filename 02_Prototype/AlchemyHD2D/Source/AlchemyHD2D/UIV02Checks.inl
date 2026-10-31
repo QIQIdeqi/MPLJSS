@@ -4,6 +4,7 @@ void AAlchemyWorld::UIV02Check(float Dt) {
     static int UINotePage=0,UICodexPage=0;
     static TSet<int32> UISeenSkills;
     static FBox2D UIPauseRect;
+    static int UIEndOutcome=0,UIRecoveryBank=0;
     const FString Dir=FPaths::ProjectDir()/TEXT("Evidence/UIV02_20261031");
     auto* PC=GetWorld()->GetFirstPlayerController();
     auto* HUD=PC?Cast<AAlchemyHUD>(PC->GetHUD()):nullptr;
@@ -15,7 +16,7 @@ void AAlchemyWorld::UIV02Check(float Dt) {
     const auto Onscreen=[&](const FBox2D& R){return R.bIsValid && R.Min.X>=0 && R.Min.Y>=0 && R.Max.X<=1280 && R.Max.Y<=720;};
     const auto HitAt=[&](FVector2D Logical){return HUD->GetHitBoxAtCoordinates({HUD->OX+Logical.X*HUD->S,HUD->OY+Logical.Y*HUD->S},true);};
     if(CaptureStep==0) {
-        UIQAOK=true;UINotePage=UICodexPage=0;UISeenSkills.Empty();Check(bCapture,TEXT("isolated_no_player_save_IO"));if(!bCapture){Finish();return;}
+        UIQAOK=true;UINotePage=UICodexPage=UIEndOutcome=0;UISeenSkills.Empty();Check(bCapture,TEXT("isolated_no_player_save_IO"));if(!bCapture){Finish();return;}
         IFileManager::Get().MakeDirectory(*Dir,true);
         Progress=NewObject<UAlchemyProgress>(this);Progress->SchemaVersion=2;Progress->Talents={2,3,4,1};Progress->Coins=1234;
         Progress->RefreshUnlocked=Progress->DropRateUnlocked=true;Progress->TutorialComplete=false;Progress->Recipes={2,4};Progress->Combinations={1};
@@ -189,6 +190,67 @@ void AAlchemyWorld::UIV02Check(float Dt) {
         Check(Slots.Num()==10 && Geometry,TEXT("ten_furnace_slots_have_in_bounds_nonoverlapping_rectangles"));
         Check(Names,TEXT("all_ten_native_furnace_hit_queries_resolve_unique_slot_names"));
         Check(Returns,TEXT("each_native_furnace_click_returns_only_its_material_without_changing_inventory"));
+        Next(30);return;
+    }
+    if(CaptureStep==30){
+        StartRun();RunCoins=37;UIRecoveryBank=Progress->Coins;EndRun(UIEndOutcome==0);
+        Check(bRunEnded && Panel==(UIEndOutcome==0?TEXT("victory"):TEXT("defeat")) && Progress->Coins==UIRecoveryBank+37,TEXT("real_outcome_settlement_pays_thirty_seven_once"));
+        Next(31);return;
+    }
+    if(CaptureStep==31){
+        EndRun(UIEndOutcome==0);Check(Progress->Coins==UIRecoveryBank+37,TEXT("repeated_outcome_before_return_does_not_pay_again"));
+        const auto* R=HUD->ButtonRects.Find(TEXT("modalclose"));const auto* Hit=R?HitAt(R->GetCenter()):nullptr;
+        Check(Hit && Hit->GetName()==FName(TEXT("modalclose")),TEXT("real_settlement_header_return_is_hit_testable"));
+        if(Hit)HUD->NotifyHitBoxClick(Hit->GetName());
+        Check(GreyfordStage==0 && !bCombat && !bRunEnded && Panel.IsEmpty() && Progress->Coins==UIRecoveryBank+37,TEXT("settlement_header_callback_returns_to_village_instead_of_restarting"));
+        Next(++UIEndOutcome<2?30:32);return;
+    }
+    if(CaptureStep==32){
+        StartRun();Progress->MediumTextScale=Progress->LargeTextScale=1.2f;UIRecoveryBank=Progress->Coins;
+        // Inject the existing post-failure recovery state; bCapture never performs disk save IO.
+        bRunEnded=true;bWon=true;Panel=TEXT("savefailed");RunCoins=37;ResultCoins=37;const int Stage=GreyfordStage;
+        const float Medium=Progress->MediumTextScale,Large=Progress->LargeTextScale;bool Guarded=true;
+        for(const TCHAR* ID:{TEXT("fonts"),TEXT("textsize"),TEXT("fontm2"),TEXT("fontreset"),TEXT("start"),TEXT("village"),TEXT("return"),TEXT("close"),TEXT("merchantopen")}){
+            Action(ID);Guarded &= Panel==TEXT("savefailed") && bRunEnded && bWon && GreyfordStage==Stage && Progress->Coins==UIRecoveryBank && RunCoins==37 && ResultCoins==37 && Progress->MediumTextScale==Medium && Progress->LargeTextScale==Large;
+        }
+        Check(Guarded,TEXT("injected_post_save_failure_state_blocks_all_navigation_and_font_mutation"));
+        Next(33);return;
+    }
+    if(CaptureStep==33){
+        Check(!HUD->ButtonRects.Contains(TEXT("textsize")) && !HUD->FocusOrder.Contains(TEXT("textsize")) && !HUD->GetHitBoxWithName(TEXT("textsize")),TEXT("save_failure_disables_font_hitbox_and_keyboard_focus_entry"));
+        Check(HUD->UIV02DrawnText.Contains(TEXT("Esc 重试")) && HUD->ButtonRects.Contains(TEXT("retry")),TEXT("save_failure_header_and_content_offer_retry"));
+        Check(HUD->Measure(TEXT("Esc 重试"),20)<=128,TEXT("max_font_save_failure_header_label_fits_button_inner_width"));
+        const auto* Header=HUD->ButtonRects.Find(TEXT("modalclose"));const auto* Content=HUD->ButtonRects.Find(TEXT("retry"));
+        Check(Header && Content && Onscreen(*Header) && Onscreen(*Content),TEXT("max_font_save_failure_header_and_content_buttons_inside_safe_frame"));
+        Shot(TEXT("07-save-failed-retry.png"));Next(34);return;
+    }
+    if(CaptureStep==34){
+        if(FScreenshotRequest::IsScreenshotRequested())return;
+        const auto* R=HUD->ButtonRects.Find(TEXT("modalclose"));const auto* Hit=R?HitAt(R->GetCenter()):nullptr;
+        Check(Hit && Hit->GetName()==FName(TEXT("modalclose")),TEXT("save_failure_header_retry_resolves_actual_hitbox"));
+        if(Hit)HUD->NotifyHitBoxClick(Hit->GetName());
+        Check(bRunEnded && bWon && Panel==TEXT("victory") && Progress->Coins==UIRecoveryBank+37 && RunCoins==0 && ResultCoins==37,TEXT("header_retry_runs_real_EndRun_and_settles_once_in_capture_mode"));
+        Action(TEXT("retry"));Check(Progress->Coins==UIRecoveryBank+37 && RunCoins==0,TEXT("repeated_successful_header_retry_cannot_pay_again"));
+        StartRun();UIRecoveryBank=Progress->Coins;bRunEnded=true;bWon=false;Panel=TEXT("savefailed");RunCoins=13;ResultCoins=37;Next(35);return;
+    }
+    if(CaptureStep==35){
+        const auto* R=HUD->ButtonRects.Find(TEXT("retry"));const auto* Hit=R?HitAt(R->GetCenter()):nullptr;
+        Check(Hit && Hit->GetName()==FName(TEXT("retry")),TEXT("failed_defeat_content_retry_resolves_actual_hitbox"));
+        if(Hit)HUD->NotifyHitBoxClick(Hit->GetName());
+        Check(bRunEnded && !bWon && Panel==TEXT("defeat") && Progress->Coins==UIRecoveryBank+13 && RunCoins==0 && ResultCoins==13,TEXT("content_retry_restores_defeat_and_settles_thirteen_once"));
+        Action(TEXT("retry"));Check(Progress->Coins==UIRecoveryBank+13 && RunCoins==0,TEXT("repeated_successful_content_retry_cannot_pay_again"));
+        StartRun();Check(Toast.Contains(TEXT("B技能")) && Toast.Contains(TEXT("Esc暂停")) && !Toast.Contains(TEXT("R重新开始")),TEXT("Flow_start_guidance_lists_real_controls_without_inactive_R_restart"));
+        Progress->MediumTextScale=Progress->LargeTextScale=1.2f;HP=MaxHP*.5f;GreyfordPortalReady=true;GreyfordPortalPos=PlayerPos;Panel=TEXT("bossportal");Next(36);return;
+    }
+    if(CaptureStep==36){
+        const FString Drawn=FString::Join(HUD->UIV02DrawnText,TEXT(""));
+        Check(Drawn.Contains(TEXT("未拾取的金币")) && Drawn.Contains(TEXT("经验球")) && Drawn.Contains(TEXT("精英宝箱")) && Drawn.Contains(TEXT("确认后消失")),TEXT("max_font_portal_warning_draws_all_uncollected_drop_losses"));
+        Check(Drawn.Contains(TEXT("保留当前生命、技能与冷却")) && Drawn.Contains(TEXT("自动回收已有地面材料")) && Drawn.Contains(TEXT("背包每种最多10个")) && Drawn.Contains(FString::Printf(TEXT("当前生命 %.0f / %.0f"),HP,MaxHP)),TEXT("max_font_portal_warning_retains_material_and_current_HP_contract"));
+        Shot(TEXT("08-boss-portal-warning.png"));Next(37);return;
+    }
+    if(CaptureStep==37){
+        if(FScreenshotRequest::IsScreenshotRequested())return;
+        for(const TCHAR* Name:{TEXT("07-save-failed-retry.png"),TEXT("08-boss-portal-warning.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("flow_recovery_native_screenshot_written"));
         Finish();return;
     }
 }

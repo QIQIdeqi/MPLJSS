@@ -656,7 +656,7 @@ void AAlchemyWorld::StartRun() {
     GreyfordPortalReady=false;GreyfordPortal=nullptr;GreyfordPortalRetry=300;
     UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
-    Message(bGreyfordScene?TEXT("村庄外围试玩 · WASD移动 / 空格闪避 / Q炼金 / R重新开始"):TEXT("腐化林地 · 技能自动释放；Q 打开炼金台。"));
+    Message(bGreyfordFlow?TEXT("村庄外围 · WASD移动 / Space闪避 / Q炼金 / B技能 / Esc暂停"):bGreyfordScene?TEXT("村庄外围试玩 · WASD移动 / 空格闪避 / Q炼金 / R重新开始"):TEXT("腐化林地 · 技能自动释放；Q 打开炼金台。"));
 }
 void AAlchemyWorld::EndRun(bool Won) {
     ClearEliteWarning();
@@ -1085,6 +1085,10 @@ void AAlchemyWorld::TogglePanel(const FString& Id) {
 
 void AAlchemyWorld::Action(FString Id) {
     if((PendingResultSkill>=0 || PendingIsNuclear) && Id!=TEXT("acceptresult") && Id!=TEXT("reroll")) {Panel=TEXT("result");return;}
+    if(bRunEnded && Panel==TEXT("savefailed")) {
+        if(Id==TEXT("retry")){bRunEnded=false;EndRun(bWon);}return;
+    }
+    if(bRunEnded && Id==TEXT("close"))Id=TEXT("village");
     if(bGreyfordFlow && GreyfordFlowAction(Id))return;
     if(Id==TEXT("merchantopen")) {OpenMerchant();return;}
     if(Id.StartsWith(TEXT("merchantbuy"))) {BuyMerchant(FCString::Atoi(*Id.Mid(11)));return;}
@@ -1105,13 +1109,7 @@ void AAlchemyWorld::Action(FString Id) {
         if(!SaveProgress()) {Progress->MediumTextScale=OldM;Progress->LargeTextScale=OldL;Message(TEXT("字号保存失败，请重试。"));}
         return;
     }
-    if(bRunEnded) {
-        if(Panel==TEXT("savefailed")) {
-            if(Id==TEXT("retry")) {bRunEnded=false; EndRun(bWon);} return;
-        }
-        if(Id==TEXT("close")) Id=TEXT("village");
-        if(Id!=TEXT("village")) return;
-    }
+    if(bRunEnded && Id!=TEXT("village"))return;
     if(Id==TEXT("close")) {
         if(Panel==TEXT("merchantconfirm")) {MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");return;}
         if(Panel==TEXT("levelup") && PendingLevelUps>0) return;

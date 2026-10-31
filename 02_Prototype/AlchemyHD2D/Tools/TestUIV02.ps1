@@ -9,5 +9,5 @@ $run=Start-Process -FilePath 'D:/02_UnrealEngine/UE_5.8/Engine/Binaries/Win64/Un
 if(!$run.WaitForExit(180000)){Stop-Process -Id $run.Id;throw "UIV02 timeout: $log"}
 if($run.ExitCode -ne 0 -or !(Select-String -LiteralPath $log -SimpleMatch 'UIV02_PASS' -Quiet)){throw "UIV02 failed: $log"}
 if(Select-String -LiteralPath $log -Pattern 'UIV02_CHECK .* FAIL|Failed to add hitbox named|Fatal error:|Ensure condition failed|LogMaterial: Error:|LogShaderCompilers: Error:' -Quiet){throw "UIV02 reported errors: $log"}
-foreach($name in @('01-ten-upgrades.png','02-alchemy-notes.png','03-battle-guidance-toast.png','04-codex-high-IDs.png','05-pause-menu.png','06-filtered-probabilities.png')){Copy-Item -LiteralPath (Join-Path $project "Evidence/UIV02_20261031/$name") -Destination (Join-Path $folder $name) -Force}
+foreach($name in @('01-ten-upgrades.png','02-alchemy-notes.png','03-battle-guidance-toast.png','04-codex-high-IDs.png','05-pause-menu.png','06-filtered-probabilities.png','07-save-failed-retry.png','08-boss-portal-warning.png')){Copy-Item -LiteralPath (Join-Path $project "Evidence/UIV02_20261031/$name") -Destination (Join-Path $folder $name) -Force}
 Write-Output "UIV02_PASS $Width`x$Height $log"

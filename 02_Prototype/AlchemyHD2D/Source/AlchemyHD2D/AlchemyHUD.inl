@@ -45,7 +45,7 @@ void AAlchemyHUD::Button(const FString& Id,const FString& Label,float X,float Y,
     }
 }
 void AAlchemyHUD::Activate(const FString& Id) {
-    if(Id==TEXT("modalclose")){World->Action(TEXT("close"));return;}
+    if(Id==TEXT("modalclose")){World->Action(World->bRunEnded && World->Panel==TEXT("savefailed")?TEXT("retry"):TEXT("close"));return;}
     if((Id==TEXT("noteprev") || Id==TEXT("notenext")) && World->Panel==TEXT("alchemy")) {
         DetailPage=FMath::Max(0,DetailPage+(Id==TEXT("notenext")?1:-1));FocusIndex=0;FocusOrder.Empty();return;
     }
@@ -223,10 +223,10 @@ void AAlchemyHUD::DrawHUD() {
         if(P==TEXT("merchantconfirm")) Title=TEXT("确认出售全部材料");
         if(P==TEXT("bossportal"))Title=TEXT("进入雾界草甸？");
         Text(Title,104,118,28,Gold);
-        Button(TEXT("modalclose"),TEXT("Esc 返回"),1018,114,160);
-        Button(TEXT("textsize"),TEXT("F7 字体调试"),778,114,220);
+        Button(TEXT("modalclose"),P==TEXT("savefailed")?TEXT("Esc 重试"):TEXT("Esc 返回"),1018,114,160);
+        Button(TEXT("textsize"),TEXT("F7 字体调试"),778,114,220,P!=TEXT("savefailed"));
         if(P==TEXT("bossportal")) {
-            Paragraph(TEXT("保留当前生命、技能与冷却。自动回收已有地面材料，背包每种最多10个；不自动回收金币。进入后至胜负结算前不能返回。"),104,220,1000,24,White);
+            Paragraph(TEXT("保留当前生命、技能与冷却。自动回收已有地面材料，背包每种最多10个。未拾取的金币、经验球与精英宝箱不会带入，确认后消失。进入后至胜负结算前不能返回。"),104,220,1000,24,White);
             Text(FString::Printf(TEXT("当前生命 %.0f / %.0f"),World->HP,World->MaxHP),104,370,26,Gold);
             Button(TEXT("enterboss"),TEXT("确认挑战Boss"),104,500,524);Button(TEXT("bossportalstay"),TEXT("继续在草原成长"),654,500,524);
         }
