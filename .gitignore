@@ -124,3 +124,15 @@ memory/archives/2026-10-27-old-build-saves/
 /02_Prototype/AlchemyHD2D/ArtSource/VillagePerspective20261031/
 /03_Build/Previews/
 /04_工具与协作/AgentTeam/Evidence/
+
+# Rebuildable attack extraction previews and duplicate frame exports stay on SSD.
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/frames/
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/qa/
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/references/
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/prompts/
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/manifest.json
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/sprite-sheet-alpha.*
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/sprite-inspect.report.json
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/*.log
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/**/*.sg-rwlock
+/02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/Runtime/Frames/

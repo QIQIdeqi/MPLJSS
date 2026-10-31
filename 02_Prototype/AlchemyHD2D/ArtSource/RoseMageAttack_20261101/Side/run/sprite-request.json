@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "rose-mage-attack-side",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "square",
+    "width": 512,
+    "height": 512,
+    "safe_margin_x": 24,
+    "safe_margin_y": 24,
+    "size": 512,
+    "safe_margin": 24
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "manual"
+  },
+  "states": {
+    "windup": {
+      "frames": 4,
+      "fps": 10,
+      "loop": false,
+      "action": "Retained native-imagegen windup poses; do not regenerate."
+    },
+    "release": {
+      "frames": 4,
+      "fps": 10,
+      "loop": false,
+      "action": "Retained native-imagegen release and recovery poses; do not regenerate."
+    }
+  },
+  "style": "Confirmed Lilita identity, existing directional anchor, original pixels retained.",
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "nearest",
+    "align_y": "bottom",
+    "align_x": "foot-centroid",
+    "ground_frames": true,
+    "pixel_unfake": false
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

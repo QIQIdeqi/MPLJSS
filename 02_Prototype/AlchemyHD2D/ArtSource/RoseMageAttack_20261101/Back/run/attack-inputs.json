@@ -1,0 +1,19 @@
+{
+  "generation": "Native image_gen supplied by producer; no generation CLI invoked.",
+  "prompt_provenance": "../../PROVENANCE.md and ../../prompts/ (producer-owned)",
+  "base": {
+    "path": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\base-source.png",
+    "sha256": "3c871951d1f297e22cc712872318c49dde932bddd5f89ffa1c53d978f2605a48"
+  },
+  "raw": {
+    "windup": {
+      "path": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\raw\\windup.png",
+      "sha256": "bbf6e7795ed310c3d5a16cf943becda55472cb252f3380083e022459484a2306"
+    },
+    "release": {
+      "path": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\raw\\release.png",
+      "sha256": "985794dca56f9bb1f75c57eab6631fce7d97e2a652c3f89f0247cddc780fc602"
+    }
+  },
+  "processing": "prepare -> components -> compose -> preview -> inspect -> curated PNG export"
+}

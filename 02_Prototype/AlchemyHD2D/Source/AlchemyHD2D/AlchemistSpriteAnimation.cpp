@@ -4,7 +4,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 
 bool FAlchemistSpriteAnimation::Initialize(UObject* Owner,UStaticMeshComponent* Mesh) {
-    RoseMage=false;RoseMotionAtlases.Empty();
+    RoseMage=false;RoseMotionAtlases.Empty();RoseAttackAtlases.Empty();
     auto Base=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Characters/Alchemist/M_AlchemistSprite.M_AlchemistSprite"));
     if(!Base) return false;
     Atlases.Empty();
@@ -19,6 +19,7 @@ bool FAlchemistSpriteAnimation::Initialize(UObject* Owner,UStaticMeshComponent* 
     Facing=1;Mirror=false;Reset();return true;
 }
 bool FAlchemistSpriteAnimation::InitializeRoseMage(UObject* Owner,UStaticMeshComponent* Mesh) {
+    RoseAttackAtlases.Empty();
     auto Base=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Characters/RoseMage/M_RoseMage.M_RoseMage"));
     if(!Base)return false;
     Atlases.Empty();
@@ -31,6 +32,9 @@ bool FAlchemistSpriteAnimation::InitializeRoseMage(UObject* Owner,UStaticMeshCom
         const FString Name=FString::Printf(TEXT("/Game/Characters/RoseMage/T_RoseMage%sMotion.T_RoseMage%sMotion"),View,View);
         auto Texture=LoadObject<UTexture2D>(nullptr,*Name);if(!Texture){RoseMotionAtlases.Empty();break;}RoseMotionAtlases.Add(Texture);
     }
+    auto SideAttack=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Characters/RoseMage/T_RoseMageSideAttack.T_RoseMageSideAttack"));
+    auto BackAttack=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Characters/RoseMage/T_RoseMageBackAttack.T_RoseMageBackAttack"));
+    if(SideAttack && BackAttack)RoseAttackAtlases={SideAttack,Atlases[3],BackAttack};
     RoseMage=true;Material=UMaterialInstanceDynamic::Create(Base,Owner);Mesh->SetMaterial(0,Material);
     Facing=1;Mirror=false;Reset();return true;
 }
@@ -79,7 +83,7 @@ void FAlchemistSpriteAnimation::Apply() {
         const bool Attack=Throwing && !Hurting && !Dead && !Moving;
         Row=Attack?2:Dead?4:Hurting?3:Moving?1:0;
         Frame=Attack?FMath::Min(7,FMath::FloorToInt(Time*10)):0;
-        Material->SetTextureParameterValue(TEXT("SpriteSheet"),Atlases[Attack?3:Facing]);
+        Material->SetTextureParameterValue(TEXT("SpriteSheet"),Attack && HasRoseAttack()?RoseAttackAtlases[Facing]:Atlases[Attack?3:Facing]);
         Material->SetVectorParameterValue(TEXT("UVScale"),FLinearColor(Attack?1.f/8:1,1,0,0));
         Material->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(Attack?Frame/8.f:0,0,0,0));
         const float Alpha=Dead?1-FMath::Clamp(Time/.75f,0.f,1.f):1;

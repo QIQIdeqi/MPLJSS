@@ -1,0 +1,256 @@
+{
+  "base_commit": "52aa282bad3af32ce5022e7f0aac80033cf547c9",
+  "suite": "BattlePresentationCapture + RoseAttackCapture",
+  "resolutions": [
+    {
+      "resolution": "1280x720",
+      "check_lines": 43,
+      "unique_checks": 37,
+      "check_names": [
+        "actual_pause_Tick_freezes_release_animation_clock_and_damage",
+        "all_three_attack_views_play_eight_frames_and_release_once_at_point_four",
+        "appended_elite_participates_in_weighted_selection",
+        "appended_elite_preserves_valid_chest_and_unlock",
+        "appended_normal_not_misclassified_as_elite",
+        "appended_normal_uses_existing_navigation",
+        "appended_row_keeps_normal_identity_and_own_stats",
+        "appended_row_participates_in_configured_waves",
+        "authored_enemy_table_loaded",
+        "authored_side_front_back_attack_atlases_loaded",
+        "baseline_profile_preserved",
+        "configured_visual_size_applied",
+        "death_overrides_hurt_movement_and_attack_and_holds_last_frame",
+        "each_attack_facing_selects_real_material_texture_and_eight_cell_layout",
+        "elite_reward_fixture_uses_authored_legal_ground",
+        "hero_visible_height_180cm",
+        "hurt_overrides_attack_and_blocks_new_attack_pose",
+        "invalid_authored_weights_are_rejected",
+        "left_attack_mirrors_same_side_atlas",
+        "legacy_initialization_clears_all_rose_motion_and_attack_state",
+        "missing_directional_attack_pack_falls_back_to_original_attack",
+        "moving_keeps_existing_gait_instead_of_starting_attack",
+        "native_Rose_attack_screenshot_written",
+        "no_duplicate_projectile_or_hit_after_release",
+        "previous_rose_mage_and_portrait_loaded",
+        "production_target_spawned",
+        "production_windup_has_hidden_projectile_and_no_early_damage",
+        "real_CastSkills_stages_hidden_Rose_potion_and_attack_pose",
+        "real_Rose_three_direction_attack_pack_active",
+        "real_projectile_visibility_waits_for_point_four_battle_seconds",
+        "rendered_attack_release_frame_and_facing_match_capture",
+        "resumed_production_potion_becomes_visible_and_hits_once_for_expected_damage",
+        "rose_attack_releases_at_authored_swing",
+        "starting_movement_still_cancels_attack_pose",
+        "stationary_hit_target_has_legal_nearby_ground",
+        "tuned_profile_preserved",
+        "zero_elite_weights_disable_selection"
+      ],
+      "log_sha256": "c2c95142fc534ccd228fd4515275f2261932aac237ba2acb38720e045baf31c8",
+      "screenshots": [
+        {
+          "path": "1280x720/01-side-attack.png",
+          "width": 1280,
+          "height": 720,
+          "sha256": "8e509d048e4ec9ef2005f915079c58bbc1bcaf6ee8022619faada97aa332a0b6"
+        },
+        {
+          "path": "1280x720/02-front-attack.png",
+          "width": 1280,
+          "height": 720,
+          "sha256": "2aae620987adda3fe8081db571200f704b4c1f29d0b4439da548879328ec47eb"
+        },
+        {
+          "path": "1280x720/03-back-attack.png",
+          "width": 1280,
+          "height": 720,
+          "sha256": "c14a2ba73e65fbd335f4bc1dc4a521287c7e45c8aae3c824e2cc9eb228e2d430"
+        },
+        {
+          "path": "1280x720/04-left-attack.png",
+          "width": 1280,
+          "height": 720,
+          "sha256": "cf987b3df14ea47dce562cb191fcd4c55cc813f465d9f005238585e709eafb8c"
+        }
+      ]
+    },
+    {
+      "resolution": "1024x768",
+      "check_lines": 43,
+      "unique_checks": 37,
+      "check_names": [
+        "actual_pause_Tick_freezes_release_animation_clock_and_damage",
+        "all_three_attack_views_play_eight_frames_and_release_once_at_point_four",
+        "appended_elite_participates_in_weighted_selection",
+        "appended_elite_preserves_valid_chest_and_unlock",
+        "appended_normal_not_misclassified_as_elite",
+        "appended_normal_uses_existing_navigation",
+        "appended_row_keeps_normal_identity_and_own_stats",
+        "appended_row_participates_in_configured_waves",
+        "authored_enemy_table_loaded",
+        "authored_side_front_back_attack_atlases_loaded",
+        "baseline_profile_preserved",
+        "configured_visual_size_applied",
+        "death_overrides_hurt_movement_and_attack_and_holds_last_frame",
+        "each_attack_facing_selects_real_material_texture_and_eight_cell_layout",
+        "elite_reward_fixture_uses_authored_legal_ground",
+        "hero_visible_height_180cm",
+        "hurt_overrides_attack_and_blocks_new_attack_pose",
+        "invalid_authored_weights_are_rejected",
+        "left_attack_mirrors_same_side_atlas",
+        "legacy_initialization_clears_all_rose_motion_and_attack_state",
+        "missing_directional_attack_pack_falls_back_to_original_attack",
+        "moving_keeps_existing_gait_instead_of_starting_attack",
+        "native_Rose_attack_screenshot_written",
+        "no_duplicate_projectile_or_hit_after_release",
+        "previous_rose_mage_and_portrait_loaded",
+        "production_target_spawned",
+        "production_windup_has_hidden_projectile_and_no_early_damage",
+        "real_CastSkills_stages_hidden_Rose_potion_and_attack_pose",
+        "real_Rose_three_direction_attack_pack_active",
+        "real_projectile_visibility_waits_for_point_four_battle_seconds",
+        "rendered_attack_release_frame_and_facing_match_capture",
+        "resumed_production_potion_becomes_visible_and_hits_once_for_expected_damage",
+        "rose_attack_releases_at_authored_swing",
+        "starting_movement_still_cancels_attack_pose",
+        "stationary_hit_target_has_legal_nearby_ground",
+        "tuned_profile_preserved",
+        "zero_elite_weights_disable_selection"
+      ],
+      "log_sha256": "b4fadf8e4b9891a02477fbf4c08a48f03c02b152a8fc2cfe9f26414a0d9c5272",
+      "screenshots": [
+        {
+          "path": "1024x768/01-side-attack.png",
+          "width": 1024,
+          "height": 768,
+          "sha256": "2fb33ba8c9664ed782d6010e0a64b518a6e230aeaea45c2cb544d75bf17da529"
+        },
+        {
+          "path": "1024x768/02-front-attack.png",
+          "width": 1024,
+          "height": 768,
+          "sha256": "6cf23593ac5a9bdeb1d3fbd85a4ead8181df40ed29c28c562c05accb0ef3ff5b"
+        },
+        {
+          "path": "1024x768/03-back-attack.png",
+          "width": 1024,
+          "height": 768,
+          "sha256": "8bc8b1117c617465dfa946ed7dc4f93cad19d99c364ae76c384da758c9fe784d"
+        },
+        {
+          "path": "1024x768/04-left-attack.png",
+          "width": 1024,
+          "height": 768,
+          "sha256": "40dfe0ba9c05b7e08d5e6c1a265aad9ee18963ae56f0b0f8d8bc40952f4900b9"
+        }
+      ]
+    },
+    {
+      "resolution": "2560x1080",
+      "check_lines": 43,
+      "unique_checks": 37,
+      "check_names": [
+        "actual_pause_Tick_freezes_release_animation_clock_and_damage",
+        "all_three_attack_views_play_eight_frames_and_release_once_at_point_four",
+        "appended_elite_participates_in_weighted_selection",
+        "appended_elite_preserves_valid_chest_and_unlock",
+        "appended_normal_not_misclassified_as_elite",
+        "appended_normal_uses_existing_navigation",
+        "appended_row_keeps_normal_identity_and_own_stats",
+        "appended_row_participates_in_configured_waves",
+        "authored_enemy_table_loaded",
+        "authored_side_front_back_attack_atlases_loaded",
+        "baseline_profile_preserved",
+        "configured_visual_size_applied",
+        "death_overrides_hurt_movement_and_attack_and_holds_last_frame",
+        "each_attack_facing_selects_real_material_texture_and_eight_cell_layout",
+        "elite_reward_fixture_uses_authored_legal_ground",
+        "hero_visible_height_180cm",
+        "hurt_overrides_attack_and_blocks_new_attack_pose",
+        "invalid_authored_weights_are_rejected",
+        "left_attack_mirrors_same_side_atlas",
+        "legacy_initialization_clears_all_rose_motion_and_attack_state",
+        "missing_directional_attack_pack_falls_back_to_original_attack",
+        "moving_keeps_existing_gait_instead_of_starting_attack",
+        "native_Rose_attack_screenshot_written",
+        "no_duplicate_projectile_or_hit_after_release",
+        "previous_rose_mage_and_portrait_loaded",
+        "production_target_spawned",
+        "production_windup_has_hidden_projectile_and_no_early_damage",
+        "real_CastSkills_stages_hidden_Rose_potion_and_attack_pose",
+        "real_Rose_three_direction_attack_pack_active",
+        "real_projectile_visibility_waits_for_point_four_battle_seconds",
+        "rendered_attack_release_frame_and_facing_match_capture",
+        "resumed_production_potion_becomes_visible_and_hits_once_for_expected_damage",
+        "rose_attack_releases_at_authored_swing",
+        "starting_movement_still_cancels_attack_pose",
+        "stationary_hit_target_has_legal_nearby_ground",
+        "tuned_profile_preserved",
+        "zero_elite_weights_disable_selection"
+      ],
+      "log_sha256": "b56d857e3e1e34edde688f49a13ca6c32091d77e32fe2e9e2a6dfa9cefc17f9a",
+      "screenshots": [
+        {
+          "path": "2560x1080/01-side-attack.png",
+          "width": 2560,
+          "height": 1080,
+          "sha256": "4be068007835aceb5db715c39934ec3e5a2f36b7616b19f666478704482483e2"
+        },
+        {
+          "path": "2560x1080/02-front-attack.png",
+          "width": 2560,
+          "height": 1080,
+          "sha256": "f30fa2ea50dadbae122a0fb8512f3d260906410cbd11f2f02fa308bc6869532e"
+        },
+        {
+          "path": "2560x1080/03-back-attack.png",
+          "width": 2560,
+          "height": 1080,
+          "sha256": "e4018da7a76b68457379707dc9c3aa6a7182e1d35eb353d0a7b7f792a665a368"
+        },
+        {
+          "path": "2560x1080/04-left-attack.png",
+          "width": 2560,
+          "height": 1080,
+          "sha256": "83113ddcd8a6949f7e2d53b210d8cc40c18748588642d1cdc34240693cd48c0a"
+        }
+      ]
+    }
+  ],
+  "builds": {
+    "editor-final": {
+      "passed": true,
+      "log_sha256": "19a880637b1aceb655ce17cd2669cee163dad40efd13b041ea74645b488467fe"
+    },
+    "game-final": {
+      "passed": true,
+      "log_sha256": "bfae7cdbeb2c3105bfc46ebc49837da826ccb22c23a8d3ca68e07ee40ee39ea0"
+    }
+  },
+  "producer_regression": {
+    "passed": true,
+    "check_lines": 39,
+    "unique_checks": 33,
+    "log_sha256": "c503e7699d82d67af4b826386d0a6476c8e8c0ba6f41b4262ba981b3ad2c9420"
+  },
+  "flow_regression": {
+    "passed": true,
+    "check_lines": 42,
+    "unique_checks": 42,
+    "log_sha256": "3b984a760dee8ee13d233370987e252a214565ac46b737c4e7d10136936f4060"
+  },
+  "protected_files": {
+    "unchanged": true,
+    "existing_assets_and_maps": 362,
+    "player_saves": 11,
+    "quality_csv": 1,
+    "total": 374
+  },
+  "new_assets": {
+    "Side": "7d64ecb17ce25eb89523c885d112e2bb3e7f89ebeaabea04ae635917d01c55af",
+    "Back": "45303ad1071b10e894e91d50ecacd9cf06fcec1cdbf03ed1cdf3370ff83a26da"
+  },
+  "import": {
+    "passed": true,
+    "log_sha256": "185561411f39cc4ea7eca6d724bbc7518ce1bd065598d3da89b341a9661fea85"
+  }
+}

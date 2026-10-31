@@ -1,0 +1,493 @@
+{
+  "result": "STATIC_QA_PASS_RUNTIME_NOT_RUN",
+  "cell": [
+    512,
+    512
+  ],
+  "atlas": [
+    4096,
+    512
+  ],
+  "fps": 10,
+  "loop": false,
+  "release_frame": 4,
+  "release_seconds": 0.4,
+  "baseline": 488,
+  "foot_anchor_x": "Per-direction original idle footAnchor",
+  "neutral_body_height": 320,
+  "normalization": "One uniform factor per half, calibrated from windup0/release3; nearest.",
+  "source": "Native image_gen supplied by producer; no generation CLI/API used.",
+  "endpoints": "Original approved direction PNG reused byte-for-byte as frame0/frame7 pixels.",
+  "frame_accounting": {
+    "new_intermediate_poses": 12,
+    "reused_neutral_frames": 4,
+    "existing_front_frames_unchanged": 8,
+    "total_runtime_frames": 24
+  },
+  "safety": "Final alpha bbox >=24px horizontal/top padding; baseline leaves24px below. All poses share the original directional idle foot anchor within0.6px.",
+  "directions": {
+    "Side": {
+      "texture": "T_RoseMageSideAttack.png",
+      "sha256": "cddb69cda80eb8277e555f5ae4c8cefe8554d5adf48b05a93e1d5dbc4197421b",
+      "footAnchor": 232.30525841378784,
+      "scales": {
+        "windup": {
+          "factor": 1.0596026490066226,
+          "neutral_frame": 0,
+          "neutral_input_height": 302
+        },
+        "release": {
+          "factor": 1.06312292358804,
+          "neutral_frame": 3,
+          "neutral_input_height": 301
+        }
+      },
+      "frames": [
+        {
+          "frame": 0,
+          "selection": [
+            "windup",
+            0
+          ],
+          "original_idle_reuse": true,
+          "source": "ArtSource\\BattlePresentation_20261031\\RoseMage\\T_RoseMageSide.png",
+          "source_sha256": "2c45e3d734f90612054cf5c6bb0c1d0dfa8104785dc5b6fd4db77087cffb4f33",
+          "alpha_bbox": [
+            112,
+            168,
+            399,
+            488
+          ],
+          "foot_centroid_x": 232.305,
+          "foot_anchor_error_px": 0.0,
+          "padding": {
+            "left": 112,
+            "top": 168,
+            "right": 113,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 112,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 1,
+          "selection": [
+            "windup",
+            1
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Side\\run\\curated\\windup-frame-1.png",
+          "source_sha256": "5ff090745f9d8988d801de33bacdd141b71055f32c20a751c4e5d2cc5e2af19f",
+          "alpha_bbox": [
+            63,
+            221,
+            330,
+            488
+          ],
+          "foot_centroid_x": 232.712,
+          "foot_anchor_error_px": 0.407,
+          "padding": {
+            "left": 63,
+            "top": 221,
+            "right": 182,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 63,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 2,
+          "selection": [
+            "windup",
+            2
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Side\\run\\curated\\windup-frame-2.png",
+          "source_sha256": "637b62e93220bb5437669c26351d3b9dabaadbbaec28165edfe7484bf324aded",
+          "alpha_bbox": [
+            70,
+            114,
+            315,
+            488
+          ],
+          "foot_centroid_x": 232.482,
+          "foot_anchor_error_px": 0.177,
+          "padding": {
+            "left": 70,
+            "top": 114,
+            "right": 197,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 70,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 3,
+          "selection": [
+            "windup",
+            3
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Side\\run\\curated\\windup-frame-3.png",
+          "source_sha256": "71fabea7db8dd67c0fc291c48520d5c05c0e324b46e91b896d62bfb78e655581",
+          "alpha_bbox": [
+            95,
+            222,
+            478,
+            488
+          ],
+          "foot_centroid_x": 232.013,
+          "foot_anchor_error_px": 0.292,
+          "padding": {
+            "left": 95,
+            "top": 222,
+            "right": 34,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 34,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 4,
+          "selection": [
+            "release",
+            0
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Side\\run\\curated\\release-frame-0.png",
+          "source_sha256": "acb8b834518abd62e23db8ca1a40380c732b183742670c1e189d02d71a4cf15c",
+          "alpha_bbox": [
+            72,
+            170,
+            479,
+            488
+          ],
+          "foot_centroid_x": 232.247,
+          "foot_anchor_error_px": 0.058,
+          "padding": {
+            "left": 72,
+            "top": 170,
+            "right": 33,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 33,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 5,
+          "selection": [
+            "release",
+            1
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Side\\run\\curated\\release-frame-1.png",
+          "source_sha256": "60dacc324f57e5e15a8c71554841d2c3553b91e3807fb406937a7bb842c77186",
+          "alpha_bbox": [
+            69,
+            206,
+            423,
+            488
+          ],
+          "foot_centroid_x": 232.779,
+          "foot_anchor_error_px": 0.473,
+          "padding": {
+            "left": 69,
+            "top": 206,
+            "right": 89,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 69,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 6,
+          "selection": [
+            "release",
+            2
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Side\\run\\curated\\release-frame-2.png",
+          "source_sha256": "24700a1e1b1014a8f78cd9a0e0fbd10de024ee18d81377127025bf121225d087",
+          "alpha_bbox": [
+            98,
+            170,
+            385,
+            488
+          ],
+          "foot_centroid_x": 232.443,
+          "foot_anchor_error_px": 0.138,
+          "padding": {
+            "left": 98,
+            "top": 170,
+            "right": 127,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 98,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 7,
+          "selection": [
+            "release",
+            3
+          ],
+          "original_idle_reuse": true,
+          "source": "ArtSource\\BattlePresentation_20261031\\RoseMage\\T_RoseMageSide.png",
+          "source_sha256": "2c45e3d734f90612054cf5c6bb0c1d0dfa8104785dc5b6fd4db77087cffb4f33",
+          "alpha_bbox": [
+            112,
+            168,
+            399,
+            488
+          ],
+          "foot_centroid_x": 232.305,
+          "foot_anchor_error_px": 0.0,
+          "padding": {
+            "left": 112,
+            "top": 168,
+            "right": 113,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 112,
+          "cyan_pixels": 0
+        }
+      ],
+      "component_extraction_pass": true,
+      "inspect_pass": true
+    },
+    "Back": {
+      "texture": "T_RoseMageBackAttack.png",
+      "sha256": "e3133cb1bf4f5ba3c4c299f0b8095ff0df67539e390a329bf28879eea88230a2",
+      "footAnchor": 214.0768874525803,
+      "scales": {
+        "windup": {
+          "factor": 0.975609756097561,
+          "neutral_frame": 0,
+          "neutral_input_height": 328
+        },
+        "release": {
+          "factor": 0.9552238805970149,
+          "neutral_frame": 3,
+          "neutral_input_height": 335
+        }
+      },
+      "frames": [
+        {
+          "frame": 0,
+          "selection": [
+            "windup",
+            0
+          ],
+          "original_idle_reuse": true,
+          "source": "ArtSource\\BattlePresentation_20261031\\RoseMage\\T_RoseMageBack.png",
+          "source_sha256": "3c871951d1f297e22cc712872318c49dde932bddd5f89ffa1c53d978f2605a48",
+          "alpha_bbox": [
+            103,
+            168,
+            408,
+            488
+          ],
+          "foot_centroid_x": 214.077,
+          "foot_anchor_error_px": 0.0,
+          "padding": {
+            "left": 103,
+            "top": 168,
+            "right": 104,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 103,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 1,
+          "selection": [
+            "windup",
+            1
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\curated\\windup-frame-1.png",
+          "source_sha256": "4086fec56eaf10c243d39b614681acdbb7cb121d054d0d086214551d02c3b0c0",
+          "alpha_bbox": [
+            91,
+            209,
+            329,
+            488
+          ],
+          "foot_centroid_x": 213.685,
+          "foot_anchor_error_px": 0.392,
+          "padding": {
+            "left": 91,
+            "top": 209,
+            "right": 183,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 91,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 2,
+          "selection": [
+            "windup",
+            2
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\curated\\windup-frame-2.png",
+          "source_sha256": "91fa39d0f842e0b194f081cc51b6f3baf5d2267b014cb5e2989f0314316bfff6",
+          "alpha_bbox": [
+            98,
+            95,
+            350,
+            488
+          ],
+          "foot_centroid_x": 213.764,
+          "foot_anchor_error_px": 0.313,
+          "padding": {
+            "left": 98,
+            "top": 95,
+            "right": 162,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 95,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 3,
+          "selection": [
+            "release",
+            0
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\curated\\release-frame-0.png",
+          "source_sha256": "b07cc477c52541c70f4402f54085f6525be805c2d0780cff1a4663afb4ea5c7d",
+          "alpha_bbox": [
+            82,
+            147,
+            435,
+            488
+          ],
+          "foot_centroid_x": 213.577,
+          "foot_anchor_error_px": 0.5,
+          "padding": {
+            "left": 82,
+            "top": 147,
+            "right": 77,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 77,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 4,
+          "selection": [
+            "windup",
+            3
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\curated\\windup-frame-3.png",
+          "source_sha256": "661ecb2de3dc932577213bc23d5a726e91fdbef62db1afab2b4be4169686030d",
+          "alpha_bbox": [
+            88,
+            185,
+            440,
+            488
+          ],
+          "foot_centroid_x": 213.749,
+          "foot_anchor_error_px": 0.328,
+          "padding": {
+            "left": 88,
+            "top": 185,
+            "right": 72,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 72,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 5,
+          "selection": [
+            "release",
+            1
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\curated\\release-frame-1.png",
+          "source_sha256": "7e8c53fb1493eaf78d5410b27989e3a019c1967940f142ba855b05f5358ef2c1",
+          "alpha_bbox": [
+            91,
+            199,
+            422,
+            488
+          ],
+          "foot_centroid_x": 214.07,
+          "foot_anchor_error_px": 0.007,
+          "padding": {
+            "left": 91,
+            "top": 199,
+            "right": 90,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 90,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 6,
+          "selection": [
+            "release",
+            2
+          ],
+          "original_idle_reuse": false,
+          "source": "ArtSource\\RoseMageAttack_20261101\\Back\\run\\curated\\release-frame-2.png",
+          "source_sha256": "81f540aa6bee8814657d62a1f992148cda05819c0d63c3af841290938d92ff83",
+          "alpha_bbox": [
+            90,
+            176,
+            407,
+            488
+          ],
+          "foot_centroid_x": 214.314,
+          "foot_anchor_error_px": 0.237,
+          "padding": {
+            "left": 90,
+            "top": 176,
+            "right": 105,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 90,
+          "cyan_pixels": 0
+        },
+        {
+          "frame": 7,
+          "selection": [
+            "release",
+            3
+          ],
+          "original_idle_reuse": true,
+          "source": "ArtSource\\BattlePresentation_20261031\\RoseMage\\T_RoseMageBack.png",
+          "source_sha256": "3c871951d1f297e22cc712872318c49dde932bddd5f89ffa1c53d978f2605a48",
+          "alpha_bbox": [
+            103,
+            168,
+            408,
+            488
+          ],
+          "foot_centroid_x": 214.077,
+          "foot_anchor_error_px": 0.0,
+          "padding": {
+            "left": 103,
+            "top": 168,
+            "right": 104,
+            "bottom": 24
+          },
+          "minimum_top_horizontal_padding": 103,
+          "cyan_pixels": 0
+        }
+      ],
+      "component_extraction_pass": true,
+      "inspect_pass": true
+    }
+  },
+  "limitations": [
+    "UE import, runtime playback and visual acceptance are pending producer review.",
+    "Original Front attack is retained; it was not redrawn in this batch.",
+    "Native intermediate poses are brighter than the original neutral sprites."
+  ]
+}

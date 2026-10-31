@@ -32,3 +32,5 @@
 02_Prototype/AlchemyHD2D/ArtSource/RoseMageAnimation_20261031/**/*.png filter=lfs diff=lfs merge=lfs -text
 02_Prototype/AlchemyHD2D/ArtSource/UIReference20261031/**/*.png filter=lfs diff=lfs merge=lfs -text
 02_Prototype/AlchemyHD2D/Docs/Verification/**/*.png filter=lfs diff=lfs merge=lfs -text
+02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/**/*.png filter=lfs diff=lfs merge=lfs -text
+02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/**/*.gif filter=lfs diff=lfs merge=lfs -text
