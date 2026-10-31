@@ -31,7 +31,9 @@ void AAlchemyHUD::Box(float X,float Y,float W,float H,FLinearColor Color) {DrawR
 void AAlchemyHUD::Button(const FString& Id,const FString& Label,float X,float Y,float W,bool Enabled,float H) {
     float MX=0,MY=0;GetOwningPlayerController()->GetMousePosition(MX,MY);MX=(MX-OX)/S;MY=(MY-OY)/S;
     bool Hover=MX>=X && MX<=X+W && MY>=Y && MY<=Y+H;
-    int Index=Enabled?FocusOrder.Add(Id):-1;bool Focus=Enabled && Index==FocusIndex && !World->Panel.IsEmpty();
+    int Index=Enabled?FocusOrder.Add(Id):-1;
+    if(Enabled && Id==FocusId)FocusIndex=Index;
+    bool Focus=Enabled && (FocusId.IsEmpty()?Index==FocusIndex:Id==FocusId) && !World->Panel.IsEmpty();
     Box(X,Y,W,H,Enabled?(Hover||Focus?FLinearColor(.14f,.27f,.28f):FLinearColor(.075f,.135f,.16f)):FLinearColor(.055f,.075f,.085f));
     Box(X,Y,4,H,Enabled?Gold:Muted);
     if(Focus) {Box(X,Y,W,2,Gold);Box(X,Y+H-2,W,2,Gold);}
@@ -69,11 +71,14 @@ void AAlchemyHUD::DrawHUD() {
     if(!World || !World->Progress || !Canvas) return;
     S=FMath::Min(Canvas->SizeX/1280.f,Canvas->SizeY/720.f);OX=(Canvas->SizeX-1280*S)/2;OY=(Canvas->SizeY-720*S)/2;
     auto PC=GetOwningPlayerController();
+    FocusId.Empty();
     if(LastPanel!=World->Panel) {FocusIndex=World->Panel==TEXT("merchant")?0:2;DetailPage=0;LastPanel=World->Panel;}
     else if(!World->Panel.IsEmpty() && !FocusOrder.IsEmpty()) {
         int Step=(PC->WasInputKeyJustPressed(EKeys::Down)||PC->WasInputKeyJustPressed(EKeys::Gamepad_DPad_Down)?1:0)-(PC->WasInputKeyJustPressed(EKeys::Up)||PC->WasInputKeyJustPressed(EKeys::Gamepad_DPad_Up)?1:0);
         FocusIndex=(FocusIndex+Step+FocusOrder.Num())%FocusOrder.Num();
-        if(PC->WasInputKeyJustPressed(EKeys::Enter)||PC->WasInputKeyJustPressed(EKeys::Gamepad_FaceButton_Bottom)) Activate(FocusOrder[FocusIndex]);
+        FocusId=FocusOrder[FocusIndex];
+        if(PC->WasInputKeyJustPressed(EKeys::Enter)||PC->WasInputKeyJustPressed(EKeys::Gamepad_FaceButton_Bottom)) Activate(FocusId);
+        if(FocusOrder.IsEmpty() || LastPanel!=World->Panel)FocusId.Empty();
     }
     if(DragMaterial>=0 && PC->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
         float X,Y;PC->GetMousePosition(X,Y);FVector2D Mouse((X-OX)/S,(Y-OY)/S);
@@ -447,4 +452,5 @@ void AAlchemyHUD::DrawHUD() {
     DrawToast();
     DrawMerchantFeedback();
     if(World->bGreyfordFlow)DrawGreyfordFlow();
+    FocusIndex=FMath::Clamp(FocusIndex,0,FMath::Max(0,FocusOrder.Num()-1));
 }

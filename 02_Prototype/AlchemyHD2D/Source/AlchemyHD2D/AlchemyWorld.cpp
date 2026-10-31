@@ -1694,6 +1694,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "VillagePresentationChecks.inl"
 #include "UnifiedPresentationChecks.inl"
 #include "UIV02Checks.inl"
+#include "UIAccessChecks.inl"
 #include "EnemyCodexChecks.inl"
 #include "EliteSpawning.inl"
 #include "EliteSpawnChecks.inl"

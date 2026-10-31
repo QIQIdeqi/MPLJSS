@@ -188,6 +188,7 @@ public:
     bool BuildBossReferenceScene();
     bool UnifiedPresentationCheck(float Delta);
     void UIV02Check(float Delta);
+    void UIAccessCheck(float Delta);
     bool EnemyCodexCheck(float Delta);
     bool bReferenceBossScene=false,CombatCameraReady=false;
     FVector2D CombatCameraSourceFocus=FVector2D(836,470.5);
@@ -498,6 +499,7 @@ public:
     float S=1, OX=0, OY=0;
     int32 FocusIndex=0, DetailPage=0;
     FString LastPanel;
+    FString FocusId;
     TArray<FString> FocusOrder;
     TArray<FString> UIV02DrawnText;
     TMap<FString,FBox2D> ButtonRects;

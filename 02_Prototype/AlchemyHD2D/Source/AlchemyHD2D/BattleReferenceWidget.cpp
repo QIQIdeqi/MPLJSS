@@ -88,10 +88,14 @@ void UBattleReferenceWidget::BindControls(){
     HPBar=Cast<UProgressBar>(GetWidgetFromName(TEXT("HPBar")));DodgeBar=Cast<UProgressBar>(GetWidgetFromName(TEXT("DodgeBar")));XPBar=Cast<UProgressBar>(GetWidgetFromName(TEXT("XPBar")));
     LevelText=Cast<UTextBlock>(GetWidgetFromName(TEXT("LevelText")));HPText=Cast<UTextBlock>(GetWidgetFromName(TEXT("HPText")));TimerText=Cast<UTextBlock>(GetWidgetFromName(TEXT("TimerText")));KillText=Cast<UTextBlock>(GetWidgetFromName(TEXT("KillText")));CoinText=Cast<UTextBlock>(GetWidgetFromName(TEXT("CoinText")));DodgeText=Cast<UTextBlock>(GetWidgetFromName(TEXT("DodgeText")));
     SkillGroup=Cast<UCanvasPanel>(GetWidgetFromName(TEXT("SkillGroup")));Minimap=Cast<UCanvasPanel>(GetWidgetFromName(TEXT("Minimap")));
+    if(DodgeBar){DodgeBar->SetVisibility(ESlateVisibility::Visible);DodgeBar->ToolTipTextDelegate.BindDynamic(this,&UBattleReferenceWidget::DodgeTooltip);}
+    if(XPBar){XPBar->SetVisibility(ESlateVisibility::Visible);XPBar->ToolTipTextDelegate.BindDynamic(this,&UBattleReferenceWidget::XPTooltip);}
     if(auto Add=Cast<UButton>(GetWidgetFromName(TEXT("OpenSkillsButton")))){Add->IsFocusable=false;Add->OnClicked.AddUniqueDynamic(this,&UBattleReferenceWidget::OpenSkills);}
 }
 void UBattleReferenceWidget::InitializeForWorld(AAlchemyWorld* InWorld){BattleWorld=InWorld;BindControls();SetVisibility(ESlateVisibility::SelfHitTestInvisible);}
 void UBattleReferenceWidget::OpenSkills(){if(BattleWorld)BattleWorld->Action(TEXT("skills"));}
+FText UBattleReferenceWidget::DodgeTooltip() const{return DodgeText?DodgeText->GetText():FText::GetEmpty();}
+FText UBattleReferenceWidget::XPTooltip() const{return BattleWorld?FText::FromString(FString::Printf(TEXT("经验 %.0f / %d"),BattleWorld->RunXP,BattleWorld->RequiredXP(BattleWorld->RunLevel))):FText::GetEmpty();}
 
 void UBattleReferenceWidget::NativeTick(const FGeometry& MyGeometry,float InDeltaTime){
     Super::NativeTick(MyGeometry,InDeltaTime);
@@ -106,8 +110,6 @@ void UBattleReferenceWidget::NativeTick(const FGeometry& MyGeometry,float InDelt
     TimerText->SetText(FText::FromString(FString::Printf(TEXT("%02d : %02d"),int(BattleWorld->RunTime)/60,int(BattleWorld->RunTime)%60)));
     KillText->SetText(FText::AsNumber(BattleWorld->Kills));CoinText->SetText(FText::AsNumber(BattleWorld->RunCoins));
     DodgeText->SetText(FText::FromString(BattleWorld->DodgeCD<=0?TEXT("Space · 闪避就绪"):FString::Printf(TEXT("Space · 闪避 %.1fs"),BattleWorld->DodgeCD)));
-    DodgeBar->SetToolTipText(DodgeText->GetText());
-    XPBar->SetToolTipText(FText::FromString(FString::Printf(TEXT("经验 %.0f / %d"),BattleWorld->RunXP,BattleWorld->RequiredXP(BattleWorld->RunLevel))));
     const int32 VisibleSlots=FMath::Clamp(BattleWorld->Equipped.Num(),4,6);const float GroupWidth=VisibleSlots*88+69;
     if(auto Layout=Cast<UCanvasPanelSlot>(SkillGroup->Slot)){Layout->SetPosition({(BattleReference::Width-GroupWidth)/2-1.5f,804});Layout->SetSize({GroupWidth,100});}
     for(int I=0;I<6;I++){
@@ -115,7 +117,7 @@ void UBattleReferenceWidget::NativeTick(const FGeometry& MyGeometry,float InDelt
         const bool Equipped=BattleWorld->Equipped.IsValidIndex(I);
         auto Art=Cast<UImage>(GetWidgetFromName(*FString::Printf(TEXT("SkillArt%d"),I)));Art->SetVisibility(Equipped?ESlateVisibility::Visible:ESlateVisibility::Hidden);
         auto Label=Cast<UTextBlock>(GetWidgetFromName(*FString::Printf(TEXT("SkillLevel%d"),I)));Label->SetText(Equipped?FText::FromString(FString::Printf(TEXT("Lv %d"),BattleWorld->Levels[BattleWorld->Equipped[I]])):FText::GetEmpty());
-        if(Equipped){const int SkillId=BattleWorld->Equipped[I];Art->SetToolTipText(FText::FromString(FString::Printf(TEXT("%s · Lv %d · 自动释放（参考图标）"),BattleWorld->SkillName(SkillId),BattleWorld->Levels[SkillId])));}
+        if(Equipped){const int SkillId=BattleWorld->Equipped[I];const FString Tooltip=FString::Printf(TEXT("%s · Lv %d · 自动释放（参考图标）"),BattleWorld->SkillName(SkillId),BattleWorld->Levels[SkillId]);if(Art->GetToolTipText().ToString()!=Tooltip)Art->SetToolTipText(FText::FromString(Tooltip));}
     }
     if(auto Add=Cast<UCanvasPanelSlot>(GetWidgetFromName(TEXT("OpenSkillsButton"))->Slot))Add->SetPosition({float(VisibleSlots*88+2),6});
     const FVector Right=BattleWorld->Camera->GetActorRightVector().GetSafeNormal2D();

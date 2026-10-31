@@ -24,6 +24,8 @@ private:
     static void BuildReferenceTree(UWidgetTree* Tree);
     void BindControls();
     UFUNCTION() void OpenSkills();
+    UFUNCTION() FText DodgeTooltip() const;
+    UFUNCTION() FText XPTooltip() const;
     UPROPERTY() TObjectPtr<AAlchemyWorld> BattleWorld;
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UProgressBar> HPBar;
     UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UProgressBar> DodgeBar;

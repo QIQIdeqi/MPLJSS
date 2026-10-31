@@ -1,5 +1,6 @@
 // Rendered production-path regression; UIV02Test must enable bCapture before save loading.
 void AAlchemyWorld::UIV02Check(float Dt) {
+    if(FParse::Param(FCommandLine::Get(),TEXT("UIAccessTest"))){UIAccessCheck(Dt);return;}
     static bool UIQAOK=true;
     static int UINotePage=0,UICodexPage=0;
     static TSet<int32> UISeenSkills;

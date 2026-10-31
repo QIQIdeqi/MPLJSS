@@ -1,0 +1,209 @@
+{
+  "base_commit": "2102845bc858fe890cc54e4a57eb8a7aeb6115a9",
+  "verified_at": "2026-11-01T05:39:24.244862+08:00",
+  "baseline": {
+    "check_lines": 22,
+    "failed_checks": [
+      "actual_Slate_hittest_paths_include_both_tooltip_bars",
+      "both_Slate_tooltip_instances_persist_across_frames_and_state_update",
+      "unchanged_equipped_skill_Slate_tooltip_instance_persists_across_frames",
+      "resumed_HUD_restores_both_tooltip_hittest_paths",
+      "dynamic_furnace_insertion_preserves_material_keyboard_focus_by_ID",
+      "second_real_Enter_press_adds_second_material_instead_of_removing_first"
+    ]
+  },
+  "final": {
+    "1280x720": {
+      "check_lines": 22,
+      "unique_checks": 22,
+      "check_names": [
+        "actual_Slate_Dodge_tooltip_binds_current_cooldown",
+        "actual_Slate_Dodge_tooltip_updates_to_ready_state",
+        "actual_Slate_XP_tooltip_binds_current_and_required_experience",
+        "actual_Slate_hittest_paths_include_both_tooltip_bars",
+        "actual_equipped_skill0_has_Slate_tooltip",
+        "both_Slate_tooltip_instances_persist_across_frames_and_state_update",
+        "dynamic_furnace_insertion_preserves_material_keyboard_focus_by_ID",
+        "empty_furnace_initial_keyboard_focus_is_material0",
+        "first_Enter_released_before_second_press",
+        "first_real_Enter_press_selects_exactly_one_material_without_spending_inventory",
+        "fixture_finishes_with_Enter_released",
+        "isolated_capture_prevents_player_save_IO",
+        "native_first_material_focus_frame_written",
+        "paused_modal_removes_both_HUD_bars_from_Slate_hittest_paths",
+        "production_close_action_restores_battle",
+        "production_pause_action_opens_modal",
+        "real_editable_reference_WBP_instance_loaded",
+        "rendered_progress_bars_have_real_cached_geometry",
+        "resumed_HUD_restores_both_tooltip_hittest_paths",
+        "second_furnace_insertion_keeps_material_keyboard_focus",
+        "second_real_Enter_press_adds_second_material_instead_of_removing_first",
+        "unchanged_equipped_skill_Slate_tooltip_instance_persists_across_frames"
+      ]
+    },
+    "1024x768": {
+      "check_lines": 22,
+      "unique_checks": 22,
+      "check_names": [
+        "actual_Slate_Dodge_tooltip_binds_current_cooldown",
+        "actual_Slate_Dodge_tooltip_updates_to_ready_state",
+        "actual_Slate_XP_tooltip_binds_current_and_required_experience",
+        "actual_Slate_hittest_paths_include_both_tooltip_bars",
+        "actual_equipped_skill0_has_Slate_tooltip",
+        "both_Slate_tooltip_instances_persist_across_frames_and_state_update",
+        "dynamic_furnace_insertion_preserves_material_keyboard_focus_by_ID",
+        "empty_furnace_initial_keyboard_focus_is_material0",
+        "first_Enter_released_before_second_press",
+        "first_real_Enter_press_selects_exactly_one_material_without_spending_inventory",
+        "fixture_finishes_with_Enter_released",
+        "isolated_capture_prevents_player_save_IO",
+        "native_first_material_focus_frame_written",
+        "paused_modal_removes_both_HUD_bars_from_Slate_hittest_paths",
+        "production_close_action_restores_battle",
+        "production_pause_action_opens_modal",
+        "real_editable_reference_WBP_instance_loaded",
+        "rendered_progress_bars_have_real_cached_geometry",
+        "resumed_HUD_restores_both_tooltip_hittest_paths",
+        "second_furnace_insertion_keeps_material_keyboard_focus",
+        "second_real_Enter_press_adds_second_material_instead_of_removing_first",
+        "unchanged_equipped_skill_Slate_tooltip_instance_persists_across_frames"
+      ]
+    },
+    "2560x1080": {
+      "check_lines": 22,
+      "unique_checks": 22,
+      "check_names": [
+        "actual_Slate_Dodge_tooltip_binds_current_cooldown",
+        "actual_Slate_Dodge_tooltip_updates_to_ready_state",
+        "actual_Slate_XP_tooltip_binds_current_and_required_experience",
+        "actual_Slate_hittest_paths_include_both_tooltip_bars",
+        "actual_equipped_skill0_has_Slate_tooltip",
+        "both_Slate_tooltip_instances_persist_across_frames_and_state_update",
+        "dynamic_furnace_insertion_preserves_material_keyboard_focus_by_ID",
+        "empty_furnace_initial_keyboard_focus_is_material0",
+        "first_Enter_released_before_second_press",
+        "first_real_Enter_press_selects_exactly_one_material_without_spending_inventory",
+        "fixture_finishes_with_Enter_released",
+        "isolated_capture_prevents_player_save_IO",
+        "native_first_material_focus_frame_written",
+        "paused_modal_removes_both_HUD_bars_from_Slate_hittest_paths",
+        "production_close_action_restores_battle",
+        "production_pause_action_opens_modal",
+        "real_editable_reference_WBP_instance_loaded",
+        "rendered_progress_bars_have_real_cached_geometry",
+        "resumed_HUD_restores_both_tooltip_hittest_paths",
+        "second_furnace_insertion_keeps_material_keyboard_focus",
+        "second_real_Enter_press_adds_second_material_instead_of_removing_first",
+        "unchanged_equipped_skill_Slate_tooltip_instance_persists_across_frames"
+      ]
+    }
+  },
+  "UIV02_1280x720": {
+    "check_lines": 193,
+    "unique_checks": 66,
+    "check_names": [
+      "Activate_and_confirm_purchase_all_ten_real_nodes",
+      "Boss_discovery_and_settlement_survive_memory_save_roundtrip",
+      "Flow_start_guidance_lists_real_controls_without_inactive_R_restart",
+      "actual_filtered_probabilities_draw_zero_and_rounded_two_decimals",
+      "actual_legacy_save_deserializes_four_talents",
+      "actual_victory_settlement_discovers_Boss",
+      "actual_victory_settlement_transfers_coins_once",
+      "alchemy_notes_fill_routes_to_real_action_and_selects_recipe",
+      "all_7x3_actual_normal_skill_IDs_including_high_IDs_reachable_in_codex",
+      "all_ten_enabled_upgrade_buttons_inside_safe_frame",
+      "all_ten_native_furnace_hit_queries_resolve_unique_slot_names",
+      "all_three_quality_percentages_draw_two_decimal_places",
+      "battle_Q_alchemy_hint_actually_drawn",
+      "content_retry_restores_defeat_and_settles_thirteen_once",
+      "each_native_furnace_click_returns_only_its_material_without_changing_inventory",
+      "failed_defeat_content_retry_resolves_actual_hitbox",
+      "first_recipe_fill_hitbox_clear_of_action_buttons",
+      "flow_recovery_native_screenshot_written",
+      "header_retry_runs_real_EndRun_and_settles_once_in_capture_mode",
+      "header_return_and_pause_resume_have_distinct_nonoverlapping_hitboxes",
+      "injected_post_save_failure_state_blocks_all_navigation_and_font_mutation",
+      "isolated_no_player_save_IO",
+      "known_recipe_fill_button_is_drawn_and_in_bounds",
+      "legacy_four_talent_save_serializes",
+      "max_font_portal_warning_draws_all_uncollected_drop_losses",
+      "max_font_portal_warning_retains_material_and_current_HP_contract",
+      "max_font_save_failure_header_and_content_buttons_inside_safe_frame",
+      "max_font_save_failure_header_label_fits_button_inner_width",
+      "migration_preserves_coins_and_converts_one_shot_flags",
+      "native_AHUD_hit_query_resolves_distinct_header_return",
+      "native_AHUD_hit_query_resolves_pause_text",
+      "native_AHUD_hit_query_resolves_resume_button",
+      "native_HUD_available",
+      "native_hitbox_click_callback_opens_pause_action",
+      "native_resume_click_callback_closes_pause",
+      "native_screenshot_written",
+      "new_native_screenshot_written",
+      "notes_page_real_fill_actions_visible_nonoverlapping_and_correct",
+      "pause_callback_reopens_after_resume",
+      "pause_menu_title_and_resume_button_actually_drawn",
+      "pause_text_hitbox_does_not_capture_adjacent_Q_B_hints",
+      "pause_text_hitbox_inside_actual_viewport",
+      "pending_result_has_no_stale_pause_hitbox",
+      "production_Message_toast_actually_drawn",
+      "queried_header_return_callback_also_closes_pause",
+      "real_outcome_settlement_pays_thirty_seven_once",
+      "real_settlement_header_return_is_hit_testable",
+      "real_widget_battle_exposes_pause_text_hitbox",
+      "repeated_outcome_before_return_does_not_pay_again",
+      "repeated_successful_content_retry_cannot_pay_again",
+      "repeated_successful_header_retry_cannot_pay_again",
+      "repeated_victory_does_not_repeat_coins_or_discovery",
+      "save_failure_disables_font_hitbox_and_keyboard_focus_entry",
+      "save_failure_header_and_content_offer_retry",
+      "save_failure_header_retry_resolves_actual_hitbox",
+      "schema3_memory_save_roundtrip_preserves_migrated_state",
+      "schema3_migration_is_idempotent",
+      "settlement_header_callback_returns_to_village_instead_of_restarting",
+      "stale_pause_callback_cannot_override_pending_result",
+      "ten_furnace_slots_have_in_bounds_nonoverlapping_rectangles",
+      "three_material_runtime_weights_remain_unchanged",
+      "upgrade_capture_matches_rendered_panel_title_and_ten_buttons",
+      "upgrade_panel_stays_rendered_until_capture_completes",
+      "upgrade_purchase_hitboxes_do_not_overlap",
+      "v2_migration_does_not_complete_tutorial_or_erase_discoveries",
+      "v2_to_v3_preserves_three_purchased_attributes"
+    ]
+  },
+  "builds": {
+    "editor": {
+      "result": "Succeeded",
+      "log_sha256": "dbe7caad55c59ce1a9efaab873d0df507133f3ce954b4e44499d7ba421ed0700"
+    },
+    "game": {
+      "result": "Succeeded",
+      "log_sha256": "87a7396626355ecd4270193ccc775c1cf504ee74ac4a5ac94a43a922314b4311"
+    }
+  },
+  "protected_files": {
+    "total": 376,
+    "assets_maps": 364,
+    "saves": 11,
+    "production_quality_csv": 1,
+    "changed": [],
+    "before_manifest_sha256": "ed7944f4b9ce872e02e2366c6301c456807a14e0fa0ede793e863c561470ef8c"
+  },
+  "images": [
+    {
+      "file": "baseline-1280x720.png",
+      "sha256": "bed22fe133c6be183c2c3af3208e61a7b8290ac864f64512de0f89399ddfca70"
+    },
+    {
+      "file": "fixed-1280x720.png",
+      "sha256": "ad9d652de918e884d2dc3821dd60b9a76bfd140efaacbe8700931fd8f4a1a2f1"
+    },
+    {
+      "file": "fixed-1024x768.png",
+      "sha256": "2df3b0710ad89310c0afcbbba0b3a139cdd1e4b8727bc1556d49ba0871abbe81"
+    },
+    {
+      "file": "fixed-2560x1080.png",
+      "sha256": "20b3fc7ef96198c72755785e061d7761513afd8a51da366e6c558b29bc9e3b01"
+    }
+  ]
+}
