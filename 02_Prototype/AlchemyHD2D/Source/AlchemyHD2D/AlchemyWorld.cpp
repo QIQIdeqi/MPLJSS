@@ -96,22 +96,59 @@ const float TuneHP[]={14,20,29,32,45,43,68};
 const float EnemySpeed[]={320,220,200,270,310,180,140,240,200,160,180};
 const float EnemyContact[]={6,7,8,6,10,7,11,12,8,14,12};
 const float TuneContact[]={5,6,7,5,9,6,9};
-const int32 Prices[4][5]={{60,90,130,180,240},{80,120,170,230,300},{70,100,140,190,250},{50,80,120,170,230}};
-const TCHAR* TalentNames[]={TEXT("生命强化"),TEXT("伤害强化"),TEXT("移动强化"),TEXT("吸引范围")};
-// TALENT-002: linear talent sequence of 7 nodes. Attribute nodes map to Talents[0..3];
-// one-shot nodes map to Progress bool flags. attrCost = index into Prices, or -1 for one-shot.
-// oneShot cost is the unlock price.
-struct FAlchemyTalentNode {int32 AttrIndex=-1; int32 OneShotCost=-1; const TCHAR* Name=nullptr;};
-const FAlchemyTalentNode TalentSequence[]={
-    {0,-1,TEXT("生命强化")},
-    {1,-1,TEXT("伤害强化")},
-    {-1,180,TEXT("技能刷新")},
-    {2,-1,TEXT("移动强化")},
-    {-1,160,TEXT("材料掉率提升")},
-    {3,-1,TEXT("吸引范围")},
-    {-1,220,TEXT("开局高级材料")}
+// TALENT-001 revised (系统 UI V0.2): 10 independent upgrades, no linear unlock tree.
+// All are freely purchasable with enough coins. Max level 5 for stats, 1 for one-shot unlocks.
+// Index order matches the document 3.2 table:
+//   0 生命  1 攻击  2 移速  3 幸运  4 冷却  5 暴击  6 暴伤  7 防御  8 技能刷新  9 材料掉落
+const TCHAR* TalentNames[]={TEXT("生命强化"),TEXT("攻击强化"),TEXT("移动速度"),TEXT("幸运增加"),TEXT("技能冷却"),TEXT("暴击增加"),TEXT("暴伤增加"),TEXT("防御增加"),TEXT("技能刷新"),TEXT("材料掉落提高")};
+// Per-level costs. Stats use 5 levels (Lv1..Lv5); one-shot unlocks use a single cost (Lv0->Lv1).
+const int32 TalentMaxLevel[10]={5,5,5,5,5,5,5,5,1,1};
+const int32 TalentCosts[10][5]={
+    {60,90,130,180,240},     // 生命强化
+    {80,120,170,230,300},    // 攻击强化
+    {70,100,140,190,250},    // 移动速度
+    {50,80,120,170,230},     // 幸运增加（暂无玩法效果）
+    {90,130,185,250,330},    // 技能冷却
+    {100,145,205,280,370},   // 暴击增加
+    {90,135,195,270,360},    // 暴伤增加
+    {110,160,225,305,400},   // 防御增加
+    {280,0,0,0,0},           // 技能刷新（一次性）
+    {320,0,0,0,0}            // 材料掉落提高（一次性）
 };
-constexpr int32 TalentNodeCount=7;
+const TCHAR* TalentDescriptions[10]={
+    TEXT("每级最大生命值 +10"),
+    TEXT("每级所有普通技能伤害 +5%（加算）"),
+    TEXT("每级移动速度 +3%（加算）"),
+    TEXT("当前版本暂不生效"),
+    TEXT("每级普通技能冷却时间减少 4%"),
+    TEXT("每级暴击率 +2 个百分点"),
+    TEXT("基础暴击倍率 150%，每级 +10 个百分点"),
+    TEXT("每级受到的敌方伤害减少 2%"),
+    TEXT("解锁后每次普通炼金结果可免费刷新一次"),
+    TEXT("普通材料掉落概率相对提高 30%")
+};
+constexpr int32 TalentNodeCount=10;
+// Codex: monster and material codex data (system UI V0.2 §4.6). Elite materials are disabled.
+const TCHAR* MonsterNames[]={TEXT("腐化鼠"),TEXT("泥团怪"),TEXT("游荡骷髅"),TEXT("毒囊虫"),TEXT("暗影猎犬"),TEXT("游荡术徒"),TEXT("石甲蛮徒"),TEXT("腐化巨蜥"),TEXT("蚀雾术士"),TEXT("根须守卫"),TEXT("腐化之源")};
+const TCHAR* MonsterDescriptions[]={
+    TEXT("成群的腐化啮齿动物，行动迅速，成群结队逼近玩家。"),
+    TEXT("缓慢但耐打的泥沼生物，靠接触造成持续伤害。"),
+    TEXT("游荡的骸骨战士，靠近后用近战挥击攻击。"),
+    TEXT("会喷射毒液的虫类，远程投射攻击。"),
+    TEXT("行动迅速的猎犬，负责逼迫玩家走位。"),
+    TEXT("使用远程法术的术徒，发射投射物。"),
+    TEXT("身披石甲的蛮徒，行动缓慢但重击凶猛。"),
+    TEXT("体型庞大的巨蜥精英，拥有扫尾强力攻击。"),
+    TEXT("释放蚀雾弹的术士精英，腐蚀爆发范围攻击。"),
+    TEXT("盘踞的根须守卫精英，地裂强力攻击。"),
+    TEXT("Demo 唯一最终 BOSS，双阶段战斗，击败后胜利。")
+};
+const TCHAR* MaterialCodexNames[]={TEXT("火粉"),TEXT("露水"),TEXT("魔法碎片")};
+const TCHAR* MaterialCodexDescriptions[]={
+    TEXT("橙红色粉末，带少量火星，用于火焰、爆炸类炼金。"),
+    TEXT("浅蓝色水珠，用于冰霜、减速类炼金。"),
+    TEXT("紫蓝色小晶片，带微弱魔法光效，用于雷电、奥术类炼金。")
+};
 const FLinearColor Gold(0.82f,0.58f,0.25f), Teal(0.18f,0.75f,0.65f), Ink(0.025f,0.045f,0.06f), Muted(0.5f,0.62f,0.63f);
 // Layout A: design X is screen-right, design Y is screen-down; default camera yaw is 90.
 // Rows: design left/top/width/height in units (1 unit = 100 cm).
@@ -162,13 +199,13 @@ void AAlchemyWorld::BeginPlay() {
         FPlatformMisc::RequestExitWithStatus(false,1);return;
     }
     if (!Progress) Progress=NewObject<UAlchemyProgress>(this);
-    if (Progress->Talents.Num()!=4) Progress->Talents={0,0,0,0};
+    if (Progress->Talents.Num()!=TalentNodeCount) Progress->Talents.Init(0,TalentNodeCount);
     if(FMath::IsNearlyEqual(Progress->UITextScale,1.15f,.001f)) Progress->UITextScale=1.035f;
     else if(FMath::IsNearlyEqual(Progress->UITextScale,1.3f,.001f)) Progress->UITextScale=1.17f;
     Progress->UITextScale=1; // Retained only to read older saves; use independent font groups now.
     Progress->MediumTextScale=FMath::Clamp(Progress->MediumTextScale,.5f,1.2f);
     Progress->LargeTextScale=FMath::Clamp(Progress->LargeTextScale,.5f,1.2f);
-    if(Progress->SchemaVersion<2) {
+    if(Progress->SchemaVersion<3) {
         const bool Played=Progress->Coins>0 || !Progress->Recipes.IsEmpty() || !Progress->Chains.IsEmpty() || Progress->Talents.ContainsByPredicate([](int32 L){return L>0;});
         // Back up the old object before adding new semantic records; isolated QA never writes player saves.
         if(HadSave && !bSmoke && !bCapture && !UGameplayStatics::SaveGameToSlot(Progress,BackupSlot,0)) {
@@ -518,9 +555,21 @@ bool AAlchemyWorld::SaveProgress() {
     return OK;
 }
 void AAlchemyWorld::MigrateProgress(bool Played) {
-    if(Progress->SchemaVersion>=2) return;
-    Progress->TutorialComplete=Played; Progress->Combinations.Empty(); Progress->ChainsV2.Empty();
-    Progress->SchemaVersion=2;
+    if(Progress->SchemaVersion>=3) return;
+    // v2 -> v3: 4 talents -> 10 independent upgrades; fold one-shot flags into Talents[8]/[9].
+    if(Progress->SchemaVersion<2) {
+        Progress->TutorialComplete=Played; Progress->Combinations.Empty(); Progress->ChainsV2.Empty();
+    }
+    TArray<int32> Old=Progress->Talents;
+    Progress->Talents.Init(0,TalentNodeCount);
+    if(Old.IsValidIndex(0)) Progress->Talents[0]=Old[0]; // 生命
+    if(Old.IsValidIndex(1)) Progress->Talents[1]=Old[1]; // 攻击/伤害
+    if(Old.IsValidIndex(2)) Progress->Talents[2]=Old[2]; // 移动
+    // Old[3] (吸引范围) is intentionally dropped per system UI V0.2.
+    if(Progress->RefreshUnlocked) Progress->Talents[8]=1;
+    if(Progress->DropRateUnlocked) Progress->Talents[9]=1;
+    Progress->RefreshUnlocked=Progress->DropRateUnlocked=false;
+    Progress->SchemaVersion=3;
 }
 bool AAlchemyWorld::TutorialActive() const {return bCombat && !Progress->TutorialComplete;}
 void AAlchemyWorld::TutorialSupply(FVector Position) {
@@ -541,6 +590,8 @@ void AAlchemyWorld::TutorialHit(int32 Skill,int32 Hits) {
 }
 void AAlchemyWorld::AddMaterial(int32 I) {
     if(!bCombat || !Selected.IsValidIndex(I)) return;
+    // 系统 UI V0.2：精英专属材料（I>=3）不可投入炼金锅。
+    if(I>=3) { Message(TEXT("该材料暂未开放，不可投入。")); return; }
     int Total=0;for(int V:Selected) Total+=V;
     if(Total>=10 || Selected[I]>=Inventory[I]) return;
     if(TutorialActive() && (TutorialSkill>=0 || I>=3 || Selected[I]>=1)) {
@@ -556,10 +607,7 @@ void AAlchemyWorld::StartRun() {
     // RESULT-001/EXP-001 run-local state resets.
     PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=0; PendingIsNuclear=false; PendingRefreshed=false;
     RunLevel=1; RunXP=0; PendingLevelUps=0;LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;for(int A=0;A<7;A++) RunAttrs[A]=0;
-    // TALENT-002 start material: if unlocked, grant the chosen elite material once into run inventory.
-    if(Progress->StartMaterialUnlocked && StartMaterialChoice>=0 && StartMaterialChoice<3) {
-        Inventory[3+StartMaterialChoice]=1;
-    }
+    // 开局高级材料 removed per system UI V0.2 (not among the 10 upgrades).
     MaxHP=(bTune001B?120:100)+Progress->Talents[0]*10; HP=MaxHP;
     DodgeCD=DodgeTime=HurtInv=DodgeInv=0; SpawnCD=2.6f; NextElite=90; EliteIndex=0;
     for(float& T:SkillCD) T=0;
@@ -677,8 +725,9 @@ void AAlchemyWorld::AcceptPendingResult() {
 }
 
 void AAlchemyWorld::RerollPendingResult() {
-    // RESULT-001: one reroll per craft, no extra cost, same combination & total, excludes current result.
+    // RESULT-001: one reroll per craft, requires 技能刷新 (Talents[8]) unlocked.
     if(PendingIsNuclear || PendingRefreshed || PendingResultSkill<0 || PendingResultCombination<0) return;
+    if(Progress->Talents[8]<=0) { Message(TEXT("尚未解锁技能刷新")); return; }
     TArray<int32> Options;TArray<float> W;
     // Temporarily restore the staged total's weight row via combination + total.
     const int Total=PendingResultTotal, C=PendingResultCombination;
@@ -698,7 +747,11 @@ void AAlchemyWorld::RerollPendingResult() {
 }
 
 int32 AAlchemyWorld::RequiredXP(int32 Level) const {
-    return FMath::RoundToInt(30.f + 15.f*(Level-1) + 2.f*(Level-1)*(Level-1));
+    // 系统 UI V0.2 §7.2：升级门槛表（Lv.1→2 到 Lv.9→10）。
+    static const int32 Thresholds[9]={20,30,45,65,90,120,155,195,240};
+    if(Level<1) return Thresholds[0];
+    if(Level>9) return Thresholds[8];
+    return Thresholds[Level-1];
 }
 
 void AAlchemyWorld::GrantXP(float Amount) {
@@ -712,7 +765,8 @@ void AAlchemyWorld::GrantXP(float Amount) {
 void AAlchemyWorld::RollLevelupChoices() {
     if(PendingLevelUps<=0) return;
     if(LevelupChoices[0]>=0) {Panel=TEXT("levelup");return;} // Reopening a modal keeps the offered choices.
-    static const int32 MaxLayers[7]={5,5,5,5,5,5,3};
+    // 系统 UI V0.2 §7.3：生命+20(5) 伤害+10%(5) 移速+5%(5) 范围+10%(5) 减伤+5pp(6) 经验+10%(5) 回复+1/s(5)
+    static const int32 MaxLayers[7]={5,5,5,5,6,5,5};
     TArray<int32> Pool;
     for(int A=0;A<7;A++) if(RunAttrs[A]<MaxLayers[A]) Pool.Add(A);
     if(Pool.IsEmpty()) {PendingLevelUps=0;return;}
@@ -726,39 +780,26 @@ void AAlchemyWorld::RollLevelupChoices() {
 void AAlchemyWorld::ApplyRunAttr(int32 AttrIndex) {
     if(AttrIndex<0 || AttrIndex>=7) return;
     RunAttrs[AttrIndex]++;
-    if(AttrIndex==0) { MaxHP += 15; HP = FMath::Min(HP+15, MaxHP); }
+    if(AttrIndex==0) { MaxHP += 20; HP = FMath::Min(HP+20, MaxHP); }
 }
 
 bool AAlchemyWorld::TalentNodeUnlocked(int32 Node) const {
-    if(Node<0 || Node>=TalentNodeCount) return false;
-    if(Node==0) return true;
-    return TalentNodeDone(Node-1);
+    // System UI V0.2: all upgrades are independently open, no prerequisite chain.
+    return Node>=0 && Node<TalentNodeCount;
 }
 bool AAlchemyWorld::TalentNodeDone(int32 Node) const {
     if(Node<0 || Node>=TalentNodeCount) return false;
-    const auto& N=TalentSequence[Node];
-    if(N.AttrIndex>=0) return Progress->Talents[N.AttrIndex]>=5; // attribute maxed = fully bought
-    switch(N.OneShotCost) {
-        case 180: return Progress->RefreshUnlocked;
-        case 160: return Progress->DropRateUnlocked;
-        case 220: return Progress->StartMaterialUnlocked;
-        default: return false;
-    }
+    return Progress->Talents[Node] >= TalentMaxLevel[Node];
 }
 void AAlchemyWorld::BuyTalentNode(int32 Node) {
-    if(Node<0 || Node>=TalentNodeCount || !TalentNodeUnlocked(Node) || TalentNodeDone(Node)) return;
-    const auto& N=TalentSequence[Node];
-    int32 Cost=0;
-    if(N.AttrIndex>=0) { int L=Progress->Talents[N.AttrIndex]; Cost=Prices[N.AttrIndex][L]; }
-    else Cost=N.OneShotCost;
+    if(Node<0 || Node>=TalentNodeCount || TalentNodeDone(Node)) return;
+    const int32 L=Progress->Talents[Node];
+    if(L<0 || L>=TalentMaxLevel[Node]) return;
+    const int32 Cost=TalentCosts[Node][L];
     if(Progress->Coins<Cost) { Message(TEXT("货币不足")); return; }
     Progress->Coins-=Cost;
-    bool OK=true;
-    if(N.AttrIndex>=0) Progress->Talents[N.AttrIndex]++;
-    else if(N.OneShotCost==180) Progress->RefreshUnlocked=true;
-    else if(N.OneShotCost==160) Progress->DropRateUnlocked=true;
-    else if(N.OneShotCost==220) Progress->StartMaterialUnlocked=true;
-    if(!SaveProgress()) { Progress->Coins+=Cost; OK=false; }
+    Progress->Talents[Node]++;
+    if(!SaveProgress()) { Progress->Coins+=Cost; Progress->Talents[Node]--; }
 }
 
 FString AAlchemyWorld::ChainHintFor(int32 Skill) const {
@@ -777,9 +818,9 @@ FString AAlchemyWorld::ChainHintFor(int32 Skill) const {
 }
 
 float AAlchemyWorld::MaterialDropChance() const {
-    // DROP-001 baseline (22% x 70% = 15.4% by default), then TALENT-002 drop-rate node x1.30.
+    // DROP-001 baseline (22% x 70% = 15.4% by default), then 材料掉落提高 (Talents[9]) x1.30.
     float Chance = bDrop001 ? 0.154f : 0.22f;
-    if(Progress->DropRateUnlocked) Chance *= 1.30f;
+    if(Progress->Talents[9]>0) Chance *= 1.30f;
     return Chance;
 }
 
@@ -910,8 +951,9 @@ int32 AAlchemyWorld::Area(FVector P,float Radius,float Damage,FLinearColor Color
 }
 void AAlchemyWorld::Hurt(float Damage) {
     if(HurtInv>0 || DodgeInv>0 || HP<=0) return;
-    // EXP-001: run-local damage reduction applies before HP deduction (max -25%).
-    float Reduced=FMath::Max(1.f,FMath::RoundToFloat(Damage*(1.f-0.05f*RunAttrs[4])));
+    // Defense reduction: 防御增加 (Talents[7]) 2%/level + 局内伤害减少 (RunAttrs[4]) 5%/level.
+    float Reduction=0.02f*Progress->Talents[7]+0.05f*RunAttrs[4];
+    float Reduced=FMath::Max(1.f,FMath::RoundToFloat(Damage*(1.f-FMath::Min(0.95f,Reduction))));
     HP=FMath::Max(0.f,HP-Reduced); HurtInv=0.65f; Ring(PlayerPos,65,FLinearColor(0.7f,0.12f,0.1f));
     if(HP<=0) {CharacterAnimation.Die();EndRun(false);}
     else CharacterAnimation.Hit();
@@ -929,13 +971,18 @@ void AAlchemyWorld::Drop(FVector P,int Kind,int Count) {
 
 void AAlchemyWorld::CastSkills(float Dt) {
     // EXP-001: skill range attribute scales range/radius values (not projectile speed or target count).
-    const float RangeScale=1.f+0.08f*RunAttrs[3];
+    const float RangeScale=1.f+0.10f*RunAttrs[3];
+    // TALENT: cooldown reduction (Talents[4]) and crit chance/damage (Talents[5]/[6]).
+    const float CooldownScale=1.f-0.04f*Progress->Talents[4];
+    const float CritChance=0.02f*Progress->Talents[5];
+    const float CritMult=1.50f+0.10f*Progress->Talents[6];
     for(int S:Equipped) {
         const auto& K=SkillConfig(S);SkillCD[S]-=Dt;if(SkillCD[S]>0) continue;
         const float Range=K.Range*RangeScale, Radius=K.Radius*RangeScale;
         int N=Nearest(PlayerPos,Range);if(N<0) continue;
-        SkillCD[S]=K.CD;
-        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]+0.08f*RunAttrs[1]));
+        SkillCD[S]=K.CD*CooldownScale;
+        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]+0.10f*RunAttrs[1]));
+        if(Random.FRand()<CritChance) Damage=FMath::RoundToFloat(Damage*CritMult);
         int Hits=0;
         const FLinearColor Color=K.Color;
         if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,Range/K.ProjectileSpeed,K.EffectScale,K.HitLife,S==0);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
@@ -1009,6 +1056,7 @@ void AAlchemyWorld::Action(FString Id) {
         if(bCombat && Panel!=TEXT("victory") && Panel!=TEXT("defeat")) { EndRun(false); if(Panel==TEXT("savefailed")) return; }
         Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty(); BuildScene(false); return;
     }
+    if(Id==TEXT("pausebtn")) { if(bCombat && !bRunEnded && Panel.IsEmpty()) Panel=TEXT("pause"); return; }
     if(Id==TEXT("return")) { Panel=TEXT("confirmreturn"); return; }
     if(Id==TEXT("craft")) { Craft(); return; }
     if(Id==TEXT("acceptresult")) { AcceptPendingResult(); return; }
@@ -1050,8 +1098,9 @@ void AAlchemyWorld::Action(FString Id) {
     if(Id==TEXT("drop") && !bCombat) bDrop001=!bDrop001;
     if(Id.StartsWith(TEXT("add"))) {AddMaterial(FCString::Atoi(*Id.Mid(3)));return;}
     if(Id.StartsWith(TEXT("sub"))) { int I=FCString::Atoi(*Id.Mid(3)); if(Selected.IsValidIndex(I)) Selected[I]=FMath::Max(0,Selected[I]-1); return; }
+    if(Id.StartsWith(TEXT("furnace"))) { int I=FCString::Atoi(*Id.Mid(7)); if(Selected.IsValidIndex(I)) Selected[I]=FMath::Max(0,Selected[I]-1); return; }
     if(Id==TEXT("codexprev")) {CodexPage=FMath::Max(0,CodexPage-1);return;}
-    if(Id==TEXT("codexnext")) {CodexPage=FMath::Min(3,CodexPage+1);return;}
+    if(Id==TEXT("codexnext")) {CodexPage=FMath::Min(2,CodexPage+1);return;}
     if(Id.StartsWith(TEXT("recipe")) && bCombat && !TutorialActive()) {
         int S=FCString::Atoi(*Id.Mid(6));
         if(S>=0 && S<NumSkills() && Progress->Recipes.Contains(S)) {for(int I=0;I<6;I++) Selected[I]=RecipeCost(S,I);Panel=TEXT("alchemy");}
@@ -1100,8 +1149,8 @@ void AAlchemyWorld::Tick(float Dt) {
         if(bRunEnded) Action(Panel==TEXT("savefailed")?TEXT("retry"):TEXT("village"));
         else if(Panel.IsEmpty()) Panel=TEXT("pause");else Action(TEXT("close"));
     }
-    if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::Tab)) Panel=Panel==TEXT("alchemy")?TEXT(""):TEXT("alchemy");
-    if(!bRunEnded && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
+    if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::Q)) Panel=Panel==TEXT("alchemy")?TEXT(""):TEXT("alchemy");
+    if(!bRunEnded && !bCombat && PC->WasInputKeyJustPressed(EKeys::C)) Panel=Panel==TEXT("codex")?TEXT(""):TEXT("codex");
     if(!bRunEnded && bCombat && PC->WasInputKeyJustPressed(EKeys::B)) Panel=Panel==TEXT("skills")?TEXT(""):TEXT("skills");
     if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossTest"))){PlannedBossCheck(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture")))PlannedBossCapture();
@@ -1297,7 +1346,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!Panel.IsEmpty()) return;
     for(int i=Drops.Num()-1;i>=0;i--) {
         auto& D=Drops[i]; float Dist=FVector::Dist2D(D.Pos,PlayerPos);
-        if(Dist>(D.Kind>=6?220:250*(1+0.1f*Progress->Talents[3]))) continue;
+        if(Dist>(D.Kind>=6?220:250)) continue;
         CollectDrop(D.Kind,D.Count);
         D.Body->Destroy(); Drops.RemoveAtSwap(i);
     }
@@ -1365,7 +1414,7 @@ void AAlchemyWorld::AlchemyCheck() {
     Progress->UITextScale=1.17f;
     TArray<uint8> Bytes;bool Saved=UGameplayStatics::SaveGameToMemory(Progress,Bytes);
     auto Loaded=Saved?Cast<UAlchemyProgress>(UGameplayStatics::LoadGameFromMemory(Bytes)):nullptr;
-    Check(Loaded && Loaded->Coins==123 && Loaded->SchemaVersion==2 && Loaded->TutorialComplete && FMath::IsNearlyEqual(Loaded->UITextScale,1.17f),TEXT("save_roundtrip_including_PC_text_scale"));
+    Check(Loaded && Loaded->Coins==123 && Loaded->SchemaVersion==3 && Loaded->TutorialComplete && FMath::IsNearlyEqual(Loaded->UITextScale,1.17f),TEXT("save_roundtrip_including_PC_text_scale"));
     StartRun();TArray<int32> Options;TArray<float> W;FString Reason;int C;
     bool Tables=true;TSet<int32> Unique;
     for(int G=0;G<7;G++) {

@@ -83,20 +83,7 @@ void AAlchemyHUD::DrawHUD() {
     }
     const FLinearColor White(.94f,.95f,.93f),Dim(.72f,.79f,.8f),Surface(.035f,.06f,.075f,.97f);
     const bool FlowBoss=World->bGreyfordFlow && World->GreyfordStage==2 && World->Panel.IsEmpty();
-    // Background bars cover the screen; content stays inside a centered 16:9 PC safe frame.
-    Box(-OX/S,-OY/S,Canvas->SizeX/S,88+OY/S,Surface);
-    Text(TEXT("冒牌炼金术士"),24,18,28,Gold);
-    if(FlowBoss) {Text(TEXT("雾界草甸 · Boss战"),24,54,18,White);Text(FString::Printf(TEXT("%02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),965,22,24,White);}
-    else {
-    Text(World->bGreyfordFlow?(World->GreyfordStage==0?TEXT("格雷弗德村庄"):World->GreyfordStage==2?TEXT("雾界草甸"):TEXT("村庄外围")):World->bGreyfordScene?TEXT("村庄外围 · 试玩"):World->bCombat?TEXT("腐化林地"):TEXT("烛苔村 · 据点"),315,25,22,White);
-    if(World->bCombat) {
-        Text(FString::Printf(TEXT("%02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),610,14,34,White);
-        Text(FString::Printf(TEXT("击败 %d   金币 %d"),World->Kills,World->RunCoins),790,28,20,Gold);
-    } else Text(FString::Printf(TEXT("金币 %d"),World->Progress->Coins),720,27,22,Gold);
-    }
-    if(World->Panel.IsEmpty()) Button(TEXT("research"),TEXT("F6 画面"),1070,20,185);
-    Box(-OX/S,668,Canvas->SizeX/S,52+OY/S,Surface);
-    Paragraph(TEXT("WASD 移动    Space 闪避    F 交互    Tab 炼金    C 图鉴    B 技能    Esc 返回"),24,680,1232,16,Dim);
+    // 顶部/底部横幅与提示条已移除（用户要求，画面全屏纯净）。
     World->RenderedEliteBars=0;World->RenderedBossBarY=-1;
     if(World->bCombat && World->Panel.IsEmpty()) {
         for(const auto& E:World->Enemies) if(E.HP>0 && E.Type>=7 && E.Type!=10) {
@@ -114,21 +101,30 @@ void AAlchemyHUD::DrawHUD() {
             FLinearColor Color(1,.9f,.55f,FMath::Min(1.f,Number.Life/.2f));
             Text(FString::Printf(TEXT("%.0f"),Number.Value),X,Y,19+4*FMath::Max(0.f,1-Age/.12f),Color);
         }
-        Box(24,108,300,160,Surface);Box(24,108,4,160,Teal);
-        Text(FString::Printf(TEXT("生命 %.0f / %.0f"),World->HP,World->MaxHP),42,122,24,White);
-        Box(42,164,264,18,Ink);Box(42,164,264*World->HP/World->MaxHP,18,Teal);
-        Text(World->DodgeCD<=0?TEXT("Space 闪避就绪"):FString::Printf(TEXT("闪避冷却 %.1f秒"),World->DodgeCD),42,197,18,Dim);
-        // EXP-001: run level and xp progress bar.
-        int NeedXP=World->RequiredXP(World->RunLevel);
-        Text(FString::Printf(TEXT("Lv.%d   经验 %.0f / %d"),World->RunLevel,World->RunXP,NeedXP),42,224,18,Gold);
-        Box(42,248,264,10,Ink);Box(42,248,264*FMath::Clamp(World->RunXP/NeedXP,0.f,1.f),10,Gold);
-        Box(24,280,300,142,Surface);Box(24,280,4,142,Gold);
-        for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d%s"),MaterialNames[I],World->Inventory[I],World->Inventory[I]>10?TEXT(" · 补给"):TEXT(" / 10")),42,296+I*38,20,I==0?Gold:White);
+        // 左上角：素材列表（系统 UI V0.2 §6.2）。
+        Box(24,108,260,142,Surface);Box(24,108,4,142,Gold);
+        for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d / 10"),MaterialNames[I],World->Inventory[I]),42,120+I*40,20,I==0?Gold:White);
+        // 脚底血条：跟随玩家世界坐标（§6.4）。
+        {
+            FVector2D HP;if(PC->ProjectWorldLocationToScreen(World->PlayerPos+FVector(0,0,40),HP)) {
+                float HX=(HP.X-OX)/S-45, HY=(HP.Y-OY)/S-28;
+                Box(HX-2,HY-2,94,12,Ink);Box(HX,HY,90*FMath::Clamp(World->HP/World->MaxHP,0.f,1.f),8,World->HP/World->MaxHP>.3f?Teal:FLinearColor(0.9f,0.2f,0.15f));
+                Text(FString::Printf(TEXT("%.0f/%.0f"),World->HP,World->MaxHP),HX+10,HY-18,14,White);
+            }
+        }
+        // 顶部中央计时已在标题栏；右上角击杀/金币/暂停按钮。
+        Text(FString::Printf(TEXT("击败 %d   金币 %d"),World->Kills,World->RunCoins),850,60,20,Gold);
+        Button(TEXT("pausebtn"),TEXT("暂停"),1180,52,80,true,40);
         float Start=(1280-World->Equipped.Num()*146)/2.f;
         for(int I=0;I<World->Equipped.Num();I++) {
             int K=World->Equipped[I];float X=Start+I*146;Box(X,578,138,76,Surface);
             Text(World->SkillName(K),X+10,587,17,White);Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),X+10,621,18,Gold);
         }
+        // Q 炼金 / B 背包入口 + 经验条（§6.2/6.7）。
+        Text(TEXT("Q 炼金"),60,648,18,Gold);Text(TEXT("B 背包"),1190,648,18,Gold);
+        int NeedXP=World->RequiredXP(World->RunLevel);
+        Text(FString::Printf(TEXT("Lv.%d  %.0f / %d"),World->RunLevel,World->RunXP,NeedXP),560,648,18,Gold);
+        Box(500,666,280,8,Ink);Box(500,666,280*FMath::Clamp(World->RunXP/NeedXP,0.f,1.f),8,Gold);
         if(World->TutorialActive() && !World->bBossArenaActive) {
             bool Ready=World->Inventory[0]>0 && World->Inventory[1]>0 && World->Inventory[2]>0;
             const float TY=World->RunTime>=300?186:108;
@@ -180,50 +176,101 @@ void AAlchemyHUD::DrawHUD() {
         else if(P==TEXT("merchant") || P==TEXT("merchantconfirm")) DrawMerchant();
         else if(P==TEXT("alchemy")) {
             Text(TEXT("点击或拖入材料；点击炉内材料取回。"),104,181,18,Dim);
-            Furnace=FBox2D(FVector2D(104,220),FVector2D(704,490));Box(104,220,600,270,FLinearColor(.055f,.105f,.12f));
-            int Total=0;for(int N:World->Selected) Total+=N;Text(FString::Printf(TEXT("炼金炉    %d / 10"),Total),124,232,24,Gold);
-            Text(TEXT("材料背包"),756,228,24,White);
-            int Next=-1;if(World->TutorialActive() && World->TutorialSkill<0) for(int I=0;I<3;I++) if(!World->Selected[I]) {Next=I;break;}
-            for(int I=0;I<3;I++) {
-                Button(FString::Printf(TEXT("sub%d"),I),FString::Printf(TEXT("%s ×%d   取回"),MaterialNames[I],World->Selected[I]),124,282+I*58,558,World->Selected[I]>0);
-                Button(FString::Printf(TEXT("material%d"),I),FString::Printf(TEXT("%s%s  %d"),Next==I?TEXT("→ "):TEXT(""),MaterialNames[I],World->Inventory[I]-World->Selected[I]),756,282+I*58,422,World->Inventory[I]>World->Selected[I] && (!World->TutorialActive() || (World->TutorialSkill<0 && World->Selected[I]<1)));
+            Furnace=FBox2D(FVector2D(104,220),FVector2D(704,490));
+            int Total=0;for(int N:World->Selected) Total+=N;
+            // 炼金锅：5 列 × 2 行，共 10 份投料位置（系统 UI V0.2 §5.2）。
+            // 点击已投入的格子可直接放回材料背包。
+            Box(104,220,600,260,FLinearColor(.055f,.105f,.12f));
+            Text(FString::Printf(TEXT("炼金锅   已投入 %d / 10"),Total),124,232,22,Gold);
+            int Slot=0;
+            for(int Row=0;Row<2;Row++) for(int Col=0;Col<5;Col++) {
+                float X=124+Col*112, Y=270+Row*92;
+                if(Slot<Total) {
+                    // 找到第 Slot 份投入的材料种类。
+                    int M=-1,Acc=0;for(int I=0;I<6;I++){Acc+=World->Selected[I];if(Slot<Acc){M=I;break;}}
+                    if(M>=0) Button(FString::Printf(TEXT("furnace%d"),M),FString::Printf(TEXT("%s"),MaterialNames[M]),X,Y,100,true,80);
+                    else Box(X,Y,100,80,FLinearColor(.08f,.14f,.16f));
+                } else {
+                    Box(X,Y,100,80,FLinearColor(.08f,.14f,.16f));
+                }
+                Slot++;
             }
+            // 品质概率（不显示核弹概率）。
             TArray<int32> Options;TArray<float> Chances;FString Reason;int Combination;bool Valid=World->CraftOptions(Options,Chances,Reason,Combination);FString Probability;
             if(Valid && Combination>=0) {
-                Probability=FString::Printf(TEXT("特殊 %.2f%%   "),SpecialProcChance[FMath::Clamp(Total-3,0,7)]);
                 for(int Q=0;Q<3;Q++) {int I=Options.Find(World->CombinationSkill(Combination,Q));Probability+=FString::Printf(TEXT("%s %.1f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
+            } else Probability=Valid?TEXT("精英专属配方 · 固定产出"):TEXT("满足投料条件后显示实际品质概率");
+            Text(Probability,124,480,17,Teal);
+            // 材料背包：3 启用普通材料 + 3 禁用占位（精英材料不可获取）。
+            Text(TEXT("材料背包"),740,220,22,White);
+            for(int I=0;I<6;I++) {
+                float X=740+(I%3)*120, Y=240+(I/3)*92;
+                bool Enabled=I<3;
+                if(Enabled) {
+                    Button(FString::Printf(TEXT("material%d"),I),FString::Printf(TEXT("%s  %d"),MaterialNames[I],World->Inventory[I]-World->Selected[I]),X,Y,110,World->Inventory[I]>World->Selected[I] && Total<10 && (!World->TutorialActive() || (World->TutorialSkill<0 && World->Selected[I]<1)),64);
+                } else {
+                    Box(X,Y,110,64,FLinearColor(.05f,.06f,.07f));Text(TEXT("暂未开放"),X+10,Y+22,14,Muted);
+                }
             }
-            else Probability=Valid?TEXT("精英专属配方 · 固定产出"):TEXT("满足投料条件后显示实际品质概率");
-            Text(Probability,124,456,18,Teal);
-            if(!World->TutorialActive()) for(int I=3;I<6;I++) {
-                float X=104+(I-3)*366;Text(FString::Printf(TEXT("%s %d  炉中%d"),MaterialNames[I],World->Inventory[I]-World->Selected[I],World->Selected[I]),X,503,16,Dim);
-                Button(FString::Printf(TEXT("add%d"),I),TEXT("+"),X+230,495,54,true,40);Button(FString::Printf(TEXT("sub%d"),I),TEXT("-"),X+290,495,54,World->Selected[I]>0,40);
+            // 炼成笔记（右下）：已发现配方 + 一键填入。
+            Text(TEXT("炼成笔记"),740,470,20,White);
+            int Rows=0;
+            for(int C=0;C<7 && Rows<3;C++) {
+                bool Known=World->Progress->Combinations.Contains(C);
+                float Y=500+Rows*44;
+                if(!Known) continue;
+                Text(FString::Printf(TEXT("%s"),World->CombinationName(C)),752,Y+10,16,Gold);
+                // 一键填入（材料足够才显示）。
+                int Need[3]={0,0,0};int Mask=World->RuntimeRecipes[C].Mask;
+                if(Mask==7){Need[0]=Need[1]=Need[2]=1;}else{int Cnt=0;if(Mask&1){Need[0]=1;Cnt++;}if(Mask&2){Need[1]=1;Cnt++;}if(Mask&4){Need[2]=1;Cnt++;}if(Cnt==1){for(int M=0;M<3;M++)if(Need[M])Need[M]=3;}else{int First=-1;for(int M=0;M<3;M++)if(Need[M]){if(First<0)First=M;}for(int M=0;M<3;M++)Need[M]=Need[M]*(M==First?2:1);}}
+                bool Enough=true;for(int M=0;M<3;M++)if(World->Inventory[M]<Need[M])Enough=false;
+                if(Enough && World->bCombat && !World->TutorialActive()) Button(FString::Printf(TEXT("fill%d"),C),TEXT("一键填入"),980,Y+6,180,true,34);
+                Rows++;
             }
-            if(Valid) Button(TEXT("craft"),TEXT("开始炼金"),104,550,330);
-            Button(TEXT("clear"),TEXT("清空投料"),456,550,330);Button(TEXT("codex"),TEXT("查看图鉴"),808,550,370);
-            Paragraph(Reason.IsEmpty()?(World->TutorialActive()?TEXT("首次三料各1个；合成后返回战斗，体验范围攻击。"):TEXT("材料种类决定组合，投入总量影响品质概率。")):Reason,104,609,1074,16,Gold);
+            // 操作按钮。
+            if(Valid) Button(TEXT("craft"),TEXT("开始炼金"),740,580,240);
+            Button(TEXT("clear"),TEXT("清空素材"),1000,580,180);
+            Paragraph(Reason.IsEmpty()?(World->TutorialActive()?TEXT("首次三料各1个；合成后返回战斗，体验范围攻击。"):TEXT("材料种类决定组合，投入总量影响品质概率。")):Reason,104,620,1074,16,Gold);
             if(DragMaterial>=0) {float X,Y;PC->GetMousePosition(X,Y);Text(MaterialNames[DragMaterial],(X-OX)/S+16,(Y-OY)/S,22,Gold);}
         } else if(P==TEXT("codex")) {
+            // 图鉴三分类：技能 / 怪物 / 素材（系统 UI V0.2 §4）。
             Button(TEXT("codexprev"),TEXT("上一类"),104,181,185);Button(TEXT("codexnext"),TEXT("下一类"),993,181,185);
-            const TCHAR* Tabs[]={TEXT("材料组合"),TEXT("已发现技能"),TEXT("技能连锁"),TEXT("精英配方")};Text(Tabs[World->CodexPage],430,191,22,White);
-            int Count=World->CodexPage==2?World->NumChains():World->CodexPage==3?World->RuntimeRecipes.Num()-7:7,PerPage=World->CodexPage==2?4:World->CodexPage==3?3:5;
-            int Pages=(Count+PerPage-1)/PerPage;DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
-            for(int Row=0;Row<PerPage;Row++) {
-                int I=DetailPage*PerPage+Row;if(I>=Count) break;float Y=248+Row*(World->CodexPage==2?72:World->CodexPage==3?96:58);
-                Box(104,Y,1074,World->CodexPage==2?66:World->CodexPage==3?88:52,FLinearColor(.055f,.095f,.11f));
-                if(World->CodexPage==0) {bool Known=World->Progress->Combinations.Contains(I);Text(Known?World->CombinationName(I):TEXT("未发现的组合"),120,Y+13,20,Known?Gold:Dim);Text(Known?TEXT("三种品质；材料比例不改变组合"):TEXT("尝试不同材料种类"),450,Y+15,18,Dim);if(Known) Button(FString::Printf(TEXT("fill%d"),I),TEXT("一键填充"),923,Y+8,235,World->bCombat&&!World->TutorialActive());}
-                if(World->CodexPage==1) for(int Q=0;Q<3;Q++) {int K=World->CombinationSkill(I,Q);bool Known=World->Progress->Recipes.Contains(K);Text(Known?FString::Printf(TEXT("%s %s"),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),World->SkillName(K)):TEXT("未发现技能"),120+Q*352,Y+14,19,Known?Gold:Dim);}
-                if(World->CodexPage==2) {
-                    const auto& K=World->ChainConfig(I);bool Known=World->Progress->ChainsV2.Contains(I);Text(K.Name,120,Y+10,21,Gold);
-                    Text(Known?FString::Printf(TEXT("%s + %s  /  冷却%.0f秒"),World->SkillName(K.A),World->SkillName(K.B),K.CD):TEXT("装备互补技能，实际触发后揭示条件"),370,Y+10,18,Known?White:Dim);
-                    if(Known) Text(FString::Printf(TEXT("基础伤害%.0f  %s%.1f  减速%.0f%%，持续%.1f秒"),K.Damage,K.Targets?TEXT("目标数"):TEXT("半径"),K.Targets?float(K.Targets):K.Radius/100,(1-K.Factor)*100,K.Slow),370,Y+39,16,Dim);
+            const TCHAR* Tabs[]={TEXT("技能"),TEXT("怪物"),TEXT("素材")};Text(Tabs[World->CodexPage],430,191,22,White);
+            if(World->CodexPage==0) {
+                // 技能图鉴：21 普通技能，已发现显示名称/品质/组合，未发现显示 ???。
+                int PerPage=6; int Count=21; int Pages=(Count+PerPage-1)/PerPage;DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
+                for(int Row=0;Row<PerPage;Row++) {
+                    int K=DetailPage*PerPage+Row; if(K>=Count) break; float Y=238+Row*54;
+                    bool Known=World->Progress->Recipes.Contains(K);
+                    Box(104,Y,1074,48,FLinearColor(.055f,.095f,.11f));
+                    Text(Known?World->SkillName(K):TEXT("??? 未发现"),120,Y+13,20,Known?Gold:Dim);
+                    if(Known) {
+                        // 组合归属：找该技能属于哪个组合。
+                        int Combo=-1,Quality=-1;for(int C=0;C<7;C++)for(int Q=0;Q<3;Q++)if(World->CombinationSkill(C,Q)==K){Combo=C;Quality=Q;}
+                        if(Combo>=0) Text(FString::Printf(TEXT("%s · %s品质"),World->CombinationName(Combo),Quality==0?TEXT("低"):Quality==1?TEXT("中"):TEXT("高")),360,Y+15,18,Dim);
+                    }
                 }
-                if(World->CodexPage==3) {
-                    int K=World->RuntimeRecipes[7+I].LowSkill;bool Known=World->Progress->Recipes.Contains(K);Text(Known?World->SkillName(K):TEXT("未发现的精英配方"),120,Y+10,21,Known?Gold:Dim);
-                    if(Known) {FString Cost;for(int M=0;M<6;M++) if(World->RecipeCost(K,M)) Cost+=FString::Printf(TEXT("%s×%d "),MaterialNames[M],World->RecipeCost(K,M));Text(Cost,120,Y+48,18,Dim);Button(FString::Printf(TEXT("recipe%d"),K),TEXT("填入素材"),923,Y+18,235,World->bCombat&&!World->TutorialActive());}
+                Button(TEXT("detailprev"),TEXT("上一页"),104,580,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,580,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,590,20,Dim);
+            } else if(World->CodexPage==1) {
+                // 怪物图鉴：11 种怪物，首次击败解锁。
+                int PerPage=6; int Count=11; int Pages=(Count+PerPage-1)/PerPage;DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
+                for(int Row=0;Row<PerPage;Row++) {
+                    int I=DetailPage*PerPage+Row; if(I>=Count) break; float Y=238+Row*54;
+                    bool Known=World->Progress->Monsters.Contains(I);
+                    Box(104,Y,1074,48,FLinearColor(.055f,.095f,.11f));
+                    Text(Known?MonsterNames[I]:TEXT("??? 未发现"),120,Y+13,20,Known?Gold:Dim);
+                    if(Known) Text(MonsterDescriptions[I],360,Y+15,18,Dim);
+                }
+                Button(TEXT("detailprev"),TEXT("上一页"),104,580,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,580,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,590,20,Dim);
+            } else {
+                // 素材图鉴：3 种普通材料，首次拾取解锁（精英材料禁用）。
+                for(int I=0;I<3;I++) {
+                    float Y=238+I*90; bool Known=World->Progress->Materials.Contains(I);
+                    Box(104,Y,1074,80,FLinearColor(.055f,.095f,.11f));
+                    Text(Known?MaterialCodexNames[I]:TEXT("??? 未发现"),120,Y+13,22,Known?Gold:Dim);
+                    if(Known) Text(MaterialCodexDescriptions[I],120,Y+48,18,Dim);
                 }
             }
-            Button(TEXT("detailprev"),TEXT("上一页"),104,570,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,570,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,580,20,Dim);
         } else if(P==TEXT("skills")) {
             Text(TEXT("选储备，再选装备位交换。初始魔弹固定保留。"),104,181,18,Dim);
             Text(TEXT("装备 6"),104,220,22,Gold);Text(TEXT("储备 6"),654,220,22,Gold);
@@ -254,32 +301,26 @@ void AAlchemyHUD::DrawHUD() {
             Button(TEXT("tune"),World->bTune001B?TEXT("战斗：测试配置"):TEXT("战斗：原始基线"),104,450,524,!World->bCombat);Button(TEXT("drop"),World->bDrop001?TEXT("材料掉落：15.4%"):TEXT("材料掉落：22%"),654,450,524,!World->bCombat);
             Paragraph(TEXT("[ / ] 调整视野宽度。战斗与掉落配置仅限据点切换。"),104,535,1074,20,Dim);
         } else if(P==TEXT("talents")) {
-            Text(FString::Printf(TEXT("永久金币 %d；前一项完成解锁下一项。"),World->Progress->Coins),104,181,18,Dim);
+            Text(FString::Printf(TEXT("永久金币 %d；所有强化独立开放，金币足够即可购买。"),World->Progress->Coins),104,181,18,Dim);
+            // 10 independent upgrades; grid of 4 columns per user mockup, scroll handled by paging here.
             for(int I=0;I<TalentNodeCount;I++) {
-                const auto& N=TalentSequence[I];
-                bool Done=World->TalentNodeDone(I),Open=World->TalentNodeUnlocked(I);
+                int L=World->Progress->Talents[I];
+                bool Done=World->TalentNodeDone(I);
+                int MX=TalentMaxLevel[I];
                 float Y=232+I*58;
-                FString State,Label;
-                if(N.AttrIndex>=0) {int L=World->Progress->Talents[N.AttrIndex];State=FString::Printf(TEXT("Lv.%d/5"),L);Label=Done?TEXT("已满级"):FString::Printf(TEXT("购买  %d金币"),Prices[N.AttrIndex][L]);}
-                else {State=TEXT("一次性");Label=Done?TEXT("已解锁"):FString::Printf(TEXT("解锁  %d金币"),N.OneShotCost);}
-                Text(FString::Printf(TEXT("%s  %s  %s"),N.Name,*State,Open?TEXT(""):TEXT("锁定")),120,Y+6,21,Open?White:Dim);
-                if(Open && !Done) Button(FString::Printf(TEXT("buy%d"),I),Label,808,Y,370);
+                FString State=FString::Printf(TEXT("Lv.%d/%d"),L,MX);
+                FString Label=Done?TEXT("已满级"):FString::Printf(TEXT("购买  %d金币"),TalentCosts[I][L]);
+                Text(FString::Printf(TEXT("%s  %s"),TalentNames[I],*State),120,Y+6,21,Done?Dim:White);
+                if(!Done) Button(FString::Printf(TEXT("buy%d"),I),Label,808,Y,370,World->Progress->Coins>=TalentCosts[I][L]);
             }
         } else if(P==TEXT("level")) {
             Text(World->bGreyfordFlow?TEXT("村庄外围"):TEXT("腐化林地"),104,245,32,Gold);Text(TEXT("自动战斗 · 材料炼金 · 固定地图"),104,305,23,White);
-            if(World->Progress->StartMaterialUnlocked) {
-                Text(TEXT("开局高级材料（选择一种，本局获得1个）："),104,370,20,White);
-                for(int I=0;I<3;I++) {
-                    const TCHAR* Names[]={TEXT("兽核"),TEXT("虚空晶"),TEXT("根须心")};
-                    Button(FString::Printf(TEXT("startmat%d"),I),FString::Printf(TEXT("%s%s"),World->StartMaterialChoice==I?TEXT("→ "):TEXT(""),Names[I]),104+I*366,410,340);
-                }
-            }
-            Paragraph(World->bGreyfordFlow?TEXT("5:00开放Boss传送阵。跟随箭头，在阵内按F确认进入；可继续成长，压力逐步增加。"):TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,500,1000,20,Dim);Button(TEXT("start"),TEXT("进入关卡"),104,545,460);
+            Paragraph(World->bGreyfordFlow?TEXT("5:00开放Boss传送阵。跟随箭头，在阵内按F确认进入；可继续成长，压力逐步增加。"):TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,400,1000,20,Dim);Button(TEXT("start"),TEXT("进入关卡"),104,500,460);
         } else if(P==TEXT("confirmbuy") && World->PendingTalent>=0) {
-            int I=World->PendingTalent;const auto& N=TalentSequence[I];
-            FString Desc;
-            if(N.AttrIndex>=0) {int L=World->Progress->Talents[N.AttrIndex];Desc=FString::Printf(TEXT("%s：Lv.%d → Lv.%d，花费%d金币。"),N.Name,L,L+1,Prices[N.AttrIndex][L]);}
-            else Desc=FString::Printf(TEXT("%s：一次性解锁，花费%d金币。"),N.Name,N.OneShotCost);
+            int I=World->PendingTalent;
+            int L=World->Progress->Talents[I];
+            FString Desc=FString::Printf(TEXT("%s：Lv.%d → Lv.%d，花费%d金币。"),TalentNames[I],L,L+1,TalentCosts[I][L]);
+            Paragraph(TalentDescriptions[I],104,320,1000,20,Dim);
             Paragraph(Desc,104,260,1000,25,White);Button(TEXT("confirmbuy"),TEXT("确认购买并保存"),104,460,524);Button(TEXT("talents"),TEXT("取消"),654,460,524);
         } else if(P==TEXT("result")) {
             if(World->PendingIsNuclear) {
@@ -300,13 +341,13 @@ void AAlchemyHUD::DrawHUD() {
                 Text(Desc,104,315,20,Dim);
                 Paragraph(World->ChainHintFor(K),104,360,1000,20,Dim);
                 Button(TEXT("acceptresult"),TEXT("接收技能"),104,520,420);
-                if(World->Progress->RefreshUnlocked && !World->PendingRefreshed && World->PendingResultCombination>=0) Button(TEXT("reroll"),TEXT("刷新一次"),560,520,420);
+                if(World->Progress->Talents[8]>0 && !World->PendingRefreshed && World->PendingResultCombination>=0) Button(TEXT("reroll"),TEXT("刷新一次"),560,520,420);
             }
         } else if(P==TEXT("levelup")) {
             Text(FString::Printf(TEXT("升级 · Lv.%d"),World->RunLevel),104,180,30,Gold);
             Text(TEXT("选择一项强化"),104,240,22,White);
             const TCHAR* AttrNames[]={TEXT("生命值"),TEXT("伤害"),TEXT("移动速度"),TEXT("技能范围"),TEXT("伤害减少"),TEXT("经验增加"),TEXT("生命回复")};
-            int MaxLayers[]={5,5,5,5,5,5,3};
+            int MaxLayers[]={5,5,5,5,6,5,5};
             for(int I=0;I<3;I++) {
                 int Attr=World->LevelupChoices[I];
                 if(Attr<0) continue;
@@ -321,12 +362,18 @@ void AAlchemyHUD::DrawHUD() {
         } else if(P==TEXT("savefailed")) {
             Paragraph(TEXT("本局金币仍待保存。重试成功后才能离开。"),104,270,1000,25,Gold);Button(TEXT("retry"),TEXT("重试保存"),104,460,524);
         } else {
-            Button(TEXT("close"),TEXT("继续游戏"),104,245,524);Button(TEXT("codex"),TEXT("发现图鉴"),654,245,524);
-            Button(World->bCombat?TEXT("alchemy"):TEXT("talents"),World->bCombat?TEXT("炼金"):TEXT("永久强化"),104,325,524);Button(World->bCombat?TEXT("return"):TEXT("level"),World->bCombat?TEXT("返回据点"):TEXT("选择关卡"),654,325,524,!(World->bGreyfordFlow && World->GreyfordStage==2));
+            if(World->bCombat) {
+                // 暂停菜单（系统 UI V0.2 §9.2）：继续 / 设置 / 返回据点。
+                Button(TEXT("close"),TEXT("继续游戏"),104,245,524);Button(TEXT("fonts"),TEXT("游戏设置"),654,245,524);
+                Button(TEXT("return"),TEXT("返回据点"),104,345,524,!(World->bGreyfordFlow && World->GreyfordStage==2));
+            } else {
+                Button(TEXT("close"),TEXT("继续游戏"),104,245,524);Button(TEXT("codex"),TEXT("图鉴"),654,245,524);
+                Button(TEXT("talents"),TEXT("能力强化"),104,325,524);Button(TEXT("level"),TEXT("选择关卡"),654,325,524);
+            }
             Text(TEXT("↑ ↓ 选择    Enter 确认    Esc 返回"),104,480,22,Dim);
         }
     }
-    if(World->ToastTime>0 && !FlowBoss) {Box(-OX/S,-OY/S,Canvas->SizeX/S,88+OY/S,FLinearColor(.025f,.075f,.085f,.99f));Paragraph(World->Toast,24,16,1232,20,Gold);}
+    // 顶部 Toast 横幅已移除（用户要求，画面全屏纯净）。
     DrawMerchantFeedback();
     if(World->bGreyfordFlow)DrawGreyfordFlow();
 }

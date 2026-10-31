@@ -27,17 +27,22 @@ class UAlchemyProgress : public USaveGame {
     GENERATED_BODY()
 public:
     UPROPERTY() int32 Coins=0;
-    UPROPERTY() TArray<int32> Talents={0,0,0,0};
+    // 10 independent upgrades (system UI V0.2): indexes 0..9 per TalentNames[].
+    UPROPERTY() TArray<int32> Talents={0,0,0,0,0,0,0,0,0,0};
     UPROPERTY() TArray<int32> Recipes;
     UPROPERTY() TArray<int32> Chains;
     UPROPERTY() int32 SchemaVersion=0;
     UPROPERTY() bool TutorialComplete=false;
     UPROPERTY() TArray<int32> Combinations;
     UPROPERTY() TArray<int32> ChainsV2;
+    // Codex: permanently discovered monsters and materials (new categories).
+    UPROPERTY() TArray<int32> Monsters;
+    UPROPERTY() TArray<int32> Materials;
     UPROPERTY() float UITextScale=1;
     UPROPERTY() float MediumTextScale=.9f;
     UPROPERTY() float LargeTextScale=.72f;
-    // TALENT-002: three one-shot unlock nodes (no levels).
+    // TALENT-002 one-shot flags are now represented by Talents[8] and Talents[9] (0/1).
+    // Kept for save migration only; not authoritative at runtime.
     UPROPERTY() bool RefreshUnlocked=false;
     UPROPERTY() bool DropRateUnlocked=false;
     UPROPERTY() bool StartMaterialUnlocked=false;

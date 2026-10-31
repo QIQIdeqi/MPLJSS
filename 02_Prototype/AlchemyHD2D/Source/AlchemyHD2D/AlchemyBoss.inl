@@ -9,13 +9,20 @@ void AAlchemyWorld::CollectDrop(int32 Kind,int32 Count,bool BossTransfer) {
         for(int J=0;J<4;J++) {const float R=Random.FRand();Add(R<.4f?0:R<.75f?1:2,1);}
         if(!BossTransfer) Message(TEXT("精英宝箱已收入背包；满仓部分不入库。"));
     } else if(Kind==-2) {
-        static const float XP[7]={3,4,5,5,6,6,8};GrantXP(XP[FMath::Clamp(Count,0,6)]);
+        // 系统 UI V0.2 §7.1：腐化鼠1 泥团1 骷髅2 毒囊2 猎犬2 术徒3 蛮徒4
+        static const float XP[7]={1,1,2,2,2,3,4};GrantXP(XP[FMath::Clamp(Count,0,6)]);
     } else if(Kind<0) RunCoins+=Count;
-    else if(Kind<6) Add(Kind,Count);
+    else if(Kind<6) {
+        Add(Kind,Count);
+        // Codex: record first pickup of a normal material permanently (materials 0..2 only).
+        if(Progress && Kind>=0 && Kind<3 && !Progress->Materials.Contains(Kind)) { Progress->Materials.Add(Kind); SaveProgress(); }
+    }
 }
 void AAlchemyWorld::RewardEnemy(const FAlchemyEnemy& E) {
     if(E.Type>=7 && E.Type<=9) MerchantEliteUnlocked[E.Type-7]=true;
     if(E.Type==10) return;
+    // Codex: record first defeat of this monster type permanently.
+    if(Progress && !Progress->Monsters.Contains(E.Type)) { Progress->Monsters.Add(E.Type); SaveProgress(); }
     if(E.Type>=7) {Drop(E.Pos,6+E.Type-7);Drop(E.Pos,-1,10);}
     else {
         Drop(E.Pos,-2,E.Type);
