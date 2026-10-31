@@ -1,0 +1,323 @@
+{
+  "date": "2026-10-31",
+  "scope": {
+    "team_id": "team_pNm3F6nDbPx6pYHVWTGzkcmA",
+    "project_id": "team_pNm3F6nDbPx6pYHVWTGzkcmA"
+  },
+  "collection_id": "col_CFRAqvktpxfnPJvawBaHauSY",
+  "status": "prologue_first_delivery_generated_builtin",
+  "sources": {
+    "lilita_original": "asset_JhMZKUzvQKp1T3zVZ2BZ8QoG",
+    "user_style_screenshot": "asset_NMMiSziUECiuM6KWuxzNAQnv"
+  },
+  "runs": [
+    {
+      "key": "grace",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 provides ONLY the shared Lilita-world simplified design language, muted palette and costume material feel. Do not copy the girl or give Grace the girl's hair, flower crown or scarf. Create exactly ONE character: Grace is a slender 42-year-old human woman, a caring ordinary medieval herbalist and foster mother, visibly middle-aged, not elderly. Warm light skin, muted olive-green eyes, long narrow face, subtle smile lines, silver-gray hair center parted into a single low bun at the nape with two short loose temple locks and a simple dark wooden pin. Approximately 4 heads tall in this stylized world. A faded moss-green ankle-length long-sleeved linen dress, oatmeal linen apron tied at the waist with one large square front pocket containing thyme sprigs, sleeves rolled to forearms, plain dark brown low ankle boots. No hat, no pointed ears, no staff, no jewelry, no magic, no glow or magical cauldron. She looks sensible, a little stern, deeply kind.\nDELTA: A neutral, single-subject full-body three-quarter FRONT character identity anchor standing centered against plain ivory paper. Entire body visible, arms relaxed slightly away from torso, gentle small closed-mouth smile, clear costume silhouette, uniform soft light. No props held, no other people, no turnaround grid, no inset portraits. Adult caregiver, not a witch costume.",
+        "referenceImages": [
+          "asset_JhMZKUzvQKp1T3zVZ2BZ8QoG"
+        ],
+        "width": 1024,
+        "height": 1536,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_hy5k2Txdu6cZqGSiyArgk8mQ",
+      "asset_id": "asset_oR4eNjKVTnG7gpMuBWwPJ8eY",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "lilita",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 is the authoritative original design, not a request for a collage. Lilita is the 14-year-old girl in the supplied character design. Preserve very long silver-white hair to her calves, one large upward curled forelock, ruby-red eyes, a circlet of red roses and dark green leaves, a mushroom-taupe short cloak with green fern embroidery and two small white fur shoulder tufts, ochre-gold scarf with a round double-scroll clasp, ivory scalloped hem dress, dark brown lace-up boots. Small slender chibi figure about 3 heads tall, earnest expression. Translate shapes into the stated gouache-and-ink storybook finish, not pixels. No redesign into an older teenager, no black hair, no witch hat. No staff in this neutral identity anchor; the rose staff in the reference is not needed in domestic prologue scenes.\nDELTA: Create exactly ONE single full-body character identity anchor, three-quarter front facing, entire body in frame, plain ivory paper background, arms relaxed at her sides, quiet earnest expression, soft uniform daylight, no held prop and no other people, no inset or turnaround grid. Keep the clothing construction and recognisable forelock and wreath from the reference.",
+        "referenceImages": [
+          "asset_JhMZKUzvQKp1T3zVZ2BZ8QoG"
+        ],
+        "width": 1024,
+        "height": 1536,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_8v9rfLQ4thFJXD4paRm8yKvB",
+      "asset_id": "asset_WCDpaL1ymN9yjuNro83DjYzm",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "child",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 is Lilita's canonical painted identity; preserve its exact face design, ruby eyes, silver hair, curled forelock, rose wreath, scarf/clasp, cape, white shoulder tufts, fern embroidery, ivory dress and lace-up boots. DELTA ONLY: Reimagine her at SIX years old for a childhood flashback. She is recognisably the same person, with rounder cheeks, shorter limbs, about 2.8 heads tall, slightly shorter version of the same very long hair, all costume motifs simplified but kept. ONE neutral full-body three-quarter front identity anchor, standing arms relaxed on ivory paper, no props, no other people, no sheet or text. A tender earnest little child. Her older identity must not appear beside her.",
+        "referenceImages": [
+          "asset_WCDpaL1ymN9yjuNro83DjYzm"
+        ],
+        "width": 1024,
+        "height": 1536,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_8TX8b32nSYEQuqQhExE2ky3Y",
+      "asset_id": "asset_921rrDLHtZjaeB7iAKPMaZzy",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "graceYoung",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 is Grace's canonical adult identity, keep the same character's facial features, olive-green eyes, silver-gray center-parted low bun and wooden hairpin, moss green dress, oatmeal single-pocket herbal apron, brown ankle boots, exact color/material language, about 5.5 heads tall. DELTA ONLY: Grace at age THIRTY-FOUR rather than forty-two for childhood flashbacks, a slightly softer younger face with fewer smile lines, unmistakably a mature adult and the same woman, natural ash-silver hair unchanged. ONE neutral full-body three-quarter front identity anchor on plain ivory paper, arms relaxed, kind reserved smile. No other people, props or text. She is an ordinary herbalist, absolutely no magic or witch hat.",
+        "referenceImages": [
+          "asset_oR4eNjKVTnG7gpMuBWwPJ8eY"
+        ],
+        "width": 1024,
+        "height": 1536,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_Wg9nhq2St2usF42Ev19xoooL",
+      "asset_id": "asset_dFBSUA4n5mYZK64dHAK2WzZM",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "p01",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 is Grace's sole character identity. Reference 2 is Lilita's sole identity but the baby must not look adult. Do not merge their costumes or facial traits.\nGrace is a slender 28-year-old human woman, a caring ordinary medieval herbalist and foster mother, a young adult, not elderly. Warm light skin, muted olive-green eyes, long narrow face, smooth cheeks, silver-gray hair center parted into a single low bun at the nape with two short loose temple locks and a simple dark wooden pin. Approximately 5.5 heads tall in this stylized world. A faded moss-green ankle-length long-sleeved linen dress, oatmeal linen apron tied at the waist with one large square front pocket containing thyme sprigs, sleeves rolled to forearms, plain dark brown low ankle boots. No hat, no pointed ears, no staff, no jewelry, no magic, no glow or magical cauldron. She looks sensible, a little stern, deeply kind.\nBaby Lilita has a tiny silver-white hair curl, ruby-red eyes and a simple ivory linen swaddle, no flower crown or grown-up clothing. A normal baby cradled securely, no distress.\nA small lived-in medieval herbalist cottage with exposed dark timber beams, warm cream plaster, left wall small leaded casement window above a simple oak dining table, one large and one small plain ceramic bowl on the table, central oak medicine workbench with clay mortar and unlabelled jars, right side simple bed and stool, plain wooden door at far right wall, bundles of dried herbs hung beneath a beam. The same welcoming domestic space, clean but modest; no modern equipment or printed signage.\nDELTA: P01 'One more small bowl'. A wide 16:9 storybook scene, eye-level three-quarter view into the warm cottage, the young herbalist Grace at center right lovingly cradling the orphan baby newly brought home. The table with two bowls is visible at center left, sunlight through the left window. Just beyond the doorway far right, a small distant ordinary merchant cart is leaving along a bright village lane, background only. The visual story is a child being welcomed into a home, gentle affection, not abandonment or danger. Grace wears no wreath, red eyes or scarf. Infant Lilita must not be wearing the teenage reference outfit. Room furnishings clearly establish layout for later scenes. Leave the bottom strip visually quiet. No inset panels, no text, no letters or written notes.",
+        "referenceImages": [
+          "asset_dFBSUA4n5mYZK64dHAK2WzZM",
+          "asset_WCDpaL1ymN9yjuNro83DjYzm"
+        ],
+        "width": 1536,
+        "height": 864,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_XQsgUzbWswX2WXYrChTwNJNJ",
+      "asset_id": "asset_LDsQyEnKWYM9iAXBY3jtUWRe",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "p02",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 is ONLY Grace; reference 2 is ONLY six-year-old Lilita. Match their faces, hair and clothes without exchanging traits.\nGrace is a slender 34-year-old human woman, a caring ordinary medieval herbalist and foster mother, visibly middle-aged, not elderly. Warm light skin, muted olive-green eyes, long narrow face, subtle smile lines, silver-gray hair center parted into a single low bun at the nape with two short loose temple locks and a simple dark wooden pin. Approximately 5.5 heads tall in this stylized world. A faded moss-green ankle-length long-sleeved linen dress, oatmeal linen apron tied at the waist with one large square front pocket containing thyme sprigs, sleeves rolled to forearms, plain dark brown low ankle boots. No hat, no pointed ears, no staff, no jewelry, no magic, no glow or magical cauldron. She looks sensible, a little stern, deeply kind.\nLilita is the six-year-old girl in the supplied character design. Preserve very long silver-white hair to her calves, one large upward curled forelock, ruby-red eyes, a circlet of red roses and dark green leaves, a mushroom-taupe short cloak with green fern embroidery and two small white fur shoulder tufts, ochre-gold scarf with a round double-scroll clasp, ivory scalloped hem dress, dark brown lace-up boots. Small slender chibi figure about 2.8 heads tall, earnest expression. Translate shapes into the stated gouache-and-ink storybook finish, not pixels. No redesign into an older teenager, no black hair, no witch hat. No staff in this neutral identity anchor; the rose staff in the reference is not needed in domestic prologue scenes.\nDELTA: P02 'Useful herbs, beautiful flowers'. A bright spring meadow beside the village, eye-level wide 16:9 composition. Grace crouches down at center left to examine a real herb with tiny child Lilita at center right; the child earnestly offers Grace a small freshly picked bouquet of ordinary meadow daisies. A woven basket beside them contains herbs and a few spare flowers. Child height if standing is only about half Grace's height; do not depict two adult women. The mother smiles at this unexpected gift, mutual care, gentle domestic humor, sunny grass, small wildflowers, soft trees and a tiny distant thatched cottage. Rose circlet stays on the child's head, no wreath on mother. No magic, no weapons, no threat, no extra people, no text. Keep bottom strip quiet.",
+        "referenceImages": [
+          "asset_dFBSUA4n5mYZK64dHAK2WzZM",
+          "asset_921rrDLHtZjaeB7iAKPMaZzy"
+        ],
+        "width": 1536,
+        "height": 864,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_4rucbAgf9DmU9bzMXJDoREA8",
+      "asset_id": "asset_qZsA8XfMcjWbm2xXwT6rAjf3",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "p03",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 is only Grace; reference 2 is only six-year-old Lilita; reference 3 provides ONLY the fixed cottage environment and painterly treatment, not its infant or the pose of its people. Keep identities separate, Grace never wears a wreath or red eyes.\nGrace is a slender 34-year-old human woman, a caring ordinary medieval herbalist and foster mother, visibly middle-aged, not elderly. Warm light skin, muted olive-green eyes, long narrow face, subtle smile lines, silver-gray hair center parted into a single low bun at the nape with two short loose temple locks and a simple dark wooden pin. Approximately 5.5 heads tall in this stylized world. A faded moss-green ankle-length long-sleeved linen dress, oatmeal linen apron tied at the waist with one large square front pocket containing thyme sprigs, sleeves rolled to forearms, plain dark brown low ankle boots. No hat, no pointed ears, no staff, no jewelry, no magic, no glow or magical cauldron. She looks sensible, a little stern, deeply kind.\nLilita is the six-year-old girl in the supplied character design. Preserve very long silver-white hair to her calves, one large upward curled forelock, ruby-red eyes, a circlet of red roses and dark green leaves, a mushroom-taupe short cloak with green fern embroidery and two small white fur shoulder tufts, ochre-gold scarf with a round double-scroll clasp, ivory scalloped hem dress, dark brown lace-up boots. Small slender chibi figure about 2.8 heads tall, earnest expression. Translate shapes into the stated gouache-and-ink storybook finish, not pixels. No redesign into an older teenager, no black hair, no witch hat. No staff in this neutral identity anchor; the rose staff in the reference is not needed in domestic prologue scenes.\nA small lived-in medieval herbalist cottage with exposed dark timber beams, warm cream plaster, left wall small leaded casement window above a simple oak dining table, one large and one small plain ceramic bowl on the table, central oak medicine workbench with clay mortar and unlabelled jars, right side simple bed and stool, plain wooden door at far right wall, bundles of dried herbs hung beneath a beam. The same welcoming domestic space, clean but modest; no modern equipment or printed signage.\nDELTA: P03 'Medicine and honey'. Daytime cottage interior, same left window, table to left, bed and door to right as reference 3. Grace at the central workbench teaches tiny Lilita how to grind ordinary herbs with a clay mortar and pestle; the child stands on a sturdy low wooden stool beside her so both can reach the counter. One plain honey pot with a wooden dipper on a small nearby shelf draws Lilita's very serious sideways glance, a gentle visual joke. Two distinct people, mother taller than child, hands natural and clearly separated, both warm and engaged. Soft daylight, herbs and kitchen tools, no bubbling fantasy cauldron, no magic or laboratory glass. Wide 16:9 scene, no inset panels, no letters, no labels or text, keep bottom strip quiet.",
+        "referenceImages": [
+          "asset_dFBSUA4n5mYZK64dHAK2WzZM",
+          "asset_921rrDLHtZjaeB7iAKPMaZzy",
+          "asset_LDsQyEnKWYM9iAXBY3jtUWRe"
+        ],
+        "width": 1536,
+        "height": 864,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_GLVgmrtMqhtbR93FrEaeXtm2",
+      "asset_id": "asset_Gs6x3r7DrsufJfVHvJKZLZR5",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "p04",
+      "model_id": "model_openai-gpt-image-2-5-flare",
+      "parameters": {
+        "prompt": "Warm European fairy-tale picture-book illustration, soft hand-drawn sepia ink contours, matte watercolor and opaque gouache, subtle ivory paper grain, large readable shapes, gently stylized chibi anatomy, expressive quiet faces, muted sage green, warm brown and honey ochre, small crimson accents. Soft diffuse light, welcoming and tender with understated domestic humor. Not pixel art, not glossy 3D, not photorealistic, not gritty horror. Clean text-free art, no lettering, no logos, no panels.\nReference 1 is only Grace; reference 2 is only six-year-old Lilita; reference 3 provides ONLY the fixed cottage environment and painterly treatment, not its infant or the pose of its people. Keep identities separate, Grace never wears a wreath or red eyes.\nGrace is a slender 34-year-old human woman, a caring ordinary medieval herbalist and foster mother, visibly middle-aged, not elderly. Warm light skin, muted olive-green eyes, long narrow face, subtle smile lines, silver-gray hair center parted into a single low bun at the nape with two short loose temple locks and a simple dark wooden pin. Approximately 5.5 heads tall in this stylized world. A faded moss-green ankle-length long-sleeved linen dress, oatmeal linen apron tied at the waist with one large square front pocket containing thyme sprigs, sleeves rolled to forearms, plain dark brown low ankle boots. No hat, no pointed ears, no staff, no jewelry, no magic, no glow or magical cauldron. She looks sensible, a little stern, deeply kind.\nLilita is the six-year-old girl in the supplied character design. Preserve very long silver-white hair to her calves, one large upward curled forelock, ruby-red eyes, a circlet of red roses and dark green leaves, a mushroom-taupe short cloak with green fern embroidery and two small white fur shoulder tufts, ochre-gold scarf with a round double-scroll clasp, ivory scalloped hem dress, dark brown lace-up boots. Small slender chibi figure about 2.8 heads tall, earnest expression. Translate shapes into the stated gouache-and-ink storybook finish, not pixels. No redesign into an older teenager, no black hair, no witch hat. No staff in this neutral identity anchor; the rose staff in the reference is not needed in domestic prologue scenes.\nA small lived-in medieval herbalist cottage with exposed dark timber beams, warm cream plaster, left wall small leaded casement window above a simple oak dining table, one large and one small plain ceramic bowl on the table, central oak medicine workbench with clay mortar and unlabelled jars, right side simple bed and stool, plain wooden door at far right wall, bundles of dried herbs hung beneath a beam. The same welcoming domestic space, clean but modest; no modern equipment or printed signage.\nDELTA: P04 'Others say witch; I say mother'. Exterior bright village lane beside the cottage, wide 16:9 eye-level scene. At the center Grace and tiny six-year-old Lilita walk home together, child at her side holding her mother's hand, a basket of herbs carried by Grace in the other hand. The open doorway of their warm cottage is visible to the right, a domestic meal awaits within. At far left edge only two small, distant ordinary travellers in travel cloaks whisper to each other with a wary glance toward the herbalist; they are peripheral, no weapons, no pointing mob or soldiers, no confrontation. Grace looks lovingly toward the child rather than hostile to anyone. The mother-child bond and anticipation of home dinner dominate, golden afternoon light and a little household cheer. The child reaches only about Grace's waist when standing. No text or speech bubbles, no letter, no magic, no extra children. Bottom strip quiet.",
+        "referenceImages": [
+          "asset_dFBSUA4n5mYZK64dHAK2WzZM",
+          "asset_921rrDLHtZjaeB7iAKPMaZzy",
+          "asset_LDsQyEnKWYM9iAXBY3jtUWRe"
+        ],
+        "width": 1536,
+        "height": 864,
+        "quality": "medium",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "job_id": "job_zdp5y9YnWmoJVgxHF3GMRXGk",
+      "asset_id": "asset_Hr5cEpc4ZuAr8XrYbprYHKiX",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "monoGrace",
+      "model_id": "model_bfl-flux-2-klein-9b",
+      "parameters": {
+        "prompt": "Radically minimal storybook drawing: ONLY a uniform solid pale parchment #E8D8B6 background and ONE dark umber #513B2B ink. Flat two-color graphic, sparse lively irregular pen/brush contours, generous 65% blank space, charming naive medieval doodle, expressive economical faces. No watercolor, no gradients, no shadows, no paper texture, no hatching, no gray wash, no filled realistic scenery, no text. Hair, faces and fabric interiors are unpainted parchment; all details expressed by the same single ink. Reference is ONLY an identity hint; discard its painted rendering and complex anatomy. Grace: slender ordinary herbalist mother, 42, long simple adult silhouette about 4.5 heads tall, center-parted hair in low bun with one wooden pin and two cheek locks, small kind eyes, long plain skirt and one-pocket tied apron, rolled sleeves, simple boots. Mature but not elderly. No crown, no witch hat, no staff, no magic. One full-body Grace alone centered on the flat background, relaxed pose with an affectionate slightly wry smile. A designed iconic line character, NOT a realistic figure. 65% empty page; a handful of expressive strokes. No inset or character sheet.",
+        "referenceImages": [
+          "asset_oR4eNjKVTnG7gpMuBWwPJ8eY"
+        ],
+        "width": 1024,
+        "height": 1024,
+        "numInferenceSteps": 4,
+        "guidance": 1,
+        "numOutputs": 1
+      },
+      "job_id": "job_jkqXDK98a5TDnJfuvScSkcCR",
+      "asset_id": "asset_BszxVA8xgyF29NLwFjyJGMS9",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "monoLily",
+      "model_id": "model_bfl-flux-2-klein-9b",
+      "parameters": {
+        "prompt": "Radically minimal storybook drawing: ONLY a uniform solid pale parchment #E8D8B6 background and ONE dark umber #513B2B ink. Flat two-color graphic, sparse lively irregular pen/brush contours, generous 65% blank space, charming naive medieval doodle, expressive economical faces. No watercolor, no gradients, no shadows, no paper texture, no hatching, no gray wash, no filled realistic scenery, no text. Hair, faces and fabric interiors are unpainted parchment; all details expressed by the same single ink. Reference is ONLY Lilita identity and silhouette; discard pixel art, all costume colors and weapon. Lilita: small earnest girl, about 2.5 heads tall, huge upward curled forelock, long unfilled hair, ring of five simple rose spirals and leaves, short triangular cloak with ONE fern motif, two white shoulder tufts shown by outline, scarf with double-spiral clasp, scalloped dress, lace-up boots. No staff. Her hair stays parchment, never solid dark. One full-body Lilita alone centered, small 6-year-old version with round cheeks, a dead-serious face and slightly oversized cloak. Iconic warm funny line art, not detailed anime shading. 65% empty page; no inset or character sheet.",
+        "referenceImages": [
+          "asset_JhMZKUzvQKp1T3zVZ2BZ8QoG"
+        ],
+        "width": 1024,
+        "height": 1024,
+        "numInferenceSteps": 4,
+        "guidance": 1,
+        "numOutputs": 1
+      },
+      "job_id": "job_NoxAXTWFW9qUBYEYaa1V39wR",
+      "asset_id": "asset_ZzVe4nhKMb9867GHczujknJh",
+      "state": "exploration_superseded"
+    },
+    {
+      "key": "inkGrace",
+      "model_id": "model_bfl-flux-2-klein-9b",
+      "parameters": {
+        "prompt": "Hand-drawn old storybook illustration on a quiet pale parchment ground. Mainly ONE dark sepia ink, coarse pressure-varied contours, dry pencil/pen grain and short curved parallel hatching following form. Selective dense ink in cloak shadows, clean light faces and unfilled silver hair, large calm margins, simplified whimsical shapes. NOT smooth vector coloring-page outlines, NOT painted realism or watercolor, no glossy shading, no dense scenery. No text, watermark, logo, UI, frame or book border. Reference 1 = character identity ONLY; reference 2 = ink/hatching language ONLY, ignore every character, words and UI in it. Grace is a slender adult mother with center-parted low bun, single wooden pin, two face locks, kind small eyes, long skirt, rolled sleeves and a tied one-pocket apron, simple boots. No wreath, hat or magic. One full-body Grace alone on parchment, affectionate reserved smile, about 4.5 heads tall. Slightly oversized expressive face, simple relaxed hands. Few folds, one apron pocket. Preserve low bun and wooden pin; do not give her a child's wreath or outfit. Use lively rough hatching on apron folds and skirt, not smooth line-only coloring art.",
+        "referenceImages": [
+          "asset_BszxVA8xgyF29NLwFjyJGMS9",
+          "asset_NMMiSziUECiuM6KWuxzNAQnv"
+        ],
+        "width": 1024,
+        "height": 1024,
+        "numInferenceSteps": 4,
+        "guidance": 1,
+        "numOutputs": 1
+      },
+      "job_id": "job_HyYHd438LTNoftsbtcL8Vuky",
+      "asset_id": "asset_ejkhGnw9WTakRx35TVGnM4Hz",
+      "state": "style_candidate"
+    },
+    {
+      "key": "inkLily",
+      "model_id": "model_bfl-flux-2-klein-9b",
+      "parameters": {
+        "prompt": "Hand-drawn old storybook illustration on a quiet pale parchment ground. Mainly ONE dark sepia ink, coarse pressure-varied contours, dry pencil/pen grain and short curved parallel hatching following form. Selective dense ink in cloak shadows, clean light faces and unfilled silver hair, large calm margins, simplified whimsical shapes. NOT smooth vector coloring-page outlines, NOT painted realism or watercolor, no glossy shading, no dense scenery. No text, watermark, logo, UI, frame or book border. Reference 1 = character identity ONLY; reference 2 = ink/hatching language ONLY, ignore every character, words and UI in it. Lilita has one huge upward curled forelock, long unfilled hair, rose-spiral wreath, small triangular cloak with fern emblem, two outlined shoulder tufts, spiral scarf clasp, scalloped skirt and boots; big head, tiny body. One full-body six-year-old Lilita alone, about 2.5 heads tall, round cheeks, serious slightly puzzled face, short limbs. Keep forelock, flower ring, scarf and cloak recognisable but reduce redundant details. Use directional pen hatching in cloak folds and boots; hair and face stay light. No staff. All flowers and eyes are sepia ink, no color accents in this identity anchor.",
+        "referenceImages": [
+          "asset_ZzVe4nhKMb9867GHczujknJh",
+          "asset_NMMiSziUECiuM6KWuxzNAQnv"
+        ],
+        "width": 1024,
+        "height": 1024,
+        "numInferenceSteps": 4,
+        "guidance": 1,
+        "numOutputs": 1
+      },
+      "job_id": "job_QidHUVFZFiUg7QfBfKvB2JLv",
+      "asset_id": "asset_YgYmmis4WCvsKtkWagJcve5D",
+      "state": "style_candidate"
+    }
+  ],
+  "previous_scene_tests": [
+    {
+      "key": "testA",
+      "job_id": "job_UgCpGqG4aRHUmsypyStJxkVe",
+      "asset_id": "asset_F9615tnCeE8z912QHJoAQFG8",
+      "model_id": "model_bfl-flux-2-klein-9b",
+      "parameters": {
+        "prompt": "Old storybook sepia ink illustration on a quiet pale parchment ground. Pressure-varied rough contours, dry pen grain, short curved directional hatching, selective deep ink in folds, large light margins and clean expressive faces. Simplified whimsical characters, warm and funny. No smooth vector coloring art, photoreal shading, watercolor, detailed scenery, words, watermark, UI or frame. Reference 1 fixes Grace identity, reference 2 ONLY the hatching and storybook style, ignore its characters and text. Grace is a slender adult mother with center-parted low bun, single wooden pin, two face locks, kind small eyes, long skirt, rolled sleeves and a tied one-pocket apron, simple boots. No wreath, hat or magic. SCENE: From infant Lilita's FIRST PERSON POV looking up, Grace leans over the viewer and smiles warmly, arms reach toward both bottom corners to cradle the unseen child/viewer. Her face is the focus, low bun visible, simple apron neckline. Do not show a separate infant or a third-person mother-and-baby pose. Only a few suggestive background lines. COLOR: strictly sepia ink and pale parchment only.",
+        "referenceImages": [
+          "asset_ejkhGnw9WTakRx35TVGnM4Hz",
+          "asset_NMMiSziUECiuM6KWuxzNAQnv"
+        ],
+        "width": 1024,
+        "height": 576,
+        "numInferenceSteps": 4,
+        "guidance": 1,
+        "numOutputs": 1
+      },
+      "actual_cu": 1,
+      "local_file": null,
+      "review": "failed_first_person_composition"
+    },
+    {
+      "key": "testB",
+      "job_id": "job_nxd3Y34oPzQns52ajiLgZCj1",
+      "asset_id": "asset_4T8YcApnhp61BDibHnrweYCB",
+      "model_id": "model_bfl-flux-2-klein-9b",
+      "parameters": {
+        "prompt": "Old storybook sepia ink illustration on a quiet pale parchment ground. Pressure-varied rough contours, dry pen grain, short curved directional hatching, selective deep ink in folds, large light margins and clean expressive faces. Simplified whimsical characters, warm and funny. No smooth vector coloring art, photoreal shading, watercolor, detailed scenery, words, watermark, UI or frame. Reference 1 fixes Grace, reference 2 fixes child Lilita, reference 3 ONLY hatching/style; ignore reference 3 characters and text. Grace is a slender adult mother with center-parted low bun, single wooden pin, two face locks, kind small eyes, long skirt, rolled sleeves and a tied one-pocket apron, simple boots. No wreath, hat or magic. Lilita has one huge upward curled forelock, long unfilled hair, rose-spiral wreath, small triangular cloak with fern emblem, two outlined shoulder tufts, spiral scarf clasp, scalloped skirt and boots; big head, tiny body. SCENE: Six-year-old Lilita has secretly mixed herbs in a bowl on a low table. A SMALL harmless puff of smoke, three flying leaves and tiny motion marks show her failed experiment. Lilita slumps with an unmistakably disappointed pout, no injuries. At the right doorway Grace peeks around the frame and quietly suppresses a kind amused smile. The bowl/table, doorframe and two people are all the scene needs. No fire, wreckage, spell rays or danger. Grace does not perform magic. COLOR: sepia ink and pale parchment only.",
+        "referenceImages": [
+          "asset_ejkhGnw9WTakRx35TVGnM4Hz",
+          "asset_YgYmmis4WCvsKtkWagJcve5D",
+          "asset_NMMiSziUECiuM6KWuxzNAQnv"
+        ],
+        "width": 1024,
+        "height": 576,
+        "numInferenceSteps": 4,
+        "guidance": 1,
+        "numOutputs": 1
+      },
+      "actual_cu": 1,
+      "local_file": null,
+      "review": "failed_duplicate_grace_and_modern_object"
+    },
+    {
+      "key": "testC",
+      "job_id": "job_LMyD7KToNSAukUmS4fN6JwAT",
+      "model_id": "model_bfl-flux-2-klein-9b",
+      "parameters": {
+        "prompt": "Old storybook sepia ink illustration on a quiet pale parchment ground. Pressure-varied rough contours, dry pen grain, short curved directional hatching, selective deep ink in folds, large light margins and clean expressive faces. Simplified whimsical characters, warm and funny. No smooth vector coloring art, photoreal shading, watercolor, detailed scenery, words, watermark, UI or frame. Reference 1 fixes Grace, reference 2 fixes child Lilita, reference 3 ONLY hatching/style; ignore reference 3 characters and text. Grace is a slender adult mother with center-parted low bun, single wooden pin, two face locks, kind small eyes, long skirt, rolled sleeves and a tied one-pocket apron, simple boots. No wreath, hat or magic. Lilita has one huge upward curled forelock, long unfilled hair, rose-spiral wreath, small triangular cloak with fern emblem, two outlined shoulder tufts, spiral scarf clasp, scalloped skirt and boots; big head, tiny body. SCENE: Grace and six-year-old Lilita BOTH SQUAT side by side, looking down at one little medicinal herb in front of them. Grace turns toward Lilita to explain patiently; Lilita studies it earnestly. The mother is taller even crouching. Only a few ground marks, no distant landscape or meadow full of flowers. COLOR EXCEPTION: only the tiny medicinal herb has one muted sage-green #79835C accent, under 3 percent of image. All people, clothes, flowers in the head wreath, objects and all hatching remain dark sepia on parchment. No other greens, golds or colored hair. Warm companionable moment.",
+        "referenceImages": [
+          "asset_ejkhGnw9WTakRx35TVGnM4Hz",
+          "asset_YgYmmis4WCvsKtkWagJcve5D",
+          "asset_NMMiSziUECiuM6KWuxzNAQnv"
+        ],
+        "width": 1024,
+        "height": 576,
+        "numInferenceSteps": 4,
+        "guidance": 1,
+        "numOutputs": 1
+      },
+      "status": "submitted_before_interruption_result_not_recorded",
+      "local_file": null,
+      "review": "not_reviewed"
+    }
+  ],
+  "latest_local_revision": {
+    "date": "2026-10-31",
+    "skills": [
+      "video-character-design",
+      "video-storyboard"
+    ],
+    "new_image_jobs": 0,
+    "production_started": false,
+    "design_approval": "pending"
+  },
+  "latest_generation_record": "序章八画_生图记录.json",
+  "latest_delivery": {
+    "date": "2026-10-31",
+    "tool": "built-in image_gen",
+    "image_count": 8,
+    "video_generated": false,
+    "local_index": "../storyboard/README.md"
+  }
+}
