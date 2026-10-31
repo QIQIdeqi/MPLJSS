@@ -177,6 +177,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest"));
     bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
     const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
     const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
@@ -624,7 +625,11 @@ void AAlchemyWorld::TutorialSupply(FVector Position) {
         bool Available=Inventory[M]>0;
         TArray<FVector> Path;
         for(const auto& D:Drops) if(D.Kind==M && D.Count>0 && FindPath(PlayerPos,D.Pos,45,Path)) Available=true;
-        if(!Available) {Drop(FindPath(PlayerPos,Position,45,Path)?Position:PlayerPos,M);return;}
+        if(!Available) {
+            const FVector Point=FindPath(PlayerPos,Position,45,Path)?Position:PlayerPos;Drop(Point,M);
+            if(FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")))UE_LOG(LogTemp,Display,TEXT("TEACHING_JOURNEY_SUPPLY kind=%d time=%.3f point=(%.3f,%.3f,%.3f)"),M,RunTime,Point.X,Point.Y,Point.Z);
+            return;
+        }
     }
     bTutorialSupplyDone=true;
 }
@@ -1235,6 +1240,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest")) && StateFlowCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("ReturnControlTest")) && ReturnControlCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")) && TutorialPlacementCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")) && TeachingJourneyCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1330,10 +1336,11 @@ void AAlchemyWorld::Tick(float Dt) {
     const float Vertical=(PC->IsInputKeyDown(EKeys::W)?1:0)-(PC->IsInputKeyDown(EKeys::S)?1:0);
     FVector Direction=Camera->GetActorRightVector().GetSafeNormal2D()*Horizontal+Camera->GetActorForwardVector().GetSafeNormal2D()*Vertical;
     Direction=Direction.GetSafeNormal();
+    if(FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")))Direction=TeachingJourneyDirection(Dt,Direction);
     if(GreyfordReviewActive)Direction=UpdateGreyfordReview(Dt,Direction);
     if(!Direction.IsNearlyZero()) LastDirection=Direction;
     DodgeCD=FMath::Max(0.f,DodgeCD-Dt); HurtInv=FMath::Max(0.f,HurtInv-Dt); DodgeInv=FMath::Max(0.f,DodgeInv-Dt);
-    if((PC->WasInputKeyJustPressed(EKeys::SpaceBar) || GreyfordReviewDodge) && DodgeCD<=0) {
+    if((PC->WasInputKeyJustPressed(EKeys::SpaceBar) || GreyfordReviewDodge || TeachingJourneyDodge) && DodgeCD<=0) {
         DodgeCD=2; DodgeTime=0.24f; DodgeInv=0.65f; DodgeDirection=LastDirection;
         if(GreyfordReviewActive)GreyfordDodges++;
     }
@@ -1703,6 +1710,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "StateFlowChecks.inl"
 #include "ReturnControlChecks.inl"
 #include "TutorialPlacementChecks.inl"
+#include "TeachingJourney.inl"
 #include "Reference60Checks.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"

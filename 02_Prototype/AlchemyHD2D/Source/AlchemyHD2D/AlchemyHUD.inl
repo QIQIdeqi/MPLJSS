@@ -4,7 +4,7 @@ float AAlchemyHUD::Measure(const FString& Value,float Size) const {
     return FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(Value,Font).X/S;
 }
 void AAlchemyHUD::Text(const FString& Value,float X,float Y,float Size,FLinearColor Color) {
-    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) || FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")))UIV02DrawnText.Add(Value);
+    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) || FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")) || FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")))UIV02DrawnText.Add(Value);
     // Font size is rasterized at the display size, rather than stretching UFont's default 9pt glyphs.
     FSlateFontInfo Font(World->UIFont,FMath::Max(1,FMath::RoundToInt(World->Progress->FontSize(Size)*S*.75f)));
     FCanvasTextItem Item(FVector2D(OX+X*S,OY+Y*S),FText::FromString(Value),Font,Color);

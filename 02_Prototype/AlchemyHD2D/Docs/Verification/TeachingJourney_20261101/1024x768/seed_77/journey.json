@@ -1,0 +1,3648 @@
+{
+	"schemaVersion": 1,
+	"outcome": "death",
+	"invariantOK": true,
+	"seed": 77,
+	"width": 1024,
+	"height": 768,
+	"runTime": 33.866321563720703,
+	"observedElapsed": 33.882987976074219,
+	"wallElapsedIncludingStartRunSetup": 14.292598001658916,
+	"hp": 0,
+	"kills": 26,
+	"initialProductionState":
+	{
+		"hp": 120,
+		"maxHP": 120,
+		"playerX": -853.16861860307449,
+		"playerY": -336.99209483962318,
+		"enemyCount": 8,
+		"enemies": [
+			{
+				"definition": 0,
+				"type": 0,
+				"hp": 14,
+				"x": -629.03883484473386,
+				"y": 716.72182146728346
+			},
+			{
+				"definition": 0,
+				"type": 0,
+				"hp": 14,
+				"x": 850.07573336585551,
+				"y": 732.05129720048672
+			},
+			{
+				"definition": 1,
+				"type": 1,
+				"hp": 20,
+				"x": 1644.47783819181,
+				"y": -190.84818696140337
+			},
+			{
+				"definition": 0,
+				"type": 0,
+				"hp": 14,
+				"x": 850.07573336585551,
+				"y": 732.05129720048672
+			},
+			{
+				"definition": 0,
+				"type": 0,
+				"hp": 14,
+				"x": 850.07573336585551,
+				"y": 732.05129720048672
+			},
+			{
+				"definition": 1,
+				"type": 1,
+				"hp": 20,
+				"x": -629.03883484473386,
+				"y": 716.72182146728346
+			},
+			{
+				"definition": 1,
+				"type": 1,
+				"hp": 20,
+				"x": 1605.7479870196337,
+				"y": -139.1828834778014
+			},
+			{
+				"definition": 0,
+				"type": 0,
+				"hp": 14,
+				"x": 850.07573336585551,
+				"y": 732.05129720048672
+			}
+		]
+	},
+	"unobservedTimeSentinel": -1,
+	"timeUnits": "seconds of production RunTime; observedElapsed also includes bot menu frames",
+	"strategy": "bot: viewport-visible missing-material drops first; native FindPath45 replanned at most every .5s; fixed reference patrol targets; eight camera-relative movement directions; pre-AoE 300-500cm band and dodge below160; post-AoE 140-180cm band and emergency dodge below90; first upgrade option; ready reaction at least .25 observed seconds; production Action menus are fast bot actions, not physical keyboard or human reaction. No teleport, clear, HP, resource, probability, timer or wave overrides.",
+	"firstAnyMeaning": "first ordinary material observed entering Inventory; fieldAvailable includes reachable offscreen drops and is not HUD readiness",
+	"fieldSamplingPeriodSeconds": 0.25,
+	"samplingNote": "ground/field first times are sampled every .25 observed seconds plus frame quantization; inventory is checked every helper tick; HUD text comes from the previous rendered frame. firstFieldAvailable requires all three at the same sample, not the max of historical first times. Equal seeds across viewports do not imply identical drop sequences.",
+	"firstAny": 6.9500360488891602,
+	"firstPerKind": [
+		-1,
+		6.9500360488891602,
+		-1
+	],
+	"firstEachReachableGround": [
+		-1,
+		5.9666895866394043,
+		-1
+	],
+	"firstFieldAvailable": -1,
+	"firstInventoryReady": -1,
+	"firstActualHUDReadyText": -1,
+	"firstCraft": -1,
+	"firstAccept": -1,
+	"firstTutorialComplete": -1,
+	"firstCraftWindow": "unobserved",
+	"lastNavigation":
+	{
+		"kind": "combat_band",
+		"hasGoal": true,
+		"goalX": -1124.6709414737331,
+		"goalY": -368.65034542947791,
+		"remainingPathPoints": 0,
+		"stuckSeconds": 0
+	},
+	"blockedPathAttempts": 4,
+	"stuckEvents": 0,
+	"samples": [
+		{
+			"runTime": 0,
+			"observedElapsed": 0.01666666753590107,
+			"hp": 120,
+			"kills": 0,
+			"enemies": 8,
+			"x": -853.16861860307449,
+			"y": -336.99209483962318,
+			"panel": "",
+			"navigation": "none",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 0.25,
+			"observedElapsed": 0.26666668057441711,
+			"hp": 120,
+			"kills": 0,
+			"enemies": 8,
+			"x": -853.16861860307449,
+			"y": -211.99208832036516,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 0.50000017881393433,
+			"observedElapsed": 0.51666682958602905,
+			"hp": 120,
+			"kills": 0,
+			"enemies": 8,
+			"x": -853.16861860307449,
+			"y": -86.992081801107133,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 0.76666659116744995,
+			"observedElapsed": 0.78333324193954468,
+			"hp": 120,
+			"kills": 0,
+			"enemies": 8,
+			"x": -841.38350496865723,
+			"y": 24.79303704871662,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 1.0333330631256104,
+			"observedElapsed": 1.0499997138977051,
+			"hp": 120,
+			"kills": 1,
+			"enemies": 7,
+			"x": -841.38350496865723,
+			"y": 24.79303704871662,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 1.299999475479126,
+			"observedElapsed": 1.3166661262512207,
+			"hp": 120,
+			"kills": 1,
+			"enemies": 7,
+			"x": -841.38350496865723,
+			"y": 24.79303704871662,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 1.5666658878326416,
+			"observedElapsed": 1.5833325386047363,
+			"hp": 120,
+			"kills": 1,
+			"enemies": 7,
+			"x": -841.38350496865723,
+			"y": 24.79303704871662,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 1.8333323001861572,
+			"observedElapsed": 1.849998950958252,
+			"hp": 120,
+			"kills": 1,
+			"enemies": 7,
+			"x": -841.38350496865723,
+			"y": 24.79303704871662,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 2.0999987125396729,
+			"observedElapsed": 2.1166653633117676,
+			"hp": 120,
+			"kills": 1,
+			"enemies": 7,
+			"x": -841.38350496865723,
+			"y": -16.873631791036054,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 2.3666651248931885,
+			"observedElapsed": 2.3833317756652832,
+			"hp": 120,
+			"kills": 1,
+			"enemies": 7,
+			"x": -841.38350496865723,
+			"y": -75.206968166689791,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 2.6333315372467041,
+			"observedElapsed": 2.6499981880187988,
+			"hp": 120,
+			"kills": 1,
+			"enemies": 15,
+			"x": -841.38350496865723,
+			"y": -133.54030454234353,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 2.8999979496002197,
+			"observedElapsed": 2.9166646003723145,
+			"hp": 120,
+			"kills": 2,
+			"enemies": 14,
+			"x": -841.38350496865723,
+			"y": -191.87364091799728,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 3.1666643619537354,
+			"observedElapsed": 3.1833310127258301,
+			"hp": 120,
+			"kills": 2,
+			"enemies": 14,
+			"x": -782.45793679657095,
+			"y": -132.94807274591071,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 3.433330774307251,
+			"observedElapsed": 3.4499974250793457,
+			"hp": 120,
+			"kills": 2,
+			"enemies": 14,
+			"x": -688.17702772123289,
+			"y": -38.667163670572002,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 3.6999971866607666,
+			"observedElapsed": 3.7166638374328613,
+			"hp": 120,
+			"kills": 2,
+			"enemies": 14,
+			"x": -626.8106825984047,
+			"y": 14.365847684306003,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 3.9666635990142822,
+			"observedElapsed": 3.983330249786377,
+			"hp": 120,
+			"kills": 2,
+			"enemies": 14,
+			"x": -626.8106825984047,
+			"y": 14.365847684306003,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 4.2166662216186523,
+			"observedElapsed": 4.2333331108093262,
+			"hp": 120,
+			"kills": 3,
+			"enemies": 13,
+			"x": -626.8106825984047,
+			"y": 14.365847684306003,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 4.4666695594787598,
+			"observedElapsed": 4.4833364486694336,
+			"hp": 120,
+			"kills": 3,
+			"enemies": 13,
+			"x": -685.73625077049098,
+			"y": -44.559720487780659,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 4.7166728973388672,
+			"observedElapsed": 4.733339786529541,
+			"hp": 120,
+			"kills": 3,
+			"enemies": 13,
+			"x": -744.66181894257727,
+			"y": -103.48528865986735,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 4.9666762351989746,
+			"observedElapsed": 4.9833431243896484,
+			"hp": 120,
+			"kills": 4,
+			"enemies": 12,
+			"x": -803.58738711466356,
+			"y": -162.41085683195399,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 5.216679573059082,
+			"observedElapsed": 5.2333464622497559,
+			"hp": 120,
+			"kills": 4,
+			"enemies": 12,
+			"x": -862.51295528674984,
+			"y": -221.33642500404056,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 5.4666829109191895,
+			"observedElapsed": 5.4833498001098633,
+			"hp": 120,
+			"kills": 4,
+			"enemies": 18,
+			"x": -915.5459666416275,
+			"y": -274.36943635891856,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 5.7166862487792969,
+			"observedElapsed": 5.7333531379699707,
+			"hp": 120,
+			"kills": 4,
+			"enemies": 18,
+			"x": -974.47153481371379,
+			"y": -333.29500453100542,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				false,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 5.9666895866394043,
+			"observedElapsed": 5.9833564758300781,
+			"hp": 120,
+			"kills": 5,
+			"enemies": 17,
+			"x": -1033.3971029858003,
+			"y": -392.22057270309227,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				317.81887817382812,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 6.2166929244995117,
+			"observedElapsed": 6.2333598136901855,
+			"hp": 120,
+			"kills": 5,
+			"enemies": 17,
+			"x": -1051.0747734374265,
+			"y": -398.11312952030096,
+			"panel": "",
+			"navigation": "missing_drop",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				334.96377563476562,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 6.4666962623596191,
+			"observedElapsed": 6.483363151550293,
+			"hp": 120,
+			"kills": 5,
+			"enemies": 17,
+			"x": -1051.0747734374265,
+			"y": -398.11312952030096,
+			"panel": "",
+			"navigation": "missing_drop",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				334.96377563476562,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 6.7166996002197266,
+			"observedElapsed": 6.7333664894104004,
+			"hp": 120,
+			"kills": 5,
+			"enemies": 17,
+			"x": -1056.5744972049674,
+			"y": -398.11312952030096,
+			"panel": "",
+			"navigation": "missing_drop",
+			"inventory": [
+				0,
+				0,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				339.14218139648438,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 6.966702938079834,
+			"observedElapsed": 6.9833698272705078,
+			"hp": 120,
+			"kills": 6,
+			"enemies": 16,
+			"x": -985.86381539846332,
+			"y": -327.40244771379673,
+			"panel": "",
+			"navigation": "missing_drop",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 7.2167062759399414,
+			"observedElapsed": 7.2333731651306152,
+			"hp": 120,
+			"kills": 6,
+			"enemies": 16,
+			"x": -897.47546314033389,
+			"y": -239.01409545566653,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 7.4667096138000488,
+			"observedElapsed": 7.4833765029907227,
+			"hp": 120,
+			"kills": 6,
+			"enemies": 16,
+			"x": -883.24957255517472,
+			"y": -233.12153863845788,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 7.7167129516601562,
+			"observedElapsed": 7.7333798408508301,
+			"hp": 120,
+			"kills": 6,
+			"enemies": 16,
+			"x": -883.24957255517472,
+			"y": -233.12153863845788,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 7.9667162895202637,
+			"observedElapsed": 7.9833831787109375,
+			"hp": 120,
+			"kills": 7,
+			"enemies": 17,
+			"x": -906.81979982400924,
+			"y": -256.69176590729251,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 8.2333793640136719,
+			"observedElapsed": 8.2500457763671875,
+			"hp": 120,
+			"kills": 7,
+			"enemies": 17,
+			"x": -965.74536799609552,
+			"y": -315.61733407937936,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 8.5000419616699219,
+			"observedElapsed": 8.5167083740234375,
+			"hp": 120,
+			"kills": 7,
+			"enemies": 17,
+			"x": -1030.5634929853907,
+			"y": -380.4354590686749,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 8.7667045593261719,
+			"observedElapsed": 8.7833709716796875,
+			"hp": 120,
+			"kills": 7,
+			"enemies": 17,
+			"x": -1054.1337202542256,
+			"y": -398.11312952030096,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 9.0333671569824219,
+			"observedElapsed": 9.0500335693359375,
+			"hp": 120,
+			"kills": 8,
+			"enemies": 16,
+			"x": -1008.0042686322809,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 9.3000297546386719,
+			"observedElapsed": 9.3166961669921875,
+			"hp": 120,
+			"kills": 8,
+			"enemies": 16,
+			"x": -974.67093356047872,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 9.5666923522949219,
+			"observedElapsed": 9.5833587646484375,
+			"hp": 120,
+			"kills": 8,
+			"enemies": 16,
+			"x": -974.67093356047872,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 9.8333549499511719,
+			"observedElapsed": 9.8500213623046875,
+			"hp": 120,
+			"kills": 8,
+			"enemies": 16,
+			"x": -974.67093356047872,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 10.100017547607422,
+			"observedElapsed": 10.116683959960938,
+			"hp": 120,
+			"kills": 8,
+			"enemies": 16,
+			"x": -1033.0042699361325,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 10.366680145263672,
+			"observedElapsed": 10.383346557617188,
+			"hp": 120,
+			"kills": 8,
+			"enemies": 16,
+			"x": -1116.3376076156378,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 10.633342742919922,
+			"observedElapsed": 10.650009155273438,
+			"hp": 120,
+			"kills": 8,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 10.900005340576172,
+			"observedElapsed": 10.916671752929688,
+			"hp": 120,
+			"kills": 9,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 11.166667938232422,
+			"observedElapsed": 11.183334350585938,
+			"hp": 120,
+			"kills": 9,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 11.433330535888672,
+			"observedElapsed": 11.449996948242188,
+			"hp": 120,
+			"kills": 9,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 11.699993133544922,
+			"observedElapsed": 11.716659545898438,
+			"hp": 114,
+			"kills": 9,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 11.966655731201172,
+			"observedElapsed": 11.983322143554688,
+			"hp": 114,
+			"kills": 10,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 12.233318328857422,
+			"observedElapsed": 12.249984741210938,
+			"hp": 114,
+			"kills": 10,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 12.499980926513672,
+			"observedElapsed": 12.516647338867188,
+			"hp": 108,
+			"kills": 10,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 12.766643524169922,
+			"observedElapsed": 12.783309936523438,
+			"hp": 108,
+			"kills": 10,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 13.033306121826172,
+			"observedElapsed": 13.049972534179688,
+			"hp": 108,
+			"kills": 11,
+			"enemies": 15,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 13.299968719482422,
+			"observedElapsed": 13.316635131835938,
+			"hp": 108,
+			"kills": 11,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 13.566631317138672,
+			"observedElapsed": 13.583297729492188,
+			"hp": 103,
+			"kills": 11,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 13.833293914794922,
+			"observedElapsed": 13.849960327148438,
+			"hp": 103,
+			"kills": 11,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 14.099956512451172,
+			"observedElapsed": 14.116622924804688,
+			"hp": 103,
+			"kills": 12,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 14.366619110107422,
+			"observedElapsed": 14.383285522460938,
+			"hp": 97,
+			"kills": 12,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 14.633281707763672,
+			"observedElapsed": 14.649948120117188,
+			"hp": 97,
+			"kills": 12,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				1,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 14.899944305419922,
+			"observedElapsed": 14.916610717773438,
+			"hp": 97,
+			"kills": 13,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 15.166606903076172,
+			"observedElapsed": 15.183273315429688,
+			"hp": 97,
+			"kills": 13,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 15.433269500732422,
+			"observedElapsed": 15.449935913085938,
+			"hp": 97,
+			"kills": 13,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 15.699932098388672,
+			"observedElapsed": 15.716598510742188,
+			"hp": 92,
+			"kills": 13,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 15.966594696044922,
+			"observedElapsed": 15.983261108398438,
+			"hp": 92,
+			"kills": 13,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 16.233257293701172,
+			"observedElapsed": 16.249923706054688,
+			"hp": 92,
+			"kills": 13,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 16.499919891357422,
+			"observedElapsed": 16.516586303710938,
+			"hp": 86,
+			"kills": 13,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 16.766582489013672,
+			"observedElapsed": 16.783248901367188,
+			"hp": 86,
+			"kills": 13,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 17.033245086669922,
+			"observedElapsed": 17.049911499023438,
+			"hp": 86,
+			"kills": 14,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 17.299907684326172,
+			"observedElapsed": 17.316574096679688,
+			"hp": 86,
+			"kills": 14,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 17.566570281982422,
+			"observedElapsed": 17.583236694335938,
+			"hp": 86,
+			"kills": 14,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 17.833232879638672,
+			"observedElapsed": 17.849899291992188,
+			"hp": 81,
+			"kills": 14,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 18.099895477294922,
+			"observedElapsed": 18.116561889648438,
+			"hp": 81,
+			"kills": 14,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 18.366558074951172,
+			"observedElapsed": 18.383224487304688,
+			"hp": 75,
+			"kills": 14,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 18.633220672607422,
+			"observedElapsed": 18.649887084960938,
+			"hp": 75,
+			"kills": 14,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 18.899883270263672,
+			"observedElapsed": 18.916549682617188,
+			"hp": 75,
+			"kills": 14,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 19.166545867919922,
+			"observedElapsed": 19.183212280273438,
+			"hp": 75,
+			"kills": 15,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 19.433208465576172,
+			"observedElapsed": 19.449874877929688,
+			"hp": 75,
+			"kills": 15,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 19.699871063232422,
+			"observedElapsed": 19.716537475585938,
+			"hp": 70,
+			"kills": 15,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 19.966533660888672,
+			"observedElapsed": 19.983200073242188,
+			"hp": 70,
+			"kills": 16,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 20.233196258544922,
+			"observedElapsed": 20.249862670898438,
+			"hp": 70,
+			"kills": 16,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 20.499858856201172,
+			"observedElapsed": 20.516525268554688,
+			"hp": 64,
+			"kills": 16,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 20.766521453857422,
+			"observedElapsed": 20.783187866210938,
+			"hp": 64,
+			"kills": 16,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 21.033184051513672,
+			"observedElapsed": 21.049850463867188,
+			"hp": 64,
+			"kills": 17,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 21.299846649169922,
+			"observedElapsed": 21.316513061523438,
+			"hp": 64,
+			"kills": 17,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 21.566509246826172,
+			"observedElapsed": 21.583175659179688,
+			"hp": 64,
+			"kills": 17,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 21.833171844482422,
+			"observedElapsed": 21.849838256835938,
+			"hp": 59,
+			"kills": 17,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 22.099834442138672,
+			"observedElapsed": 22.116500854492188,
+			"hp": 59,
+			"kills": 18,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 22.366497039794922,
+			"observedElapsed": 22.383163452148438,
+			"hp": 59,
+			"kills": 18,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 22.633159637451172,
+			"observedElapsed": 22.649826049804688,
+			"hp": 53,
+			"kills": 18,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 22.899822235107422,
+			"observedElapsed": 22.916488647460938,
+			"hp": 53,
+			"kills": 18,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 23.166484832763672,
+			"observedElapsed": 23.183151245117188,
+			"hp": 53,
+			"kills": 19,
+			"enemies": 15,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 23.433147430419922,
+			"observedElapsed": 23.449813842773438,
+			"hp": 53,
+			"kills": 19,
+			"enemies": 15,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 23.699810028076172,
+			"observedElapsed": 23.716476440429688,
+			"hp": 53,
+			"kills": 19,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 23.966472625732422,
+			"observedElapsed": 23.983139038085938,
+			"hp": 48,
+			"kills": 19,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 24.233135223388672,
+			"observedElapsed": 24.249801635742188,
+			"hp": 48,
+			"kills": 19,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 24.499797821044922,
+			"observedElapsed": 24.516464233398438,
+			"hp": 42,
+			"kills": 19,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 24.766460418701172,
+			"observedElapsed": 24.783126831054688,
+			"hp": 42,
+			"kills": 19,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 25.033123016357422,
+			"observedElapsed": 25.049789428710938,
+			"hp": 42,
+			"kills": 20,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 25.299785614013672,
+			"observedElapsed": 25.316452026367188,
+			"hp": 42,
+			"kills": 20,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 25.566448211669922,
+			"observedElapsed": 25.583114624023438,
+			"hp": 42,
+			"kills": 20,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 25.833110809326172,
+			"observedElapsed": 25.849777221679688,
+			"hp": 42,
+			"kills": 20,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 26.099773406982422,
+			"observedElapsed": 26.116439819335938,
+			"hp": 37,
+			"kills": 20,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 26.366436004638672,
+			"observedElapsed": 26.383102416992188,
+			"hp": 37,
+			"kills": 20,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 26.633098602294922,
+			"observedElapsed": 26.649765014648438,
+			"hp": 31,
+			"kills": 20,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 26.899761199951172,
+			"observedElapsed": 26.916427612304688,
+			"hp": 31,
+			"kills": 20,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 27.166423797607422,
+			"observedElapsed": 27.183090209960938,
+			"hp": 31,
+			"kills": 21,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 27.433086395263672,
+			"observedElapsed": 27.449752807617188,
+			"hp": 31,
+			"kills": 21,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 27.699748992919922,
+			"observedElapsed": 27.716415405273438,
+			"hp": 31,
+			"kills": 21,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 27.966411590576172,
+			"observedElapsed": 27.983078002929688,
+			"hp": 26,
+			"kills": 21,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 28.233074188232422,
+			"observedElapsed": 28.249740600585938,
+			"hp": 26,
+			"kills": 22,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 28.499736785888672,
+			"observedElapsed": 28.516403198242188,
+			"hp": 21,
+			"kills": 22,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 28.766399383544922,
+			"observedElapsed": 28.783065795898438,
+			"hp": 21,
+			"kills": 22,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 29.033061981201172,
+			"observedElapsed": 29.049728393554688,
+			"hp": 21,
+			"kills": 22,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 29.299724578857422,
+			"observedElapsed": 29.316390991210938,
+			"hp": 21,
+			"kills": 22,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 29.566387176513672,
+			"observedElapsed": 29.583053588867188,
+			"hp": 21,
+			"kills": 22,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 29.833049774169922,
+			"observedElapsed": 29.849716186523438,
+			"hp": 16,
+			"kills": 22,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 30.099712371826172,
+			"observedElapsed": 30.116378784179688,
+			"hp": 16,
+			"kills": 22,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 30.366374969482422,
+			"observedElapsed": 30.383041381835938,
+			"hp": 16,
+			"kills": 23,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 30.633037567138672,
+			"observedElapsed": 30.649703979492188,
+			"hp": 11,
+			"kills": 23,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 30.899700164794922,
+			"observedElapsed": 30.916366577148438,
+			"hp": 11,
+			"kills": 23,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 31.166362762451172,
+			"observedElapsed": 31.183029174804688,
+			"hp": 11,
+			"kills": 24,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 31.433025360107422,
+			"observedElapsed": 31.449691772460938,
+			"hp": 11,
+			"kills": 24,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 31.699687957763672,
+			"observedElapsed": 31.716354370117188,
+			"hp": 11,
+			"kills": 24,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 31.966350555419922,
+			"observedElapsed": 31.983016967773438,
+			"hp": 6,
+			"kills": 24,
+			"enemies": 18,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 32.233013153076172,
+			"observedElapsed": 32.249679565429688,
+			"hp": 6,
+			"kills": 25,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 32.499675750732422,
+			"observedElapsed": 32.516342163085938,
+			"hp": 6,
+			"kills": 25,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 32.766338348388672,
+			"observedElapsed": 32.783004760742188,
+			"hp": 1,
+			"kills": 25,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 33.033000946044922,
+			"observedElapsed": 33.049667358398438,
+			"hp": 1,
+			"kills": 25,
+			"enemies": 17,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 33.299663543701172,
+			"observedElapsed": 33.316329956054688,
+			"hp": 1,
+			"kills": 26,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 33.566326141357422,
+			"observedElapsed": 33.582992553710938,
+			"hp": 1,
+			"kills": 26,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 33.832988739013672,
+			"observedElapsed": 33.849655151367188,
+			"hp": 1,
+			"kills": 26,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		},
+		{
+			"runTime": 33.866321563720703,
+			"observedElapsed": 33.882987976074219,
+			"hp": 0,
+			"kills": 26,
+			"enemies": 16,
+			"x": -1124.6709413835883,
+			"y": -368.65034543425753,
+			"panel": "defeat",
+			"navigation": "combat_band",
+			"inventory": [
+				0,
+				2,
+				0
+			],
+			"fieldAvailable": [
+				false,
+				true,
+				false
+			],
+			"nearestReachableMissingKindDistanceCm": [
+				-1,
+				-1,
+				-1
+			],
+			"inventoryReady": false
+		}
+	],
+	"events": [
+		{
+			"event": "first_inventory_kind_1",
+			"runTime": 6.9500360488891602,
+			"value": 1
+		},
+		{
+			"event": "inventory_kind_1_delta",
+			"runTime": 6.9500360488891602,
+			"value": 1
+		},
+		{
+			"event": "inventory_kind_1_delta",
+			"runTime": 14.866611480712891,
+			"value": 1
+		},
+		{
+			"event": "bot_production_pick_first_upgrade",
+			"runTime": 31.133029937744141,
+			"value": 3
+		}
+	]
+}

@@ -192,6 +192,9 @@ public:
     bool StateFlowCheck(float Delta);
     bool ReturnControlCheck(float Delta);
     bool TutorialPlacementCheck(float Delta);
+    bool TeachingJourneyCheck(float Delta);
+    FVector TeachingJourneyDirection(float Delta,FVector Manual);
+    bool TeachingJourneyDodge=false;
     bool EnemyCodexCheck(float Delta);
     bool bReferenceBossScene=false,CombatCameraReady=false;
     FVector2D CombatCameraSourceFocus=FVector2D(836,470.5);

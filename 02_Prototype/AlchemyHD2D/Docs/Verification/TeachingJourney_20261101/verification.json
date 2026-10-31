@@ -1,0 +1,40 @@
+{
+  "base_commit": "a884c505be18f706bda06b7622cbacc3772b7cd3",
+  "verified_at": "2026-11-01T07:25:35.320621+08:00",
+  "builds": {
+    "editor": {
+      "result": "PASS",
+      "log_sha256": "239fae0a771632e1c64d23123cb1a93b3ed653832036c85161825067569f05a8"
+    },
+    "game": {
+      "result": "PASS",
+      "log_sha256": "57c9267711aaf7d33e6ae43e4c9ad9e6542ebd87b3c8509b3ae3f333e19412f0"
+    }
+  },
+  "normal_mode_producer_regression": {
+    "result": "PASS",
+    "logged_checks": 39,
+    "log_sha256": "7e7e2924c05fa89da8353cf9bcac12dd6fe2c92ff7cc99ad5b981aecda53b783"
+  },
+  "protected_files": {
+    "total": 376,
+    "assets_maps": 364,
+    "saves": 11,
+    "production_quality_csv": 1,
+    "changed": [],
+    "before_manifest_sha256": "ed7944f4b9ce872e02e2366c6301c456807a14e0fa0ede793e863c561470ef8c"
+  },
+  "fixed_samples": "see observations.json and original five journey.json files",
+  "source_sha256": {
+    "Source/AlchemyHD2D/TeachingJourney.inl": "4aad8a0b500bbd879e552dcc5543faa1f2f725dc56c48b45a87c283855f7155a",
+    "Tools/ObserveTeachingJourney.ps1": "c82237a52de4a1d58520ea98a61a25a21e75999273c9b6b107438700e16c1c3a",
+    "Source/AlchemyHD2D/AlchemyWorld.cpp": "6556cc8d1ff91171c8ea8cf9bf4407f2ea91ef44898b880a9755ce371ee3decc",
+    "Source/AlchemyHD2D/AlchemyWorld.h": "90c3effe53c2585130c92154178734bc86f120e946a7dce7f4a973a4ca431fc0",
+    "Source/AlchemyHD2D/AlchemyHUD.inl": "18ad26fcfae33f0efab12a808e075237a0fdabfe3a14ab36233ff6130ffae584"
+  },
+  "limits": [
+    "Bot production movement/menu observation, not physical keyboard input or human playtest.",
+    "No Cook, packaging, release or numeric changes.",
+    "2 complete and 3 death outcomes are fixed-bot observations, not a human success rate."
+  ]
+}
