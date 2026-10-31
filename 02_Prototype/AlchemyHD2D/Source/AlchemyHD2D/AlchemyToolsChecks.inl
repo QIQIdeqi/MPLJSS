@@ -34,7 +34,7 @@ void AAlchemyWorld::CaptureTools(float Dt) {
         CaptureStep=1;
     }
     SmokeTime+=Dt;UpdateCamera(0);
-    for(auto& E:Enemies) {const float Scale=E.Type==10?3:E.Type>=7?2:1;UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),FMath::Min(E.Type,9)),E.Pos,100*Scale,100*Scale);E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));}
+    for(auto& E:Enemies) {if(E.Type==10)UpdateBossVisual(E);else UpdateEnemyVisual(E);E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));}
     if(CaptureStep==1 && SmokeTime>.6f) {
         FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence/Tools_HUD_Drops.png"),false,false);CaptureStep=2;
     } else if(CaptureStep==2 && SmokeTime>1.2f) {

@@ -1,21 +1,30 @@
-// Confirmed Greyford Boss rules. Unconfirmed presentation/loop defaults are editor tunables.
+﻿// Confirmed Greyford Boss rules. Unconfirmed presentation/loop defaults are editor tunables.
 void AAlchemyWorld::SpawnTutorialEncounter() {
     TutorialEncounterRetry=RunTime+1;
     TArray<FVector> Positions;
-    for(int Try=0;Try<32 && Positions.IsEmpty();Try++) {
+    const int Authored=bBattleReference?BattleSpawnPixels.Num():0;
+    for(int Try=0;Try<32+Authored && Positions.IsEmpty();Try++) {
         FVector Anchor;TArray<FVector> Path;
-        if(!FindSpawnPoint(0,Anchor) || !FindPath(PlayerPos,Anchor,45,Path))continue;
+        if(Try<Authored)Anchor=BattleReferencePoint(BattleSpawnPixels[Try]);
+        else if(!FindSpawnPoint(0,Anchor))continue;
+        if(!FindPath(PlayerPos,Anchor,45,Path))continue;
         TArray<FVector> Candidates;
         for(int I=0;I<TutorialEncounterCount;I++) {
             const FVector P=Anchor+FVector((I%3-1)*55,(I/3)*60,0);
-            if(Walkable(P,45) && FindPath(PlayerPos,P,45,Path))Candidates.Add(P);
+            bool Legal=Walkable(P,45) && FindPath(PlayerPos,P,45,Path);
+            if(Legal && bBattleReference){
+                const auto& K=EnemyDefinition(I%2);TArray<FVector> Corners;
+                for(int X:{-1,1})for(int Y:{-1,1})Corners.Add(P+Camera->GetActorUpVector()*(K.VisualSize.Y*.46)+Camera->GetActorRightVector()*(X*K.VisualSize.X*.5)+(bUprightSprites?FVector::UpVector:Camera->GetActorUpVector())*(Y*K.VisualSize.Y*.5));
+                Legal=BattleOffscreen(P,45) && BattleProjectedOutside(GetWorld()->GetFirstPlayerController(),Corners);
+            }
+            if(Legal)Candidates.Add(P);
         }
         if(Candidates.Num()==TutorialEncounterCount)Positions=MoveTemp(Candidates);
     }
     if(Positions.IsEmpty())return;
     for(int I=0;I<Positions.Num();I++) {
         const int Before=Enemies.Num();SpawnEnemy(I%2);
-        if(Enemies.Num()>Before){Enemies.Last().Pos=Positions[I];UpdateSprite(Enemies.Last().Body,FString::Printf(TEXT("Enemy%d"),I%2),Positions[I],100,100);}
+        if(Enemies.Num()>Before){Enemies.Last().Pos=Positions[I];UpdateEnemyVisual(Enemies.Last());}
     }
     TutorialEncounterPending=false;
     UE_LOG(LogTemp,Display,TEXT("FIRST_AOE_ENCOUNTER count=%d time=%.2f legal_offscreen_cluster=1"),Positions.Num(),RunTime);
@@ -60,7 +69,7 @@ void AAlchemyWorld::ShowPlannedBossLines(FAlchemyEnemy& E,bool Dash,bool Locked)
     };
     const FVector Direction=E.DashDirection.GetSafeNormal2D();
     if(Dash) {
-        const FVector End=BossStraightMove(E.Pos,Direction*1200,EnemyRadius(10));
+        const FVector End=BossStraightMove(E.Pos,Direction*1200,EnemyRadius(E));
         const float Length=FVector::Dist2D(E.Pos,End);const FVector Side(-Direction.Y,Direction.X,0);
         for(int S=0;S<2;S++) {
             const FVector Offset=Side*(S?100:-100);
@@ -119,7 +128,7 @@ void AAlchemyWorld::UpdatePlannedBoss(FAlchemyEnemy& E,float Dt) {
         } else if(E.PlannedState==2) {
             const FVector Before=E.Pos;
             const float Travel=FMath::Min(2000*Step,1200-E.PlannedDistance);
-            E.Pos=BossStraightMove(E.Pos,E.DashDirection*Travel,EnemyRadius(10));
+            E.Pos=BossStraightMove(E.Pos,E.DashDirection*Travel,EnemyRadius(E));
             const float Moved=FVector::Dist2D(Before,E.Pos);E.PlannedDistance+=Moved;
             if(!E.BossDashHit && FMath::PointDistToSegmentSquared(PlayerPos,Before,E.Pos)<=FMath::Square(100.f+45)) {
                 const float OldHP=HP;Hurt(24);

@@ -1,4 +1,4 @@
-param([ValidateSet('Village','Outskirts')][string]$Scene='Village',[switch]$Play)
+﻿param([ValidateSet('Village','Outskirts')][string]$Scene='Village',[switch]$Play)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
 $engineExe='D:\02_UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
@@ -6,7 +6,10 @@ $projectFile=Join-Path $projectRoot 'AlchemyHD2D.uproject'
 if(-not (Test-Path -LiteralPath $engineExe)) {throw 'UE5.8 editor not found.'}
 if(-not (Test-Path -LiteralPath (Join-Path $projectRoot ('Content/Greyford/Maps/'+$Scene+'_Blockout.umap')))) {throw 'Greyford map is missing. Run the documented builder first.'}
 $editorArgs=@(('"'+$projectFile+'"'),('/Game/Greyford/Maps/'+$Scene+'_Blockout'))
-if($Play){$editorArgs+=@('-game','-windowed','-ResX=1280','-ResY=720')}
+if($Play){
+    $editorArgs=@(('"'+$projectFile+'"'),'/Game/Greyford/Maps/Greyford_Flow','-game','-windowed','-ResX=1280','-ResY=720')
+    if($Scene -eq 'Outskirts'){$editorArgs[1]='/Game/Greyford/Maps/BattleReference'}
+}
 else {
     $aliasRoot='D:\03_UEProject\AlchemyHD2DResearch'
     $target=@((Get-Item -LiteralPath $aliasRoot).Target)[0]

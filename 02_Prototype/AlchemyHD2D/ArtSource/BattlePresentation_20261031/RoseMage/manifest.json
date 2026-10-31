@@ -1,0 +1,110 @@
+{
+  "identity": "Previously supplied white-haired rose mage, 2026-10-29 art chat",
+  "user_source_thread": "01a187cc-439c-7992-a010-c854c9f28bfa",
+  "original_user_image": "codex-clipboard-74361215-0692-439c-8308-f4bfde794711.png",
+  "normalization": {
+    "cell": 512,
+    "baseline_y": 488,
+    "body_height_px": 320,
+    "body_height_cm": 180,
+    "sheet_world_size_cm": 288,
+    "foot_offset_cm": 130.5,
+    "filter": "NEAREST",
+    "attack_fps": 10,
+    "attack_frames": 8,
+    "attack_loop": false
+  },
+  "limitations": [
+    "Only existing front/back/right static views and front-three-quarter attack are authored.",
+    "Movement uses directional static art; hit tint and death fade are procedural, not hand-drawn animation.",
+    "Attack facing is not a full directional action set; left view mirrors accessories."
+  ],
+  "files": [
+    {
+      "file": "T_RoseMageFront.png",
+      "source": "03_Build\\sprite-gen\\rose-mage-views-20261029\\front\\front.png",
+      "source_sha256": "557cd63583dc1f7ef68611927d8fe4fa005130523e504eb7bbc83c02057d0248",
+      "sha256": "30d2bd2e4f4ddfb2ec1bfd2e1879d2a47c25b8b071974f055becab68d8938d32",
+      "size": [
+        512,
+        512
+      ],
+      "alpha_bbox": [
+        101,
+        168,
+        411,
+        488
+      ]
+    },
+    {
+      "file": "T_RoseMageBack.png",
+      "source": "03_Build\\sprite-gen\\rose-mage-views-20261029\\back\\back.png",
+      "source_sha256": "e82da977cd258ebc58c97a582d3ef73db4f2d1ec38144a08fd112856b1be69f4",
+      "sha256": "3c871951d1f297e22cc712872318c49dde932bddd5f89ffa1c53d978f2605a48",
+      "size": [
+        512,
+        512
+      ],
+      "alpha_bbox": [
+        103,
+        168,
+        408,
+        488
+      ]
+    },
+    {
+      "file": "T_RoseMageSide.png",
+      "source": "03_Build\\sprite-gen\\rose-mage-views-20261029\\side-right\\side-right.png",
+      "source_sha256": "da7703ba9c5d2d42afba3e085b0540d691d32d922b26a198a23d61fbb300c50c",
+      "sha256": "2c45e3d734f90612054cf5c6bb0c1d0dfa8104785dc5b6fd4db77087cffb4f33",
+      "size": [
+        512,
+        512
+      ],
+      "alpha_bbox": [
+        112,
+        168,
+        399,
+        488
+      ]
+    },
+    {
+      "file": "T_RoseMageAttack.png",
+      "source": "03_Build\\sprite-gen\\rose-mage-attack-20261029\\run\\sprite-sheet-alpha.png",
+      "source_sha256": "7743a326df182147bb669c82a60516ae417a14fc95cd88c6d78f0968514a75ab",
+      "sha256": "384ba2ec4cc8ed8fe3422528111b0ce54b5d8a0515ac2b31354cce9ccc4077f9",
+      "size": [
+        4096,
+        512
+      ],
+      "alpha_bbox": [
+        120,
+        78,
+        3974,
+        488
+      ]
+    },
+    {
+      "file": "T_RoseMagePortrait.png",
+      "source": "03_Build\\sprite-gen\\rose-mage-views-20261029\\front\\front.png",
+      "source_sha256": "557cd63583dc1f7ef68611927d8fe4fa005130523e504eb7bbc83c02057d0248",
+      "sha256": "034d49e0ec8336076e0ea296cfcd3fbed0e17301be5269f656cf5fc3097b5b1f",
+      "size": [
+        256,
+        256
+      ],
+      "alpha_bbox": [
+        11,
+        15,
+        245,
+        248
+      ]
+    }
+  ],
+  "engine_verification": {
+    "date": "2026-10-31",
+    "result": "Native D3D12 visual checks passed at 1280x720 and 1024x768",
+    "report": "02_Prototype/AlchemyHD2D/Docs/局内战斗表现与怪物配置.md",
+    "dedicated_authored_movement_hit_death_animation": false
+  }
+}

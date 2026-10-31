@@ -4,6 +4,7 @@ float AAlchemyHUD::Measure(const FString& Value,float Size) const {
     return FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(Value,Font).X/S;
 }
 void AAlchemyHUD::Text(const FString& Value,float X,float Y,float Size,FLinearColor Color) {
+    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")))UIV02DrawnText.Add(Value);
     // Font size is rasterized at the display size, rather than stretching UFont's default 9pt glyphs.
     FSlateFontInfo Font(World->UIFont,FMath::Max(1,FMath::RoundToInt(World->Progress->FontSize(Size)*S*.75f)));
     FCanvasTextItem Item(FVector2D(OX+X*S,OY+Y*S),FText::FromString(Value),Font,Color);
@@ -44,6 +45,10 @@ void AAlchemyHUD::Button(const FString& Id,const FString& Label,float X,float Y,
     }
 }
 void AAlchemyHUD::Activate(const FString& Id) {
+    if((Id==TEXT("noteprev") || Id==TEXT("notenext")) && World->Panel==TEXT("alchemy")) {
+        DetailPage=FMath::Max(0,DetailPage+(Id==TEXT("notenext")?1:-1));FocusIndex=0;FocusOrder.Empty();return;
+    }
+    if(Id==TEXT("codexprev") || Id==TEXT("codexnext")){World->Action(Id);DetailPage=0;FocusIndex=0;FocusOrder.Empty();return;}
     if(Id==TEXT("detailprev")) {DetailPage=FMath::Max(0,DetailPage-1);return;}
     if(Id==TEXT("detailnext")) {DetailPage++;return;}
     if(Id.StartsWith(TEXT("material"))) {World->AddMaterial(FCString::Atoi(*Id.Mid(8)));return;}
@@ -58,6 +63,7 @@ void AAlchemyHUD::NotifyHitBoxClick(FName Name) {
 }
 void AAlchemyHUD::DrawHUD() {
     Super::DrawHUD();
+    UIV02DrawnText.Empty();
     if(!World) for(TActorIterator<AAlchemyWorld> I(GetWorld());I;++I) {World=*I;break;}
     if(!World || !World->Progress || !Canvas) return;
     S=FMath::Min(Canvas->SizeX/1280.f,Canvas->SizeY/720.f);OX=(Canvas->SizeX-1280*S)/2;OY=(Canvas->SizeY-720*S)/2;
@@ -75,20 +81,43 @@ void AAlchemyHUD::DrawHUD() {
     }
     if(World->Panel!=TEXT("alchemy")) DragMaterial=-1;
     FocusOrder.Empty();ButtonRects.Empty();
+    const FLinearColor White(.94f,.95f,.93f),Dim(.72f,.79f,.8f),Surface(.035f,.06f,.075f,.97f);
+    const bool FlowBoss=World->bGreyfordFlow && World->GreyfordStage==2 && World->Panel.IsEmpty();
+    const bool BattleHUD=World->bCombat && World->Panel.IsEmpty();
+    const float HUDLeft=-OX/S,HUDTop=-OY/S,HUDBottom=(Canvas->SizeY-OY)/S;
+    // 顶部/底部横幅与提示条已移除（用户要求，画面全屏纯净）。
+    // Keep transient guidance away from the actual heroine/Boss sprite bounds.
+    const auto ClearPanelY=[&](float X,float W,float H,float Preferred,bool IncludeBoss){
+        TArray<FBox2D> Figures;
+        const auto AddFigure=[&](AActor* Actor){if(!IsValid(Actor))return;const FBox B=Actor->GetComponentsBoundingBox(true);FBox2D Screen(ForceInit);
+            for(int I=0;I<8;I++){const FVector P((I&1)?B.Max.X:B.Min.X,(I&2)?B.Max.Y:B.Min.Y,(I&4)?B.Max.Z:B.Min.Z);FVector2D V;if(PC->ProjectWorldLocationToScreen(P,V))Screen+=FVector2D((V.X-OX)/S,(V.Y-OY)/S);}
+            if(Screen.bIsValid){Screen.Min-=FVector2D(12,12);Screen.Max+=FVector2D(12,12);Figures.Add(Screen);}};
+        AddFigure(World->Player);if(IncludeBoss)for(const auto& E:World->Enemies)if(E.Type==10)AddFigure(E.Body);
+        if(IncludeBoss && World->bCombat && World->RenderedBossBarY>=0)Figures.Add(FBox2D(FVector2D(400,World->RenderedBossBarY),FVector2D(880,World->RenderedBossBarY+70)));
+        float Best=Preferred,Cost=TNumericLimits<float>::Max();
+        for(float Y:{Preferred,520.f,280.f,410.f}){const FBox2D Panel(FVector2D(X,Y),FVector2D(X+W,Y+H));float Area=0;
+            for(const auto& F:Figures)Area+=FMath::Max(0.,FMath::Min(Panel.Max.X,F.Max.X)-FMath::Max(Panel.Min.X,F.Min.X))*FMath::Max(0.,FMath::Min(Panel.Max.Y,F.Max.Y)-FMath::Max(Panel.Min.Y,F.Min.Y));
+            if(Area<Cost){Cost=Area;Best=Y;}if(Area==0)break;}
+        return Best;
+    };
+    const auto DrawToast=[&](){
+        if(World->ToastTime<=0)return;
+        const bool Modal=!World->Panel.IsEmpty();
+        const float X=Modal?104:340,W=Modal?1074:600,H=64;
+        const float Y=Modal?650:ClearPanelY(X,W,H,520,true);
+        Box(X,Y,W,H,Surface);Box(X,Y,3,H,Gold);Paragraph(World->Toast,X+14,Y+8,W-28,16,Gold);
+    };
+    World->RenderedEliteBars=0;World->RenderedBossBarY=-1;
     if(World->bGreyfordReference && World->Panel.IsEmpty()){
         if(FParse::Param(FCommandLine::Get(),TEXT("GreyfordReferenceCapture")))return;
         Box(12,678,680,30,FLinearColor(0,0,0,.6f));Text(TEXT("WASD 移动 · Space 闪避 · 小屋强化 / 作坊图鉴 / 雾门出发：靠近按 F"),22,684,16,FLinearColor::White);
         for(int I=0;I<3;I++)if(FVector::Dist2D(World->PlayerPos,World->FacilityPosition(I))<220)Text(I==0?TEXT("F · 小屋强化"):I==1?TEXT("F · 作坊图鉴"):TEXT("F · 雾门出发"),525,637,22,Gold);
-        return;
+        DrawToast();return;
     }
-    const FLinearColor White(.94f,.95f,.93f),Dim(.72f,.79f,.8f),Surface(.035f,.06f,.075f,.97f);
-    const bool FlowBoss=World->bGreyfordFlow && World->GreyfordStage==2 && World->Panel.IsEmpty();
-    // 顶部/底部横幅与提示条已移除（用户要求，画面全屏纯净）。
-    World->RenderedEliteBars=0;World->RenderedBossBarY=-1;
     if(World->bCombat && World->Panel.IsEmpty()) {
         for(const auto& E:World->Enemies) if(E.HP>0 && E.Type>=7 && E.Type!=10) {
             FVector2D Screen;
-            if(!PC->ProjectWorldLocationToScreen(E.Pos+FVector(0,0,E.Type>=7?225:120),Screen)) continue;
+            if(!PC->ProjectWorldLocationToScreen(E.Pos+FVector(0,0,World->EnemyDefinition(E).VisualSize.Y+25),Screen)) continue;
             float X=(Screen.X-OX)/S,Y=(Screen.Y-OY)/S,W=E.Type>=7?100:72;
             if(X<W/2 || X>1280-W/2 || Y<100 || Y>560) continue;
             World->RenderedEliteBars++;
@@ -101,6 +130,8 @@ void AAlchemyHUD::DrawHUD() {
             FLinearColor Color(1,.9f,.55f,FMath::Min(1.f,Number.Life/.2f));
             Text(FString::Printf(TEXT("%.0f"),Number.Value),X,Y,19+4*FMath::Max(0.f,1-Age/.12f),Color);
         }
+        // Reference artwork, live bars, skill slots and minimap are owned by BattleReferenceWidget.
+        if(!World->BattleWidget) {
         // 左上角：素材列表（系统 UI V0.2 §6.2）。
         Box(24,108,260,142,Surface);Box(24,108,4,142,Gold);
         for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d / 10"),MaterialNames[I],World->Inventory[I]),42,120+I*40,20,I==0?Gold:White);
@@ -112,7 +143,7 @@ void AAlchemyHUD::DrawHUD() {
                 Text(FString::Printf(TEXT("%.0f/%.0f"),World->HP,World->MaxHP),HX+10,HY-18,14,White);
             }
         }
-        // 顶部中央计时已在标题栏；右上角击杀/金币/暂停按钮。
+        // No-widget fallback only; production status bars and timer belong to UMG.
         Text(FString::Printf(TEXT("击败 %d   金币 %d"),World->Kills,World->RunCoins),850,60,20,Gold);
         Button(TEXT("pausebtn"),TEXT("暂停"),1180,52,80,true,40);
         float Start=(1280-World->Equipped.Num()*146)/2.f;
@@ -125,30 +156,36 @@ void AAlchemyHUD::DrawHUD() {
         int NeedXP=World->RequiredXP(World->RunLevel);
         Text(FString::Printf(TEXT("Lv.%d  %.0f / %d"),World->RunLevel,World->RunXP,NeedXP),560,648,18,Gold);
         Box(500,666,280,8,Ink);Box(500,666,280*FMath::Clamp(World->RunXP/NeedXP,0.f,1.f),8,Gold);
+        } else {
+            const float HintX=HUDLeft+18,HintY=ClearPanelY(HintX,264,26,HUDBottom-36,true);
+            Text(TEXT("Q 炼金 · B 技能 · Esc 暂停"),HintX,HintY+4,16,Dim);
+        }
         if(World->TutorialActive() && !World->bBossArenaActive) {
             bool Ready=World->Inventory[0]>0 && World->Inventory[1]>0 && World->Inventory[2]>0;
-            const float TY=World->RunTime>=300?186:108;
-            Box(350,TY,650,118,Surface);
-            Paragraph(World->TutorialSkill>=0?TEXT("让新技能一次命中至少2个敌人，完成首次教学。"):Ready?TEXT("材料已齐！按 Tab，尝试第一次炼金。"):TEXT("战斗收集三类材料，准备第一次炼金。"),370,TY+14,610,20,Gold);
-            if(Ready && World->TutorialSkill<0) Button(TEXT("alchemy"),TEXT("Tab 开始炼金"),370,TY+63,340);
+            const float PanelH=Ready && World->TutorialSkill<0?82:48;
+            const float TY=ClearPanelY(340,600,PanelH,102,false);
+            Box(340,TY,600,PanelH,Surface);
+            Paragraph(World->TutorialSkill>=0?TEXT("让新技能一次命中至少2个敌人，完成首次教学。"):Ready?TEXT("材料已齐！按 Q，尝试第一次炼金。"):TEXT("战斗收集三类材料，准备第一次炼金。"),360,TY+10,560,18,Gold);
+            if(Ready && World->TutorialSkill<0) Button(TEXT("alchemy"),TEXT("Q 开始炼金"),370,TY+42,340,true,32);
         }
         if(!World->bGreyfordFlow && World->RunTime>=300 && !World->bBossSpawned) {Box(340,102,600,68,Surface);Text(FString::Printf(TEXT("BOSS 即将出现：%.1f秒"),310-World->RunTime),360,120,26,Gold);}
         for(const auto& E:World->Enemies) if(E.Type==10) {
-            const float Y=FlowBoss?8:102;World->RenderedBossBarY=Y;
-            Box(340,Y,600,FlowBoss?70:104,Surface);Box(340,Y,600,3,Gold);
-            Text(E.Phase2?TEXT("腐化之源 · 二阶段"):World->bGreyfordFlow?TEXT("腐化之源 · 雾界草甸"):TEXT("腐化之源 · 封锁战场"),360,Y+10,FlowBoss?20:24,Gold);
-            Box(360,Y+(FlowBoss?36:48),560,12,Ink);Box(360,Y+(FlowBoss?36:48),560*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);
+            const float Y=FlowBoss?ClearPanelY(400,480,70,102,true):102;World->RenderedBossBarY=FMath::RoundToInt(Y);
+            Box(400,Y,480,FlowBoss?70:104,Surface);Box(400,Y,480,3,Gold);
+            Text(E.Phase2?TEXT("腐化之源 · 二阶段"):World->bGreyfordFlow?TEXT("腐化之源 · 雾界草甸"):TEXT("腐化之源 · 封锁战场"),416,Y+10,FlowBoss?20:24,Gold);
+            Box(416,Y+(FlowBoss?36:48),448,12,Ink);Box(416,Y+(FlowBoss?36:48),448*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);
             const TCHAR* Names[]={TEXT("冲刺 · 离开橙色直线"),TEXT("弹幕 · 从扇形间隙穿过"),TEXT("冲击波 · 向侧面闪避")};
-            Text(FlowBoss?(E.PlannedState==1?TEXT("冲刺蓄力 · 方向锁定后向侧面躲开"):E.PlannedState==2?TEXT("冲刺中 · 避开橙色路线"):E.PlannedState==3?TEXT("收招停顿 · 调整站位并输出"):TEXT("两波弹幕 · 观察青色弹道间隙")):E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:World->bGreyfordFlow?TEXT("保持移动 · 雾界边界不可越过"):TEXT("保持移动 · 金色边界不可越过"),360,Y+(FlowBoss?50:72),FlowBoss?16:18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
+            Text(FlowBoss?(E.PlannedState==1?TEXT("冲刺蓄力 · 方向锁定后向侧面躲开"):E.PlannedState==2?TEXT("冲刺中 · 避开橙色路线"):E.PlannedState==3?TEXT("收招停顿 · 调整站位并输出"):TEXT("两波弹幕 · 观察青色弹道间隙")):E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:World->bGreyfordFlow?TEXT("保持移动 · 雾界边界不可越过"):TEXT("保持移动 · 金色边界不可越过"),416,Y+(FlowBoss?50:72),FlowBoss?16:18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
         }
         if(World->bMerchantActive && !World->bBossSpawned) {
             const FVector D=World->MerchantPos-World->PlayerPos;
             const float Right=FVector::DotProduct(D,World->Camera->GetActorRightVector()),Up=FVector::DotProduct(D,World->Camera->GetActorForwardVector().GetSafeNormal2D());
             const TCHAR* Way=FMath::Abs(Right)>FMath::Abs(Up)?(Right>0?TEXT("右方"):TEXT("左方")):(Up>0?TEXT("上方"):TEXT("下方"));
-            Box(964,108,292,150,Surface);Box(964,108,4,150,Gold);
-            Text(World->bMerchantLeaving?FString(TEXT("流浪商人 · 正在离场")):FString::Printf(TEXT("流浪商人 · %.0f秒"),World->MerchantRemaining),982,122,20,Gold);
-            Text(FString::Printf(TEXT("%s %.1f米 · 金色标记"),Way,D.Size2D()/100),982,158,18,White);
-            Button(TEXT("merchantopen"),World->bMerchantLeaving?TEXT("正在收摊，暂不交易"):World->CanTrade()?TEXT("F 打开交易"):TEXT("靠近商人后按 F"),982,199,256,World->CanTrade(),42);
+            const float MerchantX=HUDLeft+18,MerchantY=HUDTop+142;
+            Box(MerchantX,MerchantY,292,150,Surface);Box(MerchantX,MerchantY,4,150,Gold);
+            Text(World->bMerchantLeaving?FString(TEXT("流浪商人 · 正在离场")):FString::Printf(TEXT("流浪商人 · %.0f秒"),World->MerchantRemaining),MerchantX+18,MerchantY+14,20,Gold);
+            Text(FString::Printf(TEXT("%s %.1f米 · 金色标记"),Way,D.Size2D()/100),MerchantX+18,MerchantY+50,18,White);
+            Button(TEXT("merchantopen"),World->bMerchantLeaving?TEXT("正在收摊，暂不交易"):World->CanTrade()?TEXT("F 打开交易"):TEXT("靠近商人后按 F"),MerchantX+18,MerchantY+91,256,World->CanTrade(),42);
         }
     } else if(!World->bCombat && World->Panel.IsEmpty() && !World->bGreyfordFlow) {
         for(int I=0;I<3;I++) {
@@ -212,25 +249,28 @@ void AAlchemyHUD::DrawHUD() {
                     Box(X,Y,110,64,FLinearColor(.05f,.06f,.07f));Text(TEXT("暂未开放"),X+10,Y+22,14,Muted);
                 }
             }
-            // 炼成笔记（右下）：已发现配方 + 一键填入。
-            Text(TEXT("炼成笔记"),740,470,20,White);
-            int Rows=0;
-            for(int C=0;C<7 && Rows<3;C++) {
-                bool Known=World->Progress->Combinations.Contains(C);
-                float Y=500+Rows*44;
-                if(!Known) continue;
-                Text(FString::Printf(TEXT("%s"),World->CombinationName(C)),752,Y+10,16,Gold);
-                // 一键填入（材料足够才显示）。
+            // All discovered normal combinations, three per page; actions stay below the list.
+            Text(TEXT("炼成笔记"),740,412,20,White);
+            TArray<int32> KnownCombinations;
+            for(int C=0;C<7;C++)if(World->Progress->Combinations.Contains(C))KnownCombinations.Add(C);
+            const int PerPage=3,Pages=FMath::Max(1,(KnownCombinations.Num()+PerPage-1)/PerPage);
+            DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
+            if(KnownCombinations.IsEmpty())Text(TEXT("发现材料组合后在此记录。"),752,450,16,Dim);
+            for(int Row=0;Row<PerPage;Row++) {
+                const int Index=DetailPage*PerPage+Row;if(!KnownCombinations.IsValidIndex(Index))break;
+                const int C=KnownCombinations[Index];const float Y=440+Row*38;
+                Text(World->CombinationName(C),752,Y+9,16,Gold);
                 int Need[3]={0,0,0};int Mask=World->RuntimeRecipes[C].Mask;
                 if(Mask==7){Need[0]=Need[1]=Need[2]=1;}else{int Cnt=0;if(Mask&1){Need[0]=1;Cnt++;}if(Mask&2){Need[1]=1;Cnt++;}if(Mask&4){Need[2]=1;Cnt++;}if(Cnt==1){for(int M=0;M<3;M++)if(Need[M])Need[M]=3;}else{int First=-1;for(int M=0;M<3;M++)if(Need[M]){if(First<0)First=M;}for(int M=0;M<3;M++)Need[M]=Need[M]*(M==First?2:1);}}
                 bool Enough=true;for(int M=0;M<3;M++)if(World->Inventory[M]<Need[M])Enough=false;
-                if(Enough && World->bCombat && !World->TutorialActive()) Button(FString::Printf(TEXT("fill%d"),C),TEXT("一键填入"),980,Y+6,180,true,34);
-                Rows++;
+                Button(FString::Printf(TEXT("fill%d"),C),TEXT("一键填入"),1002,Y+3,176,Enough && World->bCombat && !World->TutorialActive(),32);
             }
-            // 操作按钮。
-            if(Valid) Button(TEXT("craft"),TEXT("开始炼金"),740,580,240);
-            Button(TEXT("clear"),TEXT("清空素材"),1000,580,180);
-            Paragraph(Reason.IsEmpty()?(World->TutorialActive()?TEXT("首次三料各1个；合成后返回战斗，体验范围攻击。"):TEXT("材料种类决定组合，投入总量影响品质概率。")):Reason,104,620,1074,16,Gold);
+            Button(TEXT("noteprev"),TEXT("上一页"),740,554,120,DetailPage>0,30);
+            Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),902,561,16,Dim);
+            Button(TEXT("notenext"),TEXT("下一页"),1058,554,120,DetailPage<Pages-1,30);
+            if(Valid) Button(TEXT("craft"),TEXT("开始炼金"),740,594,240,true,42);
+            Button(TEXT("clear"),TEXT("清空素材"),1000,594,180,true,42);
+            Paragraph(Reason.IsEmpty()?(World->TutorialActive()?TEXT("首次三料各1个；合成后返回战斗，体验范围攻击。"):TEXT("材料种类决定组合，投入总量影响品质概率。")):Reason,104,530,600,16,Gold);
             if(DragMaterial>=0) {float X,Y;PC->GetMousePosition(X,Y);Text(MaterialNames[DragMaterial],(X-OX)/S+16,(Y-OY)/S,22,Gold);}
         } else if(P==TEXT("codex")) {
             // 图鉴三分类：技能 / 怪物 / 素材（系统 UI V0.2 §4）。
@@ -240,14 +280,13 @@ void AAlchemyHUD::DrawHUD() {
                 // 技能图鉴：21 普通技能，已发现显示名称/品质/组合，未发现显示 ???。
                 int PerPage=6; int Count=21; int Pages=(Count+PerPage-1)/PerPage;DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
                 for(int Row=0;Row<PerPage;Row++) {
-                    int K=DetailPage*PerPage+Row; if(K>=Count) break; float Y=238+Row*54;
+                    const int Index=DetailPage*PerPage+Row;if(Index>=Count)break;
+                    const int Combo=Index/3,Quality=Index%3,K=World->CombinationSkill(Combo,Quality);float Y=238+Row*54;
                     bool Known=World->Progress->Recipes.Contains(K);
                     Box(104,Y,1074,48,FLinearColor(.055f,.095f,.11f));
                     Text(Known?World->SkillName(K):TEXT("??? 未发现"),120,Y+13,20,Known?Gold:Dim);
                     if(Known) {
-                        // 组合归属：找该技能属于哪个组合。
-                        int Combo=-1,Quality=-1;for(int C=0;C<7;C++)for(int Q=0;Q<3;Q++)if(World->CombinationSkill(C,Q)==K){Combo=C;Quality=Q;}
-                        if(Combo>=0) Text(FString::Printf(TEXT("%s · %s品质"),World->CombinationName(Combo),Quality==0?TEXT("低"):Quality==1?TEXT("中"):TEXT("高")),360,Y+15,18,Dim);
+                        Text(FString::Printf(TEXT("%s · %s品质"),World->CombinationName(Combo),Quality==0?TEXT("低"):Quality==1?TEXT("中"):TEXT("高")),360,Y+15,18,Dim);
                     }
                 }
                 Button(TEXT("detailprev"),TEXT("上一页"),104,580,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,580,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,590,20,Dim);
@@ -302,16 +341,16 @@ void AAlchemyHUD::DrawHUD() {
             Paragraph(TEXT("[ / ] 调整视野宽度。战斗与掉落配置仅限据点切换。"),104,535,1074,20,Dim);
         } else if(P==TEXT("talents")) {
             Text(FString::Printf(TEXT("永久金币 %d；所有强化独立开放，金币足够即可购买。"),World->Progress->Coins),104,181,18,Dim);
-            // 10 independent upgrades; grid of 4 columns per user mockup, scroll handled by paging here.
+            // Two columns, five rows, all ten upgrades inside the modal safe frame.
             for(int I=0;I<TalentNodeCount;I++) {
-                int L=World->Progress->Talents[I];
-                bool Done=World->TalentNodeDone(I);
-                int MX=TalentMaxLevel[I];
-                float Y=232+I*58;
-                FString State=FString::Printf(TEXT("Lv.%d/%d"),L,MX);
-                FString Label=Done?TEXT("已满级"):FString::Printf(TEXT("购买  %d金币"),TalentCosts[I][L]);
-                Text(FString::Printf(TEXT("%s  %s"),TalentNames[I],*State),120,Y+6,21,Done?Dim:White);
-                if(!Done) Button(FString::Printf(TEXT("buy%d"),I),Label,808,Y,370,World->Progress->Coins>=TalentCosts[I][L]);
+                const int L=World->Progress->Talents[I],MX=TalentMaxLevel[I];
+                const bool Done=World->TalentNodeDone(I);
+                const float X=104+(I%2)*550,Y=220+(I/2)*76;
+                Box(X,Y,524,68,FLinearColor(.055f,.095f,.11f));
+                Text(TalentNames[I],X+12,Y+8,20,Done?Dim:White);
+                Text(FString::Printf(TEXT("Lv.%d/%d"),L,MX),X+12,Y+38,18,Gold);
+                const FString Label=Done?TEXT("已满级"):FString::Printf(TEXT("购买 %d金币"),TalentCosts[I][L]);
+                Button(FString::Printf(TEXT("buy%d"),I),Label,X+264,Y+14,248,!Done && World->Progress->Coins>=TalentCosts[I][L],44);
             }
         } else if(P==TEXT("level")) {
             Text(World->bGreyfordFlow?TEXT("村庄外围"):TEXT("腐化林地"),104,245,32,Gold);Text(TEXT("自动战斗 · 材料炼金 · 固定地图"),104,305,23,White);
@@ -324,11 +363,10 @@ void AAlchemyHUD::DrawHUD() {
             Paragraph(Desc,104,260,1000,25,White);Button(TEXT("confirmbuy"),TEXT("确认购买并保存"),104,460,524);Button(TEXT("talents"),TEXT("取消"),654,460,524);
         } else if(P==TEXT("result")) {
             if(World->PendingIsNuclear) {
-                Text(TEXT("核弹炼金 · 特殊结果"),104,200,30,Gold);
-                Paragraph(TEXT("已清除全部普通怪物，精英与BOSS不受影响。"),104,270,1000,24,White);
-                Text(TEXT("特殊结果，不参与常规连锁。"),104,360,20,Dim);
-                Button(TEXT("acceptresult"),TEXT("确认"),104,520,524);
-            } else if(World->PendingResultSkill>=0) {
+                Text(TEXT("核弹额外清场 · 中高品质权重减半，差额转低品质"),104,180,18,Gold);
+                Text(TEXT("精英与Boss不受清场影响；技能仍可接收、正常参与连锁。"),104,453,16,Dim);
+            }
+            if(World->PendingResultSkill>=0) {
                 int K=World->PendingResultSkill;
                 const auto& SK=World->SkillConfig(K);
                 Text(FString::Printf(TEXT("炼金成功 · %s"),World->SkillName(K)),104,200,30,Gold);
@@ -373,7 +411,8 @@ void AAlchemyHUD::DrawHUD() {
             Text(TEXT("↑ ↓ 选择    Enter 确认    Esc 返回"),104,480,22,Dim);
         }
     }
-    // 顶部 Toast 横幅已移除（用户要求，画面全屏纯净）。
+    // Restore transient feedback below the scene/modal without a top banner.
+    DrawToast();
     DrawMerchantFeedback();
     if(World->bGreyfordFlow)DrawGreyfordFlow();
 }

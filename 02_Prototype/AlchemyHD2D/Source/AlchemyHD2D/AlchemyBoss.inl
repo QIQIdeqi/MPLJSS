@@ -78,7 +78,7 @@ void AAlchemyWorld::UpdateBoss(FAlchemyEnemy& E,float Dt) {
     if(E.BossActive>0) {
         const float Step=FMath::Min(Dt,E.BossActive);E.BossActive-=Step;
         const FVector Before=E.Pos;
-        E.Pos=Move(E.Pos,E.DashDirection*(E.Phase2?1700.f:1350.f)*Step,EnemyRadius(10));
+        E.Pos=Move(E.Pos,E.DashDirection*(E.Phase2?1700.f:1350.f)*Step,EnemyRadius(E));
         const FVector Segment=E.Pos-Before;
         const float T=FMath::Clamp(FVector::DotProduct(PlayerPos-Before,Segment)/FMath::Max(1.f,Segment.SizeSquared2D()),0.f,1.f);
         if(!E.BossDashHit && FVector::Dist2D(Before+Segment*T,PlayerPos)<155) {Hurt(28);E.BossDashHit=true;}
@@ -130,9 +130,10 @@ void AAlchemyWorld::UpdateBoss(FAlchemyEnemy& E,float Dt) {
 }
 
 void AAlchemyWorld::UpdateBossVisual(FAlchemyEnemy& E) {
-    const float Width=300*(1+.06f*E.HitFlash/.1f),Height=350*(1-.04f*E.HitFlash/.1f);
+    const auto& K=EnemyDefinition(E);
+    const float Width=K.VisualSize.X*(1+.06f*E.HitFlash/.1f),Height=K.VisualSize.Y*(1-.04f*E.HitFlash/.1f);
     const FVector Facing=(bGreyfordFlow && GreyfordStage==2 && (E.PlannedLocked || E.PlannedState==2))?E.DashDirection:PlayerPos-E.Pos;
-    UpdateSprite(E.Body,TEXT("BossCorruption"),E.Pos,Width,Height,Facing.X<0);
+    UpdateSprite(E.Body,K.SpriteKey,E.Pos,Width,Height,Facing.X<0,K.MaterialOverride);
     // Sprite-gen's 432px baseline on a 448px canvas stays fixed during hit squash.
     E.Body->SetActorLocation(E.Pos+Camera->GetActorUpVector()*(208.f/448*Height));
     E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));

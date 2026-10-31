@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "rose-mage-front",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "square",
+    "width": 512,
+    "height": 512,
+    "safe_margin_x": 24,
+    "safe_margin_y": 24,
+    "size": 512,
+    "safe_margin": 24
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "manual"
+  },
+  "states": {
+    "walk": {
+      "frames": 6,
+      "fps": 8,
+      "loop": true,
+      "action": "Alternating articulated two-step walk in place in the approved direction."
+    },
+    "hurt": {
+      "frames": 4,
+      "fps": 10,
+      "loop": false,
+      "action": "Brace, recoil with bent knees, recover, neutral."
+    },
+    "death": {
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "action": "Knees buckle, kneel, collapse, prone and remain down. Never scale low poses to standing height."
+    }
+  },
+  "style": "Exact approved white-haired rose mage identity and pixel art. Native imagegen row per action; no rotated idle substitutes.",
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "nearest",
+    "align_y": "bottom",
+    "align_x": "bbox-center",
+    "pixel_unfake": false
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

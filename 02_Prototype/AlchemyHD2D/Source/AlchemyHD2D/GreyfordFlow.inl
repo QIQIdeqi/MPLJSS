@@ -1,5 +1,7 @@
 // A persistent world streams the three authored scenes; run state never crosses a reset boundary.
 bool AAlchemyWorld::SwitchGreyfordStage(int32 Stage) {
+    if(bGreyfordReference)UpdateVillagePerspectiveCards(false);
+    ClearBattleReferenceScene();
     const TCHAR* Names[]={TEXT("Village_Reference"),TEXT("Outskirts_Blockout"),TEXT("Greyford_Boss")};
     ULevelStreaming* Wanted=nullptr;
     for(auto* Level:GetWorld()->GetStreamingLevels()) {
@@ -31,6 +33,8 @@ bool AAlchemyWorld::SwitchGreyfordStage(int32 Stage) {
         if(It->GetLevel()!=GreyfordActiveLevel || !It->ActorHasTag(TEXT("GreyfordBlocker")))continue;
         FVector C,E;It->GetActorBounds(true,C,E);Obstacles.Add({FVector2D(C),FVector2D(E)});
     }
+    if(Stage==1 && !BuildBattleReferenceScene())return false;
+    if(Stage==2 && !BuildBossReferenceScene())return false;
 #if WITH_EDITOR
     if(Stage==2)Material(TEXT("M_BossCorruption"));
     FAssetCompilingManager::Get().FinishAllCompilation();
@@ -103,6 +107,7 @@ void AAlchemyWorld::UpdateGreyfordPortal() {
     if(GreyfordStage!=1 || GreyfordPortalReady || RunTime<GreyfordPortalRetry)return;
     FVector P;TArray<FVector> Path;bool Found=false;
     const auto Accept=[&](FVector Candidate) {
+        if(bBattleReference && !BattlePlayerPoint(Candidate).Equals(Candidate,.1))return false;
         if(!Walkable(Candidate,240) || !FindPath(PlayerPos,Candidate,45,Path))return false;
         P=Candidate;return true;
     };
@@ -113,7 +118,8 @@ void AAlchemyWorld::UpdateGreyfordPortal() {
     if(!Found)for(float X=-6400;X<=6400 && !Found;X+=400)for(float Y=-4600;Y<=4600 && !Found;Y+=400)Found=Accept(FVector(X,Y,0));
     if(!Found){GreyfordPortalRetry=RunTime+5;Message(TEXT("Boss传送阵正在寻找可达落点，5秒后重试。"));return;}
     GreyfordPortalPos=P;GreyfordPortalReady=true;
-    GreyfordPortal=Sprite(TEXT("Portal"),P,420,560);
+    GreyfordPortal=SpawnPixelFX(2,P);
+    ensureMsgf(Cast<APixelFXActor>(GreyfordPortal)->IsReady(),TEXT("Boss portal PixelFX assets must be cooked"));
     Message(TEXT("Boss传送阵已开放 · 跟随箭头，站入阵内按F确认挑战。"));
     UE_LOG(LogTemp,Display,TEXT("GREYFORD_PORTAL_READY time=%.2f pos=(%.1f,%.1f) clearance=240 path_nodes=%d"),RunTime,P.X,P.Y,Path.Num());
 }
@@ -129,16 +135,17 @@ bool AAlchemyWorld::EnterGreyfordBoss() {
     for(auto& E:Effects)if(IsValid(E.Body))E.Body->Destroy();Effects.Empty();
     for(auto& E:NiagaraFX)if(IsValid(E.Component))E.Component->DestroyComponent();NiagaraFX.Empty();DamageNumbers.Empty();
     CloseMerchant();if(IsValid(GreyfordPortal))GreyfordPortal->Destroy();GreyfordPortal=nullptr;GreyfordPortalReady=false;
+    ClearPixelFX();
     if(!SwitchGreyfordStage(2)){EndRun(false);return false;}
-    PlayerPos=FVector(0,-500,0);Panel.Empty();CharacterAnimation.Reset();
+    PlayerPos=FVector(0,-500,0);Panel=(PendingResultSkill>=0 || PendingIsNuclear)?TEXT("result"):TEXT("");CharacterAnimation.Reset();
     SpawnEnemy(10);
     if(Enemies.IsEmpty()){EndRun(false);return false;}
     auto& Boss=Enemies.Last();Boss.Pos=FVector(0,500,0);Boss.AttackCD=0;
     GreyfordBossPreparation=2;GreyfordBossStartFlash=0;GreyfordBossWarmupFrames=2;GreyfordCountdownCapture=-1;
     bBossSpawned=bBossArenaActive=true;BossArenaCenter=FVector::ZeroVector;
-    UpdateBossVisual(Boss);UpdateCamera(0);UpdateCharacterVisual(0,false);
-    PlayerShadow->SetActorLocation(PlayerPos+FVector(0,0,5));
-    Message(TEXT("雾界草甸 · 击败Boss后结算；本场不能返回，Tab炼金、B换技能均暂停。"));
+    UpdateCharacterVisual(0,false);UpdateBossVisual(Boss);UpdateCamera(0);UpdateCharacterVisual(0,false);
+    PlayerShadow->SetActorLocation(VillageVisualPoint(PlayerPos+FVector(0,0,5)));
+    Message(TEXT("雾界草甸 · 击败Boss后结算；本场不能返回，Q炼金、B换技能均暂停。"));
     UE_LOG(LogTemp,Display,TEXT("GREYFORD_BOSS_ENTER hp_before=%.1f hp_after=%.1f spacing=1000 materials=%d,%d,%d,%d,%d,%d"),BeforeHP,HP,Inventory[0],Inventory[1],Inventory[2],Inventory[3],Inventory[4],Inventory[5]);return true;
 }
 
@@ -179,7 +186,7 @@ void AAlchemyWorld::GreyfordAmbientCheck(float Dt){
             }
         }
     }
-    UpdateCamera(Dt);UpdateCharacterVisual(Dt,Moving);PlayerShadow->SetActorLocation(PlayerPos+FVector(0,0,5));
+    UpdateCamera(Dt);UpdateCharacterVisual(Dt,Moving);PlayerShadow->SetActorLocation(VillageVisualPoint(PlayerPos+FVector(0,0,5)));
     const float A=Camera->GetCameraComponent()->AspectRatio,FullW=1672*180.f/52,FullH=941*180.f/52,Sin=FMath::Sin(FMath::DegreesToRadians(48.f));
     const bool InBounds=FMath::Abs(ReferenceCameraFocus.X)+ViewWidth/2<=FullW/2+1 && FMath::Abs(ReferenceCameraFocus.Y)*Sin+ViewWidth/(2*A)<=FullH/2+1;
     AmbientOK &= InBounds && Walkable(PlayerPos);
@@ -216,7 +223,7 @@ void AAlchemyWorld::GreyfordFlowCheck(float Dt) {
                 if(FParse::Param(FCommandLine::Get(),TEXT("GreyfordReferenceClean"))){Player->SetActorHiddenInGame(true);PlayerShadow->SetActorHiddenInGame(true);}
             }
             if(!bGreyfordReference && FParse::Param(FCommandLine::Get(),TEXT("GreyfordVillageOverview"))){ViewWidth=11000;PlayerPos=FVector(0,-500,0);UpdateCamera(0);UpdateCharacterVisual(0,false);Shot(TEXT("00-village-overview.png"));}else Shot(TEXT("01-village.png"));break;}
-        case 1:Player->SetActorHiddenInGame(false);PlayerShadow->SetActorHiddenInGame(false);ViewWidth=2400;PlayerPos=bGreyfordReference?ReferencePoint(375,615):FVector(2700,-3300,GreyfordSurfaceHeight(FVector(2700,-3300,0)));Check(bGreyfordReference?Walkable(PlayerPos):PlayerPos.Z>20,TEXT("bridge_walkable_surface"));UpdateCamera(0);UpdateCharacterVisual(0,false);PlayerShadow->SetActorLocation(PlayerPos+FVector(0,0,5));Shot(TEXT("02-bridge-deck.png"));break;
+        case 1:Player->SetActorHiddenInGame(false);PlayerShadow->SetActorHiddenInGame(false);ViewWidth=2400;PlayerPos=bGreyfordReference?ReferencePoint(375,615):FVector(2700,-3300,GreyfordSurfaceHeight(FVector(2700,-3300,0)));Check(bGreyfordReference?Walkable(PlayerPos):PlayerPos.Z>20,TEXT("bridge_walkable_surface"));UpdateCamera(0);UpdateCharacterVisual(0,false);PlayerShadow->SetActorLocation(VillageVisualPoint(PlayerPos+FVector(0,0,5)));Shot(TEXT("02-bridge-deck.png"));break;
         case 2:PlayerPos=bGreyfordReference?ReferencePoint(778,365):FVector(2700,-3920,0);UpdateCamera(0);UpdateCharacterVisual(0,false);Shot(TEXT("03-bridge-front.png"));break;
         case 3:PlayerPos=bGreyfordReference?ReferencePoint(797,480):FVector(2700,-2680,0);UpdateCamera(0);UpdateCharacterVisual(0,false);Shot(TEXT("04-bridge-behind.png"));break;
         case 4:Action(TEXT("start"));Check(GreyfordStage==1 && bCombat && HP==MaxHP,TEXT("village_to_field"));RunTime=299.9f;UpdateGreyfordPortal();Check(!GreyfordPortalReady,TEXT("no_portal_before_300"));RunTime=300;UpdateGreyfordPortal();Check(GreyfordPortalReady && Walkable(GreyfordPortalPos,240),TEXT("portal_at_300_clearance"));Shot(TEXT("05-portal-guide.png"));break;
@@ -249,6 +256,7 @@ void AAlchemyHUD::DrawGreyfordFlow() {
             for(int I=0;I<8;I++){FVector2D P;if(GetOwningPlayerController()->ProjectWorldLocationToScreen(C+E*FVector(I&1?1:-1,I&2?1:-1,I&4?1:-1),P))Bounds+=FVector2D((P.X-OX)/S,(P.Y-OY)/S);}
             if(Bounds.bIsValid)Figures.Add(Bounds.ExpandBy(16));
         }
+        if(World->RenderedBossBarY>=0)Figures.Add(FBox2D(FVector2D(390,World->RenderedBossBarY-8),FVector2D(890,World->RenderedBossBarY+78)));
         FVector2D Center(640,290);bool Clear=false;
         for(FVector2D Candidate:{FVector2D(640,290),FVector2D(470,290),FVector2D(810,290),FVector2D(640,340),FVector2D(940,190),FVector2D(400,190)}) {
             FBox2D Area(Candidate-FVector2D(HalfWidth+10,46),Candidate+FVector2D(HalfWidth+10,46));bool Overlap=false;

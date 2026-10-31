@@ -1,4 +1,4 @@
-// Spatial QA runs the shipped movement code and captures named art/ground contacts.
+﻿// Spatial QA runs the shipped movement code and captures named art/ground contacts.
 void AAlchemyWorld::GreyfordSpatialCheck(float Dt) {
     if(SpatialCase<0){
         FString Spec=FPaths::ProjectDir()/TEXT("Tools/GreyfordSpatial.json"),Text;
@@ -58,7 +58,7 @@ void AAlchemyWorld::GreyfordSpatialCheck(float Dt) {
             UE_LOG(LogTemp,Display,TEXT("GREYFORD_SPATIAL_%s"),SpatialOK?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,SpatialOK?0:1);return;
         }
         PlayerPos=SpatialPoints[SpatialCase];LastDirection=FVector(0,-1,0);UpdateCamera(0);UpdateCharacterVisual(0,false);
-        PlayerShadow->SetActorLocation(PlayerPos+FVector(0,0,5));
+        PlayerShadow->SetActorLocation(VillageVisualPoint(PlayerPos+FVector(0,0,5)));
         const FString File=SpatialDir/FString::Printf(TEXT("%02d-%s.png"),SpatialCase,*SpatialNames[SpatialCase]);
         int VX=1280,VY=720;GetWorld()->GetFirstPlayerController()->GetViewportSize(VX,VY);
         FVector2D Screen(VX/2.f-(PlayerPos.X-ReferenceCameraFocus.X)*VX/ViewWidth,VY/2.f-(PlayerPos.Y-ReferenceCameraFocus.Y)*FMath::Sin(FMath::DegreesToRadians(48.f))*VX/ViewWidth);

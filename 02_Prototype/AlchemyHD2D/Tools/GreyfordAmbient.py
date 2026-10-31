@@ -6,6 +6,7 @@ lib=u.EditorAssetLibrary
 edit=u.MaterialEditingLibrary
 tools=u.AssetToolsHelpers.get_asset_tools()
 F1=u.CustomMaterialOutputType.CMOT_FLOAT1
+F2=u.CustomMaterialOutputType.CMOT_FLOAT2
 F3=u.CustomMaterialOutputType.CMOT_FLOAT3
 F4=u.CustomMaterialOutputType.CMOT_FLOAT4
 
@@ -35,6 +36,68 @@ def polygon(points):
     vertices=','.join('float2(%s,%s)'%tuple(p) for p in points);n=len(points)
     return f'float2 v[{n}]={{{vertices}}};bool hit=false;for(int i=0,j={n-1};i<{n};j=i++){{if(((v[i].y>p.y)!=(v[j].y>p.y))&&(p.x<(v[j].x-v[i].x)*(p.y-v[i].y)/(v[j].y-v[i].y)+v[i].x))hit=!hit;}}'
 
+def reference_uv(m,S):
+    """Default 0 preserves authored cards; runtime 1 preserves the painted image under affine pan/zoom."""
+    raw=expr(m,u.MaterialExpressionTextureCoordinate)
+    mode=expr(m,u.MaterialExpressionScalarParameter,parameter_name='VillagePerspective',default_value=0)
+    position=expr(m,u.MaterialExpressionWorldPosition,
+                  world_position_shader_offset=u.WorldPositionIncludedOffsets.WPT_EXCLUDE_ALL_SHADER_OFFSETS)
+    camera=expr(m,u.MaterialExpressionCameraPositionWS)
+    sn=math.sin(math.radians(48))
+    focus=expr(m,u.MaterialExpressionVectorParameter,parameter_name='VillageFocus',default_value=u.LinearColor(0,0,0,0))
+    width=expr(m,u.MaterialExpressionScalarParameter,parameter_name='VillageWidth',default_value=1672*S)
+    tangent=expr(m,u.MaterialExpressionScalarParameter,parameter_name='VillageTangent',default_value=math.tan(math.radians(25)))
+    # Position is the near camera-facing card. Ratios cancel its distance and preserve source-image shape.
+    # Ground is logical navigation XY, not the physical z=0 ray intersection; native visuals use the inverse.
+    code=f'float3 r=Position-Camera;float d=max(0.00001,dot(r,float3(0,0.5,-0.866025403784)));float k=Width/(2*max(0.00001,Tangent)*d);return float3(Focus.x+r.x*k,Focus.y+dot(r,float3(0,0.866025403784,0.5))*k/{sn:.12f},0);'
+    ground=custom(m,code,F3,{'Position':(position,''),'Camera':(camera,''),'Focus':(focus,''),'Width':(width,''),'Tangent':(tangent,'')})
+    code=f'if(Perspective<0.5)return RawUV;return float2((836-Ground.x/{S:.12f})/1672,(470.5-Ground.y*{sn:.12f}/{S:.12f})/941);'
+    uv=custom(m,code,F2,{'RawUV':(raw,''),'Ground':(ground,''),'Perspective':(mode,'')})
+    return dict(uv=uv,raw_uv=raw,mode=mode,position=position,ground=ground)
+
+def reference_material(name,S,original,clean,rects,foot=None,points=None,slope=0,parts=None,baseline=None,holes=None):
+    """Rebuild one material only. Original clean-plate patches, mask unions and holes remain unchanged."""
+    path='/Game/Greyford/Reference/M_'+name
+    m=lib.load_asset(path) if lib.does_asset_exist(path) else tools.create_asset('M_'+name,'/Game/Greyford/Reference',u.Material,u.MaterialFactoryNew())
+    # Our PDO is view-forward depth; UE5.8 defaults to ray-length compensation, which would hide edge sprites.
+    m.set_editor_property('pixel_depth_offset_mode',u.PixelDepthOffsetMode.PDOM_LEGACY)
+    edit.delete_all_material_expressions(m);m.set_editor_property('use_material_attributes',False)
+    m.set_editor_property('two_sided',True);m.set_editor_property('shading_model',u.MaterialShadingModel.MSM_UNLIT)
+    m.set_editor_property('blend_mode',u.BlendMode.BLEND_MASKED if (points or parts) else u.BlendMode.BLEND_OPAQUE)
+    mapping=reference_uv(m,S);uv=mapping['uv'];attrs=expr(m,u.MaterialExpressionMakeMaterialAttributes)
+    color=patch_color(m,uv,original,clean,rects)
+    assert edit.connect_material_expressions(color,'',attrs,'EmissiveColor')
+    if points or parts:
+        code='float2 p=UV*float2(1672,941);float mask=0;'
+        for poly in parts or [points]:code+='{'+polygon(poly)+'mask=max(mask,hit?1:0);}'
+        for poly in holes or []:code+='{'+polygon(poly)+'if(hit)mask=0;}'
+        mask=custom(m,code+'return mask;',F1,{'UV':(uv,'')})
+        assert edit.connect_material_expressions(mask,'',attrs,'OpacityMask')
+    sn=math.sin(math.radians(48));cs=math.cos(math.radians(48))
+    if baseline:
+        legacy_foot=max(p[1] for p in baseline)
+        foot_code=f'float x=UV.x*1672;float y={baseline[0][1]:.12f};'
+        for (x0,y0),(x1,y1) in zip(baseline,baseline[1:]):
+            assert x1!=x0,'A baseline segment must have nonzero source width'
+            foot_code+=f'y=lerp(y,{y1:.12f},saturate((x-{x0:.12f})/{x1-x0:.12f}));'
+        legacy=f'max(0,({legacy_foot:.12f}-y)*{S*cs/sn:.12f})'
+    else:
+        foot_code=f'float y={0 if foot is None else foot:.12f}+(UV.x*1672-836)*{slope:.12f};'
+        legacy='0'
+    desired='Ground' if foot is None and not baseline else f'float3(Ground.x,(470.5-y)*{S/sn:.12f},0)'
+    depth_code=foot_code+f'if(Perspective<0.5)return {legacy};float3 desired={desired};return max(0,dot(float3(0,0.5,-0.866025403784),desired-Position));'
+    depth=custom(m,depth_code,F1,{'UV':(uv,''),'Ground':(mapping['ground'],''),'Position':(mapping['position'],''),'Perspective':(mapping['mode'],'')})
+    # PixelDepthOffset is not exposed in Python MaterialProperty; the native attributes pin is public.
+    assert edit.connect_material_expressions(depth,'',attrs,'PixelDepthOffset')
+    if slope and not baseline:
+        offset_code=f'if(Perspective>=0.5)return float3(0,0,0);return float3(0,{cs:.12f},{-sn:.12f})*(-(UV.x*1672-836)*{slope*S*cs/sn:.12f});'
+        offset=custom(m,offset_code,F3,{'UV':(mapping['raw_uv'],''),'Perspective':(mapping['mode'],'')})
+        assert edit.connect_material_expressions(offset,'',attrs,'WorldPositionOffset')
+    m.set_editor_property('use_material_attributes',True)
+    assert edit.connect_material_property(attrs,'',u.MaterialProperty.MP_MATERIAL_ATTRIBUTES)
+    edit.recompile_material(m);assert lib.save_loaded_asset(m)
+    return m
+
 def patch_color(m,uv,original,clean,rects):
     source=expr(m,u.MaterialExpressionTextureObject,texture=original)
     replacement=expr(m,u.MaterialExpressionTextureObject,texture=clean)
@@ -44,14 +107,15 @@ def patch_color(m,uv,original,clean,rects):
     code+='return lerp(Texture2DSample(Original,OriginalSampler,UV).rgb,Texture2DSample(Clean,CleanSampler,UV).rgb,mask);'
     color=custom(m,code,F3,{'UV':(uv,''),'Original':(source,''),'Clean':(replacement,'')})
     assert edit.connect_material_property(color,'',u.MaterialProperty.MP_EMISSIVE_COLOR)
+    return color
 
-def animate(actors,plane,rot,S,clean,wheel):
+def animate(actors,plane,rot,S,clean,wheel,materials_only=False):
     def card(name,code,texture_asset,depth):
         path='/Game/Greyford/Reference/M_Ambient_'+name
         m=lib.load_asset(path) if lib.does_asset_exist(path) else tools.create_asset('M_Ambient_'+name,'/Game/Greyford/Reference',u.Material,u.MaterialFactoryNew())
-        edit.delete_all_material_expressions(m);m.set_editor_property('two_sided',True)
+        edit.delete_all_material_expressions(m);m.set_editor_property('use_material_attributes',False);m.set_editor_property('two_sided',True)
         m.set_editor_property('shading_model',u.MaterialShadingModel.MSM_UNLIT);m.set_editor_property('blend_mode',u.BlendMode.BLEND_TRANSLUCENT)
-        uv=expr(m,u.MaterialExpressionTextureCoordinate);time=expr(m,u.MaterialExpressionTime)
+        uv=reference_uv(m,S)['uv'];time=expr(m,u.MaterialExpressionTime)
         inputs={'UV':(uv,''),'T':(time,'')}
         if texture_asset:inputs['Art']=(expr(m,u.MaterialExpressionTextureObject,texture=texture_asset),'')
         rgba=custom(m,code,F4,inputs)
@@ -60,6 +124,7 @@ def animate(actors,plane,rot,S,clean,wheel):
         assert edit.connect_material_expressions(rgba,'',rgb,'');assert edit.connect_material_expressions(rgba,'',alpha,'')
         edit.connect_material_property(rgb,'',u.MaterialProperty.MP_EMISSIVE_COLOR);edit.connect_material_property(alpha,'',u.MaterialProperty.MP_OPACITY)
         edit.recompile_material(m);assert lib.save_loaded_asset(m)
+        if materials_only:return
         sn=math.sin(math.radians(48));cs=math.cos(math.radians(48))
         a=actors.spawn_actor_from_class(u.StaticMeshActor,u.Vector(0,cs*depth,-sn*depth))
         a.set_actor_label('Reference_Ambient_'+name);a.set_folder_path('Greyford/Reference/Ambient')

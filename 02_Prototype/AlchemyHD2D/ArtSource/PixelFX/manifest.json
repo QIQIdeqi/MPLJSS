@@ -1,0 +1,95 @@
+{
+  "repository": "https://github.com/patch-gg/pixelfx",
+  "commit": "fe7103c36d94e02f2d7df7d8f7a341e493837cde",
+  "fps": 30,
+  "effects": [
+    {
+      "name": "Hit",
+      "size": [
+        136,
+        80
+      ],
+      "origin": [
+        44,
+        64
+      ],
+      "count": 15,
+      "columns": 4,
+      "rows": 4,
+      "loop": false,
+      "unitsPerPixel": 2.2,
+      "options": {},
+      "layers": [
+        "FrontColor",
+        "FrontLight"
+      ]
+    },
+    {
+      "name": "Poison",
+      "size": [
+        256,
+        100
+      ],
+      "origin": [
+        128,
+        86
+      ],
+      "count": 120,
+      "columns": 8,
+      "rows": 15,
+      "loop": true,
+      "unitsPerPixel": 4,
+      "options": {
+        "spread": 0.72,
+        "palette": [
+          "#1b2a25",
+          "#304f34",
+          "#46633a",
+          "#5b7d49",
+          "#719b50",
+          "#9dbc56",
+          "#c2dc74",
+          "#e8f2b0"
+        ]
+      },
+      "layers": [
+        "BackColor",
+        "BackLight",
+        "FrontColor",
+        "FrontLight"
+      ]
+    },
+    {
+      "name": "Portal",
+      "size": [
+        152,
+        116
+      ],
+      "origin": [
+        76,
+        106
+      ],
+      "count": 72,
+      "columns": 8,
+      "rows": 9,
+      "loop": true,
+      "unitsPerPixel": 4.2,
+      "options": {
+        "palette": [
+          "#101c20",
+          "#203a3c",
+          "#31665c",
+          "#629e83",
+          "#a8d1ab",
+          "#e2f0cb",
+          "#ffffff"
+        ]
+      },
+      "layers": [
+        "BackColor",
+        "FrontColor",
+        "FrontLight"
+      ]
+    }
+  ]
+}

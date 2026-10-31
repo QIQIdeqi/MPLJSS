@@ -1,0 +1,351 @@
+{
+  "reference_size": [
+    1672,
+    940
+  ],
+  "reference_sha256": "49db3e08376d433eb4c0ba7bd5a1ff29a5a9db76ae4a93dd4efbffafbdb805fb",
+  "source": "User-supplied reference; extracted artwork only, no claim of third-party license.",
+  "method": "Deterministic crop and explicit alpha masks. Numeric state is removed and supplied by UMG at runtime.",
+  "parts": [
+    {
+      "name": "Portrait",
+      "source_box": [
+        20,
+        8,
+        119,
+        113
+      ],
+      "size": [
+        99,
+        105
+      ],
+      "hole": null,
+      "mask": "ellipse"
+    },
+    {
+      "name": "PortraitBadge",
+      "source_box": [
+        20,
+        82,
+        49,
+        113
+      ],
+      "size": [
+        29,
+        31
+      ],
+      "hole": null,
+      "mask": "ellipse"
+    },
+    {
+      "name": "HPFrame",
+      "source_box": [
+        197,
+        27,
+        503,
+        59
+      ],
+      "size": [
+        306,
+        32
+      ],
+      "hole": [
+        16,
+        8,
+        286,
+        23
+      ],
+      "mask": "rect"
+    },
+    {
+      "name": "HPFill",
+      "source_box": [
+        224,
+        35,
+        254,
+        49
+      ],
+      "size": [
+        30,
+        14
+      ],
+      "hole": null,
+      "mask": "rect"
+    },
+    {
+      "name": "BarDark",
+      "source_box": [
+        350,
+        63,
+        380,
+        71
+      ],
+      "size": [
+        30,
+        8
+      ],
+      "hole": null,
+      "mask": "rect"
+    },
+    {
+      "name": "DodgeFrame",
+      "source_box": [
+        118,
+        55,
+        414,
+        79
+      ],
+      "size": [
+        296,
+        24
+      ],
+      "hole": [
+        11,
+        6,
+        281,
+        17
+      ],
+      "mask": "rect"
+    },
+    {
+      "name": "DodgeFill",
+      "source_box": [
+        132,
+        63,
+        160,
+        71
+      ],
+      "size": [
+        28,
+        8
+      ],
+      "hole": null,
+      "mask": "rect"
+    },
+    {
+      "name": "TimerLeft",
+      "source_box": [
+        735,
+        22,
+        795,
+        46
+      ],
+      "size": [
+        60,
+        24
+      ],
+      "hole": null,
+      "mask": "rect"
+    },
+    {
+      "name": "TimerRight",
+      "source_box": [
+        891,
+        22,
+        951,
+        46
+      ],
+      "size": [
+        60,
+        24
+      ],
+      "hole": null,
+      "mask": "rect"
+    },
+    {
+      "name": "Skull",
+      "source_box": [
+        1332,
+        11,
+        1368,
+        49
+      ],
+      "size": [
+        36,
+        38
+      ],
+      "hole": null,
+      "mask": "ellipse"
+    },
+    {
+      "name": "Coin",
+      "source_box": [
+        1488,
+        10,
+        1527,
+        50
+      ],
+      "size": [
+        39,
+        40
+      ],
+      "hole": null,
+      "mask": "ellipse"
+    },
+    {
+      "name": "MinimapFrame",
+      "source_box": [
+        1405,
+        52,
+        1654,
+        200
+      ],
+      "size": [
+        249,
+        148
+      ],
+      "hole": [
+        7,
+        7,
+        241,
+        140
+      ],
+      "mask": "rounded"
+    },
+    {
+      "name": "MinimapDark",
+      "source_box": [
+        1450,
+        169,
+        1471,
+        184
+      ],
+      "size": [
+        21,
+        15
+      ],
+      "hole": null,
+      "mask": "rect"
+    },
+    {
+      "name": "SkillFrame",
+      "source_box": [
+        624,
+        804,
+        699,
+        880
+      ],
+      "size": [
+        75,
+        76
+      ],
+      "hole": [
+        8,
+        8,
+        66,
+        67
+      ],
+      "mask": "rounded"
+    },
+    {
+      "name": "SkillArt0",
+      "source_box": [
+        633,
+        814,
+        689,
+        870
+      ],
+      "size": [
+        56,
+        56
+      ],
+      "hole": null,
+      "mask": "rounded"
+    },
+    {
+      "name": "SkillArt1",
+      "source_box": [
+        721,
+        814,
+        777,
+        870
+      ],
+      "size": [
+        56,
+        56
+      ],
+      "hole": null,
+      "mask": "rounded"
+    },
+    {
+      "name": "SkillArt2",
+      "source_box": [
+        809,
+        814,
+        865,
+        870
+      ],
+      "size": [
+        56,
+        56
+      ],
+      "hole": null,
+      "mask": "rounded"
+    },
+    {
+      "name": "SkillArt3",
+      "source_box": [
+        897,
+        814,
+        953,
+        870
+      ],
+      "size": [
+        56,
+        56
+      ],
+      "hole": null,
+      "mask": "rounded"
+    },
+    {
+      "name": "AddSkill",
+      "source_box": [
+        978,
+        810,
+        1045,
+        879
+      ],
+      "size": [
+        67,
+        69
+      ],
+      "hole": null,
+      "mask": "rounded"
+    },
+    {
+      "name": "XPFrame",
+      "source_box": [
+        373,
+        902,
+        1299,
+        932
+      ],
+      "size": [
+        926,
+        30
+      ],
+      "hole": [
+        20,
+        9,
+        904,
+        22
+      ],
+      "mask": "rect"
+    },
+    {
+      "name": "XPFill",
+      "source_box": [
+        501,
+        913,
+        540,
+        923
+      ],
+      "size": [
+        39,
+        10
+      ],
+      "hole": null,
+      "mask": "rect"
+    }
+  ]
+}

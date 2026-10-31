@@ -1,0 +1,930 @@
+{
+  "schema_version": 1,
+  "status": "implementation_input_not_runtime_verified",
+  "source": {
+    "filename": "codex-clipboard-9e1ef272-4ad6-4422-b698-bff7ad5ddea5.png",
+    "image_size": [
+      1672,
+      941
+    ],
+    "pixel_coordinates": "origin top-left; x right, y down; polygons are source-image pixels",
+    "archive_requirement": "Use the SSD project archive of the user image, never depend on its temporary clipboard path at runtime.",
+    "content": "Clean scene artwork only. Player, enemies, damage, projectiles, drops, portal and UI must remain live game objects."
+  },
+  "view": {
+    "projection": "perspective",
+    "pitch_down_degrees": 60,
+    "yaw_degrees": 90,
+    "roll_degrees": 0,
+    "runtime_horizontal_fov_degrees": 50,
+    "reference_aspect": 1.7768331562,
+    "camera_policy": "Fixed calibrated camera for this painted arena. No free orbit or unbounded follow until geometry/layer registration supports it.",
+    "angle_semantics": "60 degrees means camera pitch down from horizontal, not horizontal FOV. The two settings must remain explicit.",
+    "suggested_source_overscan": 1.2,
+    "overscan_reason": "Reserve painted walkable terrain outside the actual viewport for existing off-screen enemy spawning. Full-artwork-in-view plus closed painted bounds leaves no off-screen spawn space.",
+    "virtual_calibration_horizontal_fov": "2*atan(source_overscan*tan(runtime_hfov/2))",
+    "reference_focus_pixel": [
+      836,
+      470.5
+    ],
+    "reference_focus_world_cm": [
+      0,
+      0,
+      0
+    ],
+    "letterbox_or_crop": "Keep art, collision and live actors under one shared image-to-world transform. At other aspect ratios crop consistently or use a common letterboxed play viewport; never stretch only the art."
+  },
+  "mapping": {
+    "method": "Perspective source-pixel ray intersecting ground Z=0, using the virtual calibration frustum.",
+    "camera_basis_for_yaw90_pitch60": {
+      "forward": [
+        0,
+        0.5,
+        -0.8660254038
+      ],
+      "right": [
+        -1,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        0.8660254038,
+        0.5
+      ]
+    },
+    "camera_position": "focus - forward*D",
+    "focal_length_pixels": "f=1672/(2*tan(virtual_calibration_hfov/2))",
+    "pixel_ray": "R=forward + right*((x-836)/f) + up*((470.5-y)/f)",
+    "ground_point": "P=C+R*(-C.z/R.z); require R.z<0 and intersection ahead of C",
+    "important": "Do not reuse the village orthographic 48-degree ReferencePoint affine mapping. Choose D once and use the same ray mapping for walk/block polygons, spawn, path nodes and layers.",
+    "art_registration": "Ground patch must use perspective-correct registered UVs or subdivided geometry. Sky and distant hills are backdrop, never gameplay ground. Cut tree/cart/fence foreground masks into depth layers; keep shadows/footprints registered to the same ground."
+  },
+  "character_scale": {
+    "world_visible_height_cm": 180,
+    "reference_visible_height_pixels": 84,
+    "reference_height_anchor_pixel": [
+      836,
+      470.5
+    ],
+    "calibration_distance": "For a camera-facing 180cm visible body at the reference focus depth: D=f*180/84. Recompute using the actual nontransparent sprite bounds, not its whole texture canvas.",
+    "evidence_limit": "No human is present in the source image. 84px is an initial art-direction calibration, not a measured human scale in the image.",
+    "ui_reference_comparison": "ReferenceHUD.png has about a 100px visible central body at 1672px viewport width. An 84px source body with 1.2x overscan displays at about 100.8px at that viewport width, before perspective depth changes.",
+    "perspective_requirement": "Keep world character height constant. Farther ground positions appear smaller naturally; do not force constant pixel height while claiming perspective.",
+    "feet_requirement": "Live player/enemy feet and shadow share the mapped ground point. Transparent canvas margins must not change the 180cm visible height or baseline."
+  },
+  "walk": [
+    {
+      "name": "main_meadow",
+      "points": [
+        [
+          390,
+          190
+        ],
+        [
+          490,
+          169
+        ],
+        [
+          640,
+          156
+        ],
+        [
+          700,
+          164
+        ],
+        [
+          840,
+          166
+        ],
+        [
+          1000,
+          177
+        ],
+        [
+          1170,
+          188
+        ],
+        [
+          1330,
+          196
+        ],
+        [
+          1480,
+          208
+        ],
+        [
+          1560,
+          244
+        ],
+        [
+          1590,
+          285
+        ],
+        [
+          1664,
+          315
+        ],
+        [
+          1664,
+          575
+        ],
+        [
+          1580,
+          582
+        ],
+        [
+          1510,
+          611
+        ],
+        [
+          1425,
+          641
+        ],
+        [
+          1345,
+          673
+        ],
+        [
+          1260,
+          707
+        ],
+        [
+          1170,
+          755
+        ],
+        [
+          1070,
+          782
+        ],
+        [
+          990,
+          796
+        ],
+        [
+          910,
+          816
+        ],
+        [
+          810,
+          850
+        ],
+        [
+          710,
+          863
+        ],
+        [
+          615,
+          868
+        ],
+        [
+          520,
+          859
+        ],
+        [
+          420,
+          836
+        ],
+        [
+          340,
+          808
+        ],
+        [
+          260,
+          766
+        ],
+        [
+          190,
+          736
+        ],
+        [
+          120,
+          708
+        ],
+        [
+          65,
+          666
+        ],
+        [
+          30,
+          610
+        ],
+        [
+          15,
+          520
+        ],
+        [
+          20,
+          460
+        ],
+        [
+          25,
+          380
+        ],
+        [
+          18,
+          300
+        ],
+        [
+          75,
+          277
+        ],
+        [
+          150,
+          280
+        ],
+        [
+          230,
+          285
+        ],
+        [
+          312,
+          268
+        ],
+        [
+          355,
+          230
+        ]
+      ],
+      "notes": "Conservative mainland footprint. The horizon, distant hill/animal strip and all south-bank foreground are outside gameplay. Erode by the actual actor radius in world cm."
+    }
+  ],
+  "blocked": [
+    {
+      "name": "river_and_unreachable_south_bank",
+      "kind": "water",
+      "points": [
+        [
+          1671,
+          577
+        ],
+        [
+          1590,
+          596
+        ],
+        [
+          1520,
+          622
+        ],
+        [
+          1430,
+          650
+        ],
+        [
+          1355,
+          687
+        ],
+        [
+          1280,
+          723
+        ],
+        [
+          1205,
+          762
+        ],
+        [
+          1110,
+          797
+        ],
+        [
+          1000,
+          816
+        ],
+        [
+          900,
+          848
+        ],
+        [
+          830,
+          881
+        ],
+        [
+          770,
+          915
+        ],
+        [
+          750,
+          940
+        ],
+        [
+          1671,
+          940
+        ]
+      ]
+    },
+    {
+      "name": "old_oak_trunk_rock_and_upper_left_fence",
+      "kind": "solid",
+      "points": [
+        [
+          105,
+          171
+        ],
+        [
+          185,
+          145
+        ],
+        [
+          270,
+          155
+        ],
+        [
+          345,
+          190
+        ],
+        [
+          367,
+          231
+        ],
+        [
+          330,
+          270
+        ],
+        [
+          259,
+          286
+        ],
+        [
+          164,
+          270
+        ],
+        [
+          93,
+          246
+        ]
+      ],
+      "notes": "Trunk/rock/fence footprint; canopy belongs to a separate occlusion mask and must not become a huge invisible wall."
+    },
+    {
+      "name": "left_upper_boulder",
+      "kind": "solid",
+      "points": [
+        [
+          32,
+          313
+        ],
+        [
+          65,
+          308
+        ],
+        [
+          94,
+          326
+        ],
+        [
+          86,
+          349
+        ],
+        [
+          43,
+          351
+        ],
+        [
+          23,
+          336
+        ]
+      ]
+    },
+    {
+      "name": "left_middle_rock_and_shrub_base",
+      "kind": "solid",
+      "points": [
+        [
+          0,
+          410
+        ],
+        [
+          63,
+          404
+        ],
+        [
+          119,
+          437
+        ],
+        [
+          167,
+          445
+        ],
+        [
+          203,
+          475
+        ],
+        [
+          180,
+          493
+        ],
+        [
+          118,
+          481
+        ],
+        [
+          58,
+          465
+        ],
+        [
+          0,
+          461
+        ]
+      ]
+    },
+    {
+      "name": "left_log",
+      "kind": "solid",
+      "points": [
+        [
+          69,
+          562
+        ],
+        [
+          154,
+          548
+        ],
+        [
+          181,
+          565
+        ],
+        [
+          177,
+          586
+        ],
+        [
+          102,
+          593
+        ],
+        [
+          67,
+          581
+        ]
+      ]
+    },
+    {
+      "name": "left_foreground_tree_base",
+      "kind": "solid",
+      "points": [
+        [
+          0,
+          569
+        ],
+        [
+          65,
+          582
+        ],
+        [
+          105,
+          623
+        ],
+        [
+          101,
+          670
+        ],
+        [
+          58,
+          696
+        ],
+        [
+          0,
+          684
+        ]
+      ]
+    },
+    {
+      "name": "lower_left_fence",
+      "kind": "solid",
+      "points": [
+        [
+          0,
+          724
+        ],
+        [
+          96,
+          748
+        ],
+        [
+          199,
+          777
+        ],
+        [
+          271,
+          790
+        ],
+        [
+          273,
+          811
+        ],
+        [
+          192,
+          801
+        ],
+        [
+          89,
+          772
+        ],
+        [
+          0,
+          747
+        ]
+      ]
+    },
+    {
+      "name": "cart_wheels_body_and_loose_equipment",
+      "kind": "solid",
+      "points": [
+        [
+          1430,
+          338
+        ],
+        [
+          1470,
+          322
+        ],
+        [
+          1558,
+          336
+        ],
+        [
+          1595,
+          373
+        ],
+        [
+          1543,
+          399
+        ],
+        [
+          1450,
+          389
+        ],
+        [
+          1418,
+          365
+        ]
+      ],
+      "notes": "Ground contact footprint; split the cart's upper body into an occlusion card so actors behind it are not drawn over its woodwork."
+    },
+    {
+      "name": "cart_left_fence",
+      "kind": "solid",
+      "points": [
+        [
+          1287,
+          314
+        ],
+        [
+          1418,
+          328
+        ],
+        [
+          1414,
+          345
+        ],
+        [
+          1285,
+          335
+        ]
+      ]
+    },
+    {
+      "name": "cart_right_fence",
+      "kind": "solid",
+      "points": [
+        [
+          1574,
+          324
+        ],
+        [
+          1671,
+          352
+        ],
+        [
+          1671,
+          373
+        ],
+        [
+          1573,
+          345
+        ]
+      ]
+    },
+    {
+      "name": "right_edge_tree_base",
+      "kind": "solid",
+      "points": [
+        [
+          1634,
+          408
+        ],
+        [
+          1671,
+          401
+        ],
+        [
+          1671,
+          520
+        ],
+        [
+          1622,
+          511
+        ],
+        [
+          1601,
+          474
+        ],
+        [
+          1611,
+          436
+        ]
+      ]
+    },
+    {
+      "name": "far_shrine_base",
+      "kind": "solid",
+      "points": [
+        [
+          706,
+          144
+        ],
+        [
+          787,
+          144
+        ],
+        [
+          808,
+          169
+        ],
+        [
+          779,
+          184
+        ],
+        [
+          708,
+          178
+        ],
+        [
+          695,
+          164
+        ]
+      ]
+    }
+  ],
+  "spawn": [
+    820,
+    540
+  ],
+  "path_nodes": [
+    [
+      820,
+      540
+    ],
+    [
+      520,
+      345
+    ],
+    [
+      1080,
+      325
+    ],
+    [
+      1315,
+      450
+    ],
+    [
+      1130,
+      675
+    ],
+    [
+      740,
+      755
+    ],
+    [
+      370,
+      665
+    ],
+    [
+      250,
+      420
+    ]
+  ],
+  "portal_candidates": [
+    [
+      810,
+      410
+    ],
+    [
+      1010,
+      535
+    ],
+    [
+      565,
+      565
+    ],
+    [
+      1090,
+      655
+    ]
+  ],
+  "spawn_candidate_source_pixels": [
+    [
+      70,
+      528
+    ],
+    [
+      1602,
+      556
+    ],
+    [
+      1590,
+      535
+    ],
+    [
+      55,
+      510
+    ],
+    [
+      45,
+      550
+    ],
+    [
+      145,
+      690
+    ],
+    [
+      365,
+      790
+    ],
+    [
+      635,
+      850
+    ],
+    [
+      1570,
+      450
+    ],
+    [
+      1600,
+      550
+    ],
+    [
+      480,
+      205
+    ],
+    [
+      1100,
+      210
+    ]
+  ],
+  "spawn_and_portal_contract": {
+    "player": "Require walkable(spawn, player_radius_cm) and one reachable main component. Never use a random world rectangle without intersecting this geometry.",
+    "enemies": "Per enemy Definition radius, require valid ground polygon, outside blocked polygons, swept clearance, path to player, and actual projected off-screen status. Treat listed points as candidates only. Refuse safely and retry if no legal off-screen point.",
+    "portal": "At 300s choose a random legal point in the same reachable component. Require at least 240cm free radius, a path for player radius, and a standable 220cm interaction area. Candidate anchors do not make the portal fixed.",
+    "projection": "Use ProjectWorldLocationToScreen/deprojection for perspective frustum tests. Old ViewWidth orthographic half-height rectangles are not a valid perspective off-screen test.",
+    "boss": "Do not silently reuse the existing 32x26m Boss ellipse without checking its intersection with the painted ground and river. Either keep the separate Boss stage or explicitly author a compatible painted Boss stage."
+  },
+  "semantic_checks": [
+    {
+      "pixel": [
+        820,
+        540
+      ],
+      "walkable": true,
+      "name": "player_spawn"
+    },
+    {
+      "pixel": [
+        570,
+        350
+      ],
+      "walkable": true,
+      "name": "upper_meadow"
+    },
+    {
+      "pixel": [
+        1100,
+        650
+      ],
+      "walkable": true,
+      "name": "lower_meadow"
+    },
+    {
+      "pixel": [
+        1320,
+        440
+      ],
+      "walkable": true,
+      "name": "cart_approach"
+    },
+    {
+      "pixel": [
+        1450,
+        720
+      ],
+      "walkable": false,
+      "name": "river"
+    },
+    {
+      "pixel": [
+        1000,
+        900
+      ],
+      "walkable": false,
+      "name": "near_river"
+    },
+    {
+      "pixel": [
+        900,
+        80
+      ],
+      "walkable": false,
+      "name": "distant_hills"
+    },
+    {
+      "pixel": [
+        265,
+        190
+      ],
+      "walkable": false,
+      "name": "oak_trunk"
+    },
+    {
+      "pixel": [
+        1510,
+        355
+      ],
+      "walkable": false,
+      "name": "cart"
+    },
+    {
+      "pixel": [
+        1370,
+        330
+      ],
+      "walkable": false,
+      "name": "cart_fence"
+    },
+    {
+      "pixel": [
+        55,
+        330
+      ],
+      "walkable": false,
+      "name": "left_boulder"
+    }
+  ],
+  "qa_required": [
+    "Project every authored polygon vertex and spawn back to reference pixels; roundtrip error <=2 source pixels at the calibration camera.",
+    "Player/enemy movement and dodge sweep cannot cross river, fence, cart, trunk or world boundary at any supported frame time; no invisible collision over decorative flowers.",
+    "Check full playable grid connectivity with actual player radius; each path node must be reachable from spawn.",
+    "Check ordinary, elite and configured maximum supported enemy radii; spawn and chase cannot enter distant hills, water or isolated banks.",
+    "At least one legal off-screen enemy spawn remains under each target aspect ratio; test actual viewport projection, not source-pixel bounds alone.",
+    "At 300s repeatedly sample portal candidates, including player near river/fence/cart; all chosen portals have 240cm clearance and reachable interaction space.",
+    "At 1280x720, 1920x1080 and 1024x768 inspect near/center/far character feet, 180cm world size, tree/cart depth sorting, danger markers and live projectiles.",
+    "UI must be excluded from scene extraction. Compare HUD layout in normalized play-viewport coordinates and verify it does not cover feet, danger cues, portal interact text or unletterboxed image alignment.",
+    "Background artwork contains no baked player, enemies, projectiles, damage numbers or HUD. Live simulation remains interactive and pause/cross-stage rules still pass."
+  ],
+  "ui_reference_qa": {
+    "source": "ArtSource/UIReference20261031/ReferenceHUD.png and manifest.json",
+    "reference_size": [
+      1672,
+      940
+    ],
+    "boxes": {
+      "portrait": [
+        20,
+        8,
+        119,
+        113
+      ],
+      "hp_frame": [
+        197,
+        27,
+        503,
+        59
+      ],
+      "dodge_frame": [
+        118,
+        55,
+        414,
+        79
+      ],
+      "minimap": [
+        1405,
+        52,
+        1654,
+        200
+      ],
+      "first_skill": [
+        624,
+        804,
+        699,
+        880
+      ],
+      "xp_frame": [
+        373,
+        902,
+        1299,
+        932
+      ]
+    },
+    "initial_layout_tolerance_reference_pixels": 4,
+    "semantics": "Compare frame anchors after common DPI scaling. HP, level, cooldown, time, kills, coins, skill state and minimap marks must come from live state; reference numbers and enemies are not screenshot content to bake into the HUD."
+  },
+  "limitations": "Polygon vertices and 84px body calibration were manually authored from the supplied raster. They require in-engine overlay and swept-radius validation before gameplay acceptance. This spec is not a map, finished collision import or completed runtime QA."
+}

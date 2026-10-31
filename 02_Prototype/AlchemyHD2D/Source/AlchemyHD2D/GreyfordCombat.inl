@@ -1,8 +1,8 @@
 // Authored scene adapter; movement, skills, enemies and damage remain the production simulation.
 void AAlchemyWorld::BuildGreyfordScene() {
     if(bGreyfordFlow && !SwitchGreyfordStage(bCombat?1:0)){SetActorTickEnabled(false);FPlatformMisc::RequestExitWithStatus(false,1);return;}
-    CombatHalfSize=FVector2D(7200,5400);
-    for(TActorIterator<APlayerStart> It(GetWorld());It;++It){if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;PlayerPos=It->GetActorLocation();PlayerPos.Z=0;break;}
+    if(!bBattleReference)CombatHalfSize=FVector2D(7200,5400);
+    if(!bBattleReference)for(TActorIterator<APlayerStart> It(GetWorld());It;++It){if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;PlayerPos=It->GetActorLocation();PlayerPos.Z=0;break;}
     if(!bGreyfordFlow)for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It) {
         if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;
         if(!It->ActorHasTag(TEXT("GreyfordBlocker")))continue;
@@ -15,7 +15,13 @@ void AAlchemyWorld::BuildGreyfordScene() {
         bool AuthoredGate=false;for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It)if(It->GetLevel()==GreyfordActiveLevel && It->ActorHasTag(TEXT("GreyfordVillageFogGate"))){AuthoredGate=true;break;}
         if(!AuthoredGate)Sprite(TEXT("Portal"),GreyfordFacilities[2],420,560);
     }
-    if(bGreyfordFlow && bCombat)for(int I=0;I<64;I++) {
+    if(bBattleReference){
+        PlayerPos=BattleReferencePoint(FVector2D(820,540));
+        for(int I=0;I<64;I++){
+            const FVector Candidate=BattleReferencePoint(FVector2D(Random.FRandRange(260,1400),Random.FRandRange(300,730)));TArray<FVector> Path;
+            if(Walkable(Candidate,45) && FindPath(PlayerPos,Candidate,45,Path) && !BattleOffscreen(Candidate,100)){PlayerPos=Candidate;break;}
+        }
+    }else if(bGreyfordFlow && bCombat)for(int I=0;I<64;I++){
         const FVector Candidate(Random.FRandRange(-6800,6800),Random.FRandRange(-5000,5000),0);TArray<FVector> Path;
         if(Walkable(Candidate,45) && FindPath(PlayerPos,Candidate,45,Path)){PlayerPos=Candidate;break;}
     }
@@ -43,7 +49,7 @@ void AAlchemyWorld::StartGreyfordReview() {
         for(int J=0;J<24;J++) {
             const float A=(I*3+J)*2*PI/24;
             const FVector P=PlayerPos+FVector(FMath::Cos(A)*950,FMath::Sin(A)*950,0);
-            if(Walkable(P,EnemyRadius(Enemies[I].Type))){Enemies[I].Pos=P;break;}
+            if(Walkable(P,EnemyRadius(Enemies[I]))){Enemies[I].Pos=P;break;}
         }
     }
     UE_LOG(LogTemp,Display,TEXT("GREYFORD_COMBAT_REVIEW_START seconds=60 primary_segments=8 player_radius=45 speed=500 dodge=280 normal_hp=%.0f"),HP);
@@ -55,7 +61,7 @@ FVector AAlchemyWorld::UpdateGreyfordReview(float Dt,FVector Manual) {
     GreyfordMinHP=FMath::Min(GreyfordMinHP,HP);
     if(!Shots.IsEmpty() || CharacterAnimation.Throwing)GreyfordAttackFrames++;
     GreyfordReviewOK &= Walkable(PlayerPos);
-    for(const auto& E:Enemies)if(E.HP>0)GreyfordReviewOK &= Walkable(E.Pos,EnemyRadius(E.Type));
+    for(const auto& E:Enemies)if(E.HP>0)GreyfordReviewOK &= Walkable(E.Pos,EnemyRadius(E));
     if(GreyfordReviewTime>=60 || GreyfordSegmentTime>26 || !GreyfordReviewOK) {FinishGreyfordReview();return FVector::ZeroVector;}
     if(GreyfordWaypoint>=GreyfordRoute.Num())return FVector::ZeroVector;
     const FVector Goal=GreyfordRoute[GreyfordWaypoint];

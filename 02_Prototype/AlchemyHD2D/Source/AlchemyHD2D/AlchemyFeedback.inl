@@ -24,7 +24,7 @@ bool AAlchemyWorld::CaptureFeedback(float Dt) {
         IFileManager::Get().MakeDirectory(*(FPaths::ProjectDir()/TEXT("Evidence/Feedback")),true);
     }
     SmokeTime+=Dt;UpdateFeedback(Dt);UpdateCamera(0);
-    for(auto& E:Enemies) {float Scale=E.Type>=7?2:1;E.HitFlash=FMath::Max(0.f,E.HitFlash-Dt);UpdateSprite(E.Body,FString::Printf(TEXT("Enemy%d"),E.Type),E.Pos,100*Scale,100*Scale);E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));}
+    for(auto& E:Enemies) {E.HitFlash=FMath::Max(0.f,E.HitFlash-Dt);UpdateEnemyVisual(E);E.Shadow->SetActorLocation(E.Pos+FVector(0,0,4));}
     FeedbackPeak=FMath::Max(FeedbackPeak,FeedbackParticles());
     const auto Shot=[&](const TCHAR* Name) {
         FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence/Feedback")/Name,false,false);

@@ -1,13 +1,34 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
+#include "Engine/Scene.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/HUD.h"
 #include "GameFramework/SaveGame.h"
 #include "AlchemyDesignTools.h"
+#include "AlchemyEnemyDefinitions.h"
 #include "AlchemistSpriteAnimation.h"
 #include "GreyfordReferenceRegion.h"
 #include "AlchemyWorld.generated.h"
+
+// Native off-axis frustum follows the subject without disturbing registered scenery layers.
+UCLASS()
+class UAlchemyCameraComponent : public UCameraComponent {
+    GENERATED_BODY()
+public:
+    FVector2D ProjectionOffset=FVector2D::ZeroVector;
+    virtual void GetCameraView(float Dt,FMinimalViewInfo& Out) override {
+        Super::GetCameraView(Dt,Out);Out.OffCenterProjectionOffset=ProjectionOffset;
+    }
+};
+UCLASS()
+class AAlchemyCamera : public ACameraActor {
+    GENERATED_BODY()
+public:
+    AAlchemyCamera(const FObjectInitializer& Init):Super(Init.SetDefaultSubobjectClass<UAlchemyCameraComponent>(TEXT("CameraComponent"))){}
+};
 
 class AStaticMeshActor;
 class ULevel;
@@ -16,6 +37,7 @@ class UMaterialInterface;
 class UNiagaraSystem;
 class UNiagaraComponent;
 class USoundBase;
+class UBattleReferenceWidget;
 struct FMerchantCoinEffect {
     FVector2D From,To;
     float Born=0;
@@ -53,7 +75,7 @@ struct FAlchemyEnemy {
     AStaticMeshActor* Body=nullptr;
     AStaticMeshActor* Shadow=nullptr;
     FVector Pos=FVector::ZeroVector;
-    int32 Type=0;
+    int32 Type=0, Definition=-1;
     float HP=1, MaxHP=1, Speed=1, Contact=0, AttackCD=1, Windup=0, Slow=0, Transition=0;
     FVector Aim=FVector::ZeroVector;
     bool Phase2=false;
@@ -105,9 +127,10 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float Delta) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
-    UPROPERTY(EditAnywhere, Category="HD2D") float CameraPitch=48;
+    UPROPERTY(EditAnywhere, Category="HD2D") float CameraPitch=60;
+    UPROPERTY(EditAnywhere, Category="HD2D") float CameraFOV=50;
     UPROPERTY(EditAnywhere, Category="HD2D") float ViewWidth=2844;
-    UPROPERTY(EditAnywhere, Category="HD2D") bool bPerspective=false;
+    UPROPERTY(EditAnywhere, Category="HD2D") bool bPerspective=true;
     UPROPERTY(EditAnywhere, Category="HD2D") bool bLitSprites=false;
     UPROPERTY(EditAnywhere, Category="HD2D") bool bUprightSprites=false;
     UPROPERTY(EditAnywhere, Category="HD2D") bool bDepthOfField=false;
@@ -118,8 +141,16 @@ public:
     int32 GreyfordStage=0;
     bool bGreyfordReference=false;
     int32 ReferencePreviousAA=-1;
-    UPROPERTY(EditAnywhere,Category="Reference") float ReferenceZoom=2;
+    UPROPERTY(EditAnywhere,Category="Reference") float ReferenceZoom=2.41153846f;
     UPROPERTY(EditAnywhere,Category="Reference") float ReferencePlayerRadius=30;
+    UPROPERTY() TArray<TObjectPtr<AStaticMeshActor>> ReferencePerspectiveCards;
+    UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> ReferencePerspectiveMaterials;
+    TArray<FTransform> ReferencePerspectiveTransforms;
+    void UpdateVillagePerspectiveCards(bool Perspective);
+    bool VillagePerspectiveCheck(float Delta);
+    bool VillagePresentationCheck(float Delta);
+    FVector VillageVisualPoint(FVector Logical) const;
+    float VillageVisualScale(FVector Logical) const;
     FVector ReferenceCameraFocus=FVector::ZeroVector;
     bool ReferenceCameraReady=false;
     void GreyfordAmbientCheck(float Dt);
@@ -132,6 +163,29 @@ public:
     TArray<FVector> AmbientPath;
     FString AmbientCSV;
     UPROPERTY() TArray<TObjectPtr<AGreyfordReferenceRegion>> ReferenceRegions;
+    UPROPERTY() TObjectPtr<UBattleReferenceWidget> BattleWidget;
+    bool bBattleReference=false;
+    UPROPERTY() TArray<TObjectPtr<AGreyfordReferenceRegion>> BattleRegions;
+    UPROPERTY() TArray<TObjectPtr<AActor>> BattleCards;
+    TArray<TWeakObjectPtr<AActor>> BattleHiddenActors;
+    TArray<FVector2D> BattleSpawnPixels;
+    float BattlePreviousReferenceRadius=30;
+    FPostProcessSettings BattlePreviousCameraPostProcess;
+    bool BattleSavedCameraPostProcess=false;
+    bool BuildBattleReferenceScene();
+    void ClearBattleReferenceScene();
+    FVector BattleReferencePoint(FVector2D Pixel) const;
+    FVector2D BattleReferencePixel(FVector P) const;
+    bool BattleOffscreen(FVector P,float Radius) const;
+    bool BattleFindSpawn(int DefinitionID,FVector& P);
+    void UpdateBattleReferenceCamera(float Delta=0);
+    bool BuildBossReferenceScene();
+    bool UnifiedPresentationCheck(float Delta);
+    void UIV02Check(float Delta);
+    bool bReferenceBossScene=false,CombatCameraReady=false;
+    FVector2D CombatCameraSourceFocus=FVector2D(836,470.5);
+    double CombatCameraTangent=.466307658;
+    FVector BattlePlayerPoint(FVector Point) const;
     TArray<FVector> ReferenceNodes;
     TArray<TPair<FVector,FVector>> ReferenceBoundary;
     void BuildReferenceBoundary();
@@ -141,7 +195,15 @@ public:
     bool GreyfordPortalReady=false;
     FVector GreyfordPortalPos=FVector::ZeroVector;
     float GreyfordPortalRetry=300;
-    UPROPERTY() TObjectPtr<AStaticMeshActor> GreyfordPortal;
+    UPROPERTY() TObjectPtr<AActor> GreyfordPortal;
+    class APixelFXActor* SpawnPixelFX(uint8 Kind,FVector Position,float Scale=1);
+    TArray<TWeakObjectPtr<class APixelFXActor>> PixelFXActors;
+    void ClearPixelFX();
+    void PixelFXCheck(float Delta);
+    float PixelFXCheckTime=0,PixelFXCaptureTime=0;
+    int32 PixelFXCheckSection=-1,PixelFXFrame=0,PixelFXHitCount=0;
+    bool PixelFXCheckOK=true;
+    TWeakObjectPtr<class APixelFXActor> PixelFXPreview;
     TArray<FVector> GreyfordFacilities={FVector(1800,0,0),FVector(-1200,0,0),FVector(-6300,-600,0)};
     bool SwitchGreyfordStage(int32 Stage);
     void UpdateGreyfordPortal();
@@ -191,7 +253,8 @@ public:
     void TutorialSupply(FVector Position);
     void TutorialHit(int32 Skill,int32 Hits);
     void AddMaterial(int32 Index);
-    bool CraftOptions(TArray<int32>& Skills,TArray<float>& Weights,FString& Reason,int32& Combination) const;
+    bool CraftOptions(TArray<int32>& Skills,TArray<float>& Weights,FString& Reason,int32& Combination,bool Nuclear=false) const;
+    float ResultQualityWeight(int32 Total,int32 Quality,bool Nuclear) const;
     FVector PlayerPos=FVector::ZeroVector;
     FVector LastDirection=FVector(0,1,0), DodgeDirection=FVector(0,1,0);
     TArray<FAlchemyEnemy> Enemies;
@@ -209,6 +272,17 @@ public:
     UPROPERTY() TObjectPtr<UAlchemyProgress> Progress;
     UPROPERTY() TMap<FString,TObjectPtr<UMaterialInterface>> Mats;
     UPROPERTY() TObjectPtr<UFont> UIFont;
+    UPROPERTY() TObjectPtr<UTexture2D> BattlePortrait;
+    UPROPERTY() TObjectPtr<UDataTable> EnemyTable;
+    UPROPERTY() TArray<FAlchemyEnemyRow> RuntimeEnemies;
+    const FAlchemyEnemyRow& EnemyDefinition(int32 ID) const {return RuntimeEnemies[ID];}
+    const FAlchemyEnemyRow& EnemyDefinition(const FAlchemyEnemy& E) const;
+    float EnemyRadius(int32 DefinitionID) const;
+    float EnemyRadius(const FAlchemyEnemy& E) const;
+    void UpdateEnemyVisual(FAlchemyEnemy& E,bool Mirror=false);
+    int32 ChooseEliteDefinition();
+    bool BattlePresentationCheck(float Delta);
+    bool Reference60Check(float Delta);
     UPROPERTY() TObjectPtr<AAlchemyLevelDesigner> Designer;
     UPROPERTY() TObjectPtr<UDataTable> SkillTable;
     UPROPERTY() TObjectPtr<UDataTable> RecipeTable;
@@ -299,6 +373,8 @@ public:
     void StartRun();
     void EndRun(bool Won);
     void Action(FString Id);
+    void TogglePanel(const FString& Id);
+    void ProducerRegression();
     void Message(FString Text);
     bool SaveProgress();
     bool Craft();
@@ -406,6 +482,7 @@ public:
     int32 FocusIndex=0, DetailPage=0;
     FString LastPanel;
     TArray<FString> FocusOrder;
+    TArray<FString> UIV02DrawnText;
     TMap<FString,FBox2D> ButtonRects;
     FBox2D DragSource, Furnace;
     float Measure(const FString& Value,float Size) const;

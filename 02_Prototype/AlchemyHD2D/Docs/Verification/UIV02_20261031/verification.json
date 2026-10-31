@@ -1,0 +1,64 @@
+{
+  "base": "76ff638",
+  "editor_build": "PASS",
+  "game_build": "PASS",
+  "actual_player_saves_unchanged": 11,
+  "native_ui": {
+    "1280x720": {
+      "result": "PASS",
+      "screenshots": [
+        "01-ten-upgrades.png",
+        "02-alchemy-notes.png",
+        "03-battle-guidance-toast.png",
+        "04-codex-high-IDs.png"
+      ],
+      "log_sha256": "785b54d3e5418c377525bb7c36c24b59727ad45c3d4725ea8ea5856340cfd963",
+      "unique_check_names": 26,
+      "logged_assertions": 129
+    },
+    "1024x768": {
+      "result": "PASS",
+      "screenshots": [
+        "01-ten-upgrades.png",
+        "02-alchemy-notes.png",
+        "03-battle-guidance-toast.png",
+        "04-codex-high-IDs.png"
+      ],
+      "log_sha256": "0043193e28d164dc28ad7093d90f67d76a4b90fc2954212ec0897d681121dc77",
+      "unique_check_names": 26,
+      "logged_assertions": 129
+    },
+    "2560x1080": {
+      "result": "PASS",
+      "screenshots": [
+        "01-ten-upgrades.png",
+        "02-alchemy-notes.png",
+        "03-battle-guidance-toast.png",
+        "04-codex-high-IDs.png"
+      ],
+      "log_sha256": "c5d9497b8083dbb29e636222549d1b1f8660c6e8ae990a25d62eecfe2fa34a8f",
+      "unique_check_names": 26,
+      "logged_assertions": 129
+    }
+  },
+  "producer": {
+    "result": "PASS",
+    "checks": 39,
+    "log_sha256": "dfc69f022fa709e3d5f6b9c3d7e58b9604133ebeed9677fb8bd32f69b9be6005"
+  },
+  "unified": {
+    "result": "PASS",
+    "checks": 70,
+    "log_sha256": "ee32ffb04edb287e788b8a123ec2ac9afe13e3ba301812871d8fb493d601ce7a"
+  },
+  "flow": {
+    "result": "PASS",
+    "checks": 42,
+    "log_sha256": "1004591cf844185e8886c3921dc3552e370a5a586b6a1aa8e0e5492b84d2f7b1"
+  },
+  "boss": {
+    "result": "PASS",
+    "checks": 28,
+    "log_sha256": "d2e6c87646c877817c608eeccbfe4be047a5260a4fbe4ac666b486e352e2d9ce"
+  }
+}

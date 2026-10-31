@@ -1,0 +1,17 @@
+{
+  "walk": {
+    "Front": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-b6ced126-4841-47ce-b7b5-8b8e865170ca.png",
+    "Back": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-3b239938-59a2-4de2-a2ac-1d5e05772149.png",
+    "Side": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-d31dc061-90c4-4c1c-8a7b-4a645d33bad4.png"
+  },
+  "hurt": {
+    "Front": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-cc351fde-0dc5-459a-9eb7-ef2b49096205.png",
+    "Back": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-700034a9-81ee-4a4e-a438-d2d2168ccf42.png",
+    "Side": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-a55f08d5-80da-448f-866a-d1a401451cec.png"
+  },
+  "death": {
+    "Front": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-3b068fe8-b72f-4f6c-9525-ce1c906e9190.png",
+    "Back": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-205f23ac-b4e4-4dfa-9c5d-77f17385e066.png",
+    "Side": "C:\\Users\\60550\\.codex\\generated_images\\01a190d7-ddcd-7f72-8ff6-e7662b89669f\\exec-92d581a2-4f1d-458d-a8b4-15e8ed24b100.png"
+  }
+}

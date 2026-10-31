@@ -38,6 +38,9 @@ bool AAlchemyWorld::LoadDesignConfig() {
     if(!QualityTable) QualityTable=LoadObject<UDataTable>(nullptr,TEXT("/Game/Design/DT_Quality.DT_Quality"));
     FString Error;
     if(!AlchemyDesign::ReadTables(SkillTable,RecipeTable,ChainTable,QualityTable,RuntimeSkills,RuntimeRecipes,RuntimeChains,RuntimeQuality,Error)) {UE_LOG(LogTemp,Error,TEXT("ALCHEMY_DESIGN_LOAD_FAIL %s"),*Error);return false;}
+    EnemyTable=LoadObject<UDataTable>(nullptr,TEXT("/Game/Design/DT_Enemies.DT_Enemies"));
+    if(!AlchemyDesign::ReadEnemyDefinitions(EnemyTable,RuntimeEnemies,Error)){UE_LOG(LogTemp,Error,TEXT("ALCHEMY_ENEMY_LOAD_FAIL %s"),*Error);return false;}
+    UE_LOG(LogTemp,Display,TEXT("ALCHEMY_ENEMIES_LOADED rows=%d"),RuntimeEnemies.Num());
     SkillCD.Init(0,NumSkills());ChainCD.Init(0,NumChains());if(Designer && Designer->bUseInGame) CombatHalfSize=Designer->PlayHalfSize;
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_DESIGN_LOADED skills=%d chains=%d recipes=%d authored_map=%d"),NumSkills(),NumChains(),RuntimeRecipes.Num(),Designer!=nullptr);return true;
 }

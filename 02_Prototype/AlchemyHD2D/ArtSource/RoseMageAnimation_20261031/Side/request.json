@@ -1,0 +1,29 @@
+{
+  "states": {
+    "walk": {
+      "frames": 6,
+      "fps": 8,
+      "loop": true,
+      "action": "Alternating articulated two-step walk in place in the approved direction."
+    },
+    "hurt": {
+      "frames": 4,
+      "fps": 10,
+      "loop": false,
+      "action": "Brace, recoil with bent knees, recover, neutral."
+    },
+    "death": {
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "action": "Knees buckle, kneel, collapse, prone and remain down. Never scale low poses to standing height."
+    }
+  },
+  "fit": {
+    "resample": "nearest",
+    "align_y": "bottom",
+    "align_x": "bbox-center",
+    "pixel_unfake": false
+  },
+  "style": "Exact approved white-haired rose mage identity and pixel art. Native imagegen row per action; no rotated idle substitutes."
+}

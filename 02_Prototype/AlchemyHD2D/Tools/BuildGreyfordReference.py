@@ -25,35 +25,8 @@ tex.set_editor_property('compression_settings',u.TextureCompressionSettings.TC_E
 clean=ambient.texture(root,'VillageCleanPlate');wheel=ambient.texture(root,'Waterwheel')
 plane=lib.load_asset('/Engine/BasicShapes/Plane');rot=u.MathLibrary.make_rot_from_xz(u.Vector(-1,0,0),u.Vector(0,-cs,sn))
 def card(name,foot=None,points=None,slope=0,parts=None,baseline=None,holes=None):
-    matpath='/Game/Greyford/Reference/M_'+name
-    m=lib.load_asset(matpath) if lib.does_asset_exist(matpath) else tools.create_asset('M_'+name,'/Game/Greyford/Reference',u.Material,u.MaterialFactoryNew())
-    edit.delete_all_material_expressions(m);m.set_editor_property('use_material_attributes',False);m.set_editor_property('two_sided',True);m.set_editor_property('shading_model',u.MaterialShadingModel.MSM_UNLIT);m.set_editor_property('blend_mode',u.BlendMode.BLEND_MASKED if (points or parts) else u.BlendMode.BLEND_OPAQUE)
-    uv=edit.create_material_expression(m,u.MaterialExpressionTextureCoordinate)
-    ambient.patch_color(m,uv,tex,clean,spec['clean_patch_rects'])
-    def custom(code,outtype,prop):
-        e=edit.create_material_expression(m,u.MaterialExpressionCustom);i=u.CustomInput();i.set_editor_property('input_name','UV');e.set_editor_property('inputs',[i]);e.set_editor_property('code',code);e.set_editor_property('output_type',outtype)
-        edit.connect_material_expressions(uv,'',e,'UV');assert edit.connect_material_property(e,'',prop)
-    if points or parts:
-        code='float2 p=UV*float2(1672,941);float mask=0;'
-        for poly in parts or [points]:code+='{'+ambient.polygon(poly)+'mask=max(mask,hit?1:0);}'
-        for poly in holes or []:code+='{'+ambient.polygon(poly)+'if(hit)mask=0;}'
-        custom(code+'return mask;',u.CustomMaterialOutputType.CMOT_FLOAT1,u.MaterialProperty.MP_OPACITY_MASK)
-    if baseline:
-        # A quad has no intermediate vertices: use per-pixel depth for a bent ground line.
-        foot=max(p[1] for p in baseline)
-        code='float x=UV.x*1672;float y=%f;'%baseline[0][1]
-        for (x0,y0),(x1,y1) in zip(baseline,baseline[1:]):code+='y=lerp(y,%f,saturate((x-%f)/%f));'%(y1,x0,x1-x0)
-        code+='return max(0,(%f-y)*%f);'%(foot,S*cs/sn)
-        # Python hides MP_PixelDepthOffset; the native MakeMaterialAttributes pin exposes it.
-        attrs=edit.create_material_expression(m,u.MaterialExpressionMakeMaterialAttributes)
-        for pin,prop in [('EmissiveColor',u.MaterialProperty.MP_EMISSIVE_COLOR),('OpacityMask',u.MaterialProperty.MP_OPACITY_MASK)]:
-            assert edit.connect_material_expressions(edit.get_material_property_input_node(m,prop),'',attrs,pin)
-        depth_expr=edit.create_material_expression(m,u.MaterialExpressionCustom);depth_expr.set_editor_property('code',code);depth_expr.set_editor_property('output_type',u.CustomMaterialOutputType.CMOT_FLOAT1)
-        depth_input=u.CustomInput();depth_input.set_editor_property('input_name','UV');depth_expr.set_editor_property('inputs',[depth_input]);assert edit.connect_material_expressions(uv,'',depth_expr,'UV')
-        assert edit.connect_material_expressions(depth_expr,'',attrs,'PixelDepthOffset')
-        m.set_editor_property('use_material_attributes',True);assert edit.connect_material_property(attrs,'',u.MaterialProperty.MP_MATERIAL_ATTRIBUTES)
-    elif slope:custom('return float3(0,%f,%f)*(-(UV.x*1672-836)*%f);'%(cs,-sn,slope*S*cs/sn),u.CustomMaterialOutputType.CMOT_FLOAT3,u.MaterialProperty.MP_WORLD_POSITION_OFFSET)
-    edit.recompile_material(m);assert lib.save_loaded_asset(m)
+    m=ambient.reference_material(name,S,tex,clean,spec['clean_patch_rects'],foot,points,slope,parts,baseline,holes)
+    if baseline:foot=max(p[1] for p in baseline)
     depth=10000 if foot is None else world((836,foot)).y*cs
     a=actors.spawn_actor_from_class(u.StaticMeshActor,u.Vector(0,cs*depth,-sn*depth));a.set_actor_label('Reference_'+name);a.set_folder_path('Greyford/Reference/DepthLayers');a.set_editor_property('tags',['GreyfordReference'])
     a.static_mesh_component.set_static_mesh(plane);a.static_mesh_component.set_material(0,m);a.static_mesh_component.set_collision_profile_name('NoCollision');a.static_mesh_component.set_cast_shadow(False)
