@@ -1,0 +1,122 @@
+{
+  "method": "read-only approximate threshold bounding boxes; inclusive coordinates; no images edited; not a glyph equivalence proof",
+  "frames": {
+    "reference": {
+      "sha256": "49db3e08376d433eb4c0ba7bd5a1ff29a5a9db76ae4a93dd4efbffafbdb805fb",
+      "bounds": {
+        "level": [
+          130,
+          30,
+          185,
+          47
+        ],
+        "kills": [
+          1377,
+          20,
+          1417,
+          37
+        ],
+        "timer": [
+          800,
+          22,
+          886,
+          41
+        ],
+        "coin": [
+          1533,
+          20,
+          1595,
+          41
+        ]
+      }
+    },
+    "before": {
+      "sha256": "a329feebb71d236605f904c664eed4325eeb2322ad7b892024e1199c8afac766",
+      "bounds": {
+        "level": [
+          127,
+          24,
+          191,
+          41
+        ],
+        "kills": [
+          1376,
+          14,
+          1416,
+          31
+        ],
+        "timer": [
+          798,
+          21,
+          888,
+          40
+        ],
+        "coin": [
+          1536,
+          14,
+          1598,
+          33
+        ]
+      }
+    },
+    "after": {
+      "sha256": "043ed4de7ff6d2255de0dd6813acad739a81e4634c1c8edb6dd4f0b699fa000e",
+      "bounds": {
+        "level": [
+          127,
+          30,
+          191,
+          47
+        ],
+        "kills": [
+          1376,
+          20,
+          1416,
+          37
+        ],
+        "timer": [
+          798,
+          22,
+          888,
+          41
+        ],
+        "coin": [
+          1536,
+          20,
+          1598,
+          39
+        ]
+      }
+    }
+  },
+  "filters": {
+    "white": "min(R,G,B)>190 and max(R,G,B)-min(R,G,B)<35",
+    "coin_gold": "R>200 and G>170 and B<180 and R-G>12 and G-B>45"
+  },
+  "regions_xyxy_exclusive": {
+    "level": [
+      124,
+      18,
+      197,
+      60
+    ],
+    "kills": [
+      1370,
+      10,
+      1435,
+      48
+    ],
+    "timer": [
+      794,
+      16,
+      890,
+      48
+    ],
+    "coin": [
+      1533,
+      10,
+      1645,
+      49
+    ]
+  }
+}

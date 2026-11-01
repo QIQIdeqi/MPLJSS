@@ -1,0 +1,50 @@
+{
+  "changed": true,
+  "tree": "/Game/UI/Reference/WBP_BattleReference.WBP_BattleReference:WidgetTree",
+  "targets": [
+    {
+      "name": "LevelText",
+      "before": [
+        126.0,
+        26.0
+      ],
+      "after": [
+        126.0,
+        26.0
+      ]
+    },
+    {
+      "name": "KillText",
+      "before": [
+        1374.0,
+        16.0
+      ],
+      "after": [
+        1374.0,
+        16.0
+      ]
+    },
+    {
+      "name": "TimerText",
+      "before": [
+        791.0,
+        16.0
+      ],
+      "after": [
+        791.0,
+        17.0
+      ]
+    },
+    {
+      "name": "CoinText",
+      "before": [
+        1533.0,
+        10.0
+      ],
+      "after": [
+        1533.0,
+        16.0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "changed": true,
+  "tree": "/Game/UI/Reference/WBP_BattleReference.WBP_BattleReference:WidgetTree",
+  "targets": [
+    {
+      "name": "LevelText",
+      "before": [
+        126.0,
+        20.0
+      ],
+      "after": [
+        126.0,
+        26.0
+      ]
+    },
+    {
+      "name": "KillText",
+      "before": [
+        1374.0,
+        10.0
+      ],
+      "after": [
+        1374.0,
+        16.0
+      ]
+    }
+  ]
+}
