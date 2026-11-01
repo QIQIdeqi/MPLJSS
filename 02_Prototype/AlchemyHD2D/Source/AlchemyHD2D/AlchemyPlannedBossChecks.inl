@@ -4,7 +4,7 @@ void AAlchemyWorld::PlannedBossCapture() {
     auto& E=Enemies[0];
     const auto Shot=[&](const TCHAR* Name){
         const FString Dir=FPaths::ProjectDir()/TEXT("Evidence/BossPlan/Visual");IFileManager::Get().MakeDirectory(*Dir,true);
-        FScreenshotRequest::RequestScreenshot(Dir/Name,false,false);
+        FScreenshotRequest::RequestScreenshot(Dir/Name,true,false);
         UE_LOG(LogTemp,Display,TEXT("PLANNED_BOSS_FRAME %s state=%d time=%.3f waves=%d hp=%.1f"),Name,E.PlannedState,E.PlannedTime,PlannedBossWavesFired,HP);
     };
     if(CaptureStep==0 && GreyfordBossPreparation>0 && GreyfordBossPreparation<1.5f){Shot(TEXT("01-preparation.png"));CaptureStep=1;}
@@ -17,8 +17,12 @@ void AAlchemyWorld::PlannedBossCapture() {
     else if(CaptureStep==7){Panel=TEXT("skills");SmokeTime=VisualTime;GreyfordPausedTime=E.PlannedTime;CaptureStep=8;}
     else if(CaptureStep==8 && VisualTime>SmokeTime+.5f){
         if(E.PlannedTime!=GreyfordPausedTime){FPlatformMisc::RequestExitWithStatus(false,1);return;}
-        Shot(TEXT("07-paused-config.png"));Panel.Empty();CaptureStep=9;
-    } else if(CaptureStep==9 && VisualTime>SmokeTime+1){UE_LOG(LogTemp,Display,TEXT("PLANNED_BOSS_CAPTURE_PASS"));FPlatformMisc::RequestExitWithStatus(false,0);CaptureStep=10;}
+        Shot(TEXT("07-paused-config.png"));CaptureStep=9;
+    } else if(CaptureStep==9 && VisualTime>SmokeTime+.65f && !FScreenshotRequest::IsScreenshotRequested()){
+        auto HUD=Cast<AAlchemyHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+        if(Panel!=TEXT("skills") || E.PlannedTime!=GreyfordPausedTime || !HUD || !HUD->ButtonRects.Contains(TEXT("modalclose"))){UE_LOG(LogTemp,Error,TEXT("PLANNED_BOSS_PAUSE_FRAME_FAIL"));FPlatformMisc::RequestExitWithStatus(false,1);return;}
+        UE_LOG(LogTemp,Display,TEXT("PLANNED_BOSS_PAUSE_FRAME_PASS"));Panel.Empty();SmokeTime=VisualTime;CaptureStep=10;
+    } else if(CaptureStep==10 && VisualTime>SmokeTime+.5f){UE_LOG(LogTemp,Display,TEXT("PLANNED_BOSS_CAPTURE_PASS"));FPlatformMisc::RequestExitWithStatus(false,0);CaptureStep=11;}
 }
 
 void AAlchemyWorld::PlannedBossCheck(float Dt) {
