@@ -1,6 +1,6 @@
 # 村庄碰撞编辑器
 
-入口：双击工程 `Tools/编辑村庄碰撞.cmd`。它打开 `Village_Reference`，对齐原图视角并选中水井碰撞。使用 Unreal 原生样条编辑控件，不需要改 JSON 或 C++。
+入口：双击工程 `Tools/编辑村庄碰撞.cmd`。它打开 `Village_Reference`，对齐原图视角，优先选中水井碰撞；水井区域已重命名或替换时回退到当前关卡任意Region，没有Region则给出明确提示。使用 Unreal 原生样条编辑控件，不需要改 JSON 或 C++。
 
 ![原图碰撞编辑界面](../../../00_Doc/协作策划/附件/UE_GreyfordCollisionEditor.png)
 
@@ -17,7 +17,8 @@
 
 - 选择 Actor 本身，在 Details 搜索 `Collision Layout` 可看到“阻挡区域”“显示碰撞轮廓”，以及“对齐原图编辑视角”“保存本关卡碰撞到源数据”按钮。若视图失去原图角度，重新点对齐按钮；它也会开启视口 Realtime，编辑时保持开启。
 - `Ctrl+S` 保存 `.umap`，游戏直接读取关卡里的轮廓。点“保存本关卡碰撞到源数据”会另将本关卡全部红绿区域写回 `Tools/GreyfordReference.json`，保留美术图层、交互点等其他数据；查看“数据保存状态”确认成功。修改定稿后建议两者都保存。
-- 试玩要打开根关卡 `/Game/Greyford/Maps/Greyford_Flow` 再 Play，才能保留完整流程与红发主角。停止 Play 后编辑；再次开始 Play 会重新读取边界。单独的 `Village_Reference` 是编辑用子关卡。
+- 源数据导出只允许调用Actor属于 `/Game/Greyford/Maps/Village_Reference` 子关卡。在Flow中选中该子关卡内的Region仍符合此条件；在Research、Flow根关卡或其他临时关卡新放Region后点导出会拒绝，不会把村庄源碰撞替换为其他关卡轮廓。
+- 试玩要打开根关卡 `/Game/Greyford/Maps/Greyford_Flow` 再 Play，才能保留完整流程与莉莉塔角色。停止 Play 后编辑；再次开始 Play 会重新读取边界。单独的 `Village_Reference` 是编辑用子关卡。
 - 已打包的 EXE 不会随工程修改而更新；需要重新打包。
 
 ## 后续重建

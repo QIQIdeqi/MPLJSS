@@ -56,6 +56,7 @@ memory/archives/2026-10-27-old-build-saves/
 /02_Prototype/AlchemyHD2D/Content/Tests/
 /02_Prototype/AlchemyHD2D/Tools/Test*.py
 !/02_Prototype/AlchemyHD2D/Tools/TestGreyfordCollisionEditor.py
+!/02_Prototype/AlchemyHD2D/Tools/TestCollisionExportGuard.py
 /02_Prototype/AlchemyHD2D/Tools/Diagnose*.py
 /02_Prototype/AlchemyHD2D/Tools/Smoke.ps1
 /02_Prototype/AlchemyHD2D/Tools/CleanHistoricalSpriteAssets.py

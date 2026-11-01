@@ -1,6 +1,8 @@
 #include "GreyfordReferenceRegion.h"
 #include "DrawDebugHelpers.h"
 #include "EngineUtils.h"
+#include "Engine/Level.h"
+#include "UObject/Package.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #include "LevelEditorViewport.h"
@@ -89,6 +91,10 @@ void AGreyfordReferenceRegion::AlignReferenceView(){
 void AGreyfordReferenceRegion::SaveCollisionLayout(){
 #if WITH_EDITOR
     if(GetWorld()->IsGameWorld())return;
+    if(GetLevel()->GetOutermost()->GetName()!=TEXT("/Game/Greyford/Maps/Village_Reference")){
+        EditorStatus=TEXT("仅允许从 Village_Reference 子关卡导出村庄碰撞；未写入源文件");
+        UE_LOG(LogTemp,Warning,TEXT("GREYFORD_COLLISION_EXPORT_REJECTED level=%s"),*GetLevel()->GetOutermost()->GetName());return;
+    }
     const FString Path=FPaths::ProjectDir()/TEXT("Tools/GreyfordReference.json");FString Text;TSharedPtr<FJsonObject> Data;
     if(!FFileHelper::LoadFileToString(Text,*Path) || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),Data)){EditorStatus=TEXT("读取源数据失败，未写入");return;}
     TArray<TSharedPtr<FJsonValue>> Walk,Blocked;
