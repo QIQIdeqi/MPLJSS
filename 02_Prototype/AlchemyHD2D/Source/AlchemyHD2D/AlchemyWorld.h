@@ -308,6 +308,7 @@ public:
     bool BattlePresentationCheck(float Delta);
     bool CombatFeedbackCheck(float Delta);
     bool Reference60Check(float Delta);
+    void MotionPreview(float Delta);
     UPROPERTY() TObjectPtr<AAlchemyLevelDesigner> Designer;
     UPROPERTY() TObjectPtr<UDataTable> SkillTable;
     UPROPERTY() TObjectPtr<UDataTable> RecipeTable;
@@ -483,6 +484,7 @@ public:
     void SlowEnemy(int32 Index,float Duration,float Factor);
     UNiagaraComponent* SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life);
     void UpdateFeedback(float Delta);
+    void UpdateTransientEffects(float Delta);
     int32 Area(FVector Pos,float Radius,float Damage,FLinearColor Color,float Slow=0,float SlowFactor=0.65f,UNiagaraSystem* CastSystem=nullptr,UNiagaraSystem* HitSystem=nullptr,float EffectScale=1,float CastLife=1.25f,float HitLife=.7f);
     void Hurt(float Damage);
     void Drop(FVector Pos,int32 Kind,int32 Count=1);

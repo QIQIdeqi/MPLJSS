@@ -173,6 +173,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression")) || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) || FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("UnifiedPresentationTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("Reference60Test"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("MotionPreview"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("StateFlowTest"));
@@ -1254,6 +1255,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) && VillagePresentationCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) && VillagePerspectiveCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("Reference60Test")) && Reference60Check(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("MotionPreview"))){MotionPreview(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression"))){ProducerRegression();return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossTest"))){PlannedBossCheck(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture")))PlannedBossCapture();
@@ -1453,6 +1455,10 @@ void AAlchemyWorld::Tick(float Dt) {
         CollectDrop(D.Kind,D.Count);
         D.Body->Destroy(); Drops.RemoveAtSwap(i);
     }
+    UpdateTransientEffects(Dt);
+}
+
+void AAlchemyWorld::UpdateTransientEffects(float Dt){
     for(int i=Effects.Num()-1;i>=0;i--) {
         auto& E=Effects[i];
         const float EffectDt=E.New?0.f:Dt;E.New=false;
@@ -1720,6 +1726,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "EnemyBehaviorChecks.inl"
 #include "EnemyCreationChecks.inl"
 #include "Reference60Checks.inl"
+#include "MotionPreview.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"
 #include "UnifiedPresentationChecks.inl"

@@ -10,6 +10,7 @@
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.pptx filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
+02_Prototype/AlchemyHD2D/Docs/Verification/MotionPreview_20261101/frames.csv text eol=lf
 03_Build/sprite-gen/**/*.png filter=lfs diff=lfs merge=lfs -text
 03_Build/sprite-gen/**/*.gif filter=lfs diff=lfs merge=lfs -text
 03_Build/sprite-gen/**/*.webp filter=lfs diff=lfs merge=lfs -text
