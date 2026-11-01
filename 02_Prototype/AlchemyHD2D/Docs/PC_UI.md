@@ -1,4 +1,24 @@
-# PC UI 与 HUD 可读性调整
+# PC UI 与 HUD 维护入口
+
+## 当前工程（2026-11-01）
+
+当前UI由两条绘制路径组成。下方2026-10-27记录描述的是历史Canvas版本，不应据此重建或覆盖现行参考图HUD。
+
+| 修改内容 | 当前维护位置 | 布局与状态 |
+| --- | --- | --- |
+| 战斗头像、等级、生命/闪避/经验条、计时、击杀、金币、技能槽、小地图 | [BattleReferenceWidget.cpp](../Source/AlchemyHD2D/BattleReferenceWidget.cpp)，运行优先加载`/Game/UI/Reference/WBP_BattleReference` | UMG以1672×940设计，ScaleBox等比适配并居中；技能槽按装备数显示4–6格，管理按钮随槽数移动 |
+| 炼金、强化、图鉴、暂停、字体调试、结算及战斗补充提示 | [AlchemyHUD.inl](../Source/AlchemyHD2D/AlchemyHUD.inl) | Canvas以1280×720参考单位布局；界面与战斗提示有安全框、角色/Boss避让与独立命中区 |
+| Widget创建与绑定入口 | [AlchemyWorld.cpp](../Source/AlchemyHD2D/AlchemyWorld.cpp)的BeginPlay | 加载Widget蓝图类；类缺失时使用原生UBattleReferenceWidget，原生树仅在无RootWidget时构建 |
+
+战斗Widget由NativeTick读取真实运行状态；仅在战斗中、没有面板且尚未结算时显示，面板关闭后恢复。小地图可行走格与角色/敌人标记由Widget绘制。Canvas保留无Widget时的旧HUD后备路径，不能把该分支当正常战斗HUD继续制作。
+
+F7分层字号调试作用于Canvas文字的测量和绘制；参考图UMG文字使用Widget自己的FSlateFontInfo，不读取MediumTextScale/LargeTextScale。修改UMG字体或设计尺寸需检查其实际适配，不能以F7预览推断已覆盖两条路径。Widget的绘制树由BuildReferenceTree定义，蓝图已有树不在初始化时自动重建；修改源码树后应核对蓝图资产是否同步，而非只看原生后备。
+
+`CreateEditableBlueprint`会重建并保存已有WBP_BattleReference的WidgetTree，覆盖Designer树的人工编辑。团队在蓝图中改过UI后，应先核对并合并差异；不能用重新生成代替拉取团队资产。此处说明工具现行行为，本轮未执行重建或改写Widget资产。
+
+参考图元素已作为独立资源接入；当前技能图标仍是参考占位图，不能宣称所有技能已有独立正式图标，也不能仅凭布局参数认定1:1像素还原已验收。现有[UI V0.2验收](../../../04_工具与协作/AgentTeam/2026-10-31_UI_V0.2修复验收.md)和[统一近景验收](../../../04_工具与协作/AgentTeam/2026-10-31_统一近景与风格验收.md)分别记录其覆盖与限制。本节仅按现行源码核对维护归属，没有新增运行、截图或真人验收。
+
+## 历史：2026-10-27 Canvas可读性调整
 
 2026-10-27。使用已安装的 game-ui-ux，沿用 UE 原生 Canvas HUD；没有把浏览器 UI 技术栈引入游戏。
 
