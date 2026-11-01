@@ -1,0 +1,107 @@
+{
+  "base_commit": "0e60fa1555c21d833ea2c933a56adeeddbe06f21",
+  "verified_at": "2026-11-01T08:55:13.049308+08:00",
+  "method": "Windows PowerShell executes actual OpenGreyford.ps1 with scoped Start-Process interception; Test-Path actual filesystem except two named missing-map simulations. No UE process launched.",
+  "cases": [
+    {
+      "scene": "Village",
+      "play": true,
+      "simulatedMissing": "",
+      "plan": {
+        "engine": "D:\\02_UnrealEngine\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
+        "arguments": [
+          "\"D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\AlchemyHD2D.uproject\"",
+          "/Game/Greyford/Maps/Greyford_Flow",
+          "-game",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720"
+        ],
+        "workingDirectory": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D",
+        "windowStyle": "Normal"
+      },
+      "error": null
+    },
+    {
+      "scene": "Outskirts",
+      "play": true,
+      "simulatedMissing": "",
+      "plan": {
+        "engine": "D:\\02_UnrealEngine\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
+        "arguments": [
+          "\"D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\AlchemyHD2D.uproject\"",
+          "/Game/Greyford/Maps/BattleReference",
+          "-game",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720"
+        ],
+        "workingDirectory": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D",
+        "windowStyle": "Normal"
+      },
+      "error": null
+    },
+    {
+      "scene": "Village",
+      "play": false,
+      "simulatedMissing": "",
+      "plan": {
+        "engine": "D:\\02_UnrealEngine\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
+        "arguments": [
+          "\"D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\AlchemyHD2D.uproject\"",
+          "/Game/Greyford/Maps/Village_Blockout",
+          "-ExecCmds=\"py D:/03_UEProject/AlchemyHD2DResearch/Tools/FocusGreyford.py\""
+        ],
+        "workingDirectory": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D",
+        "windowStyle": "Normal"
+      },
+      "error": null
+    },
+    {
+      "scene": "Outskirts",
+      "play": false,
+      "simulatedMissing": "",
+      "plan": {
+        "engine": "D:\\02_UnrealEngine\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
+        "arguments": [
+          "\"D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\AlchemyHD2D.uproject\"",
+          "/Game/Greyford/Maps/Outskirts_Blockout",
+          "-ExecCmds=\"py D:/03_UEProject/AlchemyHD2DResearch/Tools/FocusGreyford.py\""
+        ],
+        "workingDirectory": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D",
+        "windowStyle": "Normal"
+      },
+      "error": null
+    },
+    {
+      "scene": "Village",
+      "play": true,
+      "simulatedMissing": "Greyford_Flow.umap",
+      "plan": null,
+      "error": "Greyford map is missing: D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\Content\\Greyford\\Maps\\Greyford_Flow.umap. Restore this map before launching."
+    },
+    {
+      "scene": "Village",
+      "play": true,
+      "simulatedMissing": "Village_Blockout.umap",
+      "plan": {
+        "engine": "D:\\02_UnrealEngine\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
+        "arguments": [
+          "\"D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D\\AlchemyHD2D.uproject\"",
+          "/Game/Greyford/Maps/Greyford_Flow",
+          "-game",
+          "-windowed",
+          "-ResX=1280",
+          "-ResY=720"
+        ],
+        "workingDirectory": "D:\\06_独立游戏\\00_冒牌炼金术士\\02_Prototype\\AlchemyHD2D",
+        "windowStyle": "Normal"
+      },
+      "error": null
+    }
+  ],
+  "cases_passed": 6,
+  "source_sha256": "b53873694ac08e085eca2b473f9bcdcc5579080864fb6221816970eebf87fe98",
+  "no_ue_playtest": true,
+  "no_cook_package_or_release": true
+}

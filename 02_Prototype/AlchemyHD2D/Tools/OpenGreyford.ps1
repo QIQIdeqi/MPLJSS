@@ -4,11 +4,13 @@ $projectRoot=Split-Path -Parent $PSScriptRoot
 $engineExe='D:\02_UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
 $projectFile=Join-Path $projectRoot 'AlchemyHD2D.uproject'
 if(-not (Test-Path -LiteralPath $engineExe)) {throw 'UE5.8 editor not found.'}
-if(-not (Test-Path -LiteralPath (Join-Path $projectRoot ('Content/Greyford/Maps/'+$Scene+'_Blockout.umap')))) {throw 'Greyford map is missing. Run the documented builder first.'}
-$editorArgs=@(('"'+$projectFile+'"'),('/Game/Greyford/Maps/'+$Scene+'_Blockout'))
+$map='/Game/Greyford/Maps/'+$Scene+'_Blockout'
+if($Play){$map=if($Scene -eq 'Outskirts'){'/Game/Greyford/Maps/BattleReference'}else{'/Game/Greyford/Maps/Greyford_Flow'}}
+$mapFile=Join-Path $projectRoot ('Content/'+$map.Substring(6)+'.umap')
+if(-not (Test-Path -LiteralPath $mapFile)) {throw "Greyford map is missing: $mapFile. Restore this map before launching."}
+$editorArgs=@(('"'+$projectFile+'"'),$map)
 if($Play){
-    $editorArgs=@(('"'+$projectFile+'"'),'/Game/Greyford/Maps/Greyford_Flow','-game','-windowed','-ResX=1280','-ResY=720')
-    if($Scene -eq 'Outskirts'){$editorArgs[1]='/Game/Greyford/Maps/BattleReference'}
+    $editorArgs+=@('-game','-windowed','-ResX=1280','-ResY=720')
 }
 else {
     $aliasRoot='D:\03_UEProject\AlchemyHD2DResearch'
