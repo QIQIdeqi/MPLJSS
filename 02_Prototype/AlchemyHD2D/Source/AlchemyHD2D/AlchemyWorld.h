@@ -194,6 +194,7 @@ public:
     bool TutorialPlacementCheck(float Delta);
     bool TeachingJourneyCheck(float Delta);
     bool EnemyBehaviorCheck(float Delta);
+    bool EnemyCreationCheck(float Delta);
     FVector TeachingJourneyDirection(float Delta,FVector Manual);
     bool TeachingJourneyDodge=false;
     bool EnemyCodexCheck(float Delta);

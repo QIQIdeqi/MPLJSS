@@ -55,6 +55,9 @@ struct ALCHEMYHD2D_API FAlchemyEnemyRow : public FTableRowBase {
 
 namespace AlchemyDesign {
     ALCHEMYHD2D_API bool ReadEnemyDefinitions(UDataTable* Table,TArray<FAlchemyEnemyRow>& Rows,FString& Error);
+#if WITH_EDITOR
+    ALCHEMYHD2D_API bool CreateEnemyStarterTable(const FString& PackagePath,const FString& CSVFilename,UDataTable*& OutTable,FString& Error);
+#endif
 }
 
 UCLASS(BlueprintType)

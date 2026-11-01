@@ -4,6 +4,7 @@
 #include "Misc/Paths.h"
 #include "Components/SceneComponent.h"
 #if WITH_EDITOR
+#include "HAL/FileManager.h"
 #include "Editor.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Subsystems/AssetEditorSubsystem.h"
@@ -37,6 +38,45 @@ bool AlchemyDesign::ReadEnemyDefinitions(UDataTable* Table,TArray<FAlchemyEnemyR
     Error.Empty();return true;
 }
 
+#if WITH_EDITOR
+bool AlchemyDesign::CreateEnemyStarterTable(const FString& PackagePath,const FString& CSVFilename,UDataTable*& OutTable,FString& Error) {
+    OutTable=nullptr;Error.Empty();
+    const FString AssetName=FPackageName::GetLongPackageAssetName(PackagePath);
+    const FString ObjectPath=PackagePath+TEXT(".")+AssetName;
+    const FString Filename=FPackageName::LongPackageNameToFilename(PackagePath,FPackageName::GetAssetPackageExtension());
+    const bool OnDisk=IFileManager::Get().FileExists(*Filename) || FPackageName::DoesPackageExist(PackagePath);
+    UObject* InMemory=FindObject<UObject>(nullptr,*ObjectPath);
+    if(InMemory && !InMemory->IsA<UDataTable>()){Error=TEXT("目标路径已有其他类型对象，未覆盖");return false;}
+    if(InMemory && !OnDisk){Error=TEXT("目标路径已有未保存的内存表，请先保存或处理该对象后重试");return false;}
+    TArray<FAlchemyEnemyRow> Rows;
+    if(OnDisk){
+        auto* Existing=Cast<UDataTable>(LoadObject<UObject>(nullptr,*ObjectPath));
+        if(!Existing){Error=TEXT("目标文件已存在但无法加载为怪物表，未覆盖");return false;}
+        if(!ReadEnemyDefinitions(Existing,Rows,Error))return false;
+        OutTable=Existing;return true;
+    }
+    FString CSV;
+    if(!FFileHelper::LoadFileToString(CSV,*CSVFilename)){Error=TEXT("默认怪物CSV缺失");return false;}
+    auto* Parsed=NewObject<UDataTable>(GetTransientPackage(),NAME_None,RF_Transient);Parsed->RowStruct=FAlchemyEnemyRow::StaticStruct();
+    const auto Problems=Parsed->CreateTableFromCSVString(CSV);
+    if(!Problems.IsEmpty() || !ReadEnemyDefinitions(Parsed,Rows,Error)){Error=Problems.IsEmpty()?Error:FString::Join(Problems,TEXT("; "));return false;}
+    auto* Package=CreatePackage(*PackagePath);Package->FullyLoad();const bool WasDirty=Package->IsDirty();
+    auto* Table=NewObject<UDataTable>(Package,*AssetName,RF_Public|RF_Standalone);Table->RowStruct=FAlchemyEnemyRow::StaticStruct();
+    for(int32 I=0;I<Rows.Num();I++)Table->AddRow(FName(*FString::FromInt(I)),Rows[I]);
+    Table->MarkPackageDirty();
+    FSavePackageArgs Args;Args.TopLevelFlags=RF_Public|RF_Standalone;Args.SaveFlags|=SAVE_NoError;
+    if(!UPackage::SavePackage(Package,Table,*Filename,Args)){
+        Table->ClearFlags(RF_Public|RF_Standalone);Table->SetFlags(RF_Transient);
+        const FName TemporaryName=MakeUniqueObjectName(GetTransientPackage(),UDataTable::StaticClass(),FName(*AssetName));
+        const bool Removed=Table->Rename(*TemporaryName.ToString(),GetTransientPackage(),REN_DontCreateRedirectors|REN_NonTransactional);
+        Package->SetDirtyFlag(WasDirty);
+        Error=Removed?TEXT("保存怪物表失败，已移除本次临时对象，可以重试"):TEXT("保存怪物表失败，临时对象未能移除，请先处理后重试");return false;
+    }
+    FAssetRegistryModule::AssetCreated(Table);
+    OutTable=Table;return true;
+}
+#endif
+
 AAlchemyEnemyDesigner::AAlchemyEnemyDesigner() {
     RootComponent=CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     PrimaryActorTick.bCanEverTick=false;
@@ -60,18 +100,9 @@ void AAlchemyEnemyDesigner::OpenEnemies() {
 
 bool AAlchemyEnemyDesigner::CreateStarterTable() {
 #if WITH_EDITOR
-    const TCHAR* Path=TEXT("/Game/Design/DT_Enemies");
-    if(auto* Existing=LoadObject<UDataTable>(nullptr,TEXT("/Game/Design/DT_Enemies.DT_Enemies"))){EnemyTable=Existing;return ValidateEnemies();}
-    FString CSV;
-    if(!FFileHelper::LoadFileToString(CSV,*(FPaths::ProjectDir()/TEXT("Docs/DesignerCSV/DT_Enemies.csv")))){Status=TEXT("默认怪物CSV缺失");return false;}
-    auto* Package=CreatePackage(Path);Package->FullyLoad();
-    auto* Table=NewObject<UDataTable>(Package,TEXT("DT_Enemies"),RF_Public|RF_Standalone);Table->RowStruct=FAlchemyEnemyRow::StaticStruct();
-    const auto Problems=Table->CreateTableFromCSVString(CSV);TArray<FAlchemyEnemyRow> Rows;FString Error;
-    if(!Problems.IsEmpty() || !AlchemyDesign::ReadEnemyDefinitions(Table,Rows,Error)){Status=Problems.IsEmpty()?Error:FString::Join(Problems,TEXT("; "));return false;}
-    FAssetRegistryModule::AssetCreated(Table);Table->MarkPackageDirty();
-    FSavePackageArgs Args;Args.TopLevelFlags=RF_Public|RF_Standalone;
-    if(!UPackage::SavePackage(Package,Table,*FPackageName::LongPackageNameToFilename(Path,FPackageName::GetAssetPackageExtension()),Args)){Status=TEXT("保存怪物表失败");return false;}
-    EnemyTable=Table;MarkPackageDirty();return ValidateEnemies();
+    UDataTable* Table=nullptr;FString Error;
+    if(!AlchemyDesign::CreateEnemyStarterTable(TEXT("/Game/Design/DT_Enemies"),FPaths::ProjectDir()/TEXT("Docs/DesignerCSV/DT_Enemies.csv"),Table,Error)){Status=Error;return false;}
+    if(EnemyTable!=Table){EnemyTable=Table;MarkPackageDirty();}return ValidateEnemies();
 #else
     Status=TEXT("创建默认表仅可在编辑器执行");return false;
 #endif

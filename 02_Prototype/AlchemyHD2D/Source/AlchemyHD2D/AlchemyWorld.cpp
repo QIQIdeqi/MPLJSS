@@ -179,6 +179,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("EnemyBehaviorTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("EnemyCreationTest"));
     bCapture |= bGreyfordScene && (!bGreyfordFlow || FParse::Param(FCommandLine::Get(),TEXT("GreyfordFlowTest")) || FParse::Param(FCommandLine::Get(),TEXT("GreyfordAmbientTest")));
     const FString SaveSlot=bGreyfordFlow?TEXT("GreyfordDemo_v1"):TEXT("AlchemyResearch_v1");
     const FString BackupSlot=bGreyfordFlow?TEXT("GreyfordDemo_backup"):TEXT("AlchemyResearch_backup");
@@ -1243,6 +1244,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")) && TutorialPlacementCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")) && TeachingJourneyCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyBehaviorTest")) && EnemyBehaviorCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCreationTest")) && EnemyCreationCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) && EnemyCodexCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))){UIV02Check(Dt);return;}
     if((FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"))) && BattlePresentationCheck(Dt))return;
@@ -1714,6 +1716,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "TutorialPlacementChecks.inl"
 #include "TeachingJourney.inl"
 #include "EnemyBehaviorChecks.inl"
+#include "EnemyCreationChecks.inl"
 #include "Reference60Checks.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"
