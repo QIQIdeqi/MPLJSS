@@ -67,7 +67,7 @@ void UBattleReferenceWidget::BuildReferenceTree(UWidgetTree* Tree){
     LevelFit->SetStretch(EStretch::ScaleToFit);LevelFit->SetStretchDirection(EStretchDirection::DownOnly);LevelFit->SetClipping(EWidgetClipping::ClipToBounds);LevelFit->SetVisibility(ESlateVisibility::HitTestInvisible);
     auto Number=Text(Tree,nullptr,TEXT("LevelText"),{0,0},{0,0},18);auto NumberFont=Number->GetFont();NumberFont.LetterSpacing=-83;Number->SetFont(NumberFont);Number->SetText(FText::FromString(TEXT("1")));
     auto NumberSlot=Cast<UScaleBoxSlot>(LevelFit->AddChild(Number));NumberSlot->SetHorizontalAlignment(HAlign_Left);NumberSlot->SetVerticalAlignment(VAlign_Top);
-    Progress(Tree,Root,TEXT("HPBar"),TEXT("HPFill"),{213,35},{270,16});Image(Tree,Root,TEXT("HPFrame"),TEXT("HPFrame"),{197,27},{306,32});
+    Progress(Tree,Root,TEXT("HPBar"),TEXT("HPFill"),{213,34},{271,17});Image(Tree,Root,TEXT("HPFrame"),TEXT("HPFrame"),{197,27},{306,32});
     auto Health=Text(Tree,Root,TEXT("HPText"),{322,29},{152,27},15);Health->SetJustification(ETextJustify::Right);Health->SetText(FText::FromString(TEXT("100 / 100")));
     Progress(Tree,Root,TEXT("DodgeBar"),TEXT("DodgeFill"),{130,62},{270,10});Image(Tree,Root,TEXT("DodgeFrame"),TEXT("DodgeFrame"),{118,55},{296,24});
     auto DodgeLabel=Text(Tree,Root,TEXT("DodgeText"),{128,78},{290,20},12);DodgeLabel->SetVisibility(ESlateVisibility::Collapsed);

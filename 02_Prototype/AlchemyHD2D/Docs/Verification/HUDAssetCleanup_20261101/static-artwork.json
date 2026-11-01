@@ -1,0 +1,120 @@
+{
+  "method": "Read-only opaque artwork comparison at manifest coordinates; no images edited.",
+  "native_sha256": "35daf4e61dda762449c3af6583c04b46e9ec1812349997ca6f9863efb36af095",
+  "native_size": [
+    1672,
+    940
+  ],
+  "parts": [
+    {
+      "part": "Portrait",
+      "expected_xy": [
+        20,
+        8
+      ],
+      "opaque_pixels": 7835,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "PortraitBadge",
+      "expected_xy": [
+        20,
+        82
+      ],
+      "opaque_pixels": 611,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "HPFrame",
+      "expected_xy": [
+        197,
+        27
+      ],
+      "opaque_pixels": 3570,
+      "changed_pixels_over_2": 104,
+      "mean_abs_rgb": 3.187488
+    },
+    {
+      "part": "DodgeFrame",
+      "expected_xy": [
+        118,
+        55
+      ],
+      "opaque_pixels": 2513,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "TimerLeft",
+      "expected_xy": [
+        735,
+        22
+      ],
+      "opaque_pixels": 350,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "TimerRight",
+      "expected_xy": [
+        891,
+        22
+      ],
+      "opaque_pixels": 356,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "Skull",
+      "expected_xy": [
+        1332,
+        11
+      ],
+      "opaque_pixels": 956,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "Coin",
+      "expected_xy": [
+        1488,
+        10
+      ],
+      "opaque_pixels": 1098,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "MinimapFrame",
+      "expected_xy": [
+        1405,
+        52
+      ],
+      "opaque_pixels": 4524,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "AddSkill",
+      "expected_xy": [
+        978,
+        810
+      ],
+      "opaque_pixels": 4307,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    },
+    {
+      "part": "XPFrame",
+      "expected_xy": [
+        373,
+        902
+      ],
+      "opaque_pixels": 12166,
+      "changed_pixels_over_2": 0,
+      "mean_abs_rgb": 0.0
+    }
+  ]
+}

@@ -55,7 +55,13 @@
         286,
         23
       ],
-      "mask": "rect"
+      "mask": "rect",
+      "extra_alpha_hole": [
+        16,
+        7,
+        280,
+        7
+      ]
     },
     {
       "name": "HPFill",
@@ -215,7 +221,13 @@
         15
       ],
       "hole": null,
-      "mask": "rect"
+      "mask": "rect",
+      "interpolated_patch": [
+        1,
+        2,
+        4,
+        5
+      ]
     },
     {
       "name": "SkillFrame",

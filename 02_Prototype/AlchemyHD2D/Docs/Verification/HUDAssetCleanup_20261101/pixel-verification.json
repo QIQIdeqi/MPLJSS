@@ -1,0 +1,47 @@
+{
+  "hp_changed_alpha_pixels": 265,
+  "hp_other_pixels_changed": 0,
+  "original_numeric_residuals_transparent": 10,
+  "map_changed_pixels": 16,
+  "map_other_pixels_changed": 0,
+  "map_patch_original_max_channel": 152,
+  "map_patch_clean_max_channel": 70,
+  "native_HP_top_row_y34_samples_x240_x365": {
+    "12-hp-full": [
+      [
+        164,
+        64,
+        50
+      ],
+      [
+        186,
+        62,
+        51
+      ]
+    ],
+    "13-hp-half": [
+      [
+        164,
+        64,
+        50
+      ],
+      [
+        60,
+        60,
+        53
+      ]
+    ],
+    "14-hp-empty": [
+      [
+        53,
+        54,
+        49
+      ],
+      [
+        60,
+        60,
+        53
+      ]
+    ]
+  }
+}

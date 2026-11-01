@@ -13,8 +13,10 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     static int RefEliteIndex=0;
     static bool RefEliteNoEarly=true;
     static int RefLevelSample=0;
+    static int RefHPSample=0;
+    const bool RefHPCleanup=FParse::Param(FCommandLine::Get(),TEXT("ReferenceHPCleanup"));
     const bool RefSTIX=FParse::Param(FCommandLine::Get(),TEXT("ReferenceSTIX"));
-    const FString Dir=FPaths::ProjectDir()/(RefSTIX?TEXT("Evidence/ReferenceTypographySTIX_20261101"):TEXT("Evidence/Reference60_20261031"));
+    const FString Dir=FPaths::ProjectDir()/(RefHPCleanup?TEXT("Evidence/HUDAssetCleanup_20261101/Reference60"):RefSTIX?TEXT("Evidence/ReferenceTypographySTIX_20261101"):TEXT("Evidence/Reference60_20261031"));
     auto* PC=GetWorld()->GetFirstPlayerController();
     const auto Check=[&](bool Pass,const TCHAR* Name){RefQAOK &= Pass;UE_LOG(LogTemp,Display,TEXT("REFERENCE60_CHECK %s %s"),Name,Pass?TEXT("PASS"):TEXT("FAIL"));};
     const auto Key=[&](FKey Value,bool Pressed){FInputKeyEventArgs Event;Event.Key=Value;Event.Event=Pressed?IE_Pressed:IE_Released;Event.AmountDepressed=Pressed?1:0;PC->InputKey(Event);};
@@ -22,7 +24,7 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     const auto Next=[&](int32 Step){CaptureStep=Step;SmokeTime=0;};
     const auto Finish=[&](){for(const FKey K:{EKeys::D,EKeys::W,EKeys::S})Key(K,false);UE_LOG(LogTemp,Display,TEXT("REFERENCE60_%s"),RefQAOK?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,RefQAOK?0:1);};
     if(CaptureStep==0) {
-        RefQAOK=true;RefLevelSample=0;Check(bCapture,TEXT("isolated_fixture_never_reads_or_writes_player_save"));
+        RefQAOK=true;RefLevelSample=RefHPSample=0;Check(bCapture,TEXT("isolated_fixture_never_reads_or_writes_player_save"));
         if(!bCapture){Finish();return true;}
         IFileManager::Get().MakeDirectory(*Dir,true);
         Progress=NewObject<UAlchemyProgress>(this);MigrateProgress(true);StartRun();
@@ -134,7 +136,7 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     if(CaptureStep==14 && SmokeTime>.6f){Shot(TEXT("01-field-reference-ui.png"));Next(16);return true;}
     if(CaptureStep==16 && SmokeTime>.3f){
         if(FScreenshotRequest::IsScreenshotRequested())return true;
-        if(RefLevelSample>=4){RunLevel=12;RunXP=RequiredXP(RunLevel)*.77f;Next(2);return true;}
+        if(RefLevelSample>=4){RunLevel=12;RunXP=RequiredXP(RunLevel)*.77f;Next(RefHPCleanup?18:2);return true;}
         const int LevelsToShow[]={1,12,100,1000};RunLevel=LevelsToShow[RefLevelSample];RunXP=RequiredXP(RunLevel)*.77f;Next(17);return true;
     }
     if(CaptureStep==17 && SmokeTime>.3f){
@@ -146,6 +148,21 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
         Check(Inside,TEXT("sampled_level_number_geometry_stays_inside_fit"));
         UE_LOG(LogTemp,Display,TEXT("REFERENCE60_LEVEL_SAMPLE level=%d inside=%d"),RunLevel,Inside);
         const TCHAR* Names[]={TEXT("08-level-1.png"),TEXT("09-level-12.png"),TEXT("10-level-100.png"),TEXT("11-level-1000.png")};Shot(Names[RefLevelSample]);RefLevelSample++;Next(16);return true;
+    }
+    if(CaptureStep==18 && SmokeTime>.3f){
+        if(FScreenshotRequest::IsScreenshotRequested())return true;
+        if(RefHPSample>=3){HP=MaxHP;Next(2);return true;}
+        HP=MaxHP*(1.f-.5f*RefHPSample);Next(19);return true;
+    }
+    if(CaptureStep==19 && SmokeTime>.3f){
+        auto H=BattleWidget?Cast<UProgressBar>(BattleWidget->GetWidgetFromName(TEXT("HPBar"))):nullptr;
+        auto T=BattleWidget?Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("HPText"))):nullptr;
+        auto Root=BattleWidget?BattleWidget->GetWidgetFromName(TEXT("ReferenceCanvas")):nullptr;
+        Check(H && T && FMath::IsNearlyEqual(H->GetPercent(),HP/MaxHP,.001f) && T->GetText().ToString()==FString::Printf(TEXT("%.0f / %.0f"),HP,MaxHP),TEXT("cleanup_full_half_empty_HP_bound_after_render"));
+        bool Fits=false;
+        if(H && Root){const auto RG=Root->GetCachedGeometry(),HG=H->GetCachedGeometry();const auto P=RG.AbsoluteToLocal(HG.LocalToAbsolute(FVector2D::ZeroVector)),S=HG.GetLocalSize();Fits=FVector2D::Distance(P,{213,34})<.1 && FVector2D::Distance(S,{271,17})<.1;}
+        Check(Fits,TEXT("cleanup_dynamic_HP_covers_new_top_row_and_full_hole_width"));
+        const TCHAR* Names[]={TEXT("12-hp-full.png"),TEXT("13-hp-half.png"),TEXT("14-hp-empty.png")};Shot(Names[RefHPSample]);RefHPSample++;Next(18);return true;
     }
     if(CaptureStep==2 && SmokeTime>.3f){RefMovementStart=PlayerPos;Key(EKeys::D,true);Next(3);return false;}
     if(CaptureStep==3){if(SmokeTime<.32f)return false;Key(EKeys::D,false);Check(FVector::Dist2D(PlayerPos,RefMovementStart)>40 && CharacterAnimation.Moving && CharacterAnimation.Row==1 && CharacterAnimation.Facing==0 && CharacterAnimation.Frame>0,TEXT("injected_D_runs_production_movement_side_pose"));Shot(TEXT("02-running-side.png"));Next(4);return true;}
@@ -163,6 +180,7 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     if(CaptureStep==11){UpdateCharacterVisual(Dt,false);if(SmokeTime<.15f)return true;Check(CharacterAnimation.Row==4 && CharacterAnimation.Frame>0,TEXT("death_motion_early_frame"));Shot(TEXT("06-death-early.png"));Next(12);return true;}
     if(CaptureStep==12){UpdateCharacterVisual(Dt,false);if(SmokeTime<.49f)return true;Check(CharacterAnimation.Frame>=4,TEXT("death_motion_late_distinct_frame"));Shot(TEXT("07-death-late.png"));Next(13);return true;}
     if(CaptureStep==13 && SmokeTime>.7f){
+        if(RefHPCleanup)for(const TCHAR* Name:{TEXT("12-hp-full.png"),TEXT("13-hp-half.png"),TEXT("14-hp-empty.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("cleanup_native_HP_sample_written"));
         for(const TCHAR* Name:{TEXT("01-field-reference-ui.png"),TEXT("02-running-side.png"),TEXT("03-running-back.png"),TEXT("04-running-front.png"),TEXT("05-hurt-frame.png"),TEXT("06-death-early.png"),TEXT("07-death-late.png"),TEXT("08-level-1.png"),TEXT("09-level-12.png"),TEXT("10-level-100.png"),TEXT("11-level-1000.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("native_screenshot_written"));
         StartRun();Message(TEXT("Boss传送阵已开放，跟随箭头，站入阵内按F确认挑战。"));EndRun(true);
         Check(bRunEnded && bWon && Panel==TEXT("victory") && ToastTime<=0,TEXT("victory_clears_stale_combat_guidance"));

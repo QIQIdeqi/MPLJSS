@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse, hashlib, json, shutil
 from PIL import Image, ImageDraw
+from CleanReferenceUI import clean_part, HP_TOP, MAP_SPOT
 
 root=Path(__file__).resolve().parents[1]/'ArtSource'/'UIReference20261031'
 parser=argparse.ArgumentParser()
@@ -23,8 +24,10 @@ def cut(name,box,shape='rect',hole=None,polygon=None):
     elif shape=='rounded':draw.rounded_rectangle((1,1,w-2,h-2),radius=7,fill=255)
     else:draw.rectangle((0,0,w-1,h-1),fill=255)
     if hole:draw.rectangle(hole,fill=0)
-    tile.putalpha(mask);tile.save(root/(name+'.png'))
+    tile.putalpha(mask);tile=clean_part(name,tile);tile.save(root/(name+'.png'))
     parts.append({'name':name,'source_box':box,'size':tile.size,'hole':hole,'mask':shape})
+    if name=='HPFrame':parts[-1]['extra_alpha_hole']=HP_TOP
+    if name=='MinimapDark':parts[-1]['interpolated_patch']=MAP_SPOT
 
 cut('Portrait',(20,8,119,113),'ellipse')
 cut('PortraitBadge',(20,82,49,113),'ellipse')
