@@ -1,11 +1,13 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
 
 // Isolated rendered fixture for the shared close camera, registered art and normal stage transitions.
 bool AAlchemyWorld::UnifiedPresentationCheck(float Dt){
     static int32 Phase=-1,FieldIndex=0;
     static float Wait=0;
     static bool OK=true;
+    static bool EarlyPreparationTaken=false;
     static FString Res,CSV;
     static double VillageHeight=0,FieldHeight=0;
     static TArray<FVector> FieldPoints;
@@ -34,6 +36,23 @@ bool AAlchemyWorld::UnifiedPresentationCheck(float Dt){
         return Result;
     };
     const auto InView=[&](const FBox2D& B){return B.bIsValid && B.Min.X>=-2 && B.Min.Y>=-2 && B.Max.X<=VX+2 && B.Max.Y<=VY+2;};
+    const auto CheckHUDClear=[&](const TCHAR* Stage){
+        bool Clear=BattleWidget && !Enemies.IsEmpty();int Widgets=0;
+        if(Clear)for(const TCHAR* Name:{TEXT("PortraitArtwork"),TEXT("HPFrame"),TEXT("DodgeFrame"),TEXT("LevelText"),TEXT("HPText"),TEXT("TimerText"),TEXT("TimerLeft"),TEXT("TimerRight"),TEXT("KillIcon"),TEXT("KillText"),TEXT("CoinIcon"),TEXT("CoinText"),TEXT("Minimap"),TEXT("SkillGroup"),TEXT("XPFrame")}){
+            auto Widget=BattleWidget->GetWidgetFromName(Name);
+            if(!Widget || Widget->GetCachedGeometry().GetLocalSize().GetMin()<=0){Clear=false;continue;}
+            const auto G=Widget->GetCachedGeometry();FVector2D Min,Max,Unused;
+            USlateBlueprintLibrary::LocalToViewport(this,G,FVector2D::ZeroVector,Min,Unused);
+            USlateBlueprintLibrary::LocalToViewport(this,G,G.GetLocalSize(),Max,Unused);const FBox2D Area(Min,Max);Widgets++;
+            for(AActor* Body:{static_cast<AActor*>(Player),static_cast<AActor*>(Enemies[0].Body)}){
+                const auto Figure=Bounds(Body);const bool Overlap=!Figure.bIsValid || Figure.Intersect(Area);
+                Clear &= !Overlap;
+                if(Overlap)UE_LOG(LogTemp,Display,TEXT("UNIFIED_HUD_OVERLAP stage=%s widget=%s actor=%s figure=(%.2f,%.2f,%.2f,%.2f) widget_rect=(%.2f,%.2f,%.2f,%.2f)"),Stage,Name,Body==Player?TEXT("hero"):TEXT("Boss"),Figure.Min.X,Figure.Min.Y,Figure.Max.X,Figure.Max.Y,Min.X,Min.Y,Max.X,Max.Y);
+            }
+        }
+        UE_LOG(LogTemp,Display,TEXT("UNIFIED_HUD_SAMPLE stage=%s preparation=%.3f widgets=%d"),Stage,GreyfordBossPreparation,Widgets);
+        Check(Clear && Widgets==15,TEXT("both_character_canvases_clear_actual_UMG_geometry"));
+    };
     const auto Measure=[&](const TCHAR* Name){
         const double Scale=VillageVisualScale(PlayerPos),Size=CharacterAnimation.SheetWorldSize()*Scale;
         const FVector Center=Player->GetActorLocation(),Up=Player->GetActorRightVector();FVector2D Top,Bottom;
@@ -93,10 +112,13 @@ bool AAlchemyWorld::UnifiedPresentationCheck(float Dt){
         Check(GreyfordStage==2 && bReferenceBossScene && !bBattleReference && Enemies.Num()==1,TEXT("normal_portal_enters_reference_Boss_without_field_collision_mode"));
         if(Enemies.IsEmpty()){Finish();return true;}
         Check(FMath::IsNearlyEqual(FVector::Dist2D(PlayerPos,Enemies[0].Pos),1000.f,.1f) && FMath::IsNearlyEqual(GreyfordBossPreparation,2.f,.001f),TEXT("Boss_keeps_ten_meter_spacing_and_two_second_preparation"));
-        Phase=4;Wait=0;return true;
+        Phase=4;Wait=0;EarlyPreparationTaken=false;return true;
     }
     if(Phase==4){
-        UpdateCamera(Dt);UpdateCharacterVisual(0,false);if(Wait<.7f)return true;
+        UpdateCamera(Dt);UpdateCharacterVisual(0,false);
+        if(!EarlyPreparationTaken && Wait>=.1f){CheckHUDClear(TEXT("preparation_early"));Check(GreyfordBossPreparation>1.7f,TEXT("early_sample_uses_real_preparation_countdown"));EarlyPreparationTaken=true;Shot(TEXT("05a-boss-preparation-early"));return false;}
+        if(Wait<1.5f)return false;
+        CheckHUDClear(TEXT("preparation_late"));Check(GreyfordBossPreparation>0 && GreyfordBossPreparation<.8f,TEXT("late_sample_follows_actual_production_preparation_Tick"));
         Measure(TEXT("boss_preparation"));Check(InView(Bounds(Player)) && InView(Bounds(Enemies[0].Body)),TEXT("preparation_frames_both_complete_characters_inside_viewport"));
         Check(CombatHalfSize==FVector2D(1600,1300) && Walkable({0,0,0},45) && Walkable({1500,0,0},45) && Walkable({0,1200,0},45) && !Walkable({1601,0,0},45) && !Walkable({0,1301,0},45) && !Walkable({1400,1000,0},45),TEXT("Boss_playable_32x26m_ellipse_is_unchanged"));
         bool Art=BattleCards.Num()==7 && FieldMaterials.Num()==7;
@@ -116,6 +138,7 @@ bool AAlchemyWorld::UnifiedPresentationCheck(float Dt){
         UpdateCamera(Dt);UpdateCharacterVisual(0,false);if(Wait<.7f)return true;
         const double Height=Measure(TEXT("boss_close"));
         Check(InView(Bounds(Player)) && InView(Bounds(Enemies[0].Body)),TEXT("active_close_Boss_and_hero_remain_inside_viewport"));
+        CheckHUDClear(TEXT("active_close"));
         Check(FieldHeight>0 && FMath::Abs(Height/FieldHeight-1)<.15,TEXT("Boss_close_character_canvas_matches_field_within_15_percent"));
         Check(FMath::IsNearlyEqual(ViewWidth,AdaptedWidth,1.f) && FVector::Dist(Camera->GetActorLocation(),BattleCameraPosition()*1.75)<1,TEXT("Boss_uses_adapted_close_scale_and_scaled_fixed_eye"));
         Shot(TEXT("06-boss-close-follow"));Phase=8;return true;

@@ -56,15 +56,30 @@ void AAlchemyWorld::UpdateBattleReferenceCamera(float Delta) {
     const double Depth=FMath::Max(100.,FVector::DotProduct(PlayerPos-Eye,BattleForward()));
     const double SharedWidth=1672*180./52/FMath::Max(1.f,ReferenceZoom)*Aspect/(16./9);
     double Tangent=SharedWidth/(2*Depth);
+    FBox2D BossAngular(ForceInit);double RequiredT=0,SafeTop=0,SafeBottom=0;
     FVector Goal=PlayerPos+FVector(0,100,0);
     if(bReferenceBossScene && !Enemies.IsEmpty() && (GreyfordBossPreparation>0 || FVector::Dist2D(PlayerPos,Enemies[0].Pos)<1600)){
         Goal=(PlayerPos+Enemies[0].Pos)*.5+BattleUp()*80;
-        FBox2D Angular(ForceInit);
+        FBox2D& Angular=BossAngular;
         for(AActor* Body:{static_cast<AActor*>(Player),static_cast<AActor*>(Enemies[0].Body)})if(IsValid(Body)){
             const FBox Bounds=Body->GetComponentsBoundingBox(true);
             for(int I=0;I<8;I++){const FVector P((I&1)?Bounds.Max.X:Bounds.Min.X,(I&2)?Bounds.Max.Y:Bounds.Min.Y,(I&4)?Bounds.Max.Z:Bounds.Min.Z),V=P-Eye;
                 const double D=FMath::Max(100.,FVector::DotProduct(V,BattleForward()));Angular+=FVector2D(FVector::DotProduct(V,BattleRight())/D,FVector::DotProduct(V,BattleUp())/D);}}
-        if(Angular.bIsValid)Tangent=FMath::Max3(Tangent,Angular.GetSize().Y*Aspect/(2*.76),Angular.GetSize().X/(2*.82));
+        if(Angular.bIsValid){
+            const double ScreenH=VY>0?VY:720,ScreenW=VX>0?VX:1280;
+            const double Fit=FMath::Min(ScreenW/1672.,ScreenH/940.),Top=(ScreenH-940*Fit)*.5;
+            SafeTop=Top+50*Fit+4;SafeBottom=Top+804*Fit-4;
+            if(VX>0 && VY>0 && BattleWidget)for(const TCHAR* Name:{TEXT("TimerText"),TEXT("SkillGroup")})if(auto Widget=BattleWidget->GetWidgetFromName(Name)){
+                const auto G=Widget->GetCachedGeometry();if(G.GetLocalSize().GetMin()<=0)continue;FVector2D Pixel,Unused;
+                const bool Timer=FCString::Strcmp(Name,TEXT("TimerText"))==0;
+                USlateBlueprintLibrary::LocalToViewport(this,G,Timer?G.GetLocalSize():FVector2D::ZeroVector,Pixel,Unused);
+                if(Timer)SafeTop=Pixel.Y+4;else SafeBottom=Pixel.Y-4;
+            }
+            SafeTop=2*SafeTop/ScreenH-1;SafeBottom=2*SafeBottom/ScreenH-1;
+            const double SafeFraction=FMath::Max(.001,(SafeBottom-SafeTop)*.5);
+            RequiredT=FMath::Max(Angular.GetSize().Y*Aspect/(2*FMath::Min(.76,SafeFraction)),Angular.GetSize().X/(2*.82));
+            Tangent=FMath::Max(Tangent,RequiredT);
+        }
     }
     const double K=BattleOverscan*FMath::Tan(FMath::DegreesToRadians(25.));
     const double MaxT=K*FMath::Min(1.,Aspect/(BattleImageWidth/BattleImageHeight));
@@ -77,10 +92,17 @@ void AAlchemyWorld::UpdateBattleReferenceCamera(float Delta) {
         const double Alpha=1-FMath::Exp(-10*Delta);
         CombatCameraSourceFocus=FMath::Lerp(CombatCameraSourceFocus,Desired,Alpha);CombatCameraTangent=FMath::Lerp(CombatCameraTangent,Tangent,Alpha);
     }
-    CombatCameraTangent=FMath::Min(CombatCameraTangent,MaxT*.9999);
+    // Widen immediately when needed; interpolation must not leave a character under the HUD.
+    CombatCameraTangent=FMath::Min(FMath::Max(CombatCameraTangent,RequiredT),MaxT*.9999);
     const double HalfW=BattleImageWidth*.5*CombatCameraTangent/K,HalfH=HalfW/Aspect;
     CombatCameraSourceFocus.X=FMath::Clamp(CombatCameraSourceFocus.X,HalfW,BattleImageWidth-HalfW);
     CombatCameraSourceFocus.Y=FMath::Clamp(CombatCameraSourceFocus.Y,HalfH,BattleImageHeight-HalfH);
+    if(BossAngular.bIsValid){
+        const double F=BattleImageWidth*.5/K;
+        const double MinY=BattleImageHeight*.5-F*BossAngular.Max.Y,MaxY=BattleImageHeight*.5-F*BossAngular.Min.Y;
+        const double Low=FMath::Max(HalfH,MaxY-SafeBottom*HalfH),High=FMath::Min(BattleImageHeight-HalfH,MinY-SafeTop*HalfH);
+        if(Low<=High)CombatCameraSourceFocus.Y=FMath::Clamp(CombatCameraSourceFocus.Y,Low,High);
+    }
     C->ProjectionOffset=FVector2D((CombatCameraSourceFocus.X-BattleImageWidth*.5)/HalfW,(BattleImageHeight*.5-CombatCameraSourceFocus.Y)/HalfH);
     bPerspective=true;CameraPitch=60;CameraFOV=FMath::RadiansToDegrees(2*FMath::Atan(CombatCameraTangent));ViewWidth=SharedWidth;
     C->ProjectionMode=ECameraProjectionMode::Perspective;C->SetFieldOfView(CameraFOV);C->bConstrainAspectRatio=false;C->SetAspectRatio(float(Aspect));

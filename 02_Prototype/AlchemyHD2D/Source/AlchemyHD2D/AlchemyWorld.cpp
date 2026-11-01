@@ -2,6 +2,7 @@
 #include "BattleReferenceWidget.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
 #include "PixelFXActor.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
