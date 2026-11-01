@@ -276,7 +276,7 @@ void AAlchemyHUD::DrawHUD() {
                 for(int Q=0;Q<3;Q++) {int I=Options.Find(World->CombinationSkill(Combination,Q));Probability+=FString::Printf(TEXT("%s %.2f%%   "),Q==0?TEXT("低"):Q==1?TEXT("中"):TEXT("高"),I>=0?Chances[I]:0);}
             } else Probability=Valid?TEXT("精英专属配方 · 固定产出"):TEXT("满足投料条件后显示实际品质概率");
             Text(Probability,124,480,17,Teal);
-            // 材料背包：3 启用普通材料 + 3 禁用占位（精英材料不可获取）。
+            // 普通炼金只开放前三种投料；精英材料掉落/商人/旧配方仍保留（1.5现行边界）。
             Text(TEXT("材料背包"),740,220,22,White);
             for(int I=0;I<6;I++) {
                 float X=740+(I%3)*120, Y=240+(I/3)*92;
