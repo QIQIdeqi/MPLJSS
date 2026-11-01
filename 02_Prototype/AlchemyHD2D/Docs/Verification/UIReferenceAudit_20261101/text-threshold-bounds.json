@@ -1,0 +1,61 @@
+{
+  "method": "approximate high-white bounding boxes; background/antialiasing can affect bounds; not glyph-equivalence proof",
+  "regions": {
+    "level": {
+      "reference": [
+        130,
+        30,
+        185,
+        47
+      ],
+      "native": [
+        127,
+        24,
+        191,
+        41
+      ]
+    },
+    "hp": {
+      "reference": [
+        387,
+        35,
+        470,
+        47
+      ],
+      "native": [
+        378,
+        32,
+        470,
+        47
+      ]
+    },
+    "timer": {
+      "reference": [
+        800,
+        22,
+        886,
+        41
+      ],
+      "native": [
+        798,
+        21,
+        888,
+        40
+      ]
+    },
+    "kills": {
+      "reference": [
+        1377,
+        20,
+        1417,
+        37
+      ],
+      "native": [
+        1376,
+        14,
+        1416,
+        31
+      ]
+    }
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "method": "read-only inspection; no image or texture changed",
+  "asset": "ArtSource/UIReference20261031/HPFrame.png",
+  "opaque_white_pixels_in_numeric_region": [
+    {
+      "asset_xy": [
+        205,
+        7
+      ],
+      "reference_xy": [
+        402,
+        34
+      ],
+      "rgba": [
+        253,
+        219,
+        214,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        206,
+        7
+      ],
+      "reference_xy": [
+        403,
+        34
+      ],
+      "rgba": [
+        243,
+        206,
+        204,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        216,
+        7
+      ],
+      "reference_xy": [
+        413,
+        34
+      ],
+      "rgba": [
+        255,
+        192,
+        181,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        217,
+        7
+      ],
+      "reference_xy": [
+        414,
+        34
+      ],
+      "rgba": [
+        255,
+        208,
+        198,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        245,
+        7
+      ],
+      "reference_xy": [
+        442,
+        34
+      ],
+      "rgba": [
+        249,
+        196,
+        187,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        246,
+        7
+      ],
+      "reference_xy": [
+        443,
+        34
+      ],
+      "rgba": [
+        252,
+        200,
+        190,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        258,
+        7
+      ],
+      "reference_xy": [
+        455,
+        34
+      ],
+      "rgba": [
+        252,
+        198,
+        192,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        259,
+        7
+      ],
+      "reference_xy": [
+        456,
+        34
+      ],
+      "rgba": [
+        247,
+        217,
+        211,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        269,
+        7
+      ],
+      "reference_xy": [
+        466,
+        34
+      ],
+      "rgba": [
+        255,
+        195,
+        189,
+        255
+      ]
+    },
+    {
+      "asset_xy": [
+        270,
+        7
+      ],
+      "reference_xy": [
+        467,
+        34
+      ],
+      "rgba": [
+        248,
+        196,
+        190,
+        255
+      ]
+    }
+  ]
+}

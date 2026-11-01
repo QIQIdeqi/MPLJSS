@@ -7,6 +7,9 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     static bool RefQAOK=true;
     static FVector RefMovementStart=FVector::ZeroVector;
     static float RefOriginalHP=0;
+    static int RefEliteBefore=0;
+    static int RefEliteIndex=0;
+    static bool RefEliteNoEarly=true;
     const FString Dir=FPaths::ProjectDir()/TEXT("Evidence/Reference60_20261031");
     auto* PC=GetWorld()->GetFirstPlayerController();
     const auto Check=[&](bool Pass,const TCHAR* Name){RefQAOK &= Pass;UE_LOG(LogTemp,Display,TEXT("REFERENCE60_CHECK %s %s"),Name,Pass?TEXT("PASS"):TEXT("FAIL"));};
@@ -68,7 +71,20 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
                 UE_LOG(LogTemp,Display,TEXT("REFERENCE60_UI viewport=%dx%d artwork=%.2fx%.2f hp_anchor=%.2f,%.2f"),VX,VY,Size.X,Size.Y,P.X,P.Y);
             }else Check(false,TEXT("editable_reference_layout_nodes_exist"));
         }
-        for(int Definition:{0,7}){const int Before=Enemies.Num();SpawnEnemy(Definition);const bool Added=Enemies.Num()==Before+1;
+        for(int Definition:{0,7}){const int Before=Enemies.Num();SpawnEnemy(Definition);bool Added=Enemies.Num()==Before+1;
+            if(!Added && Definition==7){
+                // Scripted spawning stays strictly offscreen. Exercise the natural warning path when it cannot fit.
+                RefEliteBefore=Before;RefEliteIndex=EliteIndex;RefEliteNoEarly=true;NextElite=RunTime;ClearEliteWarning();EliteWarning.Definition=Definition;UpdateEliteSpawning(0);
+                Added=Enemies.Num()==Before+1;
+                if(!Added){
+                    Check(Enemies.Num()==Before && EliteWarning.Marker.IsValid() && FMath::IsNearlyEqual(EliteWarning.Remaining,1.5f,.001f),TEXT("strict_elite_unavailable_starts_full_natural_warning_without_enemy"));
+                    const float Speed=500*(1+.03f*Progress->Talents[2]+.05f*RunAttrs[2]);
+                    Check(EliteWarningPointSafe(Definition,EliteWarning.Position,FMath::Max(900.f,EnemyRadius(Definition)+45+Speed*1.5f+280)),TEXT("natural_warning_initial_point_keeps_full_movement_and_dodge_clearance"));
+                    Next(15);return true;
+                }
+                Check(EliteIndex==RefEliteIndex+1 && FMath::IsNearlyEqual(NextElite,RunTime+90,.001f),TEXT("retried_strict_elite_advances_schedule_once"));
+                NextElite=10000;
+            }
             Check(Added,Definition==0?TEXT("normal_spawn_available"):TEXT("elite_spawn_available"));
             if(Added){auto& E=Enemies.Last();FBox2D Bounds(ForceInit);const auto& Def=EnemyDefinition(E);for(int X:{-1,1})for(int Y:{-1,1}){FVector2D P;PC->ProjectWorldLocationToScreen(E.Body->GetActorLocation()+E.Body->GetActorForwardVector()*(X*Def.VisualSize.X*.5)+E.Body->GetActorRightVector()*(Y*Def.VisualSize.Y*.5),P);Bounds+=P;}
                 int VX=0,VY=0;PC->GetViewportSize(VX,VY);const double Fit=FMath::Min(double(VX)/1672,double(VY)/941),L=(VX-1672*Fit)/2,Top=(VY-941*Fit)/2;
@@ -77,6 +93,24 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
             }
         }
         Next(14);return true;
+    }
+    if(CaptureStep==15){
+        UpdateEliteSpawning(Dt);
+        if(SmokeTime<1.5f-.001f)RefEliteNoEarly &= Enemies.Num()==RefEliteBefore;
+        if(Enemies.Num()==RefEliteBefore && SmokeTime<2.5f)return true;
+        const bool Born=Enemies.Num()==RefEliteBefore+1;
+        Check(RefEliteNoEarly && SmokeTime>=1.5f-.001f,TEXT("natural_elite_warning_renders_for_full_duration_before_birth"));
+        Check(Born && !EliteWarning.Marker.IsValid() && EliteWarning.Definition<0 && EliteIndex==RefEliteIndex+1 && FMath::IsNearlyEqual(NextElite,RunTime+90,.001f),TEXT("natural_elite_materializes_once_and_clears_warning"));
+        if(Born){
+            auto& E=Enemies.Last();const auto& Def=EnemyDefinition(E);FBox2D Bounds(ForceInit);
+            for(int X:{-1,1})for(int Y:{-1,1}){FVector2D P;PC->ProjectWorldLocationToScreen(E.Body->GetActorLocation()+E.Body->GetActorForwardVector()*(X*Def.VisualSize.X*.5)+E.Body->GetActorRightVector()*(Y*Def.VisualSize.Y*.5),P);Bounds+=P;}
+            int VX=0,VY=0;PC->GetViewportSize(VX,VY);
+            const float Speed=500*(1+.03f*Progress->Talents[2]+.05f*RunAttrs[2]);
+            Check(E.Definition==7 && EliteWarningPointSafe(7,E.Pos,FMath::Max(450.f,Def.CollisionRadius+45+Speed*.5f)),TEXT("natural_elite_birth_uses_real_radius_and_reachable_safe_point"));
+            Check(Bounds.bIsValid && Bounds.Min.X>=VX*.08f && Bounds.Max.X<=VX*.92f && Bounds.Min.Y>=VY*.22f && Bounds.Max.Y<=VY*.78f,TEXT("natural_elite_complete_sprite_inside_warning_safe_viewport"));
+            E.Pos=PlayerPos+Camera->GetActorRightVector().GetSafeNormal2D()*550;E.Speed=0;UpdateEnemyVisual(E);
+        }
+        NextElite=10000;Next(14);return true;
     }
     if(CaptureStep==14 && SmokeTime>.6f){Shot(TEXT("01-field-reference-ui.png"));Next(2);return true;}
     if(CaptureStep==2 && SmokeTime>.3f){RefMovementStart=PlayerPos;Key(EKeys::D,true);Next(3);return false;}

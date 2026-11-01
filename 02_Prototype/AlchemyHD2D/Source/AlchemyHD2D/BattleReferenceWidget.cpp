@@ -15,6 +15,7 @@
 #include "Engine/FontFace.h"
 #include "Camera/CameraActor.h"
 #include "Rendering/DrawElements.h"
+#include "Layout/Clipping.h"
 #include "Styling/CoreStyle.h"
 #include "Misc/Paths.h"
 #if WITH_EDITOR
@@ -133,12 +134,15 @@ int32 UBattleReferenceWidget::NativePaint(const FPaintArgs& Args,const FGeometry
     if(!BattleWorld || !Minimap || !BattleWorld->bCombat || !BattleWorld->Panel.IsEmpty())return Base;
     const FGeometry MapGeometry=Minimap->GetCachedGeometry();const FVector2D Origin=Geometry.AbsoluteToLocal(MapGeometry.LocalToAbsolute(FVector2D::ZeroVector));
     const float Scale=float(MapGeometry.GetAbsoluteSize().X/Geometry.GetAccumulatedLayoutTransform().GetScale()/249.f);
+    // NativePaint follows the frame images; keep live map data inside the extracted frame's transparent opening.
+    const auto ClipMin=MapGeometry.LocalToAbsolute(FVector2D(7,7)),ClipMax=MapGeometry.LocalToAbsolute(FVector2D(242,141));
+    Elements.PushClip(FSlateClippingZone(FSlateRect(ClipMin,ClipMax)));
     const auto Draw=[&](FVector2D P,FVector2D Size,FLinearColor Color){FSlateDrawElement::MakeBox(Elements,Base+1,Geometry.ToPaintGeometry(FVector2f(Size*Scale),FSlateLayoutTransform(FVector2f(Origin+P*Scale))),FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")),ESlateDrawEffect::None,Color);};
     for(const auto& Cell:WalkCells)Draw({6+Cell.X*237/24,6+Cell.Y*136/18},{237.f/24,136.f/18},FLinearColor(.08f,.1f,.1f,.3f));
-    const auto Point=[&](FVector P){return FVector2D(6+(FMath::Clamp(float(FVector::DotProduct(P,MapRight)/MapRX),-1.f,1.f)+1)*118.5f,6+(1-FMath::Clamp(float(FVector::DotProduct(P,MapUp)/MapRY),-1.f,1.f))*68);};
+    const auto Point=[&](FVector P){return FVector2D(FMath::Clamp(6+(float(FVector::DotProduct(P,MapRight)/MapRX)+1)*118.5f,12.f,237.f),FMath::Clamp(6+(1-float(FVector::DotProduct(P,MapUp)/MapRY))*68,12.f,136.f));};
     for(const auto& Enemy:BattleWorld->Enemies)if(Enemy.HP>0){const float D=Enemy.Type==10?6:Enemy.Type>=7?5:3;Draw(Point(Enemy.Pos)-FVector2D(D/2),FVector2D(D),FLinearColor(.95f,.25f,.18f));}
     if(BattleWorld->GreyfordPortalReady){const auto P=Point(BattleWorld->GreyfordPortalPos);Draw(P-FVector2D(4),{8,8},FLinearColor(.15f,.95f,.9f));Draw(P-FVector2D(2),{4,4},FLinearColor(.1f,.2f,.2f));}
-    const auto Player=Point(BattleWorld->PlayerPos);Draw(Player-FVector2D(2,5),{4,10},FLinearColor(1,.86f,.4f));Draw(Player-FVector2D(5,2),{10,4},FLinearColor(1,.86f,.4f));return Base+1;
+    const auto Player=Point(BattleWorld->PlayerPos);Draw(Player-FVector2D(2,5),{4,10},FLinearColor(1,.86f,.4f));Draw(Player-FVector2D(5,2),{10,4},FLinearColor(1,.86f,.4f));Elements.PopClip();return Base+1;
 }
 
 bool UBattleReferenceWidget::CreateEditableBlueprint(){
