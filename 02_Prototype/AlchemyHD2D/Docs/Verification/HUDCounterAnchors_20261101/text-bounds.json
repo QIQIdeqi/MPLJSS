@@ -1,0 +1,74 @@
+{
+  "method": "read-only approximate high-white and gold bounds; inclusive coordinates; no images edited",
+  "frames": {
+    "reference": {
+      "sha256": "49db3e08376d433eb4c0ba7bd5a1ff29a5a9db76ae4a93dd4efbffafbdb805fb",
+      "bounds": {
+        "kills": [
+          1377,
+          20,
+          1417,
+          37
+        ],
+        "coin": [
+          1533,
+          20,
+          1595,
+          41
+        ]
+      }
+    },
+    "before": {
+      "sha256": "b86a533d366ec690ca1b76effcd725c20d3391a23573ab0c4a3d21e09a51e088",
+      "bounds": {
+        "kills": [
+          1376,
+          20,
+          1416,
+          37
+        ],
+        "coin": [
+          1536,
+          20,
+          1598,
+          39
+        ]
+      }
+    },
+    "after": {
+      "sha256": "4f5918e2f85ca3a477a3bf275ff9cf9db3a5496c6e83cf96181fcc2b5bf1ad76",
+      "bounds": {
+        "kills": [
+          1377,
+          20,
+          1417,
+          37
+        ],
+        "coin": [
+          1533,
+          20,
+          1595,
+          39
+        ]
+      }
+    }
+  },
+  "filters": {
+    "white": "minRGB>190 and maxRGB-minRGB<35",
+    "gold": "R>200 G>170 B<180 R-G>12 G-B>45"
+  },
+  "regions_xyxy_exclusive": {
+    "kills": [
+      1370,
+      10,
+      1435,
+      50
+    ],
+    "coin": [
+      1529,
+      10,
+      1645,
+      52
+    ]
+  }
+}

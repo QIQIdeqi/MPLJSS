@@ -73,8 +73,8 @@ void UBattleReferenceWidget::BuildReferenceTree(UWidgetTree* Tree){
     auto DodgeLabel=Text(Tree,Root,TEXT("DodgeText"),{128,78},{290,20},12);DodgeLabel->SetVisibility(ESlateVisibility::Collapsed);
     Image(Tree,Root,TEXT("TimerLeft"),TEXT("TimerLeft"),{735,22},{60,24});Image(Tree,Root,TEXT("TimerRight"),TEXT("TimerRight"),{891,22},{60,24});
     auto Time=Text(Tree,Root,TEXT("TimerText"),{791,17},{106,34},20);Time->SetJustification(ETextJustify::Center);Time->SetText(FText::FromString(TEXT("00 : 00")));
-    Image(Tree,Root,TEXT("KillIcon"),TEXT("Skull"),{1332,11},{36,38});Text(Tree,Root,TEXT("KillText"),{1374,16},{105,43},18)->SetText(FText::FromString(TEXT("0")));
-    Image(Tree,Root,TEXT("CoinIcon"),TEXT("Coin"),{1488,10},{39,40});Text(Tree,Root,TEXT("CoinText"),{1533,16},{118,43},18,FLinearColor(.99f,.8f,.3f))->SetText(FText::FromString(TEXT("0")));
+    Image(Tree,Root,TEXT("KillIcon"),TEXT("Skull"),{1332,11},{36,38});Text(Tree,Root,TEXT("KillText"),{1375,16},{105,43},18)->SetText(FText::FromString(TEXT("0")));
+    Image(Tree,Root,TEXT("CoinIcon"),TEXT("Coin"),{1488,10},{39,40});Text(Tree,Root,TEXT("CoinText"),{1530,16},{118,43},18,FLinearColor(.99f,.8f,.3f))->SetText(FText::FromString(TEXT("0")));
     auto Map=Tree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(),TEXT("Minimap"));Place(Root,Map,{1405,52},{249,148});
     Image(Tree,Map,TEXT("MinimapBacking"),TEXT("MinimapDark"),{6,6},{237,136});Image(Tree,Map,TEXT("MinimapFrame"),TEXT("MinimapFrame"),{0,0},{249,148});
     auto Slots=Tree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(),TEXT("SkillGroup"));Place(Root,Slots,{624,804},{421,100});
