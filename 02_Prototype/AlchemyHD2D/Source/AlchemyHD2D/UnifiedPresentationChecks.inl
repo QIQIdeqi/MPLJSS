@@ -13,6 +13,8 @@ bool AAlchemyWorld::UnifiedPresentationCheck(float Dt){
     static TArray<FVector> FieldPoints;
     static TArray<FString> FieldNames,Files,FieldMaterials;
     static TArray<FTransform> FieldTransforms;
+    static TArray<FTransform> BossEdgeTransforms;
+    static int EdgeIndex=0;
     static FVector2D FirstOffset=FVector2D::ZeroVector;
     const FString Dir=FPaths::ProjectDir()/TEXT("Evidence/UnifiedPresentation_20261031");
     auto* PC=GetWorld()->GetFirstPlayerController();
@@ -66,6 +68,14 @@ bool AAlchemyWorld::UnifiedPresentationCheck(float Dt){
         return Height;
     };
     const auto PrepareFieldPoint=[&](){PlayerPos=FieldPoints[FieldIndex];Check(Walkable(PlayerPos,45),TEXT("selected_semantic_field_point_is_legal"));UpdateCharacterVisual(0,false);Wait=0;};
+    const FVector EdgePoints[]={{1540,0,0},{-1540,0,0},{0,1240,0},{0,-1240,0},{1100,870,0},{-1100,870,0},{1100,-870,0},{-1100,-870,0}};
+    const auto PlaceEdge=[&](){
+        PlayerPos=EdgePoints[EdgeIndex];auto& Boss=Enemies[0];Boss.Pos=PlayerPos-PlayerPos.GetSafeNormal2D()*500;Boss.PlannedState=0;
+        for(auto A:PlannedBossLines)if(IsValid(A))A->SetActorHiddenInGame(true);
+        GreyfordBossPreparation=GreyfordBossStartFlash=0;ToastTime=0;
+        Check(Walkable(PlayerPos,45) && Walkable(Boss.Pos,EnemyDefinition(Boss).CollisionRadius),TEXT("edge_sample_keeps_both_collision_discs_on_legal_ground"));
+        UpdateCharacterVisual(0,false);UpdateBossVisual(Boss);UpdateCamera(0);UpdateCharacterVisual(0,false);Wait=0;
+    };
     if(Phase<0){
         Res=FString::Printf(TEXT("%dx%d"),VX,VY);CSV=TEXT("view,canvas_height_px,visible_body_height_px,view_width_cm,hfov,offset_x,offset_y,logical_x,logical_y,village_visual_scale\n");IFileManager::Get().MakeDirectory(*Dir,true);
         Check(bCapture,TEXT("fixture_has_isolated_no_save_progress"));if(!bCapture){Finish();return true;}
@@ -143,7 +153,26 @@ bool AAlchemyWorld::UnifiedPresentationCheck(float Dt){
         Check(FMath::IsNearlyEqual(ViewWidth,AdaptedWidth,1.f) && FVector::Dist(Camera->GetActorLocation(),BattleCameraPosition()*1.75)<1,TEXT("Boss_uses_adapted_close_scale_and_scaled_fixed_eye"));
         Shot(TEXT("06-boss-close-follow"));Phase=8;return true;
     }
-    if(Phase==8 && Wait>=.7f){Written();EndRun(false);Action(TEXT("village"));Panel.Empty();ToastTime=0;UpdateCamera(0);UpdateCharacterVisual(0,false);Phase=9;Wait=0;return true;}
+    if(Phase==8 && Wait>=.7f){
+        Written();
+        if(FParse::Param(FCommandLine::Get(),TEXT("BossEdgeFramingTest"))){
+            BossEdgeTransforms.Empty();for(auto A:BattleCards)BossEdgeTransforms.Add(A->GetActorTransform());EdgeIndex=0;PlaceEdge();Phase=11;return true;
+        }
+        EndRun(false);Action(TEXT("village"));Panel.Empty();ToastTime=0;UpdateCamera(0);UpdateCharacterVisual(0,false);Phase=9;Wait=0;return true;
+    }
+    if(Phase==11){
+        UpdateCamera(Dt);UpdateCharacterVisual(0,false);if(Wait<.5f)return true;
+        const FString Name=FString::Printf(TEXT("edge_%d"),EdgeIndex);Measure(*Name);CheckHUDClear(*Name);
+        Check(InView(Bounds(Player)) && InView(Bounds(Enemies[0].Body)),TEXT("both_complete_edge_characters_remain_in_viewport"));
+        bool Stable=BattleCards.Num()==BossEdgeTransforms.Num() && FVector::Dist(Camera->GetActorLocation(),BattleCameraPosition()*1.75)<1;
+        for(int I=0;I<BattleCards.Num() && I<BossEdgeTransforms.Num();I++)Stable &= BattleCards[I]->GetActorTransform().Equals(BossEdgeTransforms[I],.01);
+        Check(Stable,TEXT("edge_camera_keeps_fixed_eye_and_registered_art_transforms"));
+        Shot(FString::Printf(TEXT("08-edge-%d"),EdgeIndex));Phase=12;return true;
+    }
+    if(Phase==12 && Wait>=.3f){
+        Written();if(++EdgeIndex<UE_ARRAY_COUNT(EdgePoints)){PlaceEdge();Phase=11;return true;}
+        EndRun(false);Action(TEXT("village"));Panel.Empty();ToastTime=0;UpdateCamera(0);UpdateCharacterVisual(0,false);Phase=9;Wait=0;return true;
+    }
     if(Phase==9 && Wait>=.7f){
         Check(GreyfordStage==0 && bGreyfordReference && !bBattleReference && !bReferenceBossScene && BattleCards.IsEmpty(),TEXT("normal_result_return_clears_combat_art_and_restores_village"));
         const double Height=Measure(TEXT("returned_village"));Check(VillageHeight>0 && FMath::Abs(Height/VillageHeight-1)<.03,TEXT("return_preserves_village_close_character_scale"));

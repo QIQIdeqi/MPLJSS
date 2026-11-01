@@ -1,0 +1,533 @@
+{
+  "base_commit": "c6091015bd0f4432e55b41bcaecde6de0e865609",
+  "verified_at": "2026-11-01T10:22:20.966806+08:00",
+  "fixture": "isolated static legal edge poses, Boss 500cm toward center; no continuous movement or attack Tick during edge sample",
+  "hero_positions_cm": [
+    [
+      1540,
+      0
+    ],
+    [
+      -1540,
+      0
+    ],
+    [
+      0,
+      1240
+    ],
+    [
+      0,
+      -1240
+    ],
+    [
+      1100,
+      870
+    ],
+    [
+      -1100,
+      870
+    ],
+    [
+      1100,
+      -870
+    ],
+    [
+      -1100,
+      -870
+    ]
+  ],
+  "hero_collision_radius_cm": 45,
+  "Boss_radius": "read actual EnemyDefinition(Boss).CollisionRadius in native Walkable check",
+  "runs": {
+    "1024x768": {
+      "result": "PASS",
+      "assertions": 139,
+      "unique_names": 37,
+      "HUD_edge_samples": [
+        [
+          "0",
+          "0.000",
+          "15"
+        ],
+        [
+          "1",
+          "0.000",
+          "15"
+        ],
+        [
+          "2",
+          "0.000",
+          "15"
+        ],
+        [
+          "3",
+          "0.000",
+          "15"
+        ],
+        [
+          "4",
+          "0.000",
+          "15"
+        ],
+        [
+          "5",
+          "0.000",
+          "15"
+        ],
+        [
+          "6",
+          "0.000",
+          "15"
+        ],
+        [
+          "7",
+          "0.000",
+          "15"
+        ]
+      ],
+      "edges_camera_rows": [
+        {
+          "view": "edge_0",
+          "canvas_height_px": "163.840027",
+          "visible_body_height_px": "102.400017",
+          "view_width_cm": "1800.000122",
+          "hfov": "18.252264",
+          "offset_x": "-1.433333",
+          "offset_y": "0.118519",
+          "logical_x": "1540.000000",
+          "logical_y": "0.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_1",
+          "canvas_height_px": "163.839996",
+          "visible_body_height_px": "102.399998",
+          "view_width_cm": "1800.000122",
+          "hfov": "18.252264",
+          "offset_x": "1.433333",
+          "offset_y": "0.118519",
+          "logical_x": "-1540.000000",
+          "logical_y": "0.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_2",
+          "canvas_height_px": "163.839966",
+          "visible_body_height_px": "102.399979",
+          "view_width_cm": "1800.000122",
+          "hfov": "16.459902",
+          "offset_x": "0.000000",
+          "offset_y": "1.417157",
+          "logical_x": "0.000000",
+          "logical_y": "1240.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_3",
+          "canvas_height_px": "163.666260",
+          "visible_body_height_px": "102.291412",
+          "view_width_cm": "1800.000122",
+          "hfov": "20.499290",
+          "offset_x": "0.000000",
+          "offset_y": "-1.086934",
+          "logical_x": "0.000000",
+          "logical_y": "-1240.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_4",
+          "canvas_height_px": "163.839981",
+          "visible_body_height_px": "102.399988",
+          "view_width_cm": "1800.000122",
+          "hfov": "16.957037",
+          "offset_x": "-1.017418",
+          "offset_y": "1.049231",
+          "logical_x": "1100.000000",
+          "logical_y": "870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_5",
+          "canvas_height_px": "163.839966",
+          "visible_body_height_px": "102.399979",
+          "view_width_cm": "1800.000122",
+          "hfov": "16.957037",
+          "offset_x": "1.017418",
+          "offset_y": "1.049231",
+          "logical_x": "-1100.000000",
+          "logical_y": "870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_6",
+          "canvas_height_px": "163.839935",
+          "visible_body_height_px": "102.399960",
+          "view_width_cm": "1800.000122",
+          "hfov": "19.759598",
+          "offset_x": "-0.989503",
+          "offset_y": "-0.786910",
+          "logical_x": "1100.000000",
+          "logical_y": "-870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_7",
+          "canvas_height_px": "163.839996",
+          "visible_body_height_px": "102.399998",
+          "view_width_cm": "1800.000122",
+          "hfov": "19.759598",
+          "offset_x": "0.989503",
+          "offset_y": "-0.786910",
+          "logical_x": "-1100.000000",
+          "logical_y": "-870.000000",
+          "village_visual_scale": "1.000000"
+        }
+      ],
+      "log_sha256": "ebfe40a038ec095fa4afa2d143e393b9ec9ddd36172c661bad617d77cc104f53",
+      "verification": {
+        "result": "PASS",
+        "resolution": "1024x768",
+        "screenshots": 16,
+        "village_canvas_height_px": 163.84,
+        "field_canvas_height_px": 163.83585
+      }
+    },
+    "1280x720": {
+      "result": "PASS",
+      "assertions": 139,
+      "unique_names": 37,
+      "HUD_edge_samples": [
+        [
+          "0",
+          "0.000",
+          "15"
+        ],
+        [
+          "1",
+          "0.000",
+          "15"
+        ],
+        [
+          "2",
+          "0.000",
+          "15"
+        ],
+        [
+          "3",
+          "0.000",
+          "15"
+        ],
+        [
+          "4",
+          "0.000",
+          "15"
+        ],
+        [
+          "5",
+          "0.000",
+          "15"
+        ],
+        [
+          "6",
+          "0.000",
+          "15"
+        ],
+        [
+          "7",
+          "0.000",
+          "15"
+        ]
+      ],
+      "edges_camera_rows": [
+        {
+          "view": "edge_0",
+          "canvas_height_px": "153.600006",
+          "visible_body_height_px": "96.000004",
+          "view_width_cm": "2400.000000",
+          "hfov": "24.178936",
+          "offset_x": "-1.075000",
+          "offset_y": "0.118519",
+          "logical_x": "1540.000000",
+          "logical_y": "0.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_1",
+          "canvas_height_px": "153.599976",
+          "visible_body_height_px": "95.999985",
+          "view_width_cm": "2400.000000",
+          "hfov": "24.178936",
+          "offset_x": "1.075000",
+          "offset_y": "0.118519",
+          "logical_x": "-1540.000000",
+          "logical_y": "0.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_2",
+          "canvas_height_px": "153.599991",
+          "visible_body_height_px": "95.999994",
+          "view_width_cm": "2400.000000",
+          "hfov": "21.830730",
+          "offset_x": "0.000000",
+          "offset_y": "1.417157",
+          "logical_x": "0.000000",
+          "logical_y": "1240.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_3",
+          "canvas_height_px": "153.599915",
+          "visible_body_height_px": "95.999947",
+          "view_width_cm": "2400.000000",
+          "hfov": "27.082657",
+          "offset_x": "0.000000",
+          "offset_y": "-1.123467",
+          "logical_x": "0.000000",
+          "logical_y": "-1240.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_4",
+          "canvas_height_px": "153.600006",
+          "visible_body_height_px": "96.000004",
+          "view_width_cm": "2400.000000",
+          "hfov": "22.482870",
+          "offset_x": "-0.763064",
+          "offset_y": "1.049231",
+          "logical_x": "1100.000000",
+          "logical_y": "870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_5",
+          "canvas_height_px": "153.599976",
+          "visible_body_height_px": "95.999985",
+          "view_width_cm": "2400.000000",
+          "hfov": "22.482870",
+          "offset_x": "0.763064",
+          "offset_y": "1.049231",
+          "logical_x": "-1100.000000",
+          "logical_y": "870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_6",
+          "canvas_height_px": "153.599976",
+          "visible_body_height_px": "95.999985",
+          "view_width_cm": "2400.000000",
+          "hfov": "26.146973",
+          "offset_x": "-0.742127",
+          "offset_y": "-0.786910",
+          "logical_x": "1100.000000",
+          "logical_y": "-870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_7",
+          "canvas_height_px": "153.600006",
+          "visible_body_height_px": "96.000004",
+          "view_width_cm": "2400.000000",
+          "hfov": "26.146973",
+          "offset_x": "0.742127",
+          "offset_y": "-0.786910",
+          "logical_x": "-1100.000000",
+          "logical_y": "-870.000000",
+          "village_visual_scale": "1.000000"
+        }
+      ],
+      "log_sha256": "bdf0321356faae3332742927f4152d2070a30e975e7c73fac81bcfd8eb480e93",
+      "verification": {
+        "result": "PASS",
+        "resolution": "1280x720",
+        "screenshots": 16,
+        "village_canvas_height_px": 153.59998,
+        "field_canvas_height_px": 153.59608
+      }
+    },
+    "2560x1080": {
+      "result": "PASS",
+      "assertions": 139,
+      "unique_names": 37,
+      "HUD_edge_samples": [
+        [
+          "0",
+          "0.000",
+          "15"
+        ],
+        [
+          "1",
+          "0.000",
+          "15"
+        ],
+        [
+          "2",
+          "0.000",
+          "15"
+        ],
+        [
+          "3",
+          "0.000",
+          "15"
+        ],
+        [
+          "4",
+          "0.000",
+          "15"
+        ],
+        [
+          "5",
+          "0.000",
+          "15"
+        ],
+        [
+          "6",
+          "0.000",
+          "15"
+        ],
+        [
+          "7",
+          "0.000",
+          "15"
+        ]
+      ],
+      "edges_camera_rows": [
+        {
+          "view": "edge_0",
+          "canvas_height_px": "230.400024",
+          "visible_body_height_px": "144.000015",
+          "view_width_cm": "3200.000244",
+          "hfov": "31.877153",
+          "offset_x": "-0.806250",
+          "offset_y": "0.118519",
+          "logical_x": "1540.000000",
+          "logical_y": "0.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_1",
+          "canvas_height_px": "230.399994",
+          "visible_body_height_px": "143.999996",
+          "view_width_cm": "3200.000244",
+          "hfov": "31.877153",
+          "offset_x": "0.806250",
+          "offset_y": "0.118519",
+          "logical_x": "-1540.000000",
+          "logical_y": "0.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_2",
+          "canvas_height_px": "230.399963",
+          "visible_body_height_px": "143.999977",
+          "view_width_cm": "3200.000244",
+          "hfov": "28.840206",
+          "offset_x": "0.000000",
+          "offset_y": "1.417157",
+          "logical_x": "0.000000",
+          "logical_y": "1240.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_3",
+          "canvas_height_px": "230.399963",
+          "visible_body_height_px": "143.999977",
+          "view_width_cm": "3200.000244",
+          "hfov": "35.605972",
+          "offset_x": "0.000000",
+          "offset_y": "-1.123467",
+          "logical_x": "0.000000",
+          "logical_y": "-1240.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_4",
+          "canvas_height_px": "230.399994",
+          "visible_body_height_px": "143.999996",
+          "view_width_cm": "3200.000244",
+          "hfov": "29.685450",
+          "offset_x": "-0.572298",
+          "offset_y": "1.049231",
+          "logical_x": "1100.000000",
+          "logical_y": "870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_5",
+          "canvas_height_px": "230.399994",
+          "visible_body_height_px": "143.999996",
+          "view_width_cm": "3200.000244",
+          "hfov": "29.685450",
+          "offset_x": "0.572298",
+          "offset_y": "1.049231",
+          "logical_x": "-1100.000000",
+          "logical_y": "870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_6",
+          "canvas_height_px": "230.399963",
+          "visible_body_height_px": "143.999977",
+          "view_width_cm": "3200.000244",
+          "hfov": "34.407772",
+          "offset_x": "-0.556596",
+          "offset_y": "-0.786910",
+          "logical_x": "1100.000000",
+          "logical_y": "-870.000000",
+          "village_visual_scale": "1.000000"
+        },
+        {
+          "view": "edge_7",
+          "canvas_height_px": "230.399963",
+          "visible_body_height_px": "143.999977",
+          "view_width_cm": "3200.000244",
+          "hfov": "34.407772",
+          "offset_x": "0.556596",
+          "offset_y": "-0.786910",
+          "logical_x": "-1100.000000",
+          "logical_y": "-870.000000",
+          "village_visual_scale": "1.000000"
+        }
+      ],
+      "log_sha256": "e0df41a650dc84e2db14aea6a82394824869ba379296c59522931c1c6af2571f",
+      "verification": {
+        "result": "PASS",
+        "resolution": "2560x1080",
+        "screenshots": 16,
+        "village_canvas_height_px": 230.39999,
+        "field_canvas_height_px": 230.39417
+      }
+    }
+  },
+  "builds": {
+    "editor": {
+      "result": "PASS",
+      "log_sha256": "ad2314a7bb971ac9316679cc35d85a970d7fceb58e8b5485b0abf0cceaff1007"
+    },
+    "game": {
+      "result": "PASS",
+      "log_sha256": "4dda16736d2af711c361514510411331dad41cfb2f0dad9ed9d254a05898070b"
+    }
+  },
+  "protected_files": {
+    "count": 378,
+    "changed": []
+  },
+  "image_sha256": {
+    "08-edge-2_1024x768.png": "9a716cf0a71052b040dc5599c6599a9571401db9d04c65af550ac507eab9c8c8",
+    "08-edge-3_1024x768.png": "125c098b725b883c3b91536b461b6319deb2af6383376c61bfe2c27b22494e2c",
+    "08-edge-7_1024x768.png": "90606c3ea1417b25e8a6ea5449dfda0c41bcfde4d6fcf8a159c8c580a62cf023",
+    "08-edge-0_1280x720.png": "212e7234c4c293655053ec17d25c9f4f86f3c8af899e9b64cc5c7c81984efb8c",
+    "08-edge-5_2560x1080.png": "ae99763d14db1b45688e85bbf6d61c3bcf72c0e12602dcfced83792f647ef609"
+  },
+  "UI_main_commit": "76ff638456075b2ebb7af0535bafe7c9bb0d0e46",
+  "UI_commit_is_current_ancestor": true,
+  "production_code_changed": false,
+  "limits": [
+    "8 discrete poses per resolution, not all legal positions/trajectories",
+    "UMG geometry and actor projection covered; not all Canvas overlays, shadows, VFX or attacks",
+    "no extra low-FPS run this phase; prior central10fps evidence separate",
+    "no natural full run/human balance/audio/performance/art acceptance",
+    "no Cook/package/release"
+  ]
+}
