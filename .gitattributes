@@ -36,3 +36,4 @@
 02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/**/*.png filter=lfs diff=lfs merge=lfs -text
 02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/**/*.gif filter=lfs diff=lfs merge=lfs -text
 02_Prototype/AlchemyHD2D/Docs/Verification/TeachingJourney_20261101/**/journey.json -text whitespace=cr-at-eol
+02_Prototype/AlchemyHD2D/ArtSource/TypographyCandidates_20261101/LICENSE_STIX text eol=lf

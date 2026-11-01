@@ -1,0 +1,273 @@
+{
+  "method": "Read-only approximate high-white/gold bounds; same thresholds and ROIs for all frames; no image edits. Bounds inclusive.",
+  "regions_xyxy_exclusive": {
+    "level": [
+      124,
+      18,
+      197,
+      62
+    ],
+    "hp": [
+      350,
+      28,
+      478,
+      56
+    ],
+    "timer": [
+      794,
+      16,
+      890,
+      54
+    ],
+    "kills": [
+      1370,
+      10,
+      1435,
+      50
+    ],
+    "coin": [
+      1533,
+      10,
+      1645,
+      52
+    ]
+  },
+  "white_filter": "min(R,G,B)>190 and max(R,G,B)-min(R,G,B)<35",
+  "gold_filter": "R>200 G>170 B<180 R-G>12 G-B>45",
+  "frames": {
+    "reference": {
+      "sha256": "49db3e08376d433eb4c0ba7bd5a1ff29a5a9db76ae4a93dd4efbffafbdb805fb",
+      "fields": {
+        "level": {
+          "bounds": [
+            130,
+            30,
+            185,
+            47
+          ],
+          "width": 56,
+          "height": 18
+        },
+        "hp": {
+          "bounds": [
+            387,
+            35,
+            470,
+            47
+          ],
+          "width": 84,
+          "height": 13
+        },
+        "timer": {
+          "bounds": [
+            800,
+            22,
+            886,
+            41
+          ],
+          "width": 87,
+          "height": 20
+        },
+        "kills": {
+          "bounds": [
+            1377,
+            20,
+            1417,
+            37
+          ],
+          "width": 41,
+          "height": 18
+        },
+        "coin": {
+          "bounds": [
+            1533,
+            20,
+            1595,
+            41
+          ],
+          "width": 63,
+          "height": 22
+        }
+      }
+    },
+    "current": {
+      "sha256": "043ed4de7ff6d2255de0dd6813acad739a81e4634c1c8edb6dd4f0b699fa000e",
+      "fields": {
+        "level": {
+          "bounds": [
+            127,
+            30,
+            191,
+            47
+          ],
+          "width": 65,
+          "height": 18
+        },
+        "hp": {
+          "bounds": [
+            378,
+            32,
+            470,
+            47
+          ],
+          "width": 93,
+          "height": 16
+        },
+        "timer": {
+          "bounds": [
+            798,
+            22,
+            888,
+            41
+          ],
+          "width": 91,
+          "height": 20
+        },
+        "kills": {
+          "bounds": [
+            1376,
+            20,
+            1416,
+            37
+          ],
+          "width": 41,
+          "height": 18
+        },
+        "coin": {
+          "bounds": [
+            1536,
+            20,
+            1598,
+            39
+          ],
+          "width": 63,
+          "height": 20
+        }
+      }
+    },
+    "stix": {
+      "sha256": "0d344fd122d82205f339ea9fc03702885221dd245cf3197ff2e11b6965a2c761",
+      "fields": {
+        "level": {
+          "bounds": [
+            126,
+            35,
+            180,
+            50
+          ],
+          "width": 55,
+          "height": 16
+        },
+        "hp": {
+          "bounds": [
+            398,
+            37,
+            472,
+            49
+          ],
+          "width": 75,
+          "height": 13
+        },
+        "timer": {
+          "bounds": [
+            806,
+            27,
+            879,
+            45
+          ],
+          "width": 74,
+          "height": 19
+        },
+        "kills": {
+          "bounds": [
+            1375,
+            25,
+            1408,
+            40
+          ],
+          "width": 34,
+          "height": 16
+        },
+        "coin": {
+          "bounds": [
+            1536,
+            25,
+            1586,
+            41
+          ],
+          "width": 51,
+          "height": 17
+        }
+      }
+    }
+  },
+  "control_check": {
+    "header_widget_rectangles_xyxy_exclusive": [
+      [
+        126,
+        26,
+        198,
+        59
+      ],
+      [
+        322,
+        29,
+        474,
+        56
+      ],
+      [
+        791,
+        17,
+        897,
+        51
+      ],
+      [
+        1374,
+        16,
+        1479,
+        59
+      ],
+      [
+        1533,
+        16,
+        1651,
+        59
+      ]
+    ],
+    "rgb_pixels_changed_outside_five_header_rectangles": 2,
+    "outside_pixel_details": [
+      {
+        "xy": [
+          125,
+          35
+        ],
+        "current_rgb": [
+          104,
+          128,
+          122
+        ],
+        "stix_rgb": [
+          114,
+          136,
+          131
+        ]
+      },
+      {
+        "xy": [
+          125,
+          50
+        ],
+        "current_rgb": [
+          100,
+          92,
+          83
+        ],
+        "stix_rgb": [
+          106,
+          99,
+          90
+        ]
+      }
+    ]
+  }
+}

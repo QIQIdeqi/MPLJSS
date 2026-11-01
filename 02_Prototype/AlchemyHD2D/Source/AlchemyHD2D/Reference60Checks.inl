@@ -1,6 +1,7 @@
 ﻿#include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "InputKeyEventArgs.h"
+#include "Fonts/CompositeFont.h"
 
 // Native rendered fixture. true freezes simulation; false lets the injected controller key run production Tick.
 bool AAlchemyWorld::Reference60Check(float Dt) {
@@ -10,7 +11,8 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     static int RefEliteBefore=0;
     static int RefEliteIndex=0;
     static bool RefEliteNoEarly=true;
-    const FString Dir=FPaths::ProjectDir()/TEXT("Evidence/Reference60_20261031");
+    const bool RefSTIX=FParse::Param(FCommandLine::Get(),TEXT("ReferenceSTIX"));
+    const FString Dir=FPaths::ProjectDir()/(RefSTIX?TEXT("Evidence/ReferenceTypographySTIX_20261101"):TEXT("Evidence/Reference60_20261031"));
     auto* PC=GetWorld()->GetFirstPlayerController();
     const auto Check=[&](bool Pass,const TCHAR* Name){RefQAOK &= Pass;UE_LOG(LogTemp,Display,TEXT("REFERENCE60_CHECK %s %s"),Name,Pass?TEXT("PASS"):TEXT("FAIL"));};
     const auto Key=[&](FKey Value,bool Pressed){FInputKeyEventArgs Event;Event.Key=Value;Event.Event=Pressed?IE_Pressed:IE_Released;Event.AmountDepressed=Pressed?1:0;PC->InputKey(Event);};
@@ -31,6 +33,17 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
         MaxHP=HP=320;RunLevel=12;RunXP=RequiredXP(RunLevel)*.77f;RunTime=328;RunCoins=1240;Kills=532;
         DodgeCD=1.2f;SpawnCD=NextElite=NextMerchantTime=10000;CloseMerchant();ToastTime=0;Panel.Empty();
         Equipped={0,1,2,3};Levels[0]=3;Levels[1]=2;Levels[2]=4;Levels[3]=1;for(float& CD:SkillCD)CD=10000;
+        if(RefSTIX){
+            // Capture-only font study. Runtime widget instances change; the saved designer asset stays untouched.
+            const FString FontPath=FPaths::ProjectDir()/TEXT("ArtSource/TypographyCandidates_20261101/STIXGeneral.ttf");
+            const bool Ready=BattleWidget && IFileManager::Get().FileExists(*FontPath);
+            Check(Ready,TEXT("stix_candidate_widget_and_font_file_available"));if(!Ready){Finish();return true;}
+            const auto Candidate=MakeShared<FCompositeFont>(FName(TEXT("Regular")),FontPath,EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
+            for(const TCHAR* Name:{TEXT("LevelText"),TEXT("HPText"),TEXT("TimerText"),TEXT("KillText"),TEXT("CoinText")}){
+                auto Text=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(Name));Check(Text!=nullptr,*FString::Printf(TEXT("stix_header_%s_present"),Name));
+                if(Text){auto Font=Text->GetFont();Font.FontObject=nullptr;Font.CompositeFont=Candidate;Text->SetFont(Font);}
+            }
+        }
         Check(CharacterAnimation.HasRoseMotion(),TEXT("authored_three_direction_motion_atlases_loaded"));
         TSharedPtr<FJsonObject> Spec;FString Input;
         Check(FFileHelper::LoadFileToString(Input,*(FPaths::ProjectContentDir()/TEXT("Reference/BattleReferenceSpec.json"))) && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Input),Spec),TEXT("cooked_semantic_fixture_loaded"));
