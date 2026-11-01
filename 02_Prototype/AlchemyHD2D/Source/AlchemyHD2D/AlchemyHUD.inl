@@ -189,7 +189,8 @@ void AAlchemyHUD::DrawHUD() {
             Text(E.Phase2?TEXT("腐化之源 · 二阶段"):World->bGreyfordFlow?TEXT("腐化之源 · 雾界草甸"):TEXT("腐化之源 · 封锁战场"),416,Y+10,FlowBoss?20:24,Gold);
             Box(416,Y+(FlowBoss?36:48),448,12,Ink);Box(416,Y+(FlowBoss?36:48),448*FMath::Max(0.f,E.HP/E.MaxHP),12,Gold);
             const TCHAR* Names[]={TEXT("冲刺 · 离开橙色直线"),TEXT("弹幕 · 从扇形间隙穿过"),TEXT("冲击波 · 向侧面闪避")};
-            Text(FlowBoss?(E.PlannedState==1?TEXT("冲刺蓄力 · 方向锁定后向侧面躲开"):E.PlannedState==2?TEXT("冲刺中 · 避开橙色路线"):E.PlannedState==3?TEXT("收招停顿 · 调整站位并输出"):TEXT("两波弹幕 · 观察青色弹道间隙")):E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:World->bGreyfordFlow?TEXT("保持移动 · 雾界边界不可越过"):TEXT("保持移动 · 金色边界不可越过"),416,Y+(FlowBoss?50:72),FlowBoss?16:18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
+            const TCHAR* FlowHint=World->GreyfordBossPreparation>0?TEXT("准备阶段 · 观察站位，倒计时结束后开战"):E.PlannedState==1?TEXT("冲刺蓄力 · 方向锁定后向侧面躲开"):E.PlannedState==2?TEXT("冲刺中 · 避开橙色路线"):E.PlannedState==3?TEXT("收招停顿 · 调整站位并输出"):(E.PlannedState==4 || E.PlannedState==5)?TEXT("两波弹幕 · 观察青色弹道间隙"):TEXT("保持移动 · 等待Boss出招");
+            Text(FlowBoss?FlowHint:E.Transition>0?TEXT("阶段转换 · 可以继续攻击"):E.BossActive>0?TEXT("冲刺中 · 注意侧移"):E.Windup>0?Names[E.BossAttack]:World->bGreyfordFlow?TEXT("保持移动 · 雾界边界不可越过"):TEXT("保持移动 · 金色边界不可越过"),416,Y+(FlowBoss?50:72),FlowBoss?16:18,E.Windup>0?FLinearColor(1,.65f,.3f):Dim);break;
         }
         if(World->TutorialEncounterMarker.IsValid()) {
             FVector2D Screen;

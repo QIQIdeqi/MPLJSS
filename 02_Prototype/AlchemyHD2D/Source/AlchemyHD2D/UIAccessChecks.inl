@@ -9,6 +9,7 @@
 // -UIV02Test -UIAccessTest: production Tick is frozen; Slate/UMG/DrawHUD stay live.
 void AAlchemyWorld::UIAccessCheck(float Dt) {
     static bool OK=true;
+    static int BossHintCase=0;
     static TWeakPtr<IToolTip> DodgeTip, XPTip, SkillTip;
     auto PC=GetWorld()->GetFirstPlayerController();auto HUD=PC?Cast<AAlchemyHUD>(PC->GetHUD()):nullptr;
     if(!PC || !HUD)return;
@@ -34,9 +35,11 @@ void AAlchemyWorld::UIAccessCheck(float Dt) {
         return false;
     };
     const auto Finish=[&](){Key(IE_Released);UE_LOG(LogTemp,Display,TEXT("UIACCESS_%s"),OK?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,OK?0:1);};
+    const int BossStates[]={0,0,1,2,3,4,5};
+    const TCHAR* BossHints[]={TEXT("准备阶段 · 观察站位，倒计时结束后开战"),TEXT("保持移动 · 等待Boss出招"),TEXT("冲刺蓄力 · 方向锁定后向侧面躲开"),TEXT("冲刺中 · 避开橙色路线"),TEXT("收招停顿 · 调整站位并输出"),TEXT("两波弹幕 · 观察青色弹道间隙"),TEXT("两波弹幕 · 观察青色弹道间隙")};
     SmokeTime+=Dt;
     if(CaptureStep==0){
-        OK=true;Check(bCapture,TEXT("isolated_capture_prevents_player_save_IO"));if(!bCapture){Finish();return;}
+        OK=true;BossHintCase=0;Check(bCapture,TEXT("isolated_capture_prevents_player_save_IO"));if(!bCapture){Finish();return;}
         IFileManager::Get().MakeDirectory(*Dir,true);Key(IE_Released);
         Progress=NewObject<UAlchemyProgress>(this);MigrateProgress(true);Progress->TutorialComplete=true;StartRun();
         Inventory={5,0,0,0,0,0};Selected={0,0,0,0,0,0};Progress->Combinations.Empty();
@@ -101,7 +104,24 @@ void AAlchemyWorld::UIAccessCheck(float Dt) {
     }
     if(CaptureStep==10){
         if(SmokeTime<.2f || FScreenshotRequest::IsScreenshotRequested())return;
-        Check(!PC->IsInputKeyDown(EKeys::Enter),TEXT("fixture_finishes_with_Enter_released"));Finish();return;
+        Check(!PC->IsInputKeyDown(EKeys::Enter),TEXT("fixture_finishes_with_Enter_released"));Action(TEXT("close"));
+        StartRun();GreyfordPortalReady=true;GreyfordPortalPos=PlayerPos;Check(EnterGreyfordBoss() && Enemies.Num()==1,TEXT("actual_Boss_entry_available_for_HUD_state_checks"));Next(13);return;
+    }
+    if(CaptureStep==13){
+        if(Enemies.IsEmpty()){Finish();return;}
+        GreyfordBossPreparation=BossHintCase==0?2:0;Enemies[0].PlannedState=BossStates[BossHintCase];Next(14);return;
+    }
+    if(CaptureStep==14){
+        if(SmokeTime<.3f)return;
+        UE_LOG(LogTemp,Display,TEXT("UIACCESS_BOSS_HINT case=%d preparation=%.1f state=%d"),BossHintCase,GreyfordBossPreparation,Enemies[0].PlannedState);
+        Check(HUD->UIV02DrawnText.Contains(BossHints[BossHintCase]),TEXT("rendered_Boss_hint_matches_preparation_or_actual_planned_state"));
+        if(BossHintCase<2)FScreenshotRequest::RequestScreenshot(Dir/(BossHintCase==0?TEXT("03-boss-preparation.png"):TEXT("04-boss-idle.png")),true,false);
+        Next(15);return;
+    }
+    if(CaptureStep==15){
+        if(SmokeTime<.3f || FScreenshotRequest::IsScreenshotRequested())return;
+        if(++BossHintCase<UE_ARRAY_COUNT(BossStates)){Next(13);return;}
+        Finish();return;
     }
     Check(false,TEXT("bounded_fixture_stage"));Finish();
 }
