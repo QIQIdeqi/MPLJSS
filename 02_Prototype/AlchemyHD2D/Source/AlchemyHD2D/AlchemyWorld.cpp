@@ -679,6 +679,7 @@ void AAlchemyWorld::EndRun(bool Won) {
     CloseMerchant();
     EndBossArena();PendingLevelUps=0;
     bRunEnded=true; bWon=Won;
+    ToastTime=0; // End combat guidance before SaveProgress can report a new failure.
     // EXP-001/PAUSE-001: clear run-local xp/attributes and pending results on run end.
     RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
     PendingResultSkill=-1; PendingIsNuclear=false; StartMaterialChoice=-1;

@@ -1,0 +1,71 @@
+{
+  "base_commit": "24e83641ae68f873477cc8814dcc1bb133bd929f",
+  "verified_at": "2026-11-01T09:30:04.615901+08:00",
+  "reference_resolution": [
+    1672,
+    940
+  ],
+  "state_flow_resolution_fps": [
+    1280,
+    720,
+    60
+  ],
+  "checks": {
+    "reference_baseline": {
+      "result": "FAIL",
+      "assertions": 34,
+      "unique_names": 28,
+      "failed": [
+        "lethal_Hurt_clears_stale_combat_guidance",
+        "victory_clears_stale_combat_guidance"
+      ],
+      "log_sha256": "849cf0f8883ecc96d8cccee40b4636451e97841350dd43b258d65b3d992c16e7"
+    },
+    "reference_fixed": {
+      "result": "PASS",
+      "assertions": 34,
+      "unique_names": 28,
+      "failed": [],
+      "log_sha256": "eefbf87ff7c732d196a892eb29c9b3657ee496fee34a0aad3d8f8d5b5973e568"
+    },
+    "producer": {
+      "result": "PASS",
+      "assertions": 39,
+      "unique_names": 33,
+      "failed": [],
+      "log_sha256": "5d386e5c4011a81cad9d05251dd85bd74707e0b8a9e63f67b133600db7c4f897"
+    },
+    "state_flow": {
+      "result": "PASS",
+      "assertions": 19,
+      "unique_names": 19,
+      "failed": [],
+      "log_sha256": "3f0f16a8bd53f731e65bfcbfdcfcd64bf520c01b8abae8916f038e9ed7394f3d"
+    }
+  },
+  "builds": {
+    "editor": {
+      "result": "PASS",
+      "log_sha256": "6cc3ecb63cb03e546ae1630431754b823583beba06fd8d85da2ccc6fd0b7b3ea"
+    },
+    "game": {
+      "result": "PASS",
+      "log_sha256": "46e3fc4392fdb78f2337fe0b9c2f6de4b8e25fb56cee92635814de5bb250f2a0"
+    }
+  },
+  "protected_files": {
+    "count": 378,
+    "changed": []
+  },
+  "image_sha256": {
+    "fixed-hud.png": "69dbd683d9e6f2e64a385506626dd45f259e490eca2114823eacfb6520ca3a75",
+    "baseline-death.png": "f852cf5ffa55f2d9db7043363a6a1dd6db8a65d37ccad62682e6e13bf4b661c6",
+    "fixed-death.png": "6647a65a2e89598950939df42e7b4ab2e306ab01ee2d29e72d917aeb0810bbb3"
+  },
+  "limits": [
+    "isolated constructed progress, no real saves",
+    "saving failure Message preservation reviewed in source only, no disk-failure injection",
+    "not full pixel identity or human art/balance/animation continuity acceptance",
+    "no Cook/package/release"
+  ]
+}

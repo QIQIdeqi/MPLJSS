@@ -91,11 +91,13 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
         if(BattleWidget){auto H=Cast<UProgressBar>(BattleWidget->GetWidgetFromName(TEXT("HPBar")));auto T=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("HPText")));Check(H && T && FMath::IsNearlyEqual(H->GetPercent(),HP/MaxHP,.001f) && T->GetText().ToString().Contains(FString::Printf(TEXT("%.0f"),HP)),TEXT("UMG_HP_binding_changes_after_real_damage"));}
         Shot(TEXT("05-hurt-frame.png"));Next(10);return true;
     }
-    if(CaptureStep==10 && SmokeTime>.3f){for(auto& FX:Effects)if(IsValid(FX.Body))FX.Body->Destroy();Effects.Empty();HurtInv=DodgeInv=0;Hurt(10000);Check(HP<=0 && bRunEnded && CharacterAnimation.Dead,TEXT("real_lethal_Hurt_enters_defeat_and_death_motion"));Next(11);return true;}
+    if(CaptureStep==10 && SmokeTime>.3f){for(auto& FX:Effects)if(IsValid(FX.Body))FX.Body->Destroy();Effects.Empty();Message(TEXT("Boss传送阵已开放，跟随箭头，站入阵内按F确认挑战。"));HurtInv=DodgeInv=0;Hurt(10000);Check(HP<=0 && bRunEnded && CharacterAnimation.Dead,TEXT("real_lethal_Hurt_enters_defeat_and_death_motion"));Check(ToastTime<=0,TEXT("lethal_Hurt_clears_stale_combat_guidance"));Next(11);return true;}
     if(CaptureStep==11){UpdateCharacterVisual(Dt,false);if(SmokeTime<.15f)return true;Check(CharacterAnimation.Row==4 && CharacterAnimation.Frame>0,TEXT("death_motion_early_frame"));Shot(TEXT("06-death-early.png"));Next(12);return true;}
     if(CaptureStep==12){UpdateCharacterVisual(Dt,false);if(SmokeTime<.49f)return true;Check(CharacterAnimation.Frame>=4,TEXT("death_motion_late_distinct_frame"));Shot(TEXT("07-death-late.png"));Next(13);return true;}
     if(CaptureStep==13 && SmokeTime>.7f){
         for(const TCHAR* Name:{TEXT("01-field-reference-ui.png"),TEXT("02-running-side.png"),TEXT("03-running-back.png"),TEXT("04-running-front.png"),TEXT("05-hurt-frame.png"),TEXT("06-death-early.png"),TEXT("07-death-late.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("native_screenshot_written"));
+        StartRun();Message(TEXT("Boss传送阵已开放，跟随箭头，站入阵内按F确认挑战。"));EndRun(true);
+        Check(bRunEnded && bWon && Panel==TEXT("victory") && ToastTime<=0,TEXT("victory_clears_stale_combat_guidance"));
         Finish();return true;
     }
     return true;
