@@ -29,7 +29,27 @@ bool AAlchemyWorld::EnemyBehaviorCheck(float Dt) {
             const FVector Rounded(FMath::RoundToInt(P.X),FMath::RoundToInt(P.Y),0);
             if(Walkable(Rounded,45) && SegmentClear(Rounded,Rounded+FVector(750,0,0),45)){Origin=Rounded;Found=true;break;}}
         Check(Found,TEXT("integer_axis_aligned_750cm_fixture_corridor_is_legal"));if(!Found){Finish();return true;}
-        PlayerPos=Origin;UpdateCamera(0);UpdateCharacterVisual(0,false);Next(1);return true;
+        PlayerPos=Origin;UpdateCamera(0);UpdateCharacterVisual(0,false);
+        // Spawn postconditions only: no production death Tick is claimed by these four cases.
+        const bool OriginalTune=bTune001B;
+        const float HealthValues[4][2]={{.1f,-1.f},{17.f,.1f},{1.f,-1.f},{17.f,-1.f}};
+        for(int HealthCase=0;HealthCase<4;HealthCase++){
+            const auto HealthCheck=[&](bool Pass,const TCHAR* Name){OK &= Pass;UE_LOG(LogTemp,Display,TEXT("ENEMY_HEALTH_CHECK case=%d %s %s"),HealthCase,Name,Pass?TEXT("PASS"):TEXT("FAIL"));};
+            Clear();FAlchemyEnemyRow Row=Original[0];Row.Name=FString::Printf(TEXT("QA_Health_%d"),HealthCase);Row.HP=HealthValues[HealthCase][0];Row.TunedHP=HealthValues[HealthCase][1];
+            auto Table=NewObject<UDataTable>(this);Table->RowStruct=FAlchemyEnemyRow::StaticStruct();
+            for(int I=0;I<Original.Num();I++)Table->AddRow(FName(*FString::FromInt(I)),Original[I]);
+            const int HealthID=Original.Num();Table->AddRow(FName(*FString::FromInt(HealthID)),Row);
+            TArray<FAlchemyEnemyRow> Parsed;FString Error;const bool Valid=AlchemyDesign::ReadEnemyDefinitions(Table,Parsed,Error);
+            HealthCheck(Valid,TEXT("positive_fractional_or_control_HP_row_passes_actual_validation"));
+            bTune001B=HealthCase==1;
+            if(Valid){RuntimeEnemies=MoveTemp(Parsed);SpawnEnemyAt(HealthID,Origin+FVector(100,0,0));}
+            HealthCheck(Enemies.Num()==1,TEXT("production_SpawnEnemyAt_creates_configured_enemy"));
+            const float Expected=HealthCase==3?17.f:1.f;
+            HealthCheck(Enemies.Num()==1 && Enemies[0].HP==Expected && Enemies[0].MaxHP==Expected,TEXT("production_spawn_HP_and_MaxHP_match_positive_minimum_or_integer_control"));
+            UE_LOG(LogTemp,Display,TEXT("ENEMY_HEALTH_STATE case=%d base=%.3f tuned=%.3f tuning_enabled=%d expected=%.1f actual_HP=%.3f actual_MaxHP=%.3f"),HealthCase,Row.HP,Row.TunedHP,bTune001B,Expected,Enemies.IsEmpty()?-1.f:Enemies[0].HP,Enemies.IsEmpty()?-1.f:Enemies[0].MaxHP);
+            Clear();RuntimeEnemies=Original;bTune001B=OriginalTune;
+        }
+        Next(1);return true;
     }
     if(CaptureStep==1){
         Clear();PlayerPos=Origin;HP=MaxHP;HurtInv=DodgeInv=DodgeCD=DodgeTime=0;CharacterAnimation.Reset();Panel.Empty();

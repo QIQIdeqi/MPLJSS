@@ -29,7 +29,7 @@ cdo = u.get_default_object(bp.generated_class())
 if not cdo.get_editor_property('enemy_table'):
     cdo.set_editor_property('enemy_table', table)
 assert cdo.validate_enemies(), cdo.get_editor_property('status')
-u.BlueprintEditorLibrary.compile_blueprint(bp)
+assert u.BlueprintEditorLibrary.compile_blueprint(bp), 'Enemy designer Blueprint compilation failed; setup stopped before save.'
 assert lib.save_loaded_asset(bp)
 
 # Export the actual loaded table into evidence rather than overwriting the seed CSV.

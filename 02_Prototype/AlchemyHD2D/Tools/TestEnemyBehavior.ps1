@@ -8,5 +8,5 @@ $launch=@('D:/03_UEProject/AlchemyHD2DResearch/AlchemyHD2D.uproject','/Game/Grey
 $run=Start-Process -FilePath 'D:/02_UnrealEngine/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList $launch -WindowStyle Hidden -PassThru
 if(!$run.WaitForExit(180000)){Stop-Process -Id $run.Id;throw "EnemyBehavior timeout: $log"}
 if($run.ExitCode -ne 0 -or !(Select-String -LiteralPath $log -SimpleMatch 'ENEMY_BEHAVIOR_PASS' -Quiet)){throw "EnemyBehavior failed: $log"}
-if(Select-String -LiteralPath $log -Pattern 'ENEMY_BEHAVIOR_CHECK .* FAIL|Fatal error:|Ensure condition failed|LogMaterial: Error:|LogShaderCompilers: Error:' -Quiet){throw "EnemyBehavior reported errors: $log"}
+if(Select-String -LiteralPath $log -Pattern 'ENEMY_BEHAVIOR_CHECK .* FAIL|ENEMY_HEALTH_CHECK .* FAIL|Fatal error:|Ensure condition failed|LogMaterial: Error:|LogShaderCompilers: Error:' -Quiet){throw "EnemyBehavior reported errors: $log"}
 Write-Output "ENEMY_BEHAVIOR_PASS ${FPS}fps $log"

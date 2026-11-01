@@ -930,7 +930,7 @@ void AAlchemyWorld::SpawnEnemyAt(int Type,FVector P) {
     FAlchemyEnemy E;E.Type=K.Archetype;E.Definition=Type;E.Pos=P;
     const int Minute=FMath::Max(0,int(RunTime/60));
     const float HPBase=bTune001B && K.TunedHP>=0?K.TunedHP:K.HP;
-    E.HP=E.MaxHP=FMath::RoundToFloat(HPBase*(1+K.HPPerMinute*FMath::Min(K.HPMinuteCap,Minute)));
+    E.HP=E.MaxHP=FMath::Max(1.f,FMath::RoundToFloat(HPBase*(1+K.HPPerMinute*FMath::Min(K.HPMinuteCap,Minute))));
     E.Speed=K.Speed*(1+K.SpeedPerMinute*FMath::Min(K.SpeedMinuteCap,Minute));
     E.Contact=bTune001B && K.TunedContactDamage>=0?K.TunedContactDamage:K.ContactDamage;
     E.Body=Sprite(K.SpriteKey.IsEmpty()?FString(TEXT("Enemy0")):K.SpriteKey,P,K.VisualSize.X,K.VisualSize.Y);
