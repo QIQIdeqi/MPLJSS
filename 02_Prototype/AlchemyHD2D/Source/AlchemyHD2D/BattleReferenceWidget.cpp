@@ -18,6 +18,9 @@
 #include "Layout/Clipping.h"
 #include "Styling/CoreStyle.h"
 #include "Misc/Paths.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Rendering/SlateRenderer.h"
+#include "Fonts/FontMeasure.h"
 #if WITH_EDITOR
 #include "WidgetBlueprint.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
@@ -41,7 +44,7 @@ UTextBlock* Text(UWidgetTree* Tree,UCanvasPanel* Parent,const TCHAR* Name,FVecto
     auto Serif=FCString::Strcmp(Name,TEXT("DodgeText"))==0?nullptr:LoadObject<UFont>(nullptr,TEXT("/Game/UI/Reference/F_ReferenceSerif.F_ReferenceSerif"));
     Result->SetFont(Serif?FSlateFontInfo(Serif,FontSize,TEXT("Regular")):FSlateFontInfo(FPaths::EngineContentDir()/TEXT("Slate/Fonts/DroidSansFallback.ttf"),FontSize));
     Result->SetColorAndOpacity(FSlateColor(Color));Result->SetShadowOffset(FVector2D(1,2));Result->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));
-    Result->SetVisibility(ESlateVisibility::HitTestInvisible);Place(Parent,Result,Position,Size);return Result;
+    Result->SetVisibility(ESlateVisibility::HitTestInvisible);if(Parent)Place(Parent,Result,Position,Size);return Result;
 }
 UProgressBar* Progress(UWidgetTree* Tree,UCanvasPanel* Parent,const TCHAR* Name,const TCHAR* Fill,FVector2D Position,FVector2D Size){
     auto Result=Tree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(),Name);
@@ -59,7 +62,11 @@ void UBattleReferenceWidget::BuildReferenceTree(UWidgetTree* Tree){
     auto Root=Tree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(),TEXT("ReferenceCanvas"));DesignSize->AddChild(Root);
     Root->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     Image(Tree,Root,TEXT("PortraitArtwork"),TEXT("Portrait"),{20,8},{99,105});Image(Tree,Root,TEXT("PortraitBadge"),TEXT("PortraitBadge"),{20,82},{29,31});
-    Text(Tree,Root,TEXT("LevelText"),{126,26},{72,33},18)->SetText(FText::FromString(TEXT("Lv 1")));
+    Text(Tree,Root,TEXT("LevelPrefixText"),{129,30},{30,27},14)->SetText(FText::FromString(TEXT("Lv")));
+    auto LevelFit=Tree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass(),TEXT("LevelNumberFit"));Place(Root,LevelFit,{160,26},{37,33});
+    LevelFit->SetStretch(EStretch::ScaleToFit);LevelFit->SetStretchDirection(EStretchDirection::DownOnly);LevelFit->SetClipping(EWidgetClipping::ClipToBounds);LevelFit->SetVisibility(ESlateVisibility::HitTestInvisible);
+    auto Number=Text(Tree,nullptr,TEXT("LevelText"),{0,0},{0,0},18);auto NumberFont=Number->GetFont();NumberFont.LetterSpacing=-83;Number->SetFont(NumberFont);Number->SetText(FText::FromString(TEXT("1")));
+    auto NumberSlot=Cast<UScaleBoxSlot>(LevelFit->AddChild(Number));NumberSlot->SetHorizontalAlignment(HAlign_Left);NumberSlot->SetVerticalAlignment(VAlign_Top);
     Progress(Tree,Root,TEXT("HPBar"),TEXT("HPFill"),{213,35},{270,16});Image(Tree,Root,TEXT("HPFrame"),TEXT("HPFrame"),{197,27},{306,32});
     auto Health=Text(Tree,Root,TEXT("HPText"),{322,29},{152,27},15);Health->SetJustification(ETextJustify::Right);Health->SetText(FText::FromString(TEXT("100 / 100")));
     Progress(Tree,Root,TEXT("DodgeBar"),TEXT("DodgeFill"),{130,62},{270,10});Image(Tree,Root,TEXT("DodgeFrame"),TEXT("DodgeFrame"),{118,55},{296,24});
@@ -107,7 +114,22 @@ void UBattleReferenceWidget::NativeTick(const FGeometry& MyGeometry,float InDelt
     if(!Show)return;
     HPBar->SetPercent(FMath::Clamp(BattleWorld->HP/FMath::Max(1.f,BattleWorld->MaxHP),0.f,1.f));DodgeBar->SetPercent(1-FMath::Clamp(BattleWorld->DodgeCD/2.f,0.f,1.f));
     XPBar->SetPercent(FMath::Clamp(BattleWorld->RunXP/FMath::Max(1,BattleWorld->RequiredXP(BattleWorld->RunLevel)),0.f,1.f));
-    LevelText->SetText(FText::FromString(FString::Printf(TEXT("Lv %d"),BattleWorld->RunLevel)));HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"),BattleWorld->HP,BattleWorld->MaxHP)));
+    const FString LevelValue=FString::FromInt(BattleWorld->RunLevel);
+    const FString LevelDisplay=Cast<UTextBlock>(GetWidgetFromName(TEXT("LevelPrefixText")))?LevelValue:TEXT("Lv ")+LevelValue;
+    if(LevelText->GetText().ToString()!=LevelDisplay)LevelText->SetText(FText::FromString(LevelDisplay));
+    if(auto Fit=Cast<UScaleBox>(GetWidgetFromName(TEXT("LevelNumberFit")))){
+        if(auto NumberLayout=Cast<UScaleBoxSlot>(LevelText->Slot)){const auto Alignment=LevelValue.Len()>2?VAlign_Center:VAlign_Top;if(NumberLayout->GetVerticalAlignment()!=Alignment)NumberLayout->SetVerticalAlignment(Alignment);}
+        float MinimumWidth=0;
+        const float InheritedScale=Fit->GetCachedGeometry().GetAccumulatedLayoutTransform().GetScale();
+        if(LevelValue.Len()>2 && InheritedScale>0){
+            // Negative tracking and hinted glyphs do not measure linearly across ScaleBox prepasses.
+            auto MeasureFont=LevelText->GetFont();MeasureFont.LetterSpacing=0;
+            const float Width=FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(LevelValue,MeasureFont,InheritedScale).X/InheritedScale;
+            MinimumWidth=Width+FMath::Abs(LevelText->GetShadowOffset().X)+2.f/InheritedScale;
+        }
+        LevelText->SetMinDesiredWidth(MinimumWidth);
+    }
+    HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"),BattleWorld->HP,BattleWorld->MaxHP)));
     TimerText->SetText(FText::FromString(FString::Printf(TEXT("%02d : %02d"),int(BattleWorld->RunTime)/60,int(BattleWorld->RunTime)%60)));
     KillText->SetText(FText::AsNumber(BattleWorld->Kills));CoinText->SetText(FText::AsNumber(BattleWorld->RunCoins));
     DodgeText->SetText(FText::FromString(BattleWorld->DodgeCD<=0?TEXT("Space · 闪避就绪"):FString::Printf(TEXT("Space · 闪避 %.1fs"),BattleWorld->DodgeCD)));
@@ -145,6 +167,17 @@ int32 UBattleReferenceWidget::NativePaint(const FPaintArgs& Args,const FGeometry
     const auto Player=Point(BattleWorld->PlayerPos);Draw(Player-FVector2D(2,5),{4,10},FLinearColor(1,.86f,.4f));Draw(Player-FVector2D(5,2),{10,4},FLinearColor(1,.86f,.4f));Elements.PopClip();return Base+1;
 }
 
+bool UBattleReferenceWidget::RegisterDesignerWidgetNames(){
+#if WITH_EDITOR
+    auto Blueprint=LoadObject<UWidgetBlueprint>(nullptr,TEXT("/Game/UI/Reference/WBP_BattleReference.WBP_BattleReference"));
+    if(!Blueprint || !Blueprint->WidgetTree || !Blueprint->WidgetTree->RootWidget)return false;
+    Blueprint->WidgetTree->ForEachWidget([&](UWidget* Widget){if(!Blueprint->WidgetVariableNameToGuidMap.Contains(Widget->GetFName()))Blueprint->OnVariableAdded(Widget->GetFName());});
+    return true;
+#else
+    return false;
+#endif
+}
+
 bool UBattleReferenceWidget::CreateEditableBlueprint(){
 #if WITH_EDITOR
     // Import the face first, then store a real composite-font asset so cooked builds do not need a local TTF path.
@@ -162,6 +195,7 @@ bool UBattleReferenceWidget::CreateEditableBlueprint(){
     if(!Blueprint){Blueprint=Cast<UWidgetBlueprint>(FKismetEditorUtilities::CreateBlueprint(StaticClass(),Package,TEXT("WBP_BattleReference"),BPTYPE_Normal,UWidgetBlueprint::StaticClass(),UWidgetBlueprintGeneratedClass::StaticClass()));if(Blueprint)FAssetRegistryModule::AssetCreated(Blueprint);}
     if(!Blueprint)return false;
     Blueprint->WidgetTree=NewObject<UWidgetTree>(Blueprint,TEXT("WidgetTree"),RF_Transactional);BuildReferenceTree(Blueprint->WidgetTree);
+    if(!RegisterDesignerWidgetNames())return false;
     FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);FKismetEditorUtilities::CompileBlueprint(Blueprint);Package->MarkPackageDirty();
     if(Blueprint->Status==BS_Error)return false;
     FSavePackageArgs Save;Save.TopLevelFlags=RF_Public|RF_Standalone;Save.SaveFlags=SAVE_NoError;

@@ -1,0 +1,6 @@
+{
+  "changed": true,
+  "preserved_number_widget": "/Game/UI/Reference/WBP_BattleReference.WBP_BattleReference:WidgetTree.LevelText",
+  "prefix": "/Game/UI/Reference/WBP_BattleReference.WBP_BattleReference:WidgetTree.LevelPrefixText",
+  "fit": "/Game/UI/Reference/WBP_BattleReference.WBP_BattleReference:WidgetTree.LevelNumberFit"
+}

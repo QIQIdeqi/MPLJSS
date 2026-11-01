@@ -16,6 +16,7 @@ class ALCHEMYHD2D_API UBattleReferenceWidget : public UUserWidget {
 public:
     UFUNCTION(BlueprintCallable,Category="Battle HUD") void InitializeForWorld(AAlchemyWorld* InWorld);
     UFUNCTION(BlueprintCallable,Category="Battle HUD|Editor") static bool CreateEditableBlueprint();
+    UFUNCTION(BlueprintCallable,Category="Battle HUD|Editor") static bool RegisterDesignerWidgetNames();
 protected:
     virtual void NativeOnInitialized() override;
     virtual void NativeTick(const FGeometry& MyGeometry,float InDeltaTime) override;

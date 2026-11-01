@@ -2,6 +2,7 @@
 #include "Components/TextBlock.h"
 #include "InputKeyEventArgs.h"
 #include "Fonts/CompositeFont.h"
+#include "Components/ScaleBox.h"
 
 // Native rendered fixture. true freezes simulation; false lets the injected controller key run production Tick.
 bool AAlchemyWorld::Reference60Check(float Dt) {
@@ -11,6 +12,7 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     static int RefEliteBefore=0;
     static int RefEliteIndex=0;
     static bool RefEliteNoEarly=true;
+    static int RefLevelSample=0;
     const bool RefSTIX=FParse::Param(FCommandLine::Get(),TEXT("ReferenceSTIX"));
     const FString Dir=FPaths::ProjectDir()/(RefSTIX?TEXT("Evidence/ReferenceTypographySTIX_20261101"):TEXT("Evidence/Reference60_20261031"));
     auto* PC=GetWorld()->GetFirstPlayerController();
@@ -20,7 +22,7 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     const auto Next=[&](int32 Step){CaptureStep=Step;SmokeTime=0;};
     const auto Finish=[&](){for(const FKey K:{EKeys::D,EKeys::W,EKeys::S})Key(K,false);UE_LOG(LogTemp,Display,TEXT("REFERENCE60_%s"),RefQAOK?TEXT("PASS"):TEXT("FAIL"));FPlatformMisc::RequestExitWithStatus(false,RefQAOK?0:1);};
     if(CaptureStep==0) {
-        RefQAOK=true;Check(bCapture,TEXT("isolated_fixture_never_reads_or_writes_player_save"));
+        RefQAOK=true;RefLevelSample=0;Check(bCapture,TEXT("isolated_fixture_never_reads_or_writes_player_save"));
         if(!bCapture){Finish();return true;}
         IFileManager::Get().MakeDirectory(*Dir,true);
         Progress=NewObject<UAlchemyProgress>(this);MigrateProgress(true);StartRun();
@@ -43,6 +45,7 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
                 auto Text=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(Name));Check(Text!=nullptr,*FString::Printf(TEXT("stix_header_%s_present"),Name));
                 if(Text){auto Font=Text->GetFont();Font.FontObject=nullptr;Font.CompositeFont=Candidate;Text->SetFont(Font);}
             }
+            if(auto Prefix=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("LevelPrefixText")))){auto Font=Prefix->GetFont();Font.FontObject=nullptr;Font.CompositeFont=Candidate;Prefix->SetFont(Font);}
         }
         Check(CharacterAnimation.HasRoseMotion(),TEXT("authored_three_direction_motion_atlases_loaded"));
         TSharedPtr<FJsonObject> Spec;FString Input;
@@ -76,6 +79,9 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
         auto C=Camera->GetCameraComponent();Check(C->ProjectionMode==ECameraProjectionMode::Perspective && FMath::IsNearlyEqual(Camera->GetActorRotation().Pitch,-60.f,.01f) && C->FieldOfView>10 && C->FieldOfView<60,TEXT("native_camera_perspective_pitch60_registered_near_frustum"));
         Check(BattleWidget && BattleWidget->GetClass()->GetPathName().Contains(TEXT("WBP_BattleReference_C")),TEXT("editable_WBP_loaded_in_actual_viewport"));
         if(BattleWidget) {
+            auto Level=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("LevelText")));auto Prefix=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("LevelPrefixText")));auto Fit=Cast<UScaleBox>(BattleWidget->GetWidgetFromName(TEXT("LevelNumberFit")));
+            Check(Level && Prefix && Prefix->GetText().ToString()==TEXT("Lv") && Level->GetText().ToString()==FString::FromInt(RunLevel),TEXT("split_level_prefix_and_real_number_bound_after_render"));
+            Check(Fit && Level && Level->GetParent()==Fit && Fit->GetStretchDirection()==EStretchDirection::DownOnly,TEXT("level_number_down_only_container_loaded"));
             auto H=Cast<UProgressBar>(BattleWidget->GetWidgetFromName(TEXT("HPBar")));auto T=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("HPText")));auto K=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("KillText")));auto Coin=Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("CoinText")));
             Check(H && T && K && Coin && FMath::IsNearlyEqual(H->GetPercent(),1) && T->GetText().ToString().Contains(TEXT("320")) && K->GetText().ToString()==FText::AsNumber(Kills).ToString() && Coin->GetText().ToString()==FText::AsNumber(RunCoins).ToString(),TEXT("real_HP_and_numeric_state_bound_after_render_frame"));
             auto Root=BattleWidget->GetWidgetFromName(TEXT("ReferenceCanvas"));auto Frame=BattleWidget->GetWidgetFromName(TEXT("HPFrame"));
@@ -125,7 +131,22 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
         }
         NextElite=10000;Next(14);return true;
     }
-    if(CaptureStep==14 && SmokeTime>.6f){Shot(TEXT("01-field-reference-ui.png"));Next(2);return true;}
+    if(CaptureStep==14 && SmokeTime>.6f){Shot(TEXT("01-field-reference-ui.png"));Next(16);return true;}
+    if(CaptureStep==16 && SmokeTime>.3f){
+        if(FScreenshotRequest::IsScreenshotRequested())return true;
+        if(RefLevelSample>=4){RunLevel=12;RunXP=RequiredXP(RunLevel)*.77f;Next(2);return true;}
+        const int LevelsToShow[]={1,12,100,1000};RunLevel=LevelsToShow[RefLevelSample];RunXP=RequiredXP(RunLevel)*.77f;Next(17);return true;
+    }
+    if(CaptureStep==17 && SmokeTime>.3f){
+        auto Number=BattleWidget?Cast<UTextBlock>(BattleWidget->GetWidgetFromName(TEXT("LevelText"))):nullptr;
+        auto Fit=BattleWidget?Cast<UScaleBox>(BattleWidget->GetWidgetFromName(TEXT("LevelNumberFit"))):nullptr;
+        Check(Number && Number->GetText().ToString()==FString::FromInt(RunLevel),TEXT("sampled_live_level_number_updates"));
+        bool Inside=false;
+        if(Number && Fit){const auto NG=Number->GetCachedGeometry(),FG=Fit->GetCachedGeometry();const auto Min=FG.AbsoluteToLocal(NG.LocalToAbsolute(FVector2D::ZeroVector)),Max=FG.AbsoluteToLocal(NG.LocalToAbsolute(NG.GetLocalSize()));const auto Size=FG.GetLocalSize();Inside=Size.X>0 && Size.Y>0 && Min.X>=-1 && Min.Y>=-1 && Max.X<=Size.X+1 && Max.Y<=Size.Y+1;UE_LOG(LogTemp,Display,TEXT("REFERENCE60_LEVEL_RECT level=%d min=%.3f,%.3f max=%.3f,%.3f fit=%.3f,%.3f desired=%.3f,%.3f"),RunLevel,Min.X,Min.Y,Max.X,Max.Y,Size.X,Size.Y,Number->GetDesiredSize().X,Number->GetDesiredSize().Y);}
+        Check(Inside,TEXT("sampled_level_number_geometry_stays_inside_fit"));
+        UE_LOG(LogTemp,Display,TEXT("REFERENCE60_LEVEL_SAMPLE level=%d inside=%d"),RunLevel,Inside);
+        const TCHAR* Names[]={TEXT("08-level-1.png"),TEXT("09-level-12.png"),TEXT("10-level-100.png"),TEXT("11-level-1000.png")};Shot(Names[RefLevelSample]);RefLevelSample++;Next(16);return true;
+    }
     if(CaptureStep==2 && SmokeTime>.3f){RefMovementStart=PlayerPos;Key(EKeys::D,true);Next(3);return false;}
     if(CaptureStep==3){if(SmokeTime<.32f)return false;Key(EKeys::D,false);Check(FVector::Dist2D(PlayerPos,RefMovementStart)>40 && CharacterAnimation.Moving && CharacterAnimation.Row==1 && CharacterAnimation.Facing==0 && CharacterAnimation.Frame>0,TEXT("injected_D_runs_production_movement_side_pose"));Shot(TEXT("02-running-side.png"));Next(4);return true;}
     if(CaptureStep==4 && SmokeTime>.3f){RefMovementStart=PlayerPos;Key(EKeys::W,true);Next(5);return false;}
@@ -142,7 +163,7 @@ bool AAlchemyWorld::Reference60Check(float Dt) {
     if(CaptureStep==11){UpdateCharacterVisual(Dt,false);if(SmokeTime<.15f)return true;Check(CharacterAnimation.Row==4 && CharacterAnimation.Frame>0,TEXT("death_motion_early_frame"));Shot(TEXT("06-death-early.png"));Next(12);return true;}
     if(CaptureStep==12){UpdateCharacterVisual(Dt,false);if(SmokeTime<.49f)return true;Check(CharacterAnimation.Frame>=4,TEXT("death_motion_late_distinct_frame"));Shot(TEXT("07-death-late.png"));Next(13);return true;}
     if(CaptureStep==13 && SmokeTime>.7f){
-        for(const TCHAR* Name:{TEXT("01-field-reference-ui.png"),TEXT("02-running-side.png"),TEXT("03-running-back.png"),TEXT("04-running-front.png"),TEXT("05-hurt-frame.png"),TEXT("06-death-early.png"),TEXT("07-death-late.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("native_screenshot_written"));
+        for(const TCHAR* Name:{TEXT("01-field-reference-ui.png"),TEXT("02-running-side.png"),TEXT("03-running-back.png"),TEXT("04-running-front.png"),TEXT("05-hurt-frame.png"),TEXT("06-death-early.png"),TEXT("07-death-late.png"),TEXT("08-level-1.png"),TEXT("09-level-12.png"),TEXT("10-level-100.png"),TEXT("11-level-1000.png")})Check(IFileManager::Get().FileSize(*(Dir/Name))>0,TEXT("native_screenshot_written"));
         StartRun();Message(TEXT("Boss传送阵已开放，跟随箭头，站入阵内按F确认挑战。"));EndRun(true);
         Check(bRunEnded && bWon && Panel==TEXT("victory") && ToastTime<=0,TEXT("victory_clears_stale_combat_guidance"));
         Finish();return true;

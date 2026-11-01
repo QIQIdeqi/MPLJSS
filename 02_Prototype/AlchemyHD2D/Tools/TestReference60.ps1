@@ -11,5 +11,5 @@ $run=Start-Process -FilePath 'D:/02_UnrealEngine/UE_5.8/Engine/Binaries/Win64/Un
 if(!$run.WaitForExit(180000)){Stop-Process -Id $run.Id;throw "Reference60 timeout: $log"}
 if($run.ExitCode -ne 0 -or !(Select-String -LiteralPath $log -SimpleMatch 'REFERENCE60_PASS' -Quiet)){throw "Reference60 failed: $log"}
 if(Select-String -LiteralPath $log -Pattern 'REFERENCE60_CHECK .* FAIL|Fatal error:|Ensure condition failed|LogMaterial: Error:|LogShaderCompilers: Error:' -Quiet){throw "Reference60 reported errors: $log"}
-foreach($name in @('01-field-reference-ui.png','02-running-side.png','03-running-back.png','04-running-front.png','05-hurt-frame.png','06-death-early.png','07-death-late.png')){Copy-Item -LiteralPath (Join-Path $project "$snapshot/$name") -Destination (Join-Path $folder $name) -Force}
+foreach($name in @('01-field-reference-ui.png','02-running-side.png','03-running-back.png','04-running-front.png','05-hurt-frame.png','06-death-early.png','07-death-late.png','08-level-1.png','09-level-12.png','10-level-100.png','11-level-1000.png')){Copy-Item -LiteralPath (Join-Path $project "$snapshot/$name") -Destination (Join-Path $folder $name) -Force}
 Write-Output "REFERENCE60_PASS $Width`x$Height $log"

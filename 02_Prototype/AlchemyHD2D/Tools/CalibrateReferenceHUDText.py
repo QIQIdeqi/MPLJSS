@@ -16,6 +16,11 @@ for name, previous_y, target_y in [('LevelText', 20., 26.), ('KillText', 10., 16
                                    ('TimerText', 16., 17.), ('CoinText', 10., 16.)]:
     text = u.find_object(tree, name)
     assert isinstance(text, u.TextBlock), name
+    if name == 'LevelText':
+        fit = u.find_object(tree, 'LevelNumberFit')
+        if fit:
+            assert isinstance(fit, u.ScaleBox) and text.get_parent() == fit
+            text = fit
     slot = text.get_editor_property('slot')
     assert isinstance(slot, u.CanvasPanelSlot), name
     p = slot.get_position()
