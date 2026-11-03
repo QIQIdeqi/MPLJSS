@@ -667,11 +667,13 @@ void AAlchemyWorld::StartRun() {
     const int32 RunSeed=(!bSmoke && !bCapture)?static_cast<int32>(FPlatformTime::Cycles64()):77;
     const int32 MaterialSeed=RunSeed ^ 0x4D41544C;
     const int32 BrewSeed=RunSeed ^ 0x42524557;
+    const int32 EliteLootSeed=RunSeed ^ 0x454C4F54;
     MaterialRandom.Initialize(MaterialSeed);
     BrewRandom.Initialize(BrewSeed);
+    EliteLootRandom.Initialize(EliteLootSeed);
     if(!bSmoke && !bCapture) {
         Random.Initialize(RunSeed);
-        UE_LOG(LogTemp,Display,TEXT("ALCHEMY_RUN_SEED %d material=%d brew=%d"),RunSeed,MaterialSeed,BrewSeed);
+        UE_LOG(LogTemp,Display,TEXT("ALCHEMY_RUN_SEED %d material=%d brew=%d elite_loot=%d"),RunSeed,MaterialSeed,BrewSeed,EliteLootSeed);
     }
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
     Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
@@ -1097,35 +1099,75 @@ void AAlchemyWorld::Drop(FVector P,int Kind,int Count) {
     Drops.Add(D);
 }
 
-void AAlchemyWorld::CastSkills(float Dt) {
-    // EXP-001: skill range attribute scales range/radius values (not projectile speed or target count).
+FAlchemySkillStats AAlchemyWorld::EvaluateSkillStats(int32 Skill,int32 Level,const FAlchemyPillState& Pill) const {
+    FAlchemySkillStats Stats;
+    if(!Progress || !RuntimeSkills.IsValidIndex(Skill) || Level<=0) return Stats;
+    const auto& K=SkillConfig(Skill);
+    const bool HasPill=Pill.Main>=0;
+    const float TraitRange=HasPill && Pill.Trait==1?1.f+0.15f*Pill.TraitLevel:1.f;
+    const float TraitCooldown=HasPill && Pill.Trait==2?1.f-0.10f*Pill.TraitLevel:1.f;
+    const float TraitDamage=HasPill && Pill.Trait==0?1.f+0.10f*Pill.TraitLevel:1.f;
+    const float QualityDamage=HasPill?1.f+0.05f*Pill.Quality:1.f;
     const float RangeScale=1.f+0.10f*RunAttrs[3];
-    // TALENT: cooldown reduction (Talents[4]) and crit chance/damage (Talents[5]/[6]).
     const float CooldownScale=1.f-0.04f*Progress->Talents[4];
+    Stats.bValid=true;Stats.Skill=Skill;Stats.Level=Level;Stats.Pill=Pill;
+    Stats.Cast=K.Cast;Stats.Targets=K.Targets;Stats.Slow=K.Slow;Stats.Factor=K.Factor;
+    Stats.Range=K.Range*RangeScale*TraitRange;
+    Stats.Radius=K.Radius*RangeScale*TraitRange;
+    Stats.Cooldown=K.CD*CooldownScale*TraitCooldown;
+    Stats.Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Level-1)+0.05f*Progress->Talents[1]+0.10f*RunAttrs[1])*TraitDamage*QualityDamage);
+    return Stats;
+}
+
+FAlchemySkillStats AAlchemyWorld::CurrentSkillStats(int32 Skill) const {
+    if(!Levels.IsValidIndex(Skill)) return FAlchemySkillStats();
+    const FAlchemyPillState Pill=PillStates.IsValidIndex(Skill)?PillStates[Skill]:FAlchemyPillState();
+    return EvaluateSkillStats(Skill,Levels[Skill],Pill);
+}
+
+FAlchemySkillStats AAlchemyWorld::PendingBrewStats() const {
+    if(!bV02Pending || PendingResultSkill<0) return FAlchemySkillStats();
+    const int32 Old=PendingOldSkill;
+    const bool HasOld=Levels.IsValidIndex(Old) && PillStates.IsValidIndex(Old) && Levels[Old]>0;
+    FAlchemyPillState Pill;
+    Pill.Main=PendingMain;Pill.Trait=PendingTrait;Pill.TraitLevel=PendingTraitLevel;Pill.Quality=PendingQuality;
+    int32 Level=1;
+    if(PendingBrewOperation==1) {
+        if(!HasOld) return FAlchemySkillStats();
+        Level=FMath::Min(5,Levels[Old]+1);
+        Pill=PillStates[Old];Pill.Quality=FMath::Max(Pill.Quality,PendingQuality);
+    } else if(PendingBrewOperation==2) {
+        if(!HasOld) return FAlchemySkillStats();
+        Level=Levels[Old];
+    } else if(PendingBrewOperation==3) {
+        if(!HasOld) return FAlchemySkillStats();
+        Level=Levels[Old];
+        Pill=PillStates[Old];Pill.Trait=PendingTrait;Pill.TraitLevel=PendingTraitLevel;
+    } else if(PendingBrewOperation!=0) return FAlchemySkillStats();
+    return EvaluateSkillStats(PendingResultSkill,Level,Pill);
+}
+
+void AAlchemyWorld::CastSkills(float Dt) {
+    // Crit is rolled only for an actual cast; the shared preview stays non-critical.
     const float CritChance=0.02f*Progress->Talents[5];
     const float CritMult=1.50f+0.10f*Progress->Talents[6];
     for(int S:Equipped) {
         const auto& K=SkillConfig(S);SkillCD[S]-=Dt;if(SkillCD[S]>0) continue;
-        const FAlchemyPillState* Pill=PillStates.IsValidIndex(S) && PillStates[S].Main>=0?&PillStates[S]:nullptr;
-        const float TraitRange=Pill && Pill->Trait==1?1.f+0.15f*Pill->TraitLevel:1.f;
-        const float TraitCooldown=Pill && Pill->Trait==2?1.f-0.10f*Pill->TraitLevel:1.f;
-        const float TraitDamage=Pill && Pill->Trait==0?1.f+0.10f*Pill->TraitLevel:1.f;
-        const float QualityDamage=Pill?1.f+0.05f*Pill->Quality:1.f;
-        const float Range=K.Range*RangeScale*TraitRange, Radius=K.Radius*RangeScale*TraitRange;
-        int N=Nearest(PlayerPos,Range);if(N<0) continue;
-        SkillCD[S]=K.CD*CooldownScale*TraitCooldown;
-        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]+0.10f*RunAttrs[1])*TraitDamage*QualityDamage);
+        const FAlchemySkillStats Stats=CurrentSkillStats(S);if(!Stats.bValid) continue;
+        int N=Nearest(PlayerPos,Stats.Range);if(N<0) continue;
+        SkillCD[S]=Stats.Cooldown;
+        float Damage=Stats.Damage;
         if(Random.FRand()<CritChance) Damage=FMath::RoundToFloat(Damage*CritMult);
         int Hits=0;
         const FLinearColor Color=K.Color;
-        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,Range/K.ProjectileSpeed,K.EffectScale,K.HitLife,S==0);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
-        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,Radius,Damage,Color,K.Slow,K.Factor,K.CastEffect,K.HitEffect,K.EffectScale,K.CastLife,K.HitLife);
+        if(K.Cast==Bolt) {Fire(PlayerPos,Enemies[N].Pos,Damage,Color,false,K.ProjectileSpeed,K.TrailEffect,K.HitEffect,Stats.Range/K.ProjectileSpeed,K.EffectScale,K.HitLife,S==0);Shots.Last().Slow=K.Slow;Shots.Last().SlowFactor=K.Factor;}
+        else if(K.Cast==SelfArea || K.Cast==TargetArea) Hits=Area(K.Cast==SelfArea?PlayerPos:Enemies[N].Pos,Stats.Radius,Damage,Color,K.Slow,K.Factor,K.CastEffect,K.HitEffect,K.EffectScale,K.CastLife,K.HitLife);
         else {
             TArray<int32> Used;
             for(int J=0;J<K.Targets && N>=0;J++) {
                 Used.Add(N);auto& E=Enemies[N];DamageEnemy(N,Damage,Color,K.HitEffect,K.EffectScale,K.HitLife);Hits++;
                 SlowEnemy(N,K.Slow,K.Factor);
-                N=K.Cast==Bounce?Nearest(E.Pos,Range,Used):-1;
+                N=K.Cast==Bounce?Nearest(E.Pos,Stats.Range,Used):-1;
             }
         }
         TutorialHit(S,Hits);
@@ -1389,6 +1431,9 @@ void AAlchemyWorld::Tick(float Dt) {
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture"))) {CaptureFeedback(Dt);return;}
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture"))) {
         const bool bBrewVisual=FParse::Param(FCommandLine::Get(),TEXT("BrewV02Visual"));
+        const bool bBrewResultVisual=bBrewVisual && FParse::Param(FCommandLine::Get(),TEXT("BrewV02ResultVisual"));
+        const bool bBrewSupplyVisual=bBrewVisual && FParse::Param(FCommandLine::Get(),TEXT("BrewV02SupplyVisual"));
+        const bool bBrewStationVisual=bBrewVisual && FParse::Param(FCommandLine::Get(),TEXT("BrewV02StationVisual"));
         static FString BrewVisualScreenshot;
         if(bBrewVisual && CaptureStep==3) {
             const int64 ScreenshotBytes=BrewVisualScreenshot.IsEmpty()?-1:IFileManager::Get().FileSize(*BrewVisualScreenshot);
@@ -1420,7 +1465,39 @@ void AAlchemyWorld::Tick(float Dt) {
                         BrewSupport=1;BrewSupportCount=2;bBrewConvertTrait=false;Inventory={8,FMath::Clamp(VisualSupportStock,0,10),8,1,1,1};
                         for(int32& Stock:BrewOnlyStock) Stock=0;
                         Progress->Recipes.AddUnique(16); // Capture one known and several unknown candidates.
-                        UE_LOG(LogTemp,Display,TEXT("BREW_V02_VISUAL_CONFIG main=%d count=%d support_stock=%d"),BrewMain,BrewMainCount,Inventory[1]);
+                        if(bBrewStationVisual) {
+                            BrewMode=1;BrewOperation=0;BrewMain=0;BrewMainCount=1;
+                            BrewSupport=1;BrewSupportCount=1;
+                            if(!BeginBrew()) {
+                                UE_LOG(LogTemp,Error,TEXT("BREW_V02_VISUAL_FAIL station_begin_failed"));
+                                FPlatformMisc::RequestExitWithStatus(false,1);return;
+                            }
+                            PlayerPos=BrewOrigin+FVector(450,0,0);
+                            UpdateCharacterVisual(0,false);
+                            UpdateBrew(.2f);
+                            if(!bBrewActive || BrewProgress>0 || FVector::Dist2D(PlayerPos,BrewOrigin)<=120.f) {
+                                UE_LOG(LogTemp,Error,TEXT("BREW_V02_VISUAL_FAIL station_not_paused_outside"));
+                                FPlatformMisc::RequestExitWithStatus(false,1);return;
+                            }
+                        } else if(bBrewSupplyVisual) {
+                            Panel.Empty();OpeningSupplyNormalDeaths=7;
+                            bOpeningSupplyEligible=true;bOpeningSupplyGranted=false;
+                        } else if(bBrewResultVisual) {
+                            BrewOperation=1;BrewTarget=1;BrewMain=0;BrewMainCount=1;
+                            BrewSupport=-1;BrewSupportCount=0;
+                            PillStates[1].Main=0;PillStates[1].Trait=1;
+                            PillStates[1].TraitLevel=1;PillStates[1].Quality=1;
+                            if(!BeginBrew()) {
+                                UE_LOG(LogTemp,Error,TEXT("BREW_V02_VISUAL_FAIL result_begin_failed"));
+                                FPlatformMisc::RequestExitWithStatus(false,1);return;
+                            }
+                            UpdateBrew(BrewDuration+.01f);
+                            if(!bV02Pending || Panel!=TEXT("result")) {
+                                UE_LOG(LogTemp,Error,TEXT("BREW_V02_VISUAL_FAIL result_not_staged"));
+                                FPlatformMisc::RequestExitWithStatus(false,1);return;
+                            }
+                        }
+                        UE_LOG(LogTemp,Display,TEXT("BREW_V02_VISUAL_CONFIG main=%d count=%d support_stock=%d supply_progress=%d"),BrewMain,BrewMainCount,Inventory[1],OpeningSupplyNormalDeaths);
                     } else Selected={1,1,1,0,0,0};
                     break;
                 case 3: Progress->MediumTextScale=.9f;Progress->LargeTextScale=.72f;break;

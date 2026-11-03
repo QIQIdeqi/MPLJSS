@@ -6,7 +6,7 @@ void AAlchemyWorld::CollectDrop(int32 Kind,int32 Count,bool BossTransfer) {
     };
     if(Kind>=6 && Kind<=8) {
         Add(Kind-3,1);
-        for(int J=0;J<4;J++) {const float R=Random.FRand();Add(R<.4f?0:R<.75f?1:2,1);}
+        for(int J=0;J<4;J++) {const float R=EliteLootRandom.FRand();Add(R<.4f?0:R<.75f?1:2,1);}
         if(!BossTransfer) Message(TEXT("精英宝箱已收入背包；满仓部分不入库。"));
     } else if(Kind==-2) {
         // 系统 UI V0.2 §7.1：腐化鼠1 泥团1 骷髅2 毒囊2 猎犬2 术徒3 蛮徒4

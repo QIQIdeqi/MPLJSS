@@ -133,18 +133,56 @@ void AAlchemyHUD::DrawHUD() {
         // V0.2: the live brew advances with combat time; fragments collect into materials.
         // Keep this independent of the editable reference UMG so both battle presentations show it.
         if(!FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) {
-            const float X=HUDLeft+18,W=326,H=World->bBrewActive?108.f:52.f;
+            const float X=HUDLeft+18,W=326,H=World->bBrewActive?124.f:52.f;
             const float Preferred=HUDTop+290;
             const float Y=FMath::Clamp(ClearPanelY(X,W,H,Preferred,true),HUDTop+116,HUDBottom-H-142);
             Box(X,Y,W,H,Surface);Box(X,Y,3,H,Gold);
             Text(FString::Printf(TEXT("碎片  火 %d  ·  露 %d  ·  魔 %d"),World->FragmentCount[0],World->FragmentCount[1],World->FragmentCount[2]),X+13,Y+9,17,Gold);
+            FString SupplyLine;
+            if(World->bBossSpawned) SupplyLine=TEXT("Boss战无普通碎片补给，存量仍可炼制");
+            else if(World->bOpeningSupplyEligible && !World->bOpeningSupplyGranted)
+                SupplyLine=FString::Printf(TEXT("首测补给：普通怪 %d/8（清场不计）"),FMath::Clamp(World->OpeningSupplyNormalDeaths,0,8));
+            else if(World->bOpeningSupplyGranted) SupplyLine=TEXT("首测补给已发放 · 碎片仍可归集");
+            else SupplyLine=TEXT("普通怪少量掉落，碎片自动归集为材料");
+            Text(SupplyLine,X+13,Y+31,15,Dim);
             if(World->bBrewActive) {
-                Text(World->BrewMode==1?TEXT("驻留坩埚 · 120cm内推进（首测）"):TEXT("随身试剂 · 移动中推进（首测）"),X+13,Y+38,16,White);
-                Box(X+13,Y+68,W-26,10,FLinearColor(.07f,.10f,.12f));
+                const float StationDistance=FVector::Dist2D(World->PlayerPos,World->BrewOrigin);
+                const bool bStationPaused=World->BrewMode==1 && StationDistance>120.f;
+                FString ReturnDirection=TEXT("向起炼点");
+                if(World->BrewMode==1) {
+                    FVector2D OriginScreen,PlayerScreen;
+                    const bool bOriginVisible=PC->ProjectWorldLocationToScreen(World->BrewOrigin+FVector(0,0,12),OriginScreen);
+                    const bool bPlayerVisible=PC->ProjectWorldLocationToScreen(World->PlayerPos+FVector(0,0,50),PlayerScreen);
+                    if(bOriginVisible && bPlayerVisible) {
+                        const FVector2D Delta=OriginScreen-PlayerScreen;
+                        ReturnDirection=FMath::Abs(Delta.X)>FMath::Abs(Delta.Y)?
+                            (Delta.X<0?TEXT("向左"):TEXT("向右")):(Delta.Y<0?TEXT("向上"):TEXT("向下"));
+                    }
+                    if(bStationPaused && bOriginVisible) {
+                        const float MarkerX=(OriginScreen.X-OX)/S,MarkerY=(OriginScreen.Y-OY)/S;
+                        const float HUDRight=(Canvas->SizeX-OX)/S;
+                        const bool bOnscreen=MarkerX>HUDLeft+24 && MarkerX<HUDRight-88 && MarkerY>HUDTop+92 && MarkerY<HUDBottom-98;
+                        const bool bOverCard=MarkerX>=X-20 && MarkerX<=X+W+20 && MarkerY>=Y-20 && MarkerY<=Y+H+20;
+                        const bool bOverPlayer=bPlayerVisible && FVector2D::Distance(OriginScreen,PlayerScreen)<52.f*S;
+                        if(bOnscreen && !bOverCard && !bOverPlayer) {
+                            Box(MarkerX-6,MarkerY-6,12,12,Gold);
+                            Box(MarkerX-2,MarkerY-2,4,4,Surface);
+                            Text(TEXT("起炼点"),MarkerX+11,MarkerY-9,14,Gold);
+                        }
+                    }
+                }
+                Text(World->BrewMode==1?
+                    (bStationPaused?FString::Printf(TEXT("驻留暂停 · 距起炼点 %.0fcm"),StationDistance):
+                        FString::Printf(TEXT("驻留推进 · 距起炼点 %.0fcm"),StationDistance)):
+                    FString(TEXT("随身试剂 · 移动中推进（首测）")),X+13,Y+55,16,bStationPaused?Gold:White);
+                Box(X+13,Y+84,W-26,10,FLinearColor(.07f,.10f,.12f));
                 const float Ratio=World->BrewDuration>0?FMath::Clamp(World->BrewProgress/World->BrewDuration,0.f,1.f):0.f;
-                Box(X+13,Y+68,(W-26)*Ratio,10,Teal);
-                Text(FString::Printf(TEXT("炼制 %.0f%% · %s"),Ratio*100,World->BrewMode==1?TEXT("离开驻留点暂停"):TEXT("可继续走位")),X+13,Y+84,16,Dim);
-            } else Text(World->bBossSpawned?TEXT("Boss战无普通碎片补给，存量仍可炼制"):TEXT("普通怪少量掉落，碎片自动归集为材料"),X+13,Y+31,15,Dim);
+                Box(X+13,Y+84,(W-26)*Ratio,10,Teal);
+                Text(World->BrewMode==1?
+                    (bStationPaused?FString::Printf(TEXT("返回120cm内恢复 · %s · %.0f%%"),*ReturnDirection,Ratio*100):
+                        FString::Printf(TEXT("120cm内持续推进 · %.0f%%"),Ratio*100)):
+                    FString::Printf(TEXT("炼制 %.0f%% · 可继续走位"),Ratio*100),X+13,Y+100,16,Dim);
+            }
         }
         for(const auto& E:World->Enemies) if(E.HP>0 && E.Type>=7 && E.Type!=10) {
             FVector2D Screen;
@@ -578,9 +616,26 @@ void AAlchemyHUD::DrawHUD() {
             if(World->bV02Pending) {
                 const int32 Old=World->PendingOldSkill,New=World->PendingResultSkill;
                 const bool HasOld=Old>=0 && World->PillStates.IsValidIndex(Old) && World->Levels.IsValidIndex(Old) && World->Levels[Old]>0;
-                const int32 OldLevel=HasOld?World->Levels[Old]:0;
-                const auto* OldPill=HasOld?&World->PillStates[Old]:nullptr;
-                const int32 NewLevel=World->PendingBrewOperation==0?1:World->PendingBrewOperation==1?OldLevel+1:OldLevel;
+                const FAlchemySkillStats OldStats=HasOld?World->CurrentSkillStats(Old):FAlchemySkillStats();
+                const FAlchemySkillStats NewStats=World->PendingBrewStats();
+                const auto* OldPill=HasOld?&OldStats.Pill:nullptr;
+                const auto DrawTheory=[&](const FAlchemySkillStats& Stats,float X) {
+                    if(!Stats.bValid) {Text(TEXT("理论值暂不可用"),X,402,16,Dim);return;}
+                    Text(FString::Printf(TEXT("单次非暴击 %.0f · 冷却 %.2f秒"),Stats.Damage,Stats.Cooldown),X,402,16,White);
+                    const TCHAR* CastName=Stats.Cast==EAlchemyCast::Bolt?TEXT("弹丸"):
+                        Stats.Cast==EAlchemyCast::Direct?TEXT("直接命中"):
+                        Stats.Cast==EAlchemyCast::SelfArea?TEXT("自身范围"):
+                        Stats.Cast==EAlchemyCast::TargetArea?TEXT("落点范围"):TEXT("弹跳命中");
+                    Text(FString::Printf(TEXT("作用方式  %s"),CastName),X,429,15,Dim);
+                    FString Reach;
+                    if(Stats.Cast==EAlchemyCast::SelfArea || Stats.Cast==EAlchemyCast::TargetArea)
+                        Reach=FString::Printf(TEXT("选敌 %.1f米 · 半径 %.1f米"),Stats.Range/100.f,Stats.Radius/100.f);
+                    else if(Stats.Cast==EAlchemyCast::Bounce)
+                        Reach=FString::Printf(TEXT("射程 %.1f米 · 最多%d目标"),Stats.Range/100.f,Stats.Targets);
+                    else Reach=FString::Printf(TEXT("射程 %.1f米"),Stats.Range/100.f);
+                    Text(Reach,X,454,15,Dim);
+                    Text(Stats.Slow>0?FString::Printf(TEXT("减速 %.0f%% · 持续 %.1f秒"),(1.f-Stats.Factor)*100.f,Stats.Slow):TEXT("减速  无"),X,478,15,Dim);
+                };
                 Text(FString::Printf(TEXT("%s结果 · 每炉只结算一次"),BrewOperationName(World->PendingBrewOperation)),104,178,22,Gold);
                 Text(TEXT("材料已消耗；保留旧丹也不会返还本炉材料（首测）。"),104,211,17,Dim);
                 if(World->bPendingTraitConverted)Text(TEXT("已用虚空晶定向转换词条 · 额外消耗1枚（首测暂定）"),104,230,16,Teal);
@@ -591,23 +646,29 @@ void AAlchemyHUD::DrawHUD() {
                 Text(HasOld?TEXT("原有丹药 · 结果处理前继续生效"):TEXT("原有丹药 · 无"),121,259,21,HasOld?White:Dim);
                 Text(TEXT("本炉成品 · 接受后生效"),671,259,21,Gold);
                 if(HasOld) {
-                    Text(FString::Printf(TEXT("本体  %s"),World->SkillName(Old)),121,304,20,White);
-                    Text(OldPill->Main>=0 && OldPill->Main<3?FString::Printf(TEXT("主材  %s"),MaterialNames[OldPill->Main]):TEXT("主材  未记录"),121,343,18,Dim);
+                    Text(FString::Printf(TEXT("本体  %s"),World->SkillName(Old)),121,296,18,White);
+                    Text(OldPill->Main>=0 && OldPill->Main<3?FString::Printf(TEXT("主材  %s · 成长 Lv.%d"),MaterialNames[OldPill->Main],OldStats.Level):TEXT("主材  未记录"),121,326,16,Dim);
                     FString OldTrait=FString::Printf(TEXT("词条  %s"),TraitName(OldPill->Trait));
                     if(OldPill->Trait>=0)OldTrait+=FString::Printf(TEXT(" Lv.%d"),OldPill->TraitLevel);
-                    Text(OldTrait,121,380,18,Dim);
-                    Text(FString::Printf(TEXT("成长  Lv.%d"),OldLevel),121,417,18,White);
-                    Text(FString::Printf(TEXT("品质  %s"),QualityName(OldPill->Quality)),121,454,18,Dim);
+                    Text(OldTrait,121,351,16,Dim);
+                    Text(FString::Printf(TEXT("品质  %s"),QualityName(OldPill->Quality)),121,376,16,Dim);
+                    DrawTheory(OldStats,121);
                 } else {
-                    Text(TEXT("首次制丹，没有旧丹会被覆盖。"),121,327,19,Dim);
+                    Text(TEXT("首次制丹，没有旧丹可比较。"),121,327,19,Dim);
                 }
-                Text(New>=0?FString::Printf(TEXT("本体  %s"),World->SkillName(New)):TEXT("本体  待结算"),671,304,20,White);
-                Text(World->PendingMain>=0 && World->PendingMain<3?FString::Printf(TEXT("主材  %s"),MaterialNames[World->PendingMain]):TEXT("主材  未记录"),671,343,18,Dim);
-                FString NewTrait=FString::Printf(TEXT("词条  %s"),TraitName(World->PendingTrait));
-                if(World->PendingTrait>=0)NewTrait+=FString::Printf(TEXT(" Lv.%d"),World->PendingTraitLevel);
-                Text(NewTrait,671,380,18,Dim);
-                Text(FString::Printf(TEXT("成长  Lv.%d%s"),NewLevel,World->PendingBrewOperation==1?TEXT(" · 首测暂用 Lv.5 上限"):World->PendingBrewOperation>=2?TEXT(" · 保留旧成长"):TEXT("")),671,417,18,White);
-                Text(FString::Printf(TEXT("品质  %s（首测暂值）"),QualityName(World->PendingQuality)),671,454,18,Dim);
+                const int32 Operation=World->PendingBrewOperation;
+                const TCHAR* BodyChange=Operation==0?TEXT("新制"):Operation==1 || Operation==3?TEXT("保留"):TEXT("重抽");
+                const TCHAR* TraitChange=Operation==0?TEXT("新生成"):Operation==1 || Operation==2?TEXT("保留"):TEXT("重抽");
+                Text(NewStats.bValid?FString::Printf(TEXT("本体  %s（%s）"),World->SkillName(New),BodyChange):TEXT("本体  待结算"),671,296,18,White);
+                Text(NewStats.bValid && NewStats.Pill.Main>=0 && NewStats.Pill.Main<3?
+                    FString::Printf(TEXT("主材  %s · 成长 Lv.%d"),MaterialNames[NewStats.Pill.Main],NewStats.Level):TEXT("主材  未记录"),671,326,16,Dim);
+                FString NewTrait=FString::Printf(TEXT("词条  %s"),TraitName(NewStats.Pill.Trait));
+                if(NewStats.Pill.Trait>=0)NewTrait+=FString::Printf(TEXT(" Lv.%d"),NewStats.Pill.TraitLevel);
+                NewTrait+=FString::Printf(TEXT("（%s）"),TraitChange);
+                Text(NewTrait,671,351,16,Dim);
+                Text(FString::Printf(TEXT("品质  %s"),QualityName(NewStats.Pill.Quality)),671,376,16,Dim);
+                DrawTheory(NewStats,671);
+                Text(TEXT("理论值按当前成长与强化计算，不代表 DPS 或实际命中。"),104,511,14,Dim);
                 Button(TEXT("acceptresult"),TEXT("接受本炉成品"),104,536,510,true,54);
                 Button(TEXT("rejectresult"),HasOld?TEXT("保留旧丹 · 本炉材料已消耗"):TEXT("放弃成品 · 本炉材料已消耗"),654,536,524,true,54);
                 Text(TEXT("换材继承为本版原型规则；接受新丹不会免费重置技能冷却。"),104,608,16,Dim);

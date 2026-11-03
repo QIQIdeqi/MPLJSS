@@ -130,6 +130,13 @@ struct FAlchemyPillState {
     int32 TraitLevel=0;  // first prototype uses grade-one ingredients
     int32 Quality=0;     // 0 rough, 1 stable, 2 refined (prototype tuning)
 };
+struct FAlchemySkillStats {
+    bool bValid=false;
+    int32 Skill=-1,Level=0,Targets=0;
+    FAlchemyPillState Pill;
+    EAlchemyCast Cast=EAlchemyCast::Bolt;
+    float Damage=0,Cooldown=0,Range=0,Radius=0,Slow=0,Factor=1;
+};
 USTRUCT()
 struct FAlchemyNiagaraFX {
     GENERATED_BODY()
@@ -423,6 +430,7 @@ public:
     FRandomStream Random{77};
     FRandomStream MaterialRandom{77};
     FRandomStream BrewRandom{77};
+    FRandomStream EliteLootRandom{77};
     void BuildScene(bool Combat);
     AStaticMeshActor* Mesh(const FString& Shape, FVector Pos, FVector Scale, FLinearColor Tint, bool Solid=false);
     AStaticMeshActor* Sprite(const FString& Name, FVector Pos, float Width, float Height);
@@ -534,6 +542,9 @@ public:
     void Hurt(float Damage);
     void Drop(FVector Pos,int32 Kind,int32 Count=1);
     void CastSkills(float Delta);
+    FAlchemySkillStats EvaluateSkillStats(int32 Skill,int32 Level,const FAlchemyPillState& Pill) const;
+    FAlchemySkillStats CurrentSkillStats(int32 Skill) const;
+    FAlchemySkillStats PendingBrewStats() const;
     void SmokeCheck(float Delta);
     void AlchemyCheck();
     int32 FeedbackParticles() const;
