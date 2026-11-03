@@ -69,18 +69,19 @@ bool FAlchemistSpriteAnimation::Advance(float Delta,FVector2D Direction,bool IsM
 }
 void FAlchemistSpriteAnimation::Apply() {
     if(RoseMage && Material && Atlases.Num()==4) {
-        if(HasRoseMotion() && (Dead || Hurting || Moving)) {
-            Row=Dead?4:Hurting?3:1;
-            Frame=Dead?FMath::Min(5,FMath::FloorToInt(Time*8)):Hurting?FMath::Min(3,FMath::FloorToInt(Time*10)):FMath::FloorToInt(Time*8)%6;
-            const int MotionRow=Dead?2:Hurting?1:0;
+        const bool Attack=Throwing && !Hurting && !Dead;
+        // Motion pack drives idle/walk/hurt/dead; attack keeps its own authored sheet.
+        if(HasRoseMotion() && !Attack && (Dead || Hurting || Moving || !Throwing)) {
+            const int MotionRow=Dead?3:Hurting?2:Moving?1:0;
+            Row=Dead?4:Hurting?3:Moving?1:0;
+            Frame=Dead?FMath::Min(5,FMath::FloorToInt(Time*8)):Hurting?FMath::Min(3,FMath::FloorToInt(Time*10)):Moving?FMath::FloorToInt(Time*8)%7:FMath::FloorToInt(Time*2)%3;
             Material->SetTextureParameterValue(TEXT("SpriteSheet"),RoseMotionAtlases[Facing]);
-            Material->SetVectorParameterValue(TEXT("UVScale"),FLinearColor(1.f/6,1.f/3,0,0));
-            Material->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(Frame/6.f,MotionRow/3.f,0,0));
+            Material->SetVectorParameterValue(TEXT("UVScale"),FLinearColor(1.f/7,1.f/4,0,0));
+            Material->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(Frame/7.f,MotionRow/4.f,0,0));
             Material->SetVectorParameterValue(TEXT("SpriteTint"),FLinearColor::White);
             return;
         }
         // Static/attack art remains available if the optional authored motion pack is absent.
-        const bool Attack=Throwing && !Hurting && !Dead && !Moving;
         Row=Attack?2:Dead?4:Hurting?3:Moving?1:0;
         Frame=Attack?FMath::Min(7,FMath::FloorToInt(Time*10)):0;
         Material->SetTextureParameterValue(TEXT("SpriteSheet"),Attack && HasRoseAttack()?RoseAttackAtlases[Facing]:Atlases[Attack?3:Facing]);
