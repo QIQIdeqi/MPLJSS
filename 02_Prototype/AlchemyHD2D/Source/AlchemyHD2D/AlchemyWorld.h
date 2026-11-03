@@ -263,6 +263,8 @@ public:
     float ToastTime=0, RunTime=0, HP=120, MaxHP=120, DodgeCD=0, DodgeTime=0, HurtInv=0, DodgeInv=0;
     int32 Kills=0, RunCoins=0, CraftCount=0, ChainCount=0, ResultCoins=0, PendingTalent=-1, SelectedBag=-1;
     TArray<int32> Inventory={0,0,0,0,0,0}, Selected={0,0,0,0,0,0};
+    // Run-local introductory/supply materials can be brewed but never sold.
+    int32 BrewOnlyStock[3]={0,0,0};
     TArray<int32> Levels, Equipped={0}, Bag;
     // RESULT-001: pending craft result before accept, plus one-shot reroll state.
     int32 PendingResultSkill=-1, PendingResultCombination=-1, PendingResultTotal=0;
@@ -271,6 +273,8 @@ public:
     TArray<FAlchemyPillState> PillStates;
     int32 BrewMode=0, BrewOperation=0, BrewTarget=-1, BrewMain=0, BrewSupport=-1;
     int32 BrewMainCount=1, BrewSupportCount=0, FragmentCount[3]={0,0,0};
+    int32 OpeningSupplyNormalDeaths=0;
+    bool bOpeningSupplyEligible=false, bOpeningSupplyGranted=false;
     bool bBrewConvertTrait=false, bBrewCommittedConvertTrait=false, bPendingTraitConverted=false;
     bool bBrewActive=false, bV02Pending=false;
     float BrewProgress=0, BrewDuration=0;
@@ -293,7 +297,12 @@ public:
     void TutorialSupply(FVector Position);
     void TutorialHit(int32 Skill,int32 Hits);
     void AddMaterial(int32 Index);
+    void SpendRunMaterial(int32 Kind,int32 Count);
     void GrantFragment(int32 Index,FVector Position);
+    void TryGrantNormalFragment(FVector Position);
+    void BuildBrewBodyOptions(int32 Main,int32 MainCount,int32 ExcludedSkill,TArray<int32>& Candidates,TArray<float>& Weights) const;
+    void BuildBrewTraitWeights(int32 Support,int32 SupportCount,float OutWeights[3]) const;
+    void BuildBrewCost(int32 OutCost[6]) const;
     bool CanStartBrew(FString& Reason) const;
     bool BeginBrew();
     void UpdateBrew(float Delta);
@@ -400,7 +409,7 @@ public:
     UPROPERTY() TObjectPtr<UTexture2D> MerchantCoinTexture;
     int32 MerchantVisit=0,MerchantRerolls=0,MerchantStock[3]={0,1,2};
     bool MerchantSoldOut[3]={false,false,false};
-    int32 MerchantSellKind=-1,MerchantSellCount=0;
+    int32 MerchantSellKind=-1,MerchantSellCount=0,MerchantSellInventorySnapshot=0;
     FRandomStream MerchantRandom{1177};
     UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantBody;
     UPROPERTY() TObjectPtr<AStaticMeshActor> MerchantShadow;
@@ -412,6 +421,8 @@ public:
     int32 EliteIndex=0, SmokeStep=0, CaptureStep=0;
     float SmokeTime=0;
     FRandomStream Random{77};
+    FRandomStream MaterialRandom{77};
+    FRandomStream BrewRandom{77};
     void BuildScene(bool Combat);
     AStaticMeshActor* Mesh(const FString& Shape, FVector Pos, FVector Scale, FLinearColor Tint, bool Solid=false);
     AStaticMeshActor* Sprite(const FString& Name, FVector Pos, float Width, float Height);
@@ -495,6 +506,7 @@ public:
     int32 MerchantBuyPrice(int32 Kind) const;
     int32 MerchantSellPrice(int32 Kind) const;
     int32 MerchantRefreshPrice() const;
+    int32 MerchantSellableCount(int32 Kind) const;
     bool BuyMerchant(int32 Slot);
     bool RefreshMerchant();
     bool SellMerchant(int32 Kind,bool All=false);
@@ -513,6 +525,7 @@ public:
     int32 Nearest(FVector Pos,float Range,const TArray<int32>& Exclude={}) const;
     void Fire(FVector From,FVector Target,float Damage,FLinearColor Color,bool Hostile=false,float Speed=1000,UNiagaraSystem* TrailSystem=nullptr,UNiagaraSystem* HitSystem=nullptr,float Lifetime=4,float EffectScale=1,float HitLife=.7f,bool Potion=false);
     void DamageEnemy(int32 Index,float Damage,FLinearColor Color=FLinearColor(1,.8f,.3f),UNiagaraSystem* HitSystem=nullptr,float EffectScale=1,float HitLife=.7f);
+    void ProcessDeadEnemies();
     void SlowEnemy(int32 Index,float Duration,float Factor);
     UNiagaraComponent* SpawnVFX(UNiagaraSystem* System,FVector Position,FLinearColor Color,float Scale,float Life);
     void UpdateFeedback(float Delta);

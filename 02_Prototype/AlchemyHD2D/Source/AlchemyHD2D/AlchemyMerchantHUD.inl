@@ -3,9 +3,9 @@ void AAlchemyHUD::DrawMerchant() {
     if(World->Panel==TEXT("merchantconfirm")) {
         const int Kind=World->MerchantSellKind,Count=World->MerchantSellCount;
         if(Kind<0 || Kind>=6 || Count<=0) return;
-        Paragraph(FString::Printf(TEXT("出售全部 %s ×%d"),MaterialNames[Kind],Count),104,246,1000,28,White);
+        Paragraph(FString::Printf(TEXT("出售全部可售 %s ×%d"),MaterialNames[Kind],Count),104,246,1000,28,White);
         Text(FString::Printf(TEXT("将获得 %d 本局金币"),Count*World->MerchantSellPrice(Kind)),104,320,28,Gold);
-        Text(TEXT("确认后材料立即扣除；只使用本局钱包，不影响银行金币。"),104,376,18,Dim);
+        Text(TEXT("炼制专用赠料保留；确认后可售材料立即扣除，金币进入本局钱包。"),104,376,18,Dim);
         Button(TEXT("merchantconfirm"),TEXT("确认出售"),104,460,524,World->CanTrade());
         Button(TEXT("close"),TEXT("取消，返回商店"),654,460,524);return;
     }
@@ -26,13 +26,16 @@ void AAlchemyHUD::DrawMerchant() {
         const float X=104+(K%3)*364,Y=416+(K/3)*72;
         Box(X,Y,344,64,Card);
         const bool LegacyOnly=K==3 || K==5;
-        Text(FString::Printf(LegacyOnly && !World->bSmoke && !World->bCapture?TEXT("%s ×%d · 本版未开放炼制"):TEXT("%s ×%d"),MaterialNames[K],World->Inventory[K]),X+10,Y+7,18,White);
-        Text(FString::Printf(TEXT("回收价 %d金币/个"),World->MerchantSellPrice(K)),X+10,Y+35,14,Dim);
-        const bool Enabled=World->CanTrade() && World->Inventory[K]>0;
+        FString MaterialLabel=FString::Printf(TEXT("%s ×%d"),MaterialNames[K],World->Inventory[K]);
+        if(LegacyOnly && !World->bSmoke && !World->bCapture) MaterialLabel+=TEXT(" · 本版未开放炼制");
+        Text(MaterialLabel,X+10,Y+7,18,White);
+        const int32 Sellable=World->MerchantSellableCount(K);
+        Text(FString::Printf(TEXT("可售%d · %d金/个"),Sellable,World->MerchantSellPrice(K)),X+10,Y+35,14,Dim);
+        const bool Enabled=World->CanTrade() && Sellable>0;
         Button(FString::Printf(TEXT("merchantsell%d"),K),TEXT("卖1"),X+168,Y+12,72,Enabled,40);
         Button(FString::Printf(TEXT("merchantsellall%d"),K),TEXT("全卖"),X+250,Y+12,84,Enabled,40);
     }
-    if(World->VisualTime>=World->MerchantBubbleUntil) Paragraph(TEXT("三个随机货位至少两种材料；购买上限10个。关闭重开不会补货或重置刷新费。"),104,574,1074,16,Dim);
+    if(World->VisualTime>=World->MerchantBubbleUntil) Paragraph(TEXT("首测赠料为炼制专用、不可出售；全卖仅出售可售数量。三个随机货位至少两种材料。"),104,574,1074,16,Dim);
     Paragraph(FString::Printf(TEXT("本位商人已刷新%d次；离场剩余%.0f秒（交易中暂停）。出售全部需再次确认。"),World->MerchantRerolls,World->MerchantRemaining),104,605,1074,16,Gold);
 }
 

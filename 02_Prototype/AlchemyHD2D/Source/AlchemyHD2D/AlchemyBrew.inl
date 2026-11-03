@@ -5,6 +5,12 @@ namespace AlchemyBrewPrototype {
     constexpr int32 Pool[3][5]={{1,6,10,11,12},{2,13,14,15,21},{3,16,17,18,23}};
 }
 
+void AAlchemyWorld::SpendRunMaterial(int32 Kind,int32 Count) {
+    check(Inventory.IsValidIndex(Kind) && Count>=0 && Inventory[Kind]>=Count);
+    if(Kind<3) BrewOnlyStock[Kind]-=FMath::Min(BrewOnlyStock[Kind],Count);
+    Inventory[Kind]-=Count;
+}
+
 void AAlchemyWorld::GrantFragment(int32 Index,FVector Position) {
     if(Index<0 || Index>=3) return;
     // Older capture checks still exercise collection of physical material drops.
@@ -19,6 +25,37 @@ void AAlchemyWorld::GrantFragment(int32 Index,FVector Position) {
     Inventory[Index]++;
     if(Progress && !Progress->Materials.Contains(Index)) {Progress->Materials.Add(Index);SaveProgress();}
     Message(FString::Printf(TEXT("%s碎片归集为材料"),MaterialNames[Index]));
+}
+
+void AAlchemyWorld::TryGrantNormalFragment(FVector Position) {
+    if(MaterialRandom.FRand()>=MaterialDropChance()) return;
+    const float Roll=MaterialRandom.FRand();
+    GrantFragment(Roll<.4f?0:Roll<.75f?1:2,Position);
+}
+
+void AAlchemyWorld::BuildBrewBodyOptions(int32 Main,int32 MainCount,int32 ExcludedSkill,TArray<int32>& Candidates,TArray<float>& Weights) const {
+    Candidates.Empty();Weights.Empty();
+    if(Main<0 || Main>=3 || MainCount<1 || MainCount>3) return;
+    for(int32 I=0;I<5;I++) {
+        const int32 Skill=AlchemyBrewPrototype::Pool[Main][I];
+        if(!RuntimeSkills.IsValidIndex(Skill) || !Levels.IsValidIndex(Skill) || Levels[Skill]>0 || Skill==ExcludedSkill) continue;
+        Candidates.Add(Skill);
+        Weights.Add(float(6-I+(MainCount-1)*I));
+    }
+}
+
+void AAlchemyWorld::BuildBrewTraitWeights(int32 Support,int32 SupportCount,float OutWeights[3]) const {
+    OutWeights[0]=OutWeights[1]=OutWeights[2]=0;
+    if(Support<0 || Support>=3 || SupportCount<1 || SupportCount>3) return;
+    OutWeights[0]=OutWeights[1]=OutWeights[2]=20;
+    OutWeights[Support]+=40+15*(SupportCount-1);
+}
+
+void AAlchemyWorld::BuildBrewCost(int32 OutCost[6]) const {
+    for(int32 I=0;I<6;I++) OutCost[I]=0;
+    if(BrewOperation!=3 && BrewMain>=0 && BrewMain<3) OutCost[BrewMain]+=FMath::Max(0,BrewMainCount);
+    if(BrewSupportCount>0 && BrewSupport>=0 && BrewSupport<3) OutCost[BrewSupport]+=BrewSupportCount;
+    if(bBrewConvertTrait) OutCost[4]=1;
 }
 
 bool AAlchemyWorld::CanStartBrew(FString& Reason) const {
@@ -48,7 +85,9 @@ bool AAlchemyWorld::CanStartBrew(FString& Reason) const {
     if(bBrewConvertTrait && ((BrewOperation!=0 && BrewOperation!=3) || BrewSupportCount==0 || BrewSupport<0)) {
         Reason=TEXT("虚空晶转换只用于新制或换辅材，须先选辅材");return false;
     }
-    if(bBrewConvertTrait && Inventory[4]<1) {Reason=TEXT("确定转换需要1份虚空晶");return false;}
+    if(bBrewConvertTrait && BrewSupportCount>1) {
+        Reason=TEXT("虚空晶确定转换只需1份辅材，请先减料");return false;
+    }
     if(BrewOperation==1 && BrewMain!=PillStates[BrewTarget].Main) {
         Reason=TEXT("同方强化需要原丹药的主材");return false;
     }
@@ -60,20 +99,18 @@ bool AAlchemyWorld::CanStartBrew(FString& Reason) const {
     if(BrewOperation==0 && Equipped.Num()>=6 && Bag.Num()>=6) {
         Reason=TEXT("首测丹药容量已满");return false;
     }
-    int32 Cost[3]={0,0,0};
-    if(BrewOperation!=3) Cost[BrewMain]+=BrewMainCount;
-    if(BrewSupportCount>0) Cost[BrewSupport]+=BrewSupportCount;
+    int32 Cost[6];BuildBrewCost(Cost);
+    if(Cost[4]>Inventory[4]) {Reason=TEXT("确定转换需要1份虚空晶");return false;}
     for(int32 I=0;I<3;I++) if(Cost[I]>Inventory[I]) {
         Reason=FString::Printf(TEXT("%s不足：需要%d，持有%d"),MaterialNames[I],Cost[I],Inventory[I]);return false;
     }
     if(BrewOperation==0 || BrewOperation==2) {
-        bool HasCandidate=false;
-        for(int32 Skill:AlchemyBrewPrototype::Pool[BrewMain]) {
-            if(RuntimeSkills.IsValidIndex(Skill) && Levels.IsValidIndex(Skill) && Levels[Skill]==0 && Skill!=BrewTarget) {
-                HasCandidate=true;break;
-            }
+        TArray<int32> Candidates;TArray<float> Weights;
+        BuildBrewBodyOptions(BrewMain,BrewMainCount,BrewOperation==2?BrewTarget:-1,Candidates,Weights);
+        if(Candidates.IsEmpty()) {Reason=TEXT("该主材没有可接收的新本体，不扣料");return false;}
+        if(Candidates.Num()==1 && BrewMainCount>1) {
+            Reason=TEXT("仅剩1种本体候选，多投主材不会改变结果，请减至1份");return false;
         }
-        if(!HasCandidate) {Reason=TEXT("该主材没有可接收的新本体，不扣料");return false;}
     }
     return true;
 }
@@ -81,11 +118,8 @@ bool AAlchemyWorld::CanStartBrew(FString& Reason) const {
 bool AAlchemyWorld::BeginBrew() {
     FString Reason;
     if(!CanStartBrew(Reason)) {Message(Reason);return false;}
-    int32 Cost[3]={0,0,0};
-    if(BrewOperation!=3) Cost[BrewMain]+=BrewMainCount;
-    if(BrewSupportCount>0) Cost[BrewSupport]+=BrewSupportCount;
-    for(int32 I=0;I<3;I++) Inventory[I]-=Cost[I];
-    if(bBrewConvertTrait) Inventory[4]--;
+    int32 Cost[6];BuildBrewCost(Cost);
+    for(int32 I=0;I<6;I++) SpendRunMaterial(I,Cost[I]);
     BrewCommittedMode=BrewMode;
     BrewCommittedOperation=BrewOperation;
     BrewCommittedTarget=BrewOperation==0?-1:BrewTarget;
@@ -121,16 +155,10 @@ void AAlchemyWorld::CompleteBrew() {
     if(Operation==0 || Operation==2) {
         TArray<int32> Candidates;
         TArray<float> Weights;
-        for(int32 I=0;I<5;I++) {
-            const int32 Skill=AlchemyBrewPrototype::Pool[BrewCommittedMain][I];
-            if(!RuntimeSkills.IsValidIndex(Skill) || !Levels.IsValidIndex(Skill) || Levels[Skill]>0 || Skill==Old) continue;
-            Candidates.Add(Skill);
-            // More main material tilts toward later candidates; these are test weights only.
-            Weights.Add(float(6-I+(BrewCommittedMainCount-1)*I));
-        }
+        BuildBrewBodyOptions(BrewCommittedMain,BrewCommittedMainCount,Old,Candidates,Weights);
         if(Candidates.IsEmpty()) {Message(TEXT("炼制候选失效，原丹药保留"));return;}
         float Sum=0;for(float Weight:Weights) Sum+=Weight;
-        float Roll=Random.FRand()*Sum;NewSkill=Candidates.Last();
+        float Roll=BrewRandom.FRand()*Sum;NewSkill=Candidates.Last();
         for(int32 I=0;I<Candidates.Num();I++) {Roll-=Weights[I];if(Roll<0){NewSkill=Candidates[I];break;}}
     }
     int32 Trait=Old>=0?PillStates[Old].Trait:-1;
@@ -140,9 +168,9 @@ void AAlchemyWorld::CompleteBrew() {
         if(BrewCommittedSupport>=0) {
             if(bBrewCommittedConvertTrait) Trait=BrewCommittedSupport;
             else {
-                float Weights[3]={20,20,20};
-                Weights[BrewCommittedSupport]+=40+15*(BrewCommittedSupportCount-1);
-                float Sum=Weights[0]+Weights[1]+Weights[2],Roll=Random.FRand()*Sum;
+                float Weights[3];
+                BuildBrewTraitWeights(BrewCommittedSupport,BrewCommittedSupportCount,Weights);
+                float Sum=Weights[0]+Weights[1]+Weights[2],Roll=BrewRandom.FRand()*Sum;
                 Trait=2;
                 for(int32 I=0;I<3;I++) {Roll-=Weights[I];if(Roll<0){Trait=I;break;}}
             }
@@ -159,7 +187,7 @@ void AAlchemyWorld::CompleteBrew() {
     PendingQuality=Old>=0?PillStates[Old].Quality:0;
     if(Operation==0 || Operation==1) {
         PendingQuality=FMath::Max(PendingQuality,BrewCommittedMode==1?1:0);
-        if(Random.FRand()<.25f) PendingQuality=FMath::Min(2,PendingQuality+1);
+        if(BrewRandom.FRand()<.25f) PendingQuality=FMath::Min(2,PendingQuality+1);
     }
     bV02Pending=true;
     Panel=TEXT("result");

@@ -4,11 +4,15 @@ int32 AAlchemyWorld::MerchantBuyPrice(int32 Kind) const {
 }
 int32 AAlchemyWorld::MerchantSellPrice(int32 Kind) const {return Kind>=0 && Kind<6?(Kind<3?2:8):0;}
 int32 AAlchemyWorld::MerchantRefreshPrice() const {return 5+5*FMath::Min(MerchantRerolls,4);}
+int32 AAlchemyWorld::MerchantSellableCount(int32 Kind) const {
+    if(!Inventory.IsValidIndex(Kind)) return 0;
+    return FMath::Max(0,Inventory[Kind]-(Kind<3?BrewOnlyStock[Kind]:0));
+}
 bool AAlchemyWorld::CanTrade() const {
     return bCombat && !bRunEnded && !bBossSpawned && RunTime<300 && bMerchantActive && !bMerchantLeaving && MerchantRemaining>0 && FVector::Dist2D(PlayerPos,MerchantPos)<=260;
 }
 void AAlchemyWorld::CloseMerchant() {
-    bMerchantActive=false;MerchantRemaining=0;MerchantSellKind=-1;MerchantSellCount=0;
+    bMerchantActive=false;MerchantRemaining=0;MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;
     bMerchantLeaving=false;MerchantDepartureTime=0;MerchantBubble.Empty();MerchantCoinEffects.Empty();
     for(auto* A:{MerchantBody.Get(),MerchantShadow.Get(),MerchantMarker.Get()}) if(IsValid(A)) A->Destroy();
     MerchantBody=MerchantShadow=MerchantMarker=nullptr;
@@ -63,7 +67,7 @@ bool AAlchemyWorld::SpawnMerchant() {
 }
 bool AAlchemyWorld::OpenMerchant() {
     if(!CanTrade() || !Panel.IsEmpty() || PendingLevelUps>0 || PendingResultSkill>=0 || PendingIsNuclear) return false;
-    Selected={0,0,0,0,0,0};MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");UpdateFeedback(0);MerchantSay(TEXT("缺材料可以买，多出来的我也收。"));return true;
+    Selected={0,0,0,0,0,0};MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;Panel=TEXT("merchant");UpdateFeedback(0);MerchantSay(TEXT("缺材料可以买，多出来的我也收。"));return true;
 }
 bool AAlchemyWorld::BuyMerchant(int32 Slot) {
     if(!CanTrade() || Panel!=TEXT("merchant") || Slot<0 || Slot>=3 || MerchantSoldOut[Slot]) return false;
@@ -84,16 +88,20 @@ bool AAlchemyWorld::RefreshMerchant() {
 }
 bool AAlchemyWorld::SellMerchant(int32 Kind,bool All) {
     if(!CanTrade() || Panel!=TEXT("merchant") || Kind<0 || Kind>=6 || Inventory[Kind]<=0) return false;
-    if(All) {MerchantSellKind=Kind;MerchantSellCount=Inventory[Kind];Panel=TEXT("merchantconfirm");return true;}
+    const int32 Sellable=MerchantSellableCount(Kind);
+    if(Sellable<=0) {Message(TEXT("首测赠料仅可炼制，不可出售"));return false;}
+    if(All) {MerchantSellKind=Kind;MerchantSellCount=Sellable;MerchantSellInventorySnapshot=Inventory[Kind];Panel=TEXT("merchantconfirm");return true;}
     Inventory[Kind]--;RunCoins+=MerchantSellPrice(Kind);
     MerchantTradeFeedback(MerchantSellPrice(Kind),FVector2D(354+364*(Kind%3),448+72*(Kind/3)),FVector2D(270,196),TEXT("材料我收下，金币请拿稳。"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_SELL visit=%d kind=%d count=1 balance=%d"),MerchantVisit,Kind,RunCoins);return true;
 }
 bool AAlchemyWorld::ConfirmMerchantSale() {
     if(!CanTrade() || Panel!=TEXT("merchantconfirm")) return false;
-    const int Kind=MerchantSellKind,Count=MerchantSellCount;
-    MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");
-    if(Kind<0 || Kind>=6 || Count<=0 || Inventory[Kind]!=Count) {Message(TEXT("库存已变化，请重新确认出售。"));return false;}
+    const int Kind=MerchantSellKind,Count=MerchantSellCount,Snapshot=MerchantSellInventorySnapshot;
+    MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;Panel=TEXT("merchant");
+    if(Kind<0 || Kind>=6 || Count<=0 || Inventory[Kind]!=Snapshot || MerchantSellableCount(Kind)!=Count) {
+        Message(TEXT("库存已变化，请重新确认出售。"));return false;
+    }
     Inventory[Kind]-=Count;RunCoins+=Count*MerchantSellPrice(Kind);
     MerchantTradeFeedback(Count*MerchantSellPrice(Kind),FVector2D(354+364*(Kind%3),448+72*(Kind/3)),FVector2D(270,196),TEXT("这批我全收了，下次还来！"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_SELL visit=%d kind=%d count=%d balance=%d"),MerchantVisit,Kind,Count,RunCoins);return true;
@@ -178,7 +186,7 @@ void AAlchemyWorld::StartMerchantEffect() {
 void AAlchemyWorld::BeginMerchantDeparture() {
     if(!bMerchantActive || bMerchantLeaving) return;
     bMerchantLeaving=true;MerchantDepartureTime=0;MerchantRemaining=0;MerchantWaveTime=0;MerchantArrivalAge=1.4f;
-    MerchantSellKind=-1;MerchantSellCount=0;
+    MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;
     if(Panel==TEXT("merchant") || Panel==TEXT("merchantconfirm")) Panel.Empty();
     StartMerchantEffect();MerchantSay(RunTime>=300?TEXT("危险来了，我先撤啦！"):TEXT("收摊啦，下回见，小炼金术士！"),2);
 }

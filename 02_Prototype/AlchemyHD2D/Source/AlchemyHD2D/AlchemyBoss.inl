@@ -27,7 +27,7 @@ void AAlchemyWorld::RewardEnemy(const FAlchemyEnemy& E) {
     else {
         Drop(E.Pos,-2,E.Type);
         if(Random.FRand()<.7f) Drop(E.Pos,-1);
-        if(Random.FRand()<MaterialDropChance()) {const float R=Random.FRand();GrantFragment(R<.4f?0:R<.75f?1:2,E.Pos);}
+        TryGrantNormalFragment(E.Pos);
     }
 }
 void AAlchemyWorld::EndBossArena() {

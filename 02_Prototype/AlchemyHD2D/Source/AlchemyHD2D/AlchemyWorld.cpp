@@ -7,6 +7,7 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "HAL/IConsoleManager.h"
+#include "HAL/PlatformTime.h"
 #include "Modules/ModuleManager.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/TargetPoint.h"
@@ -662,15 +663,31 @@ void AAlchemyWorld::AddMaterial(int32 I) {
 }
 void AAlchemyWorld::StartRun() {
     ResetMerchant();
+    // Production runs need a fresh sequence; capture and smoke fixtures keep their fixed seeds.
+    const int32 RunSeed=(!bSmoke && !bCapture)?static_cast<int32>(FPlatformTime::Cycles64()):77;
+    const int32 MaterialSeed=RunSeed ^ 0x4D41544C;
+    const int32 BrewSeed=RunSeed ^ 0x42524557;
+    MaterialRandom.Initialize(MaterialSeed);
+    BrewRandom.Initialize(BrewSeed);
+    if(!bSmoke && !bCapture) {
+        Random.Initialize(RunSeed);
+        UE_LOG(LogTemp,Display,TEXT("ALCHEMY_RUN_SEED %d material=%d brew=%d"),RunSeed,MaterialSeed,BrewSeed);
+    }
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
     Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
-    const bool bFirstBrewIntro=!bSmoke && !bCapture && !Progress->BrewV02Introduced;
+    for(int32& Stock:BrewOnlyStock) Stock=0;
+    const bool bBrewFixture=FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test"));
+    const bool bFirstBrewIntro=(!bSmoke && !bCapture || bBrewFixture) && !Progress->BrewV02Introduced;
     if(bFirstBrewIntro) {
         Inventory[0]=Inventory[1]=Inventory[2]=1;
+        for(int32& Stock:BrewOnlyStock) Stock=1;
         for(int32 I=0;I<3;I++) Progress->Materials.AddUnique(I);
         Progress->BrewV02Introduced=true;
         SaveProgress();
     }
+    OpeningSupplyNormalDeaths=0;
+    bOpeningSupplyGranted=false;
+    bOpeningSupplyEligible=!bFirstBrewIntro && (!bSmoke && !bCapture || bBrewFixture);
     TutorialSkill=-1;bTutorialSupplyDone=false;TutorialEncounterPending=false;TutorialEncounterRetry=0;
     // RESULT-001/EXP-001 run-local state resets.
     PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=0; PendingIsNuclear=false; PendingRefreshed=false;
@@ -702,6 +719,7 @@ void AAlchemyWorld::EndRun(bool Won) {
     CloseMerchant();
     EndBossArena();PendingLevelUps=0;
     bRunEnded=true; bWon=Won;
+    for(int32& Stock:BrewOnlyStock) Stock=0;
     ToastTime=0; // End combat guidance before SaveProgress can report a new failure.
     // EXP-001/PAUSE-001: clear run-local xp/attributes and pending results on run end.
     RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
@@ -761,7 +779,7 @@ bool AAlchemyWorld::Craft() {
     const bool Special=EligibleSpecial && Random.FRand()*100 < SpecialProcChance[FMath::Clamp(Total-3,0,7)];
     if(Special && !CraftOptions(Options,WeightsOut,Reason,Combination,true)) {Message(Reason);return false;}
     // Deduct exactly once, after the final candidate set is known to be receivable.
-    for(int i=0;i<6;i++) Inventory[i]-=Selected[i];
+    for(int i=0;i<6;i++) SpendRunMaterial(i,Selected[i]);
     Selected={0,0,0,0,0,0};
     float Roll=Random.FRand()*100;int Match=Options.Last();
     for(int I=0;I<Options.Num();I++) {Roll-=WeightsOut[I];if(Roll<0) {Match=Options[I];break;}}
@@ -786,7 +804,7 @@ void AAlchemyWorld::TriggerNuclear() {
         // EXP-001: normal enemy always drops one XP orb (Kind -2).
         Drop(E.Pos,-2,E.Type);
         if(Random.FRand()<0.7f) Drop(E.Pos,-1);
-        if(Random.FRand()<MaterialDropChance()) {float R=Random.FRand(); GrantFragment(R<0.4f?0:R<0.75f?1:2,E.Pos);}
+        TryGrantNormalFragment(E.Pos);
     }
     Message(FString::Printf(TEXT("核弹炼金！清除普通怪 ×%d"),Cleared));
     if(Discovered)SaveProgress();
@@ -1201,15 +1219,30 @@ void AAlchemyWorld::Action(FString Id) {
         if(Id.Len()==6 && Id.StartsWith(TEXT("brewm"))) {BrewMain=FMath::Clamp(FCString::Atoi(*Id.Mid(5)),0,2);return;}
         if(Id==TEXT("brewsnone")) {BrewSupport=-1;BrewSupportCount=0;bBrewConvertTrait=false;return;}
         if(Id.Len()==6 && Id.StartsWith(TEXT("brews"))) {BrewSupport=FMath::Clamp(FCString::Atoi(*Id.Mid(5)),0,2);BrewSupportCount=FMath::Max(1,BrewSupportCount);return;}
-        if(Id==TEXT("brewconvert")) {bBrewConvertTrait=!bBrewConvertTrait;return;}
-        if(Id==TEXT("brewmainplus")) {BrewMainCount=FMath::Min(3,BrewMainCount+1);return;}
+        if(Id==TEXT("brewconvert")) {
+            if(!bBrewConvertTrait && ((BrewOperation!=0 && BrewOperation!=3) || BrewSupportCount!=1 || BrewSupport<0)) {
+                Message(TEXT("虚空晶定向转换须选1份辅材"));return;
+            }
+            bBrewConvertTrait=!bBrewConvertTrait;return;
+        }
+        if(Id==TEXT("brewmainplus")) {
+            if(BrewOperation!=0 && BrewOperation!=2) return;
+            TArray<int32> Candidates;TArray<float> Weights;
+            BuildBrewBodyOptions(BrewMain,BrewMainCount,BrewOperation==2?BrewTarget:-1,Candidates,Weights);
+            if(Candidates.Num()<=1) {Message(TEXT("本体候选不足，多投主材不会改变结果"));return;}
+            BrewMainCount=FMath::Min(3,BrewMainCount+1);return;
+        }
         if(Id==TEXT("brewmainminus")) {BrewMainCount=FMath::Max(1,BrewMainCount-1);return;}
-        if(Id==TEXT("brewsupportplus")) {if(BrewSupport>=0) BrewSupportCount=FMath::Min(3,BrewSupportCount+1);return;}
+        if(Id==TEXT("brewsupportplus")) {
+            if(bBrewConvertTrait) {Message(TEXT("虚空晶已确定词条，无需多投辅材"));return;}
+            if(BrewSupport>=0) BrewSupportCount=FMath::Min(3,BrewSupportCount+1);
+            return;
+        }
         if(Id==TEXT("brewsupportminus")) {BrewSupportCount=FMath::Max(BrewSupport>=0?1:0,BrewSupportCount-1);return;}
         if(Id==TEXT("brewstart")) {BeginBrew();return;}
     }
     if(Id==TEXT("close")) {
-        if(Panel==TEXT("merchantconfirm")) {MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");return;}
+        if(Panel==TEXT("merchantconfirm")) {MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;Panel=TEXT("merchant");return;}
         if(Panel==TEXT("levelup") && PendingLevelUps>0) return;
         if(Panel==TEXT("result") && (PendingResultSkill>=0 || PendingIsNuclear)) return; // must resolve the result
         Panel.Empty(); PendingTalent=-1; return;
@@ -1355,14 +1388,41 @@ void AAlchemyWorld::Tick(float Dt) {
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture"))) {CaptureTools(Dt);return;}
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture"))) {CaptureFeedback(Dt);return;}
     if(bCapture && FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture"))) {
+        const bool bBrewVisual=FParse::Param(FCommandLine::Get(),TEXT("BrewV02Visual"));
+        static FString BrewVisualScreenshot;
+        if(bBrewVisual && CaptureStep==3) {
+            const int64 ScreenshotBytes=BrewVisualScreenshot.IsEmpty()?-1:IFileManager::Get().FileSize(*BrewVisualScreenshot);
+            if(ScreenshotBytes>0) {
+                UE_LOG(LogTemp,Display,TEXT("BREW_V02_VISUAL_PASS file=%s bytes=%lld"),*BrewVisualScreenshot,static_cast<long long>(ScreenshotBytes));
+                FPlatformMisc::RequestExitWithStatus(false,0);
+            } else if(VisualTime>15.f) {
+                UE_LOG(LogTemp,Error,TEXT("BREW_V02_VISUAL_FAIL screenshot_not_written file=%s"),*BrewVisualScreenshot);
+                FPlatformMisc::RequestExitWithStatus(false,1);
+            }
+            UpdateCamera(Dt);return;
+        }
         if(VisualTime>2+CaptureStep*1.2f) {
             switch(CaptureStep) {
                 case 0: BuildScene(false);ToastTime=0;break;
                 case 1:
+                    if(bBrewVisual) Progress->TutorialComplete=true;
                     StartRun();RunTime=47;Kills=18;RunCoins=12;Inventory={5,4,3,1,1,1};Equipped={0,4,6,1,3,2};for(int K:Equipped) Levels[K]=2;
                     for(int I=0;I<Enemies.Num();I++) {Enemies[I].Pos=FVector(FMath::Cos(float(I))*650,FMath::Sin(float(I))*650,0);UpdateSprite(Enemies[I].Body,TEXT("Enemy0"),Enemies[I].Pos,100,100);}
                     ToastTime=0;break;
-                case 2: Panel=TEXT("alchemy");Selected={1,1,1,0,0,0};break;
+                case 2:
+                    Panel=TEXT("alchemy");
+                    if(bBrewVisual) {
+                        int32 VisualMain=2,VisualCount=2,VisualSupportStock=8;
+                        FParse::Value(FCommandLine::Get(),TEXT("BrewVisualMain="),VisualMain);
+                        FParse::Value(FCommandLine::Get(),TEXT("BrewVisualCount="),VisualCount);
+                        FParse::Value(FCommandLine::Get(),TEXT("BrewVisualSupportStock="),VisualSupportStock);
+                        BrewOperation=0;BrewMain=FMath::Clamp(VisualMain,0,2);BrewMainCount=FMath::Clamp(VisualCount,1,3);
+                        BrewSupport=1;BrewSupportCount=2;bBrewConvertTrait=false;Inventory={8,FMath::Clamp(VisualSupportStock,0,10),8,1,1,1};
+                        for(int32& Stock:BrewOnlyStock) Stock=0;
+                        Progress->Recipes.AddUnique(16); // Capture one known and several unknown candidates.
+                        UE_LOG(LogTemp,Display,TEXT("BREW_V02_VISUAL_CONFIG main=%d count=%d support_stock=%d"),BrewMain,BrewMainCount,Inventory[1]);
+                    } else Selected={1,1,1,0,0,0};
+                    break;
                 case 3: Progress->MediumTextScale=.9f;Progress->LargeTextScale=.72f;break;
                 case 4: Panel=TEXT("codex");CodexPage=1;for(int K=1;K<25;K++) Progress->Recipes.AddUnique(K);break;
                 case 5: CodexPage=2;for(int C=0;C<10;C++) Progress->ChainsV2.AddUnique(C);break;
@@ -1375,7 +1435,13 @@ void AAlchemyWorld::Tick(float Dt) {
             }
             UpdateCamera(0);int X=0,Y=0;PC->GetViewportSize(X,Y);
             FString Folder=FPaths::ProjectDir()/TEXT("Evidence/PC_UI");IFileManager::Get().MakeDirectory(*Folder,true);
-            FScreenshotRequest::RequestScreenshot(Folder/FString::Printf(TEXT("PC_%dx%d_%02d.png"),X,Y,CaptureStep),false,false);
+            if(!bBrewVisual || CaptureStep==2) {
+                const FString ScreenshotPath=Folder/(bBrewVisual?
+                    FString::Printf(TEXT("BrewV02_PC_%dx%d_%u.png"),X,Y,static_cast<uint32>(FPlatformTime::Cycles64())):
+                    FString::Printf(TEXT("PC_%dx%d_%02d.png"),X,Y,CaptureStep));
+                if(bBrewVisual) BrewVisualScreenshot=ScreenshotPath;
+                FScreenshotRequest::RequestScreenshot(ScreenshotPath,false,false);
+            }
             UE_LOG(LogTemp,Display,TEXT("PC_UI_FRAME step=%d viewport=%dx%d scale=%.2f panel=%s"),CaptureStep,X,Y,Progress->UITextScale,*Panel);
             CaptureStep++;
         }
@@ -1529,13 +1595,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(!Panel.IsEmpty()) return;
     UpdateShots(Dt);
     if(!Panel.IsEmpty())return;
-    for(int i=Enemies.Num()-1;i>=0;i--) if(Enemies[i].HP<=0) {
-        auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
-        SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
-        TutorialSupply(E.Pos);
-        if(E.Type==10) {DiscoverEnemy(E);EndRun(true); break;}
-        RewardEnemy(E);
-    }
+    ProcessDeadEnemies();
     if(!Panel.IsEmpty()) return;
     for(int i=Drops.Num()-1;i>=0;i--) {
         auto& D=Drops[i]; float Dist=FVector::Dist2D(D.Pos,PlayerPos);
@@ -1544,6 +1604,28 @@ void AAlchemyWorld::Tick(float Dt) {
         D.Body->Destroy(); Drops.RemoveAtSwap(i);
     }
     UpdateTransientEffects(Dt);
+}
+
+void AAlchemyWorld::ProcessDeadEnemies() {
+    for(int i=Enemies.Num()-1;i>=0;i--) if(Enemies[i].HP<=0) {
+        auto E=Enemies[i]; E.Body->Destroy(); E.Shadow->Destroy(); Enemies.RemoveAtSwap(i); Kills++;
+        SpawnVFX(ImpactFX,E.Pos+FVector(0,0,50),FLinearColor(.4f,.8f,.6f),.7f,1);
+        TutorialSupply(E.Pos);
+        if(E.Type==10) {DiscoverEnemy(E);EndRun(true); break;}
+        RewardEnemy(E);
+        if(E.Type>=0 && E.Type<=6 && bOpeningSupplyEligible && !bOpeningSupplyGranted) {
+            OpeningSupplyNormalDeaths++;
+            if(OpeningSupplyNormalDeaths==8) {
+                bool bAdded=false;
+                for(int32 Material=0;Material<3;Material++) if(Inventory[Material]<1) {
+                    Inventory[Material]=1;BrewOnlyStock[Material]=1;bAdded=true;
+                }
+                bOpeningSupplyGranted=true;
+                Message(bAdded?TEXT("首测补给：第8只普通怪已倒下，火粉、露水、魔法碎片各至少1份"):
+                    TEXT("首测补给：第8只普通怪已倒下，三种普通材料已齐，不重复加料"));
+            }
+        }
+    }
 }
 
 void AAlchemyWorld::UpdateTransientEffects(float Dt){

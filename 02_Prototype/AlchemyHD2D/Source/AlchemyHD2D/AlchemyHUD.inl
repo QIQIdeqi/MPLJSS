@@ -310,30 +310,91 @@ void AAlchemyHUD::DrawHUD() {
                 Button(SupportIds[I],SupportNames[I],X,370,126,!World->bBrewActive && UsesSupport,44);
                 if(World->BrewSupport==I-1)Box(X,370,126,3,Gold);
             }
-            Text(TEXT("主材候选：火粉→火焰 · 露水→寒霜 · 魔碎→奥术（首测）"),104,417,14,Dim);
-            Text(TEXT("辅材倾向：火→强击 · 露→延伸(射程/范围) · 魔→迅捷（首测）"),650,417,14,Dim);
-            Text(UsesMain?(World->BrewOperation==1?FString(TEXT("强化固定消耗1份主材（首测）")):FString::Printf(TEXT("主材投入 %d / 3 份（首测）"),World->BrewMainCount)):TEXT("沿用原主材 · 本炉不扣"),104,443,18,White);
-            Button(TEXT("brewmainminus"),TEXT("－"),369,432,84,!World->bBrewActive && UsesMain && World->BrewOperation!=1 && World->BrewMainCount>1,42);
-            Button(TEXT("brewmainplus"),TEXT("＋"),465,432,84,!World->bBrewActive && UsesMain && World->BrewOperation!=1 && World->BrewMainCount<3,42);
-            Text(UsesSupport?FString::Printf(TEXT("辅材投入 %d / 3 份（首测）"),World->BrewSupportCount):TEXT("本炉不扣辅材"),650,443,18,White);
-            Button(TEXT("brewsupportminus"),TEXT("－"),972,432,94,!World->bBrewActive && UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount>1,42);
-            Button(TEXT("brewsupportplus"),TEXT("＋"),1078,432,94,!World->bBrewActive && UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount<3,42);
+            TArray<int32> Candidates;TArray<float> Weights;
+            if(ChoosesMain) {
+                World->BuildBrewBodyOptions(World->BrewMain,World->BrewMainCount,World->BrewOperation==2?World->BrewTarget:-1,Candidates,Weights);
+                const TCHAR* BodyCategory=World->BrewMain==0?TEXT("火焰"):World->BrewMain==1?TEXT("寒霜"):World->BrewMain==2?TEXT("魔法/混融"):TEXT("本体");
+                if(Candidates.IsEmpty()) Text(FString::Printf(TEXT("%s候选：无可接收的新技能"),BodyCategory),104,416,15,Gold);
+                else {
+                    float Total=0;for(float Weight:Weights) Total+=Weight;
+                    float UseWeights[5]={0,0,0,0,0};
+                    for(int32 I=0;I<Candidates.Num();I++) {
+                        const EAlchemyCast Cast=World->SkillConfig(Candidates[I]).Cast;
+                        const int32 Use=(Cast==EAlchemyCast::Bolt || Cast==EAlchemyCast::Direct)?0:
+                            Cast==EAlchemyCast::SelfArea?1:Cast==EAlchemyCast::TargetArea?2:Cast==EAlchemyCast::Bounce?3:4;
+                        UseWeights[Use]+=Weights[I];
+                    }
+                    const TCHAR* UseNames[5]={TEXT("单体"),TEXT("近身范围"),TEXT("落点范围"),TEXT("弹跳"),TEXT("其他")};
+                    const int32 UseOrder[3][5]={{0,2,1,3,4},{1,0,2,3,4},{3,2,0,1,4}};
+                    FString UseLine=FString::Printf(TEXT("%s用途："),BodyCategory);
+                    bool bFirstUse=true;
+                    for(int32 Position=0;Position<5;Position++) {
+                        const int32 Use=UseOrder[FMath::Clamp(World->BrewMain,0,2)][Position];
+                        if(UseWeights[Use]<=0) continue;
+                        if(!bFirstUse) UseLine+=TEXT(" · ");
+                        UseLine+=FString::Printf(TEXT("%s %.1f%%"),UseNames[Use],UseWeights[Use]*100.f/Total);
+                        bFirstUse=false;
+                    }
+                    Text(UseLine,104,416,14,Gold);
+                    FString FirstLine(TEXT("本体：")),SecondLine;
+                    for(int32 I=0;I<Candidates.Num();I++) {
+                        const FString Name=World->Progress->Recipes.Contains(Candidates[I])?FString(World->SkillName(Candidates[I])):FString::Printf(TEXT("未知本体%d"),I+1);
+                        const FString Entry=FString::Printf(TEXT("%s %.1f%%"),*Name,Weights[I]*100.f/Total);
+                        FString& Line=I<3?FirstLine:SecondLine;
+                        if(I!=0 && I!=3) Line+=TEXT(" · ");
+                        Line+=Entry;
+                    }
+                    Text(FirstLine,104,435,14,Dim);
+                    if(!SecondLine.IsEmpty()) Text(SecondLine,104,453,14,Dim);
+                }
+            } else Text(HasTarget?FString::Printf(TEXT("本体保留：%s"),World->SkillName(World->BrewTarget)):TEXT("本体保留：请先选择丹药"),104,416,15,Dim);
+            if(!UsesSupport) Text(HasTarget?FString::Printf(TEXT("词条保留：%s"),TraitName(World->PillStates[World->BrewTarget].Trait)):TEXT("词条不重抽"),650,415,15,Dim);
+            else if(World->BrewSupport<0 || World->BrewSupportCount<1) Text(TEXT("不加辅材：本炉不会生成词条"),650,415,15,Dim);
+            else if(World->bBrewConvertTrait) Text(FString::Printf(TEXT("虚空晶定向：%s 100%%"),TraitName(World->BrewSupport)),650,415,15,Gold);
+            else {
+                float TraitWeights[3];World->BuildBrewTraitWeights(World->BrewSupport,World->BrewSupportCount,TraitWeights);
+                const float Total=TraitWeights[0]+TraitWeights[1]+TraitWeights[2];
+                Text(TEXT("词条实际概率："),650,415,15,Dim);
+                Text(FString::Printf(TEXT("强击 %.1f%% · 延伸 %.1f%% · 迅捷 %.1f%%"),TraitWeights[0]*100.f/Total,TraitWeights[1]*100.f/Total,TraitWeights[2]*100.f/Total),650,435,14,Dim);
+            }
+            Text(UsesMain?(World->BrewOperation==1?FString(TEXT("强化固定消耗1份主材（首测）")):FString::Printf(TEXT("主材投入 %d / 3 份（首测）"),World->BrewMainCount)):TEXT("沿用原主材 · 本炉不扣"),104,486,18,White);
+            Button(TEXT("brewmainminus"),TEXT("－"),369,474,84,!World->bBrewActive && UsesMain && World->BrewOperation!=1 && World->BrewMainCount>1,42);
+            Button(TEXT("brewmainplus"),TEXT("＋"),465,474,84,!World->bBrewActive && ChoosesMain && Candidates.Num()>1 && World->BrewMainCount<3,42);
+            Text(UsesSupport?FString::Printf(TEXT("辅材投入 %d / 3 份（首测）"),World->BrewSupportCount):TEXT("本炉不扣辅材"),650,486,18,White);
+            Button(TEXT("brewsupportminus"),TEXT("－"),972,474,94,!World->bBrewActive && UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount>1,42);
+            Button(TEXT("brewsupportplus"),TEXT("＋"),1078,474,94,!World->bBrewActive && UsesSupport && !World->bBrewConvertTrait && World->BrewSupport>=0 && World->BrewSupportCount<3,42);
             const int32 Main=World->BrewMain,Support=World->BrewSupport;
-            Text(!UsesMain?TEXT("原主材会随旧丹保留"):Main>=0 && Main<3?FString::Printf(TEXT("库存：%s %d 份"),MaterialNames[Main],World->Inventory[Main]):TEXT("请选择主材"),104,497,18,Dim);
-            Text(!UsesSupport?TEXT("该操作不重抽词条"):Support>=0 && Support<3?FString::Printf(TEXT("库存：%s %d 份"),MaterialNames[Support],World->Inventory[Support]):TEXT("无辅材投入"),650,497,18,Dim);
-            Text(FString::Printf(TEXT("碎片：火 %d · 露 %d · 魔 %d，自动归集成材料"),World->FragmentCount[0],World->FragmentCount[1],World->FragmentCount[2]),104,526,17,Teal);
-            const bool CanConvert=UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount>0;
-            Button(TEXT("brewconvert"),FString::Printf(TEXT("%s虚空晶 ×1 · 定向转换（现有%d）"),World->bBrewConvertTrait?TEXT("已选 "):TEXT("选择 "),World->Inventory[4]),650,522,528,!World->bBrewActive && CanConvert && (World->Inventory[4]>0 || World->bBrewConvertTrait),42);
-            if(World->bBrewConvertTrait && CanConvert)Box(650,522,528,3,Gold);
-            Text(TEXT("普通辅材只提高词条倾向；虚空晶确定转换为所选辅材词条（首测暂定）。"),104,552,16,Dim);
+            int32 Cost[6];World->BuildBrewCost(Cost);
+            const auto CostLine=[&](int32 Kind) {
+                const int32 Remaining=World->Inventory[Kind]-Cost[Kind];
+                return FString::Printf(TEXT("%s 需%d / 现有%d · %s%d"),MaterialNames[Kind],Cost[Kind],World->Inventory[Kind],Remaining>=0?TEXT("余"):TEXT("缺"),FMath::Abs(Remaining));
+            };
+            const bool SameColor=UsesMain && UsesSupport && Main>=0 && Main<3 && Main==Support && World->BrewSupportCount>0;
+            if(SameColor) {
+                const int32 Remaining=World->Inventory[Main]-Cost[Main];
+                Text(FString(TEXT("主辅同色合计："))+CostLine(Main),104,517,18,Remaining>=0?Teal:Gold);
+                Text(TEXT("主辅材共用此库存"),650,517,16,Dim);
+            } else {
+                Text(!UsesMain?TEXT("原主材会随旧丹保留"):Main>=0 && Main<3?CostLine(Main):TEXT("请选择主材"),104,517,18,UsesMain && Main>=0 && Main<3 && Cost[Main]>World->Inventory[Main]?Gold:Dim);
+                Text(!UsesSupport?TEXT("该操作不重抽词条"):Support>=0 && Support<3?CostLine(Support):TEXT("无辅材投入"),650,517,18,UsesSupport && Support>=0 && Support<3 && Cost[Support]>World->Inventory[Support]?Gold:Dim);
+            }
+            Text(FString::Printf(TEXT("碎片：火 %d · 露 %d · 魔 %d，自动归集成材料"),World->FragmentCount[0],World->FragmentCount[1],World->FragmentCount[2]),104,541,17,Teal);
+            const bool CanConvert=UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount==1;
+            const FString ConvertLabel=World->BrewSupportCount>1 && !World->bBrewConvertTrait?FString(TEXT("先将辅材减至1份，再选虚空晶定向转换")):
+                FString::Printf(TEXT("%s虚空晶 · 额外需1 / 现有%d%s"),World->bBrewConvertTrait?TEXT("已选 "):TEXT("选择 "),World->Inventory[4],Cost[4]>World->Inventory[4]?TEXT(" · 缺1"):TEXT(""));
+            Button(TEXT("brewconvert"),ConvertLabel,650,539,528,!World->bBrewActive && (CanConvert || World->bBrewConvertTrait) && (World->Inventory[4]>0 || World->bBrewConvertTrait),42);
+            if(World->bBrewConvertTrait && CanConvert)Box(650,539,528,3,Gold);
+            Text(TEXT("起炼即扣，拒绝成品不返料。虚空晶仅定词条，本体仍随机。"),104,560,15,Dim);
             FString Reason;
             const bool CanStart=World->CanStartBrew(Reason);
             const TCHAR* OperationHint=World->BrewOperation==0?TEXT("新制一颗丹药；旧丹仍可使用。"):
                 World->BrewOperation==1?TEXT("保留本体与词条，提升成长；暂用 Lv.5 上限。"):
                 World->BrewOperation==2?TEXT("换主材重抽本体，保留兼容词条与成长。"):
                 TEXT("换辅材重抽词条，保留本体与成长。");
-            Paragraph(CanStart?FString(OperationHint):Reason,104,578,760,16,CanStart?Dim:Gold);
-            Text(World->BrewMode==1?TEXT("本局驻留坩埚：1.2秒，离起炼点120cm外暂停（首测）"):TEXT("本局随身试剂：2.5秒，可边移动边炼（首测）"),104,606,16,Dim);
+            Paragraph(CanStart?FString(OperationHint):Reason,104,583,760,16,CanStart?Dim:Gold);
+            Text(World->BrewMode==1?
+                TEXT("驻留1.2秒，离点120cm暂停；新制稳定起25%升精良；强化至少稳定、25%尝试升档（精良封顶）"):
+                TEXT("随身2.5秒可移动；新制粗制起25%升稳定；强化保留旧品质、25%尝试升档（精良封顶）"),104,610,16,Dim);
             Button(TEXT("brewstart"),World->bBrewActive?TEXT("正在炼制中"):TEXT("确认起炼 · 返回战场"),888,587,290,CanStart && !World->bBrewActive,46);
         }
         else if(P==TEXT("alchemy")) {
