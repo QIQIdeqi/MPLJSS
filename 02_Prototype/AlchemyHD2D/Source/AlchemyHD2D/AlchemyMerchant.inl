@@ -26,7 +26,9 @@ void AAlchemyWorld::ResetMerchant() {
 void AAlchemyWorld::RollMerchantStock() {
     TArray<int32> Pool;
     for(int I=0;I<3;I++) for(int N=0;N<4;N++) Pool.Add(I);
-    for(int I=0;I<3;I++) if(MerchantEliteUnlocked[I]) Pool.Add(3+I);
+    // In live V0.2 only void crystal (kind 4) has a defined special-material use.
+    // Preserve old elite-stock coverage for isolated legacy checks.
+    for(int I=0;I<3;I++) if(MerchantEliteUnlocked[I] && (I==1 || bSmoke || bCapture)) Pool.Add(3+I);
     for(int I=0;I<3;I++) {MerchantStock[I]=Pool[MerchantRandom.RandRange(0,Pool.Num()-1)];MerchantSoldOut[I]=false;}
     if(MerchantStock[0]==MerchantStock[1] && MerchantStock[1]==MerchantStock[2]) {
         Pool.Remove(MerchantStock[0]);MerchantStock[MerchantRandom.RandRange(0,2)]=Pool[MerchantRandom.RandRange(0,Pool.Num()-1)];
@@ -67,6 +69,7 @@ bool AAlchemyWorld::BuyMerchant(int32 Slot) {
     if(!CanTrade() || Panel!=TEXT("merchant") || Slot<0 || Slot>=3 || MerchantSoldOut[Slot]) return false;
     const int Kind=MerchantStock[Slot],Price=MerchantBuyPrice(Kind);
     if(Kind<0 || Kind>=6 || Inventory[Kind]>=10 || RunCoins<Price) return false;
+    if(!bSmoke && !bCapture && (Kind==3 || Kind==5)) return false;
     RunCoins-=Price;Inventory[Kind]++;MerchantSoldOut[Slot]=true;
     MerchantTradeFeedback(-Price,FVector2D(270,196),FVector2D(276+364*Slot,332),TEXT("好眼光，这份材料归你了！"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_BUY visit=%d slot=%d kind=%d cost=%d balance=%d"),MerchantVisit,Slot,Kind,Price,RunCoins);

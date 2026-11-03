@@ -16,15 +16,17 @@ void AAlchemyHUD::DrawMerchant() {
         Box(X,238,344,126,Card);Box(X,238,344,3,Teal);
         Text(FString::Printf(TEXT("%d  %s"),I+1,MaterialNames[K]),X+14,250,22,White);
         Text(FString::Printf(TEXT("单价 %d金币   ·   库存 %d"),Price,World->MerchantSoldOut[I]?0:1),X+14,283,18,Dim);
-        const bool Enabled=World->CanTrade() && !World->MerchantSoldOut[I] && World->Inventory[K]<10 && World->RunCoins>=Price;
-        const FString Label=World->MerchantSoldOut[I]?TEXT("已售罄"):World->Inventory[K]>=10?TEXT("材料已满"):World->RunCoins<Price?TEXT("金币不足"):TEXT("购买一个");
+        const bool Usable=K!=3 && K!=5 || World->bSmoke || World->bCapture;
+        const bool Enabled=Usable && World->CanTrade() && !World->MerchantSoldOut[I] && World->Inventory[K]<10 && World->RunCoins>=Price;
+        const FString Label=!Usable?TEXT("V0.2暂不出售"):World->MerchantSoldOut[I]?TEXT("已售罄"):World->Inventory[K]>=10?TEXT("材料已满"):World->RunCoins<Price?TEXT("金币不足"):TEXT("购买一个");
         Button(FString::Printf(TEXT("merchantbuy%d"),I),Label,X+14,312,316,Enabled,40);
     }
     Text(TEXT("随身材料 · 出售"),104,382,22,White);
     for(int K=0;K<6;K++) {
         const float X=104+(K%3)*364,Y=416+(K/3)*72;
         Box(X,Y,344,64,Card);
-        Text(FString::Printf(TEXT("%s ×%d"),MaterialNames[K],World->Inventory[K]),X+10,Y+7,18,White);
+        const bool LegacyOnly=K==3 || K==5;
+        Text(FString::Printf(LegacyOnly && !World->bSmoke && !World->bCapture?TEXT("%s ×%d · 本版未开放炼制"):TEXT("%s ×%d"),MaterialNames[K],World->Inventory[K]),X+10,Y+7,18,White);
         Text(FString::Printf(TEXT("回收价 %d金币/个"),World->MerchantSellPrice(K)),X+10,Y+35,14,Dim);
         const bool Enabled=World->CanTrade() && World->Inventory[K]>0;
         Button(FString::Printf(TEXT("merchantsell%d"),K),TEXT("卖1"),X+168,Y+12,72,Enabled,40);

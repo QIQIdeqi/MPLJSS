@@ -55,6 +55,8 @@ public:
     UPROPERTY() TArray<int32> Chains;
     UPROPERTY() int32 SchemaVersion=0;
     UPROPERTY() bool TutorialComplete=false;
+    // One-time supply for the V0.2 brewing introduction; kept apart from the legacy tutorial flag.
+    UPROPERTY() bool BrewV02Introduced=false;
     UPROPERTY() TArray<int32> Combinations;
     UPROPERTY() TArray<int32> ChainsV2;
     // Codex: permanently discovered monsters and materials (new categories).
@@ -63,6 +65,8 @@ public:
     UPROPERTY() float UITextScale=1;
     UPROPERTY() float MediumTextScale=.9f;
     UPROPERTY() float LargeTextScale=.72f;
+    // V0.2 prototype: selected before a run. Existing saves default to the mobile mode.
+    UPROPERTY() int32 AlchemyMode=0;
     // TALENT-002 one-shot flags are now represented by Talents[8] and Talents[9] (0/1).
     // Kept for save migration only; not authoritative at runtime.
     UPROPERTY() bool RefreshUnlocked=false;
@@ -118,6 +122,14 @@ struct FAlchemyDrop {
 struct FAlchemyFX { AStaticMeshActor* Body=nullptr; float Life=0, Total=0; float Radius=0; bool PotionBreak=false,New=true; };
 struct FAlchemyObstacle { FVector2D Center; FVector2D Half; };
 struct FAlchemyDamageNumber {FVector Position; float Value=0,Life=.85f; int32 Lane=0;};
+
+// A made pill keeps its body and effect as separate run-local layers.
+struct FAlchemyPillState {
+    int32 Main=-1;       // 0 fire, 1 dew, 2 arcane
+    int32 Trait=-1;      // -1 none, 0 damage, 1 reach (range/radius), 2 cooldown
+    int32 TraitLevel=0;  // first prototype uses grade-one ingredients
+    int32 Quality=0;     // 0 rough, 1 stable, 2 refined (prototype tuning)
+};
 USTRUCT()
 struct FAlchemyNiagaraFX {
     GENERATED_BODY()
@@ -255,6 +267,18 @@ public:
     // RESULT-001: pending craft result before accept, plus one-shot reroll state.
     int32 PendingResultSkill=-1, PendingResultCombination=-1, PendingResultTotal=0;
     bool PendingIsNuclear=false, PendingRefreshed=false;
+    // V0.2 run-local brewing prototype. The fixed skill ID is the body; trait is a separate layer.
+    TArray<FAlchemyPillState> PillStates;
+    int32 BrewMode=0, BrewOperation=0, BrewTarget=-1, BrewMain=0, BrewSupport=-1;
+    int32 BrewMainCount=1, BrewSupportCount=0, FragmentCount[3]={0,0,0};
+    bool bBrewConvertTrait=false, bBrewCommittedConvertTrait=false, bPendingTraitConverted=false;
+    bool bBrewActive=false, bV02Pending=false;
+    float BrewProgress=0, BrewDuration=0;
+    FVector BrewOrigin=FVector::ZeroVector;
+    int32 BrewCommittedMode=0, BrewCommittedOperation=0, BrewCommittedTarget=-1;
+    int32 BrewCommittedMain=-1, BrewCommittedMainCount=0, BrewCommittedSupport=-1, BrewCommittedSupportCount=0;
+    int32 PendingOldSkill=-1, PendingTrait=-1, PendingTraitLevel=0;
+    int32 PendingQuality=0, PendingMain=-1, PendingBrewOperation=-1;
     // ALCH-003: nuclear special result only kills normal enemies, then shows a dedicated result page.
     // EXP-001: run-local level/xp and the seven in-run attribute stacks.
     int32 RunLevel=1; float RunXP=0; int32 RunAttrs[7]={0,0,0,0,0,0,0};
@@ -269,6 +293,14 @@ public:
     void TutorialSupply(FVector Position);
     void TutorialHit(int32 Skill,int32 Hits);
     void AddMaterial(int32 Index);
+    void GrantFragment(int32 Index,FVector Position);
+    bool CanStartBrew(FString& Reason) const;
+    bool BeginBrew();
+    void UpdateBrew(float Delta);
+    void CompleteBrew();
+    void AcceptBrewResult();
+    void RejectPendingResult();
+    bool BrewV02Check(float Delta);
     bool CraftOptions(TArray<int32>& Skills,TArray<float>& Weights,FString& Reason,int32& Combination,bool Nuclear=false) const;
     float ResultQualityWeight(int32 Total,int32 Quality,bool Nuclear) const;
     FVector PlayerPos=FVector::ZeroVector;

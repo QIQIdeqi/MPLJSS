@@ -96,7 +96,7 @@ const int32 Recipes[10][6]={{0,0,0,0,0,0},{2,0,1,0,0,0},{0,2,1,0,0,0},{1,0,2,0,0
 const int32 Minimum[]={18,30,45,60,75,90}, Batch[]={2,3,4,5,6,6}, Refill[]={8,8,10,10,12,12};
 const float Interval[]={2.6f,2.2f,1.9f,1.6f,1.4f,1.35f};
 // TALENT-001 revised (系统 UI V0.2): 10 independent upgrades, no linear unlock tree.
-// All are freely purchasable with enough coins. Max level 5 for stats, 1 for one-shot unlocks.
+// Stats and live unlocks are independently purchasable with enough coins; old refresh is dormant in V0.2.
 // Index order matches the document 3.2 table:
 //   0 生命  1 攻击  2 移速  3 幸运  4 冷却  5 暴击  6 暴伤  7 防御  8 技能刷新  9 材料掉落
 const TCHAR* TalentNames[]={TEXT("生命强化"),TEXT("攻击强化"),TEXT("移动速度"),TEXT("幸运增加"),TEXT("技能冷却"),TEXT("暴击增加"),TEXT("暴伤增加"),TEXT("防御增加"),TEXT("技能刷新"),TEXT("材料掉落提高")};
@@ -123,8 +123,8 @@ const TCHAR* TalentDescriptions[10]={
     TEXT("每级暴击率 +2 个百分点"),
     TEXT("基础暴击倍率 150%，每级 +10 个百分点"),
     TEXT("每级受到的敌方伤害减少 2%"),
-    TEXT("解锁后每次普通炼金结果可免费刷新一次"),
-    TEXT("普通材料掉落概率相对提高 30%")
+    TEXT("旧七组合结果刷新；V0.2分层炼丹尚未定义刷新权益，暂不可新购"),
+    TEXT("普通怪材料／碎片触发率相对提高 30%")
 };
 constexpr int32 TalentNodeCount=10;
 // Codex: monster and material codex data (system UI V0.2 §4.6). Elite materials are disabled.
@@ -166,6 +166,7 @@ void AAlchemyWorld::BeginPlay() {
     bSmoke=FParse::Param(FCommandLine::Get(),TEXT("AlchemySmoke"));
     bCapture=FParse::Param(FCommandLine::Get(),TEXT("AlchemyCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyLayoutCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyUI")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyPCCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyFeedbackCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyToolsCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview")) || FParse::Param(FCommandLine::Get(),TEXT("PlannedBossTest")) || FParse::Param(FCommandLine::Get(),TEXT("PlannedBossPreview")) || FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantSmoke")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) || FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("GreyfordSpatialTest"));
@@ -622,7 +623,11 @@ void AAlchemyWorld::MigrateProgress(bool Played) {
     Progress->RefreshUnlocked=Progress->DropRateUnlocked=false;
     Progress->SchemaVersion=3;
 }
-bool AAlchemyWorld::TutorialActive() const {return bCombat && !Progress->TutorialComplete && (!bGreyfordFlow || GreyfordStage==1);}
+bool AAlchemyWorld::TutorialActive() const {
+    // Legacy fixed-combination teaching remains available to existing isolated QA only.
+    // The live V0.2 run starts with the main/support brewing flow instead.
+    return (bSmoke || bCapture) && bCombat && !Progress->TutorialComplete && (!bGreyfordFlow || GreyfordStage==1);
+}
 void AAlchemyWorld::TutorialSupply(FVector Position) {
     if(!TutorialActive() || TutorialSkill>=0 || bTutorialSupplyDone || RunTime<35) return;
     for(int M=0;M<3;M++) {
@@ -659,9 +664,22 @@ void AAlchemyWorld::StartRun() {
     ResetMerchant();
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
     Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
+    const bool bFirstBrewIntro=!bSmoke && !bCapture && !Progress->BrewV02Introduced;
+    if(bFirstBrewIntro) {
+        Inventory[0]=Inventory[1]=Inventory[2]=1;
+        for(int32 I=0;I<3;I++) Progress->Materials.AddUnique(I);
+        Progress->BrewV02Introduced=true;
+        SaveProgress();
+    }
     TutorialSkill=-1;bTutorialSupplyDone=false;TutorialEncounterPending=false;TutorialEncounterRetry=0;
     // RESULT-001/EXP-001 run-local state resets.
     PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=0; PendingIsNuclear=false; PendingRefreshed=false;
+    PillStates.Init(FAlchemyPillState(),NumSkills());
+    BrewMode=FMath::Clamp(Progress->AlchemyMode,0,1);
+    BrewOperation=0;BrewTarget=-1;BrewMain=0;BrewSupport=-1;BrewMainCount=1;BrewSupportCount=0;
+    FragmentCount[0]=FragmentCount[1]=FragmentCount[2]=0;
+    bBrewActive=bV02Pending=false;bBrewConvertTrait=bBrewCommittedConvertTrait=bPendingTraitConverted=false;BrewProgress=BrewDuration=0;
+    PendingOldSkill=-1;PendingTrait=-1;PendingMain=-1;PendingBrewOperation=-1;
     RunLevel=1; RunXP=0; PendingLevelUps=0;LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;for(int A=0;A<7;A++) RunAttrs[A]=0;
     // 开局高级材料 removed per system UI V0.2 (not among the 10 upgrades).
     MaxHP=(bTune001B?120:100)+Progress->Talents[0]*10; HP=MaxHP;
@@ -672,7 +690,10 @@ void AAlchemyWorld::StartRun() {
     GreyfordPortalReady=false;GreyfordPortal=nullptr;GreyfordPortalRetry=300;
     UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
-    Message(bGreyfordFlow?TEXT("村庄外围 · WASD移动 / Space闪避 / Q炼金 / B技能 / Esc暂停"):bGreyfordScene?TEXT("村庄外围试玩 · WASD移动 / 空格闪避 / Q炼金 / R重新开始"):TEXT("腐化林地 · 技能自动释放；Q 打开炼金台。"));
+    if(bFirstBrewIntro)
+        Message(TEXT("首局材料已备好 · WASD移动、Space闪避；按Q选主材与辅材，制成第一颗丹药"));
+    else
+        Message(bGreyfordFlow?TEXT("村庄外围 · WASD移动 / Space闪避 / Q炼金 / B技能 / Esc暂停"):bGreyfordScene?TEXT("村庄外围试玩 · WASD移动 / 空格闪避 / Q炼金 / R重新开始"):TEXT("腐化林地 · 技能自动释放；Q 打开炼金台。"));
 }
 void AAlchemyWorld::EndRun(bool Won) {
     ClearEliteWarning();
@@ -685,6 +706,7 @@ void AAlchemyWorld::EndRun(bool Won) {
     // EXP-001/PAUSE-001: clear run-local xp/attributes and pending results on run end.
     RunLevel=1; RunXP=0; for(int A=0;A<7;A++) RunAttrs[A]=0;
     PendingResultSkill=-1; PendingIsNuclear=false; StartMaterialChoice=-1;
+    bBrewActive=bV02Pending=false;bBrewConvertTrait=bBrewCommittedConvertTrait=bPendingTraitConverted=false;BrewProgress=BrewDuration=0;PendingOldSkill=-1;
     const int Old=Progress->Coins; Progress->Coins+=RunCoins;
     if(!SaveProgress()) { Progress->Coins=Old; Panel=TEXT("savefailed"); return; }
     ResultCoins=RunCoins; RunCoins=0; Panel=Won?TEXT("victory"):TEXT("defeat");
@@ -764,17 +786,22 @@ void AAlchemyWorld::TriggerNuclear() {
         // EXP-001: normal enemy always drops one XP orb (Kind -2).
         Drop(E.Pos,-2,E.Type);
         if(Random.FRand()<0.7f) Drop(E.Pos,-1);
-        if(Random.FRand()<MaterialDropChance()) {float R=Random.FRand(); Drop(E.Pos,R<0.4f?0:R<0.75f?1:2);}
+        if(Random.FRand()<MaterialDropChance()) {float R=Random.FRand(); GrantFragment(R<0.4f?0:R<0.75f?1:2,E.Pos);}
     }
     Message(FString::Printf(TEXT("核弹炼金！清除普通怪 ×%d"),Cleared));
     if(Discovered)SaveProgress();
 }
 
 void AAlchemyWorld::AcceptPendingResult() {
+    if(bV02Pending) {AcceptBrewResult();return;}
     if(PendingResultSkill<0) {Panel.Empty();return;}
     const int Match=PendingResultSkill;
     if(Levels[Match]==0) { if(Equipped.Num()<6) Equipped.Add(Match); else Bag.Add(Match); }
     Levels[Match]++;
+    if(PillStates.IsValidIndex(Match) && PillStates[Match].Main<0) {
+        const int32 Mask=PendingResultCombination>=0?RuntimeRecipes[PendingResultCombination].Mask:4;
+        PillStates[Match].Main=(Mask&1)?0:(Mask&2)?1:2;
+    }
     if(PendingResultCombination>=0) Progress->Combinations.AddUnique(PendingResultCombination);
     if(TutorialActive()) {TutorialSkill=Match;bTutorialSupplyDone=true;if(bGreyfordFlow && GreyfordStage==1)TutorialEncounterPending=true;}
     Progress->Recipes.AddUnique(Match); SaveProgress();
@@ -804,6 +831,8 @@ void AAlchemyWorld::RerollPendingResult() {
     PendingResultSkill=Match; PendingRefreshed=true;
     Message(TEXT("已刷新技能结果"));
 }
+
+#include "AlchemyBrew.inl"
 
 int32 AAlchemyWorld::RequiredXP(int32 Level) const {
     // 系统 UI V0.2 §7.2：升级门槛表（Lv.1→2 到 Lv.9→10）。
@@ -844,15 +873,17 @@ void AAlchemyWorld::ApplyRunAttr(int32 AttrIndex) {
 }
 
 bool AAlchemyWorld::TalentNodeUnlocked(int32 Node) const {
-    // System UI V0.2: all upgrades are independently open, no prerequisite chain.
-    return Node>=0 && Node<TalentNodeCount;
+    // Upgrades have no prerequisite chain; the old result refresh has no live V0.2 effect.
+    // The old result-refresh perk has no defined effect in the new brew. Preserve owned saves,
+    // but prevent a live player from paying for a perk with no live benefit.
+    return Node>=0 && Node<TalentNodeCount && (Node!=8 || bSmoke || bCapture);
 }
 bool AAlchemyWorld::TalentNodeDone(int32 Node) const {
     if(Node<0 || Node>=TalentNodeCount) return false;
     return Progress->Talents[Node] >= TalentMaxLevel[Node];
 }
 void AAlchemyWorld::BuyTalentNode(int32 Node) {
-    if(Node<0 || Node>=TalentNodeCount || TalentNodeDone(Node)) return;
+    if(Node<0 || Node>=TalentNodeCount || !TalentNodeUnlocked(Node) || TalentNodeDone(Node)) return;
     const int32 L=Progress->Talents[Node];
     if(L<0 || L>=TalentMaxLevel[Node]) return;
     const int32 Cost=TalentCosts[Node][L];
@@ -1057,10 +1088,15 @@ void AAlchemyWorld::CastSkills(float Dt) {
     const float CritMult=1.50f+0.10f*Progress->Talents[6];
     for(int S:Equipped) {
         const auto& K=SkillConfig(S);SkillCD[S]-=Dt;if(SkillCD[S]>0) continue;
-        const float Range=K.Range*RangeScale, Radius=K.Radius*RangeScale;
+        const FAlchemyPillState* Pill=PillStates.IsValidIndex(S) && PillStates[S].Main>=0?&PillStates[S]:nullptr;
+        const float TraitRange=Pill && Pill->Trait==1?1.f+0.15f*Pill->TraitLevel:1.f;
+        const float TraitCooldown=Pill && Pill->Trait==2?1.f-0.10f*Pill->TraitLevel:1.f;
+        const float TraitDamage=Pill && Pill->Trait==0?1.f+0.10f*Pill->TraitLevel:1.f;
+        const float QualityDamage=Pill?1.f+0.05f*Pill->Quality:1.f;
+        const float Range=K.Range*RangeScale*TraitRange, Radius=K.Radius*RangeScale*TraitRange;
         int N=Nearest(PlayerPos,Range);if(N<0) continue;
-        SkillCD[S]=K.CD*CooldownScale;
-        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]+0.10f*RunAttrs[1]));
+        SkillCD[S]=K.CD*CooldownScale*TraitCooldown;
+        float Damage=FMath::RoundToFloat(K.Damage*(1+0.15f*(Levels[S]-1)+0.05f*Progress->Talents[1]+0.10f*RunAttrs[1])*TraitDamage*QualityDamage);
         if(Random.FRand()<CritChance) Damage=FMath::RoundToFloat(Damage*CritMult);
         int Hits=0;
         const FLinearColor Color=K.Color;
@@ -1076,7 +1112,9 @@ void AAlchemyWorld::CastSkills(float Dt) {
         }
         TutorialHit(S,Hits);
     }
-    for(int C=0;C<NumChains();C++) {
+    // The old equipped-pair chain is kept only for isolated legacy checks.
+    // V0.2 reactions will use their own hit/status contract once specified.
+    if(bSmoke || bCapture) for(int C=0;C<NumChains();C++) {
         const auto& K=ChainConfig(C);
         if(!Equipped.Contains(K.A) || !Equipped.Contains(K.B)) continue;
         ChainCD[C]-=Dt;if(ChainCD[C]>0) continue;ChainCD[C]=K.CD;
@@ -1103,7 +1141,7 @@ void AAlchemyWorld::TogglePanel(const FString& Id) {
 
 void AAlchemyWorld::Action(FString Id) {
     if(bRunEnded && CharacterAnimation.Dead && !CharacterAnimation.DeathFinished())return;
-    if((PendingResultSkill>=0 || PendingIsNuclear) && Id!=TEXT("acceptresult") && Id!=TEXT("reroll")) {Panel=TEXT("result");return;}
+    if((PendingResultSkill>=0 || PendingIsNuclear) && Id!=TEXT("acceptresult") && Id!=TEXT("reroll") && Id!=TEXT("rejectresult")) {Panel=TEXT("result");return;}
     if(bRunEnded && Panel==TEXT("savefailed")) {
         if(Id==TEXT("retry")){bRunEnded=false;EndRun(bWon);}return;
     }
@@ -1129,6 +1167,47 @@ void AAlchemyWorld::Action(FString Id) {
         return;
     }
     if(bRunEnded && Id!=TEXT("village"))return;
+    if(!bCombat && Id.Len()==5 && Id.StartsWith(TEXT("mode"))) {
+        const int32 Mode=FCString::Atoi(*Id.Mid(4));
+        if(Mode>=0 && Mode<=1) {
+            const int32 Previous=Progress->AlchemyMode;
+            Progress->AlchemyMode=Mode;
+            if(!SaveProgress()) {Progress->AlchemyMode=Previous;Message(TEXT("炼金模式保存失败"));}
+            else Message(Mode==0?TEXT("下局模式：随身试剂"):TEXT("下局模式：驻留坩埚"));
+        }
+        return;
+    }
+    if(bCombat && !TutorialActive() && Panel==TEXT("alchemy")) {
+        if(Id.Len()==7 && Id.StartsWith(TEXT("brewop"))) {
+            BrewOperation=FMath::Clamp(FCString::Atoi(*Id.Mid(6)),0,3);
+            if(BrewOperation==1) {
+                BrewMainCount=1;
+                if(PillStates.IsValidIndex(BrewTarget)) BrewMain=PillStates[BrewTarget].Main;
+            }
+            if(BrewOperation==1 || BrewOperation==2) {BrewSupport=-1;BrewSupportCount=0;bBrewConvertTrait=false;}
+            return;
+        }
+        if(Id==TEXT("brewtargetprev") || Id==TEXT("brewtargetnext")) {
+            TArray<int32> Targets;
+            for(int32 Skill:Equipped) if(Skill>0 && PillStates.IsValidIndex(Skill) && PillStates[Skill].Main>=0) Targets.AddUnique(Skill);
+            for(int32 Skill:Bag) if(Skill>0 && PillStates.IsValidIndex(Skill) && PillStates[Skill].Main>=0) Targets.AddUnique(Skill);
+            if(Targets.IsEmpty()) {BrewTarget=-1;return;}
+            int32 At=Targets.Find(BrewTarget);
+            At=Id==TEXT("brewtargetnext")?(At+1)%Targets.Num():(At<0?Targets.Num()-1:(At+Targets.Num()-1)%Targets.Num());
+            BrewTarget=Targets[At];
+            if(BrewOperation==1) BrewMain=PillStates[BrewTarget].Main;
+            return;
+        }
+        if(Id.Len()==6 && Id.StartsWith(TEXT("brewm"))) {BrewMain=FMath::Clamp(FCString::Atoi(*Id.Mid(5)),0,2);return;}
+        if(Id==TEXT("brewsnone")) {BrewSupport=-1;BrewSupportCount=0;bBrewConvertTrait=false;return;}
+        if(Id.Len()==6 && Id.StartsWith(TEXT("brews"))) {BrewSupport=FMath::Clamp(FCString::Atoi(*Id.Mid(5)),0,2);BrewSupportCount=FMath::Max(1,BrewSupportCount);return;}
+        if(Id==TEXT("brewconvert")) {bBrewConvertTrait=!bBrewConvertTrait;return;}
+        if(Id==TEXT("brewmainplus")) {BrewMainCount=FMath::Min(3,BrewMainCount+1);return;}
+        if(Id==TEXT("brewmainminus")) {BrewMainCount=FMath::Max(1,BrewMainCount-1);return;}
+        if(Id==TEXT("brewsupportplus")) {if(BrewSupport>=0) BrewSupportCount=FMath::Min(3,BrewSupportCount+1);return;}
+        if(Id==TEXT("brewsupportminus")) {BrewSupportCount=FMath::Max(BrewSupport>=0?1:0,BrewSupportCount-1);return;}
+        if(Id==TEXT("brewstart")) {BeginBrew();return;}
+    }
     if(Id==TEXT("close")) {
         if(Panel==TEXT("merchantconfirm")) {MerchantSellKind=-1;MerchantSellCount=0;Panel=TEXT("merchant");return;}
         if(Panel==TEXT("levelup") && PendingLevelUps>0) return;
@@ -1143,9 +1222,10 @@ void AAlchemyWorld::Action(FString Id) {
     }
     if(Id==TEXT("pausebtn")) { if(bCombat && !bRunEnded && Panel.IsEmpty()) Panel=TEXT("pause"); return; }
     if(Id==TEXT("return")) { Panel=TEXT("confirmreturn"); return; }
-    if(Id==TEXT("craft")) { Craft(); return; }
+    if(Id==TEXT("craft")) { if(TutorialActive() || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) Craft();else BeginBrew();return; }
     if(Id==TEXT("acceptresult")) { AcceptPendingResult(); return; }
     if(Id==TEXT("reroll")) { RerollPendingResult(); return; }
+    if(Id==TEXT("rejectresult")) { RejectPendingResult(); return; }
     if(Id.StartsWith(TEXT("pick"))) {
         const int Choice=FCString::Atoi(*Id.Mid(4));
         if(Panel!=TEXT("levelup") || PendingLevelUps<=0 || (Choice!=LevelupChoices[0] && Choice!=LevelupChoices[1] && Choice!=LevelupChoices[2])) return;
@@ -1153,6 +1233,7 @@ void AAlchemyWorld::Action(FString Id) {
     }
     if(Id.StartsWith(TEXT("startmat"))) { StartMaterialChoice=FCString::Atoi(*Id.Mid(8)); Panel=TEXT("level"); return; }
     if(Id.StartsWith(TEXT("fill")) && (Panel==TEXT("alchemy") || Panel==TEXT("codex")) && bCombat) {
+        if(!TutorialActive() && !FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) {Message(TEXT("旧组合只作档案记录；新炼丹请分别选主材与辅材"));return;}
         // CODEX-002: notes and legacy codex use the same discovered-combination fill action.
         if(TutorialActive()){Message(TEXT("首次教学请三种普通材料各投入1个"));return;}
         int C=FCString::Atoi(*Id.Mid(4)); if(C<0 || C>=7) return;
@@ -1189,6 +1270,10 @@ void AAlchemyWorld::Action(FString Id) {
     if(Id==TEXT("codexprev")) {CodexPage=FMath::Max(0,CodexPage-1);return;}
     if(Id==TEXT("codexnext")) {CodexPage=FMath::Min(2,CodexPage+1);return;}
     if(Id.StartsWith(TEXT("recipe")) && bCombat && !TutorialActive()) {
+        if(!FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) {
+            Message(TEXT("旧配方只作档案记录；新炼丹请分别选主材与辅材"));
+            return;
+        }
         int S=FCString::Atoi(*Id.Mid(6));
         if(S>=0 && S<NumSkills() && Progress->Recipes.Contains(S)) {for(int I=0;I<6;I++) Selected[I]=RecipeCost(S,I);Panel=TEXT("alchemy");}
         return;
@@ -1257,6 +1342,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("Reference60Test")) && Reference60Check(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("MotionPreview"))){MotionPreview(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression"))){ProducerRegression();return;}
+    if(FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test")) && BrewV02Check(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossTest"))){PlannedBossCheck(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("PlannedBossCapture")))PlannedBossCapture();
     if(bSmoke) SmokeCheck(Dt);
@@ -1308,7 +1394,7 @@ void AAlchemyWorld::Tick(float Dt) {
         // Isolated interactive UI check: no real save load/write, no cheat path in ordinary play.
         if(CaptureStep==0 && VisualTime>2) {StartRun();Inventory={10,10,10,1,1,1};Panel=TEXT("alchemy");CaptureStep=1;}
     }
-    else if(bCapture && !bGreyfordScene && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"))) {
+    else if(bCapture && !FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test")) && !bGreyfordScene && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterSmoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyCharacterV3Smoke")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyBossPreview")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantCapture")) && !FParse::Param(FCommandLine::Get(),TEXT("AlchemyMerchantPreview"))) {
         const auto Capture=[this](const TCHAR* Name) {
             FScreenshotRequest::RequestScreenshot(FPaths::ProjectDir()/TEXT("Evidence")/Name,false,false);
         };
@@ -1361,6 +1447,8 @@ void AAlchemyWorld::Tick(float Dt) {
     UpdateCharacterVisual(Dt,!PlayerPos.Equals(PreviousPos));
     Player->SetActorHiddenInGame(!CharacterAnimation.Hurting && (HurtInv>0 || DodgeInv>0) && int(VisualTime*16)%2==0);
     PlayerShadow->SetActorLocation(VillageVisualPoint(PlayerPos+FVector(0,0,bBattleReference?-8:5)));
+    UpdateBrew(Dt);
+    if(!Panel.IsEmpty()) return;
     if(bGreyfordFlow && GreyfordPortalReady && GreyfordStage==1 && PC->WasInputKeyJustPressed(EKeys::F) && FVector::Dist2D(PlayerPos,GreyfordPortalPos)<=220){Panel=TEXT("bossportal");return;}
     if(bCombat && PC->WasInputKeyJustPressed(EKeys::F) && OpenMerchant()) return;
     if(!bCombat) {
@@ -1695,6 +1783,7 @@ void AAlchemyWorld::UpdateShots(float Dt) {
 
 #include "AlchemyMerchant.inl"
 #include "AlchemyMerchantChecks.inl"
+#include "AlchemyBrewChecks.inl"
 #include "AlchemyMerchantHUD.inl"
 #include "AlchemyHUD.inl"
 #include "AlchemyFeedback.inl"

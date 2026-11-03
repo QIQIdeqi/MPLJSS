@@ -4,7 +4,7 @@ float AAlchemyHUD::Measure(const FString& Value,float Size) const {
     return FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(Value,Font).X/S;
 }
 void AAlchemyHUD::Text(const FString& Value,float X,float Y,float Size,FLinearColor Color) {
-    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) || FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")) || FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")))UIV02DrawnText.Add(Value);
+    if(FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest")) || FParse::Param(FCommandLine::Get(),TEXT("TutorialPlacementTest")) || FParse::Param(FCommandLine::Get(),TEXT("TeachingJourneyTest")))UIV02DrawnText.Add(Value);
     // Font size is rasterized at the display size, rather than stretching UFont's default 9pt glyphs.
     FSlateFontInfo Font(World->UIFont,FMath::Max(1,FMath::RoundToInt(World->Progress->FontSize(Size)*S*.75f)));
     FCanvasTextItem Item(FVector2D(OX+X*S,OY+Y*S),FText::FromString(Value),Font,Color);
@@ -82,12 +82,21 @@ void AAlchemyHUD::DrawHUD() {
     }
     if(DragMaterial>=0 && PC->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
         float X,Y;PC->GetMousePosition(X,Y);FVector2D Mouse((X-OX)/S,(Y-OY)/S);
-        if(World->Panel==TEXT("alchemy") && (DragSource.IsInsideOrOn(Mouse)||Furnace.IsInsideOrOn(Mouse))) World->AddMaterial(DragMaterial);
+        if(World->Panel==TEXT("alchemy") && (World->TutorialActive() || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) && (DragSource.IsInsideOrOn(Mouse)||Furnace.IsInsideOrOn(Mouse))) World->AddMaterial(DragMaterial);
         DragMaterial=-1;
     }
     if(World->Panel!=TEXT("alchemy")) DragMaterial=-1;
     FocusOrder.Empty();ButtonRects.Empty();
     const FLinearColor White(.94f,.95f,.93f),Dim(.72f,.79f,.8f),Surface(.035f,.06f,.075f,.97f);
+    const auto TraitName=[](int32 Trait)->const TCHAR* {
+        switch(Trait){case 0:return TEXT("强击");case 1:return TEXT("延伸");case 2:return TEXT("迅捷");default:return TEXT("无");}
+    };
+    const auto QualityName=[](int32 Quality)->const TCHAR* {
+        switch(Quality){case 0:return TEXT("粗制");case 1:return TEXT("稳定");case 2:return TEXT("精良");default:return TEXT("待结算");}
+    };
+    const auto BrewOperationName=[](int32 Operation)->const TCHAR* {
+        switch(Operation){case 0:return TEXT("新制");case 1:return TEXT("同方强化");case 2:return TEXT("换主材");case 3:return TEXT("换辅材");default:return TEXT("炼制");}
+    };
     const bool FlowBoss=World->bGreyfordFlow && World->GreyfordStage==2 && World->Panel.IsEmpty();
     const bool BattleHUD=World->bCombat && World->Panel.IsEmpty();
     const float HUDLeft=-OX/S,HUDTop=-OY/S,HUDBottom=(Canvas->SizeY-OY)/S;
@@ -121,6 +130,22 @@ void AAlchemyHUD::DrawHUD() {
         DrawToast();return;
     }
     if(World->bCombat && World->Panel.IsEmpty()) {
+        // V0.2: the live brew advances with combat time; fragments collect into materials.
+        // Keep this independent of the editable reference UMG so both battle presentations show it.
+        if(!FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) {
+            const float X=HUDLeft+18,W=326,H=World->bBrewActive?108.f:52.f;
+            const float Preferred=HUDTop+290;
+            const float Y=FMath::Clamp(ClearPanelY(X,W,H,Preferred,true),HUDTop+116,HUDBottom-H-142);
+            Box(X,Y,W,H,Surface);Box(X,Y,3,H,Gold);
+            Text(FString::Printf(TEXT("碎片  火 %d  ·  露 %d  ·  魔 %d"),World->FragmentCount[0],World->FragmentCount[1],World->FragmentCount[2]),X+13,Y+9,17,Gold);
+            if(World->bBrewActive) {
+                Text(World->BrewMode==1?TEXT("驻留坩埚 · 120cm内推进（首测）"):TEXT("随身试剂 · 移动中推进（首测）"),X+13,Y+38,16,White);
+                Box(X+13,Y+68,W-26,10,FLinearColor(.07f,.10f,.12f));
+                const float Ratio=World->BrewDuration>0?FMath::Clamp(World->BrewProgress/World->BrewDuration,0.f,1.f):0.f;
+                Box(X+13,Y+68,(W-26)*Ratio,10,Teal);
+                Text(FString::Printf(TEXT("炼制 %.0f%% · %s"),Ratio*100,World->BrewMode==1?TEXT("离开驻留点暂停"):TEXT("可继续走位")),X+13,Y+84,16,Dim);
+            } else Text(World->bBossSpawned?TEXT("Boss战无普通碎片补给，存量仍可炼制"):TEXT("普通怪少量掉落，碎片自动归集为材料"),X+13,Y+31,15,Dim);
+        }
         for(const auto& E:World->Enemies) if(E.HP>0 && E.Type>=7 && E.Type!=10) {
             FVector2D Screen;
             if(!PC->ProjectWorldLocationToScreen(E.Pos+FVector(0,0,World->EnemyDefinition(E).VisualSize.Y+25),Screen)) continue;
@@ -248,6 +273,69 @@ void AAlchemyHUD::DrawHUD() {
             Button(TEXT("enterboss"),TEXT("确认挑战Boss"),104,500,524);Button(TEXT("bossportalstay"),TEXT("继续在草原成长"),654,500,524);
         }
         else if(P==TEXT("merchant") || P==TEXT("merchantconfirm")) DrawMerchant();
+        else if(P==TEXT("alchemy") && !World->TutorialActive() && !FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) {
+            Text(TEXT("主材决定技能本体，辅材影响效果词条；模式决定炼制过程。首测未启用负面变异。"),104,179,17,Dim);
+            const TCHAR* Operations[]={TEXT("新制丹药"),TEXT("同方强化"),TEXT("换主材重炼"),TEXT("换辅材重炼")};
+            const float OperationX[]={104.f,374.f,644.f,914.f};
+            for(int I=0;I<4;I++) {
+                Button(FString::Printf(TEXT("brewop%d"),I),Operations[I],OperationX[I],211,248,!World->bBrewActive,44);
+                if(World->BrewOperation==I)Box(OperationX[I],211,248,3,Gold);
+            }
+            Box(104,269,1074,61,FLinearColor(.055f,.095f,.11f));
+            const bool HasTarget=World->BrewTarget>=0 && World->PillStates.IsValidIndex(World->BrewTarget)
+                && World->PillStates[World->BrewTarget].Main>=0
+                && World->Levels.IsValidIndex(World->BrewTarget) && World->Levels[World->BrewTarget]>0;
+            const bool UsesMain=World->BrewOperation!=3;
+            const bool ChoosesMain=World->BrewOperation==0 || World->BrewOperation==2;
+            const bool UsesSupport=World->BrewOperation==0 || World->BrewOperation==3;
+            if(World->BrewOperation==0) {
+                Text(TEXT("目标：新丹药 · 当前已装备的丹药不会被替换"),122,286,20,White);
+            } else {
+                Button(TEXT("brewtargetprev"),TEXT("上一个"),114,277,126,!World->bBrewActive,44);
+                Button(TEXT("brewtargetnext"),TEXT("下一个"),1042,277,126,!World->bBrewActive,44);
+                Text(HasTarget?FString::Printf(TEXT("目标丹药：%s · Lv.%d"),World->SkillName(World->BrewTarget),World->Levels[World->BrewTarget]):TEXT("暂无可改造丹药，请先新制"),260,287,19,HasTarget?Gold:Dim);
+            }
+            Text(UsesMain?TEXT("必要主材 · 决定本体"):TEXT("原有主材 · 保留，不消耗"),104,343,19,Gold);
+            Text(UsesSupport?TEXT("辅助材料 · 决定词条倾向"):TEXT("辅助材料 · 本次不参与"),650,343,19,Gold);
+            for(int I=0;I<3;I++) {
+                const float X=104+I*174;
+                Button(FString::Printf(TEXT("brewm%d"),I),MaterialNames[I],X,370,166,!World->bBrewActive && ChoosesMain,44);
+                const int32 DisplayMain=!UsesMain && HasTarget?World->PillStates[World->BrewTarget].Main:World->BrewMain;
+                if(DisplayMain==I)Box(X,370,166,3,Gold);
+            }
+            const TCHAR* SupportNames[]={TEXT("不加辅材"),TEXT("火粉"),TEXT("露水"),TEXT("魔法碎片")};
+            const TCHAR* SupportIds[]={TEXT("brewsnone"),TEXT("brews0"),TEXT("brews1"),TEXT("brews2")};
+            for(int I=0;I<4;I++) {
+                const float X=650+I*134;
+                Button(SupportIds[I],SupportNames[I],X,370,126,!World->bBrewActive && UsesSupport,44);
+                if(World->BrewSupport==I-1)Box(X,370,126,3,Gold);
+            }
+            Text(TEXT("主材候选：火粉→火焰 · 露水→寒霜 · 魔碎→奥术（首测）"),104,417,14,Dim);
+            Text(TEXT("辅材倾向：火→强击 · 露→延伸(射程/范围) · 魔→迅捷（首测）"),650,417,14,Dim);
+            Text(UsesMain?(World->BrewOperation==1?FString(TEXT("强化固定消耗1份主材（首测）")):FString::Printf(TEXT("主材投入 %d / 3 份（首测）"),World->BrewMainCount)):TEXT("沿用原主材 · 本炉不扣"),104,443,18,White);
+            Button(TEXT("brewmainminus"),TEXT("－"),369,432,84,!World->bBrewActive && UsesMain && World->BrewOperation!=1 && World->BrewMainCount>1,42);
+            Button(TEXT("brewmainplus"),TEXT("＋"),465,432,84,!World->bBrewActive && UsesMain && World->BrewOperation!=1 && World->BrewMainCount<3,42);
+            Text(UsesSupport?FString::Printf(TEXT("辅材投入 %d / 3 份（首测）"),World->BrewSupportCount):TEXT("本炉不扣辅材"),650,443,18,White);
+            Button(TEXT("brewsupportminus"),TEXT("－"),972,432,94,!World->bBrewActive && UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount>1,42);
+            Button(TEXT("brewsupportplus"),TEXT("＋"),1078,432,94,!World->bBrewActive && UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount<3,42);
+            const int32 Main=World->BrewMain,Support=World->BrewSupport;
+            Text(!UsesMain?TEXT("原主材会随旧丹保留"):Main>=0 && Main<3?FString::Printf(TEXT("库存：%s %d 份"),MaterialNames[Main],World->Inventory[Main]):TEXT("请选择主材"),104,497,18,Dim);
+            Text(!UsesSupport?TEXT("该操作不重抽词条"):Support>=0 && Support<3?FString::Printf(TEXT("库存：%s %d 份"),MaterialNames[Support],World->Inventory[Support]):TEXT("无辅材投入"),650,497,18,Dim);
+            Text(FString::Printf(TEXT("碎片：火 %d · 露 %d · 魔 %d，自动归集成材料"),World->FragmentCount[0],World->FragmentCount[1],World->FragmentCount[2]),104,526,17,Teal);
+            const bool CanConvert=UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount>0;
+            Button(TEXT("brewconvert"),FString::Printf(TEXT("%s虚空晶 ×1 · 定向转换（现有%d）"),World->bBrewConvertTrait?TEXT("已选 "):TEXT("选择 "),World->Inventory[4]),650,522,528,!World->bBrewActive && CanConvert && (World->Inventory[4]>0 || World->bBrewConvertTrait),42);
+            if(World->bBrewConvertTrait && CanConvert)Box(650,522,528,3,Gold);
+            Text(TEXT("普通辅材只提高词条倾向；虚空晶确定转换为所选辅材词条（首测暂定）。"),104,552,16,Dim);
+            FString Reason;
+            const bool CanStart=World->CanStartBrew(Reason);
+            const TCHAR* OperationHint=World->BrewOperation==0?TEXT("新制一颗丹药；旧丹仍可使用。"):
+                World->BrewOperation==1?TEXT("保留本体与词条，提升成长；暂用 Lv.5 上限。"):
+                World->BrewOperation==2?TEXT("换主材重抽本体，保留兼容词条与成长。"):
+                TEXT("换辅材重抽词条，保留本体与成长。");
+            Paragraph(CanStart?FString(OperationHint):Reason,104,578,760,16,CanStart?Dim:Gold);
+            Text(World->BrewMode==1?TEXT("本局驻留坩埚：1.2秒，离起炼点120cm外暂停（首测）"):TEXT("本局随身试剂：2.5秒，可边移动边炼（首测）"),104,606,16,Dim);
+            Button(TEXT("brewstart"),World->bBrewActive?TEXT("正在炼制中"):TEXT("确认起炼 · 返回战场"),888,587,290,CanStart && !World->bBrewActive,46);
+        }
         else if(P==TEXT("alchemy")) {
             Text(TEXT("点击或拖入材料；点击炉内材料取回。"),104,181,18,Dim);
             Furnace=FBox2D(FVector2D(104,220),FVector2D(704,490));
@@ -324,7 +412,11 @@ void AAlchemyHUD::DrawHUD() {
                     Box(104,Y,1074,48,FLinearColor(.055f,.095f,.11f));
                     Text(Known?World->SkillName(K):TEXT("??? 未发现"),120,Y+13,20,Known?Gold:Dim);
                     if(Known) {
-                        Text(FString::Printf(TEXT("%s · %s品质"),World->CombinationName(Combo),Quality==0?TEXT("低"):Quality==1?TEXT("中"):TEXT("高")),360,Y+15,18,Dim);
+                        const bool LegacyUI=FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"));
+                        const TCHAR* QualityLabel=Quality==0?TEXT("低"):Quality==1?TEXT("中"):TEXT("高");
+                        const FString Detail=LegacyUI?FString::Printf(TEXT("%s · %s品质"),World->CombinationName(Combo),QualityLabel):
+                            FString::Printf(TEXT("历史组合档案：%s · %s品质"),World->CombinationName(Combo),QualityLabel);
+                        Text(Detail,360,Y+15,18,Dim);
                     }
                 }
                 Button(TEXT("detailprev"),TEXT("上一页"),104,580,185,DetailPage>0);Button(TEXT("detailnext"),TEXT("下一页"),993,580,185,DetailPage<Pages-1);Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),600,590,20,Dim);
@@ -386,7 +478,8 @@ void AAlchemyHUD::DrawHUD() {
             Button(TEXT("ortho"),World->bPerspective?TEXT("F1 透视镜头"):TEXT("F1 正交镜头"),104,235,524);Button(TEXT("lit"),World->bLitSprites?TEXT("F2 角色接受光照"):TEXT("F2 角色自发光"),654,235,524);
             Button(TEXT("upright"),World->bUprightSprites?TEXT("F3 角色竖直"):TEXT("F3 角色面向相机"),104,300,524);Button(TEXT("tilt"),FString::Printf(TEXT("F4 俯角 %.0f°"),World->CameraPitch),654,300,524);
             Button(TEXT("dof"),World->bDepthOfField?TEXT("F5 景深开启"):TEXT("F5 景深关闭"),104,365,524);
-            Button(TEXT("tune"),World->bTune001B?TEXT("战斗：测试配置"):TEXT("战斗：原始基线"),104,450,524,!World->bCombat);Button(TEXT("drop"),World->bDrop001?TEXT("材料掉落：15.4%"):TEXT("材料掉落：22%"),654,450,524,!World->bCombat);
+            Button(TEXT("tune"),World->bTune001B?TEXT("战斗：测试配置"):TEXT("战斗：原始基线"),104,450,524,!World->bCombat);
+            Button(TEXT("drop"),World->bSmoke || World->bCapture?(World->bDrop001?TEXT("材料掉落：15.4%"):TEXT("材料掉落：22%")):(World->bDrop001?TEXT("碎片触发：15.4%"):TEXT("碎片触发：22%")),654,450,524,!World->bCombat);
             Paragraph(TEXT("[ / ] 调整视野宽度。战斗与掉落配置仅限据点切换。"),104,535,1074,20,Dim);
         } else if(P==TEXT("talents")) {
             Text(FString::Printf(TEXT("永久金币 %d；所有强化独立开放，金币足够即可购买。"),World->Progress->Coins),104,181,18,Dim);
@@ -394,16 +487,26 @@ void AAlchemyHUD::DrawHUD() {
             for(int I=0;I<TalentNodeCount;I++) {
                 const int L=World->Progress->Talents[I],MX=TalentMaxLevel[I];
                 const bool Done=World->TalentNodeDone(I);
+                const bool Available=World->TalentNodeUnlocked(I);
                 const float X=104+(I%2)*550,Y=220+(I/2)*76;
                 Box(X,Y,524,68,FLinearColor(.055f,.095f,.11f));
                 Text(TalentNames[I],X+12,Y+8,20,Done?Dim:White);
                 Text(FString::Printf(TEXT("Lv.%d/%d"),L,MX),X+12,Y+38,18,Gold);
-                const FString Label=Done?TEXT("已满级"):FString::Printf(TEXT("购买 %d金币"),TalentCosts[I][L]);
-                Button(FString::Printf(TEXT("buy%d"),I),Label,X+264,Y+14,248,!Done && World->Progress->Coins>=TalentCosts[I][L],44);
+                const FString Label=I==8 && Done && !Available?TEXT("旧权益保留 · 暂不生效"):Done?TEXT("已解锁／满级"):!Available?TEXT("V0.2 暂不可购买"):FString::Printf(TEXT("购买 %d金币"),TalentCosts[I][L]);
+                Button(FString::Printf(TEXT("buy%d"),I),Label,X+264,Y+14,248,Available && !Done && World->Progress->Coins>=TalentCosts[I][L],44);
             }
         } else if(P==TEXT("level")) {
-            Text(World->bGreyfordFlow?TEXT("村庄外围"):TEXT("腐化林地"),104,245,32,Gold);Text(TEXT("自动战斗 · 材料炼金 · 固定地图"),104,305,23,White);
-            Paragraph(World->bGreyfordFlow?TEXT("5:00开放Boss传送阵。跟随箭头，在阵内按F确认进入；可继续成长，压力逐步增加。"):TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,400,1000,20,Dim);Button(TEXT("start"),TEXT("进入关卡"),104,500,460);
+            Text(World->bGreyfordFlow?TEXT("村庄外围"):TEXT("腐化林地"),104,192,29,Gold);
+            Text(TEXT("本局炼金模式 · 主辅材料决定成品，模式决定战场炼制方式"),104,251,20,White);
+            Button(TEXT("mode0"),TEXT("随身试剂 · 可移动"),104,305,524,true,66);
+            Button(TEXT("mode1"),TEXT("驻留坩埚 · 快速"),654,305,524,true,66);
+            const int32 ChosenMode=FMath::Clamp(World->Progress->AlchemyMode,0,1);
+            Box(ChosenMode==0?104:654,305,524,4,Gold);
+            Paragraph(ChosenMode==0?TEXT("已选随身试剂：起炼后可走位，2.5秒完成；耗时为首测暂值。"):
+                TEXT("已选驻留坩埚：起炼点120cm内推进，1.2秒完成；离开暂停进度。距离与耗时为首测暂值。"),104,398,1074,19,Gold);
+            Paragraph(World->bGreyfordFlow?TEXT("5:00开放Boss传送阵。进入后保留当前生命、丹药技能和材料。"):
+                TEXT("5:00预警，5:10出现最终BOSS。击败BOSS获得胜利。"),104,470,1074,18,Dim);
+            Button(TEXT("start"),TEXT("按所选模式进入关卡"),104,554,524,true,58);
         } else if(P==TEXT("confirmbuy") && World->PendingTalent>=0) {
             int I=World->PendingTalent;
             int L=World->Progress->Talents[I];
@@ -411,6 +514,43 @@ void AAlchemyHUD::DrawHUD() {
             Paragraph(TalentDescriptions[I],104,320,1000,20,Dim);
             Paragraph(Desc,104,260,1000,25,White);Button(TEXT("confirmbuy"),TEXT("确认购买并保存"),104,460,524);Button(TEXT("talents"),TEXT("取消"),654,460,524);
         } else if(P==TEXT("result")) {
+            if(World->bV02Pending) {
+                const int32 Old=World->PendingOldSkill,New=World->PendingResultSkill;
+                const bool HasOld=Old>=0 && World->PillStates.IsValidIndex(Old) && World->Levels.IsValidIndex(Old) && World->Levels[Old]>0;
+                const int32 OldLevel=HasOld?World->Levels[Old]:0;
+                const auto* OldPill=HasOld?&World->PillStates[Old]:nullptr;
+                const int32 NewLevel=World->PendingBrewOperation==0?1:World->PendingBrewOperation==1?OldLevel+1:OldLevel;
+                Text(FString::Printf(TEXT("%s结果 · 每炉只结算一次"),BrewOperationName(World->PendingBrewOperation)),104,178,22,Gold);
+                Text(TEXT("材料已消耗；保留旧丹也不会返还本炉材料（首测）。"),104,211,17,Dim);
+                if(World->bPendingTraitConverted)Text(TEXT("已用虚空晶定向转换词条 · 额外消耗1枚（首测暂定）"),104,230,16,Teal);
+                else if((World->PendingBrewOperation==0 || World->PendingBrewOperation==3) && World->PendingTrait>=0)
+                    Text(TEXT("普通辅材只增加词条倾向；本次按候选权重生成结果（首测）。"),104,230,16,Dim);
+                Box(104,247,510,261,FLinearColor(.055f,.095f,.11f));
+                Box(654,247,524,261,FLinearColor(.055f,.095f,.11f));
+                Text(HasOld?TEXT("原有丹药 · 结果处理前继续生效"):TEXT("原有丹药 · 无"),121,259,21,HasOld?White:Dim);
+                Text(TEXT("本炉成品 · 接受后生效"),671,259,21,Gold);
+                if(HasOld) {
+                    Text(FString::Printf(TEXT("本体  %s"),World->SkillName(Old)),121,304,20,White);
+                    Text(OldPill->Main>=0 && OldPill->Main<3?FString::Printf(TEXT("主材  %s"),MaterialNames[OldPill->Main]):TEXT("主材  未记录"),121,343,18,Dim);
+                    FString OldTrait=FString::Printf(TEXT("词条  %s"),TraitName(OldPill->Trait));
+                    if(OldPill->Trait>=0)OldTrait+=FString::Printf(TEXT(" Lv.%d"),OldPill->TraitLevel);
+                    Text(OldTrait,121,380,18,Dim);
+                    Text(FString::Printf(TEXT("成长  Lv.%d"),OldLevel),121,417,18,White);
+                    Text(FString::Printf(TEXT("品质  %s"),QualityName(OldPill->Quality)),121,454,18,Dim);
+                } else {
+                    Text(TEXT("首次制丹，没有旧丹会被覆盖。"),121,327,19,Dim);
+                }
+                Text(New>=0?FString::Printf(TEXT("本体  %s"),World->SkillName(New)):TEXT("本体  待结算"),671,304,20,White);
+                Text(World->PendingMain>=0 && World->PendingMain<3?FString::Printf(TEXT("主材  %s"),MaterialNames[World->PendingMain]):TEXT("主材  未记录"),671,343,18,Dim);
+                FString NewTrait=FString::Printf(TEXT("词条  %s"),TraitName(World->PendingTrait));
+                if(World->PendingTrait>=0)NewTrait+=FString::Printf(TEXT(" Lv.%d"),World->PendingTraitLevel);
+                Text(NewTrait,671,380,18,Dim);
+                Text(FString::Printf(TEXT("成长  Lv.%d%s"),NewLevel,World->PendingBrewOperation==1?TEXT(" · 首测暂用 Lv.5 上限"):World->PendingBrewOperation>=2?TEXT(" · 保留旧成长"):TEXT("")),671,417,18,White);
+                Text(FString::Printf(TEXT("品质  %s（首测暂值）"),QualityName(World->PendingQuality)),671,454,18,Dim);
+                Button(TEXT("acceptresult"),TEXT("接受本炉成品"),104,536,510,true,54);
+                Button(TEXT("rejectresult"),HasOld?TEXT("保留旧丹 · 本炉材料已消耗"):TEXT("放弃成品 · 本炉材料已消耗"),654,536,524,true,54);
+                Text(TEXT("换材继承为本版原型规则；接受新丹不会免费重置技能冷却。"),104,608,16,Dim);
+            } else {
             if(World->PendingIsNuclear) {
                 Text(TEXT("核弹额外清场 · 中高品质权重减半，差额转低品质"),104,180,18,Gold);
                 Text(TEXT("精英与Boss不受清场影响；技能仍可接收、正常参与连锁。"),104,453,16,Dim);
@@ -430,6 +570,7 @@ void AAlchemyHUD::DrawHUD() {
                 Button(TEXT("acceptresult"),TEXT("接收技能"),104,520,420);
                 if(World->Progress->Talents[8]>0 && !World->PendingRefreshed && World->PendingResultCombination>=0) Button(TEXT("reroll"),TEXT("刷新一次"),560,520,420);
             }
+            }
         } else if(P==TEXT("levelup")) {
             Text(FString::Printf(TEXT("升级 · Lv.%d"),World->RunLevel),104,180,30,Gold);
             Text(TEXT("选择一项强化"),104,240,22,White);
@@ -445,7 +586,9 @@ void AAlchemyHUD::DrawHUD() {
         } else if(P==TEXT("confirmreturn")) {
             Paragraph(TEXT("已拾取金币会结算。本局材料与技能将清空。"),104,270,1000,25,White);Button(TEXT("village"),TEXT("确认返回"),104,460,524);Button(TEXT("close"),TEXT("继续战斗"),654,460,524);
         } else if(P==TEXT("victory")||P==TEXT("defeat")) {
-            Text(FString::Printf(TEXT("生存 %02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),104,240,36,White);Text(FString::Printf(TEXT("击败 %d   炼金 %d   连锁 %d"),World->Kills,World->CraftCount,World->ChainCount),104,315,25,White);Text(FString::Printf(TEXT("本局到账 %d 金币"),World->ResultCoins),104,385,28,Gold);Button(TEXT("village"),TEXT("返回据点"),104,520,524);
+            Text(FString::Printf(TEXT("生存 %02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),104,240,36,White);
+            Text(World->bSmoke || World->bCapture?FString::Printf(TEXT("击败 %d   炼金 %d   连锁 %d"),World->Kills,World->CraftCount,World->ChainCount):FString::Printf(TEXT("击败 %d   炼丹 %d"),World->Kills,World->CraftCount),104,315,25,White);
+            Text(FString::Printf(TEXT("本局到账 %d 金币"),World->ResultCoins),104,385,28,Gold);Button(TEXT("village"),TEXT("返回据点"),104,520,524);
         } else if(P==TEXT("savefailed")) {
             Paragraph(TEXT("本局金币仍待保存。重试成功后才能离开。"),104,270,1000,25,Gold);Button(TEXT("retry"),TEXT("重试保存"),104,460,524);
         } else {

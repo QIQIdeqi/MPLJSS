@@ -128,6 +128,7 @@ void AAlchemyWorld::UpdateGreyfordPortal() {
 
 bool AAlchemyWorld::EnterGreyfordBoss() {
     if(!GreyfordPortalReady || GreyfordStage!=1 || FVector::Dist2D(PlayerPos,GreyfordPortalPos)>220 || bRunEnded)return false;
+    if(bBrewActive) {Message(TEXT("炼制完成后再进入Boss传送阵"));return false;}
     const float BeforeHP=HP;
     ClearTutorialEncounter();
     // Only already-generated material drops transfer, and never beyond inventory capacity.
@@ -162,6 +163,7 @@ bool AAlchemyWorld::GreyfordFlowAction(const FString& Id) {
     if(Id==TEXT("village") && bRunEnded) {
         bBossArenaActive=bBossSpawned=false;
         Inventory={0,0,0,0,0,0};Selected=Inventory;Levels.Init(0,NumSkills());Levels[0]=1;Equipped={0};Bag.Empty();
+        PillStates.Empty();bBrewActive=bV02Pending=false;FragmentCount[0]=FragmentCount[1]=FragmentCount[2]=0;
         BuildScene(false);HP=MaxHP;CharacterAnimation.Reset();UpdateCamera(0);Message(TEXT("已返回格雷弗德村庄，本局金币已结算，可强化后再次出发。"));return true;
     }
     if(Id==TEXT("village") && bCombat) {
