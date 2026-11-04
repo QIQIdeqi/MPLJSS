@@ -117,6 +117,7 @@ void AAlchemyWorld::UpdateBattleReferenceCamera(float Delta) {
 }
 
 void AAlchemyWorld::ClearBattleReferenceScene() {
+    ClearRandomBattleScene();
     bReferenceBossScene=false;CombatCameraReady=false;
     if(Camera)CastChecked<UAlchemyCameraComponent>(Camera->GetCameraComponent())->ProjectionOffset=FVector2D::ZeroVector;
     for(auto A:BattleCards)if(IsValid(A))A->Destroy();BattleCards.Empty();
@@ -232,6 +233,8 @@ bool AAlchemyWorld::BuildBossReferenceScene(){
     TSharedPtr<FJsonObject> BossLayerSpec;
     if(!LoadBattleJson(FPaths::ProjectContentDir()/TEXT("Reference/BattleReferenceLayers.json"),BossLayerSpec)){UE_LOG(LogTemp,Error,TEXT("BOSS_REFERENCE missing shared layer manifest"));return false;}
     bReferenceBossScene=true;CombatCameraReady=false;
+    for(TActorIterator<AAlchemyLevelDesigner> It(GetWorld());It;++It)
+        if(It->GetLevel()==GreyfordActiveLevel)It->SetRuntimeVisible(false);
     // Reuse the same countryside artwork, enlarged only enough to place its scenery outside the existing arena.
     constexpr double Scale=1.75;
     for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It)if(It->GetLevel()==GreyfordActiveLevel && !It->IsHidden()){

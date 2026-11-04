@@ -1,0 +1,8 @@
+{
+  "actor": "/Game/Greyford/Maps/Greyford_Boss.Greyford_Boss:PersistentLevel.AlchemyLevelDesigner_0",
+  "boss": true,
+  "ground": 168,
+  "objects": 40,
+  "result": "PASS",
+  "scope": "Editor startup selection and native reflected APIs; not mouse clicks or human usability."
+}

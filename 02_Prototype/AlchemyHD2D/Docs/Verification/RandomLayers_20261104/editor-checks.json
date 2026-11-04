@@ -1,0 +1,384 @@
+{
+  "result": "PASS",
+  "checks": [
+    {
+      "name": "load_isolated_map",
+      "pass": true
+    },
+    {
+      "name": "spawn_normal_designer",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Grass",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Dirt",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Oak",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Bush",
+      "pass": true
+    },
+    {
+      "name": "normal_seed_77_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=77 mask=3：新建21，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "normal_seed_77_both_layers_nonempty",
+      "pass": true
+    },
+    {
+      "name": "normal_seed_77_repeat_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=77 mask=3：新建21，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "normal_seed_77_reproducible",
+      "pass": true
+    },
+    {
+      "name": "normal_seed_78_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=78 mask=3：新建22，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "normal_seed_78_both_layers_nonempty",
+      "pass": true
+    },
+    {
+      "name": "normal_seed_78_repeat_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=78 mask=3：新建22，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "normal_seed_78_reproducible",
+      "pass": true
+    },
+    {
+      "name": "normal_seed_79_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=3：新建24，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "normal_seed_79_both_layers_nonempty",
+      "pass": true
+    },
+    {
+      "name": "normal_seed_79_repeat_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=3：新建24，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "normal_seed_79_reproducible",
+      "pass": true
+    },
+    {
+      "name": "normal_sampled_seeds_vary",
+      "pass": true
+    },
+    {
+      "name": "ground_only_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=1：新建12，保留12；地面斑块/物件独立序列"
+    },
+    {
+      "name": "ground_only_preserves_object_layer",
+      "pass": true
+    },
+    {
+      "name": "ground_only_changes_ground_sample",
+      "pass": true
+    },
+    {
+      "name": "objects_only_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=2：新建10，保留12；地面斑块/物件独立序列"
+    },
+    {
+      "name": "objects_only_preserves_ground_layer",
+      "pass": true
+    },
+    {
+      "name": "objects_only_changes_object_sample",
+      "pass": true
+    },
+    {
+      "name": "both_layers_rerolled_with_locks",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=3：新建19，保留2；地面斑块/物件独立序列"
+    },
+    {
+      "name": "edited_ground_lock_preserved",
+      "pass": true
+    },
+    {
+      "name": "edited_object_lock_preserved",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Grass",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Dirt",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Oak",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Bush",
+      "pass": true
+    },
+    {
+      "name": "zero_ground_weight_rejected",
+      "pass": true,
+      "detail": "地面池为空；旧地面保留"
+    },
+    {
+      "name": "zero_ground_weight_old_layout_and_instances_preserved",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Grass",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Dirt",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Oak",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Bush",
+      "pass": true
+    },
+    {
+      "name": "locked_cell_outside_grid_rejected",
+      "pass": true,
+      "detail": "保留格AlchemyTileCell_135超出新网格；未解锁"
+    },
+    {
+      "name": "locked_cell_outside_grid_old_layout_and_instances_preserved",
+      "pass": true
+    },
+    {
+      "name": "locked_object_inside_protected_origin_rejected",
+      "pass": true,
+      "detail": "保留/锁定物件AlchemyTileCell_148侵入保护区或非法地面"
+    },
+    {
+      "name": "locked_object_inside_protected_origin_old_layout_and_instances_preserved",
+      "pass": true
+    },
+    {
+      "name": "valid_configuration_recovers_after_failures",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=3：新建19，保留2；地面斑块/物件独立序列"
+    },
+    {
+      "name": "spawn_boss_designer",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Grass",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Dirt",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Oak",
+      "pass": true
+    },
+    {
+      "name": "read_existing_Bush",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_77_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=77 mask=3：新建89，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "boss_seed_77_both_layers_nonempty",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_77_repeat_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=77 mask=3：新建89，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "boss_seed_77_reproducible",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_77_central_ellipse_clear_of_blockers_and_tall_props",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_78_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=78 mask=3：新建92，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "boss_seed_78_both_layers_nonempty",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_78_repeat_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=78 mask=3：新建92，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "boss_seed_78_reproducible",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_78_central_ellipse_clear_of_blockers_and_tall_props",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_79_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=3：新建89，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "boss_seed_79_both_layers_nonempty",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_79_repeat_generated",
+      "pass": true,
+      "detail": "双层生成成功 Seed=79 mask=3：新建89，保留0；地面斑块/物件独立序列"
+    },
+    {
+      "name": "boss_seed_79_reproducible",
+      "pass": true
+    },
+    {
+      "name": "boss_seed_79_central_ellipse_clear_of_blockers_and_tall_props",
+      "pass": true
+    },
+    {
+      "name": "boss_sampled_seeds_vary",
+      "pass": true
+    },
+    {
+      "name": "camera_facing_configured_feet_match_actor_anchors",
+      "pass": true,
+      "detail": {
+        "max_error_cm": 6.008148196272015e-06
+      }
+    },
+    {
+      "name": "camera_facing_plane_normals_oppose_fixed60_camera",
+      "pass": true,
+      "detail": {
+        "minimum_dot": 0.9999999999999999
+      }
+    },
+    {
+      "name": "read_existing_blend_and_custom_materials",
+      "pass": true
+    },
+    {
+      "name": "custom_material_target_is_locked_ground",
+      "pass": true
+    },
+    {
+      "name": "standard_ground_uses_dynamic_blend_materials",
+      "pass": true,
+      "detail": {
+        "standard_cells": 11
+      }
+    },
+    {
+      "name": "locked_custom_ground_override_and_display_preserved",
+      "pass": true
+    },
+    {
+      "name": "save_test_map_only",
+      "pass": true
+    },
+    {
+      "name": "open_empty_reload_world",
+      "pass": true
+    },
+    {
+      "name": "reload_saved_test_map",
+      "pass": true
+    },
+    {
+      "name": "saved_layers_and_edited_locks_survive_reload",
+      "pass": true
+    },
+    {
+      "name": "saved_both_lock_types_exist",
+      "pass": true
+    }
+  ],
+  "samples": [
+    {
+      "scene": "normal",
+      "seed": 77,
+      "signature": "bb2a5d5285d5d7992b77a8238772a6338f223babddb02a5c6e90ea9dabab1bc0",
+      "ground": 12,
+      "objects": 9
+    },
+    {
+      "scene": "normal",
+      "seed": 78,
+      "signature": "af0454abf539f943aea1db4266a6d9e9c33b078f69cea2e0e914f63b4f254995",
+      "ground": 12,
+      "objects": 10
+    },
+    {
+      "scene": "normal",
+      "seed": 79,
+      "signature": "37170a3dcd1258fd204fb4035ddef5c6d70d78d52c220e70f70fd0a975d90f13",
+      "ground": 12,
+      "objects": 12
+    },
+    {
+      "scene": "boss",
+      "seed": 77,
+      "signature": "05029925854843b8128d67ad4e320008cd96740fad588af3601d9a68c854c868",
+      "ground": 48,
+      "objects": 41
+    },
+    {
+      "scene": "boss",
+      "seed": 78,
+      "signature": "25bd8217fdacb55e017cffcfaa17949673ea2a7bf4ae9c9f00a63402c0631aab",
+      "ground": 48,
+      "objects": 44
+    },
+    {
+      "scene": "boss",
+      "seed": 79,
+      "signature": "db6267ba31af0d77a3017bd9ac0e79cd6ab154795e3512a40fc7c9bb3607f871",
+      "ground": 48,
+      "objects": 41
+    }
+  ],
+  "test_map": "/Game/Tests/RandomLayers_20261104",
+  "production_assets_saved": false,
+  "scope": "editor generation, locking, failure preservation and test-map reload",
+  "not_covered": [
+    "production Flow movement/pathfinding/spawn/portal",
+    "native rendering, camera and gameplay feel"
+  ]
+}

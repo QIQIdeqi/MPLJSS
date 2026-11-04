@@ -12,6 +12,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "Engine/TargetPoint.h"
 #include "Engine/LevelStreaming.h"
+#include "Engine/Level.h"
 #include "TimerManager.h"
 #if WITH_EDITOR
 #include "ShaderCompiler.h"
@@ -175,6 +176,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression")) || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) || FParse::Param(FCommandLine::Get(),TEXT("EnemyCodexTest")) || FParse::Param(FCommandLine::Get(),TEXT("EliteSpawnTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) || FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("UnifiedPresentationTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("Reference60Test"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("RandomLayersTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("MotionPreview"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest"));
@@ -507,6 +509,7 @@ void AAlchemyWorld::Chase(FAlchemyEnemy& E,float Dt) {
     E.Pos=Move(E.Pos,To.GetSafeNormal2D()*Step,Radius);
 }
 void AAlchemyWorld::UpdateCamera(float Delta) {
+    if(bRandomBattleScene){UpdateRandomBattleCamera(Delta);return;}
     auto C=Camera->GetCameraComponent();
     if(bBattleReference || bReferenceBossScene){UpdateBattleReferenceCamera(Delta);return;}
     CastChecked<UAlchemyCameraComponent>(C)->ProjectionOffset=FVector2D::ZeroVector;
@@ -665,6 +668,7 @@ void AAlchemyWorld::StartRun() {
     ResetMerchant();
     // Production runs need a fresh sequence; capture and smoke fixtures keep their fixed seeds.
     const int32 RunSeed=(!bSmoke && !bCapture)?static_cast<int32>(FPlatformTime::Cycles64()):77;
+    RandomMapSeed=RunSeed;FParse::Value(FCommandLine::Get(),TEXT("MapSeed="),RandomMapSeed);
     const int32 MaterialSeed=RunSeed ^ 0x4D41544C;
     const int32 BrewSeed=RunSeed ^ 0x42524557;
     const int32 EliteLootSeed=RunSeed ^ 0x454C4F54;
@@ -682,13 +686,6 @@ void AAlchemyWorld::StartRun() {
     for(int32& Stock:BrewOnlyStock) Stock=0;
     const bool bBrewFixture=FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test"));
     const bool bFirstBrewIntro=(!bSmoke && !bCapture || bBrewFixture) && !Progress->BrewV02Introduced;
-    if(bFirstBrewIntro) {
-        Inventory[0]=Inventory[1]=Inventory[2]=1;
-        for(int32& Stock:BrewOnlyStock) Stock=1;
-        for(int32 I=0;I<3;I++) Progress->Materials.AddUnique(I);
-        Progress->BrewV02Introduced=true;
-        SaveProgress();
-    }
     OpeningSupplyNormalDeaths=0;
     bOpeningSupplyGranted=false;
     bOpeningSupplyEligible=!bFirstBrewIntro && (!bSmoke && !bCapture || bBrewFixture);
@@ -707,7 +704,16 @@ void AAlchemyWorld::StartRun() {
     DodgeCD=DodgeTime=HurtInv=DodgeInv=0; SpawnCD=2.6f; NextElite=90; EliteIndex=0;
     for(float& T:SkillCD) T=0;
     for(int C=0;C<NumChains();C++) ChainCD[C]=ChainConfig(C).CD;
+    bStageBuildFailed=false;
     BuildScene(true);
+    if(bStageBuildFailed)return;
+    if(bFirstBrewIntro) {
+        Inventory[0]=Inventory[1]=Inventory[2]=1;
+        for(int32& Stock:BrewOnlyStock) Stock=1;
+        for(int32 I=0;I<3;I++) Progress->Materials.AddUnique(I);
+        Progress->BrewV02Introduced=true;
+        SaveProgress();
+    }
     GreyfordPortalReady=false;GreyfordPortal=nullptr;GreyfordPortalRetry=300;
     UpdateCamera(0);
     for(int i=0;i<8;i++) SpawnEnemy(Random.FRand()<0.7f?0:1);
@@ -1334,7 +1340,7 @@ void AAlchemyWorld::Action(FString Id) {
     }
     if(Id==TEXT("clear")) { Selected={0,0,0,0,0,0}; return; }
     if(Id==TEXT("alchemy") || Id==TEXT("codex") || Id==TEXT("skills") || Id==TEXT("talents") || Id==TEXT("level") || Id==TEXT("research")) { Panel=Id; return; }
-    if(bBattleReference && (Id==TEXT("ortho") || Id==TEXT("tilt"))){Message(TEXT("参考场景固定为透视俯角60°，避免画面与碰撞错位"));return;}
+    if((bBattleReference || bRandomBattleScene) && (Id==TEXT("ortho") || Id==TEXT("tilt"))){Message(TEXT("局内场景保持60°透视与统一角色比例"));return;}
     if(Id==TEXT("ortho")) bPerspective=!bPerspective;
     if(Id==TEXT("lit")) bLitSprites=!bLitSprites;
     if(Id==TEXT("upright")) bUprightSprites=!bUprightSprites;
@@ -1418,6 +1424,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) && VillagePresentationCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) && VillagePerspectiveCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("Reference60Test")) && Reference60Check(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("RandomLayersTest")) && RandomLayerCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("MotionPreview"))){MotionPreview(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression"))){ProducerRegression();return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test")) && BrewV02Check(Dt))return;
@@ -1977,6 +1984,8 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "EnemyBehaviorChecks.inl"
 #include "EnemyCreationChecks.inl"
 #include "Reference60Checks.inl"
+#include "RandomBattleScene.inl"
+#include "RandomLayerChecks.inl"
 #include "MotionPreview.inl"
 #include "VillagePerspectiveChecks.inl"
 #include "VillagePresentationChecks.inl"

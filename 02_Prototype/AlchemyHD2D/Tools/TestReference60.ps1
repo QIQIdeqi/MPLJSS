@@ -5,7 +5,7 @@ $snapshot=if($HPCleanup){'Evidence/HUDAssetCleanup_20261101/Reference60'}elseif(
 $folder=Join-Path $project "$snapshot/$Width`x$Height"
 New-Item -ItemType Directory -Force -Path $folder | Out-Null
 $log=Join-Path $folder 'native.log'
-$launch=@('D:/03_UEProject/AlchemyHD2DResearch/AlchemyHD2D.uproject','/Game/Greyford/Maps/Greyford_Flow','-game','-Reference60Test','-d3d12','-RenderOffscreen','-windowed','-ForceRes',"-ResX=$Width","-ResY=$Height",'-benchmark','-fps=60','-unattended','-nosound',"-abslog=`"$log`"")
+$launch=@('D:/03_UEProject/AlchemyHD2DResearch/AlchemyHD2D.uproject','/Game/Greyford/Maps/Greyford_Flow','-game','-Reference60Test','-ReferenceScene','-d3d12','-RenderOffscreen','-windowed','-ForceRes',"-ResX=$Width","-ResY=$Height",'-benchmark','-fps=60','-unattended','-nosound',"-abslog=`"$log`"")
 if($STIX){$launch+='-ReferenceSTIX'}
 if($HPCleanup){$launch+='-ReferenceHPCleanup'}
 $run=Start-Process -FilePath 'D:/02_UnrealEngine/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList $launch -WindowStyle Hidden -PassThru

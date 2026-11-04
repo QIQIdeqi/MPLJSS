@@ -85,6 +85,13 @@ struct FAlchemyTileBrush {
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bGround=true;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0")) float RandomWeight=0;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D VisualSize=FVector2D(240,320);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bBlocksMovement=false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D CollisionHalfSize=FVector2D(60,60);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0",ClampMax="1")) float FootFraction=.96f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D ScaleRange=FVector2D(1,1);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D YawRange=FVector2D(0,0);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> AllowedGrounds;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="仅低矮非阻挡装饰可开启；Boss有效战斗区禁止高大物件")) bool bBossInterior=false;
 };
 
 UCLASS(BlueprintType)
@@ -100,6 +107,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="外观") TObjectPtr<UMaterialInterface> MaterialOverride;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="外观") bool bGround=true;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="外观") FVector2D VisualSize=FVector2D(600,600);
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="外观") FString BrushName;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="外观",meta=(ClampMin="0",ClampMax="1")) float FootFraction=.96f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="外观") bool bBossInterior=false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="碰撞") bool bBlocksMovement=false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="碰撞") FVector2D CollisionHalfSize=FVector2D(100,100);
     virtual void OnConstruction(const FTransform& Transform) override;
@@ -118,8 +128,20 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡",meta=(ClampMin="1",ClampMax="64")) int32 Rows=18;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡",meta=(ClampMin="100",Units="cm")) float CellSize=600;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡") int32 Seed=77;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机",meta=(ClampMin="1",ClampMax="3")) int32 LayerMask=3;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机") int32 GroundSeedOffset=0;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机") int32 ObjectSeedOffset=0;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机",meta=(ClampMin="1",ClampMax="16")) int32 GroundPatchSize=3;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机",meta=(ClampMin="0",ClampMax="1")) float ObjectDensity=.18f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机",meta=(ClampMin="0",Units="cm")) float ObjectSpacing=120;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机") bool bBossLayout=false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机") FVector2D BossHalfSize=FVector2D(1600,1300);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="保护区",meta=(ToolTip="Designer局部XY；从原点到每个点保留整段通路，均不放物件")) TArray<FVector2D> ProtectedPoints={FVector2D::ZeroVector};
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="保护区",meta=(ClampMin="100",Units="cm")) float ProtectedPathHalfWidth=300;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡") FVector2D PlayHalfSize=FVector2D(7060,5330);
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡") bool bUseInGame=true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机",meta=(ToolTip="非地面物件面向固定60度/yaw90相机；旧作者实例默认保持原方向")) bool bCameraFacingObjects=false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="两层随机",meta=(ToolTip="可选九邻域地表混合；仅作用默认草/土/石，保留手工自定义材质")) TObjectPtr<UMaterialInterface> GroundBlendMaterial=nullptr;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="素材",meta=(TitleProperty="Name")) TArray<FAlchemyTileBrush> Palette;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="微调") int32 BrushIndex=0;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="微调",meta=(MakeEditWidget)) FVector PaintCursor=FVector::ZeroVector;
@@ -131,6 +153,9 @@ public:
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="1 读取全部图片素材")) void ImportPalette();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="2 一键随机生成（保留锁定格）")) void Randomize();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="按当前Seed重新生成（复现布局）")) void GenerateFromSeed();
+    UFUNCTION(BlueprintCallable, Category="关卡工具") bool GenerateLayers(int32 InLayerMask=3);
+    UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="只重摇地面（保留物件）")) void RandomizeGround();
+    UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="只重摇物件（保留地面）")) void RandomizeObjects();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="3 在光标格子应用笔刷并锁定")) void PaintCell();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="4 刷新全部格子显示")) void RefreshCells();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="技能工具",meta=(DisplayName="打开技能与特效表")) void OpenSkills();
@@ -142,7 +167,11 @@ public:
     UFUNCTION(CallInEditor, BlueprintCallable, Category="技能工具",meta=(DisplayName="创建缺失的默认技能表（不覆盖已有）")) void CreateStarterTables();
     UFUNCTION(CallInEditor, BlueprintCallable, Category="关卡工具",meta=(DisplayName="保存当前关卡和技能表")) void SaveDesign();
     void SetRuntimeVisible(bool bVisible);
+    // Flow supplies its real semantic ground and navigation checks before a plan is committed.
+    TFunction<bool(FVector,FVector2D)> CanPlaceObject;
+    TFunction<bool(const TArray<FBox2D>&)> ValidateBlockingLayout;
 private:
+    bool PlacementAllowed(FVector Local,FVector2D Half,bool Blocking,bool BossInterior) const;
     void ApplyBrush(AAlchemyTileCell* Cell,int32 Index);
     void OpenTable(UDataTable* Table);
 };

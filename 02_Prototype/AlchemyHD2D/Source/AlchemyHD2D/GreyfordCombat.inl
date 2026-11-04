@@ -1,8 +1,15 @@
 // Authored scene adapter; movement, skills, enemies and damage remain the production simulation.
 void AAlchemyWorld::BuildGreyfordScene() {
-    if(bGreyfordFlow && !SwitchGreyfordStage(bCombat?1:0)){SetActorTickEnabled(false);FPlatformMisc::RequestExitWithStatus(false,1);return;}
-    if(!bBattleReference)CombatHalfSize=FVector2D(7200,5400);
-    if(!bBattleReference)for(TActorIterator<APlayerStart> It(GetWorld());It;++It){if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;PlayerPos=It->GetActorLocation();PlayerPos.Z=0;break;}
+    if(bGreyfordFlow && !SwitchGreyfordStage(bCombat?1:0)){
+        bStageBuildFailed=true;
+        if(bCombat && SwitchGreyfordStage(0)){
+            bCombat=false;PlayerPos=bGreyfordReference?ReferencePoint(843,480):FVector(0,-500,0);
+            UpdateCamera(0);Message(TEXT("当前地图暂不可用，已返回村庄，本局未开始"));
+        }else {SetActorTickEnabled(false);FPlatformMisc::RequestExitWithStatus(false,1);}
+        return;
+    }
+    if(!bBattleReference && !bRandomBattleScene)CombatHalfSize=FVector2D(7200,5400);
+    if(!bBattleReference && !bRandomBattleScene)for(TActorIterator<APlayerStart> It(GetWorld());It;++It){if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;PlayerPos=It->GetActorLocation();PlayerPos.Z=0;break;}
     if(!bGreyfordFlow)for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It) {
         if(bGreyfordFlow && It->GetLevel()!=GreyfordActiveLevel)continue;
         if(!It->ActorHasTag(TEXT("GreyfordBlocker")))continue;
@@ -22,7 +29,8 @@ void AAlchemyWorld::BuildGreyfordScene() {
             if(Walkable(Candidate,45) && FindPath(PlayerPos,Candidate,45,Path) && !BattleOffscreen(Candidate,100)){PlayerPos=Candidate;break;}
         }
     }else if(bGreyfordFlow && bCombat)for(int I=0;I<64;I++){
-        const FVector Candidate(Random.FRandRange(-6800,6800),Random.FRandRange(-5000,5000),0);TArray<FVector> Path;
+        // The first random layout uses its reserved north/south spawn corridor, clear of tall props.
+        const FVector Candidate=bRandomBattleScene?FVector(0,Random.FRandRange(-CombatHalfSize.Y+900,CombatHalfSize.Y-900),0):FVector(Random.FRandRange(-6800,6800),Random.FRandRange(-5000,5000),0);TArray<FVector> Path;
         if(Walkable(Candidate,45) && FindPath(PlayerPos,Candidate,45,Path)){PlayerPos=Candidate;break;}
     }
     UE_LOG(LogTemp,Display,TEXT("GREYFORD_COMBAT_SCENE blockers=%d spawn_clear=%d no_save=%d"),Obstacles.Num(),Walkable(PlayerPos),bCapture);

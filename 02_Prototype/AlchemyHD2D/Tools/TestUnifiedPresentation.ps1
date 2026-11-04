@@ -3,7 +3,7 @@ $ErrorActionPreference='Stop'
 $project=Split-Path -Parent $PSScriptRoot
 $dir=Join-Path $project 'Evidence/UnifiedPresentation_20261031'
 $log=Join-Path $dir "native-$Width`x$Height.log"
-$launch=@('D:/03_UEProject/AlchemyHD2DResearch/AlchemyHD2D.uproject','-game','-UnifiedPresentationTest','-d3d12','-RenderOffscreen','-windowed','-ForceRes',"-ResX=$Width","-ResY=$Height",'-benchmark',"-fps=$FPS",'-unattended','-nosound',"-abslog=`"$log`"")
+$launch=@('D:/03_UEProject/AlchemyHD2DResearch/AlchemyHD2D.uproject','-game','-UnifiedPresentationTest','-ReferenceScene','-d3d12','-RenderOffscreen','-windowed','-ForceRes',"-ResX=$Width","-ResY=$Height",'-benchmark',"-fps=$FPS",'-unattended','-nosound',"-abslog=`"$log`"")
 if($Edges){$launch+='-BossEdgeFramingTest'}
 $p=Start-Process -FilePath 'D:/02_UnrealEngine/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList $launch -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(240000)){Stop-Process -Id $p.Id;throw "Unified presentation test timeout: $log"}

@@ -34,8 +34,10 @@ bool AAlchemyWorld::SwitchGreyfordStage(int32 Stage) {
         if(It->GetLevel()!=GreyfordActiveLevel || !It->ActorHasTag(TEXT("GreyfordBlocker")))continue;
         FVector C,E;It->GetActorBounds(true,C,E);Obstacles.Add({FVector2D(C),FVector2D(E)});
     }
-    if(Stage==1 && !BuildBattleReferenceScene())return false;
-    if(Stage==2 && !BuildBossReferenceScene())return false;
+    const bool Reference=FParse::Param(FCommandLine::Get(),TEXT("ReferenceScene"));
+    if(Stage>0 && !Reference && !BuildRandomBattleScene(Stage==2))return false;
+    if(Stage==1 && Reference && !BuildBattleReferenceScene())return false;
+    if(Stage==2 && Reference && !BuildBossReferenceScene())return false;
 #if WITH_EDITOR
     if(Stage==2)Material(TEXT("M_BossCorruption"));
     FAssetCompilingManager::Get().FinishAllCompilation();
@@ -100,6 +102,7 @@ bool AAlchemyWorld::ReferenceSweep(FVector A,FVector B,float Radius) const {
 }
 
 void AAlchemyWorld::EndPlay(const EEndPlayReason::Type Reason){
+    ClearRandomBattleScene();
     ClearEliteWarning();
     if(ReferencePreviousAA>=0)if(auto AA=IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))AA->Set(ReferencePreviousAA,ECVF_SetByCode);
     Super::EndPlay(Reason);
@@ -130,6 +133,14 @@ bool AAlchemyWorld::EnterGreyfordBoss() {
     if(!GreyfordPortalReady || GreyfordStage!=1 || FVector::Dist2D(PlayerPos,GreyfordPortalPos)>220 || bRunEnded)return false;
     if(bBrewActive) {Message(TEXT("炼制完成后再进入Boss传送阵"));return false;}
     const float BeforeHP=HP;
+    const FVector BeforePosition=PlayerPos;
+    // Prepare the destination before consuming the field's drops, enemies or entry state.
+    if(!SwitchGreyfordStage(2)){
+        const bool Restored=SwitchGreyfordStage(1);PlayerPos=BeforePosition;UpdateCamera(0);
+        if(Restored)Message(TEXT("Boss场地暂不可用，本局已保留，可稍后重试"));
+        else {bStageBuildFailed=true;SetActorTickEnabled(false);FPlatformMisc::RequestExitWithStatus(false,1);}
+        return false;
+    }
     ClearTutorialEncounter();
     // Only already-generated material drops transfer, and never beyond inventory capacity.
     for(const auto& D:Drops)if(D.Kind>=0 && D.Kind<6)CollectDrop(D.Kind,D.Count,false);
@@ -140,7 +151,6 @@ bool AAlchemyWorld::EnterGreyfordBoss() {
     for(auto& E:NiagaraFX)if(IsValid(E.Component))E.Component->DestroyComponent();NiagaraFX.Empty();DamageNumbers.Empty();
     CloseMerchant();if(IsValid(GreyfordPortal))GreyfordPortal->Destroy();GreyfordPortal=nullptr;GreyfordPortalReady=false;
     ClearPixelFX();
-    if(!SwitchGreyfordStage(2)){EndRun(false);return false;}
     PlayerPos=FVector(0,-500,0);Panel=(PendingResultSkill>=0 || PendingIsNuclear)?TEXT("result"):TEXT("");CharacterAnimation.Reset();
     SpawnEnemy(10);
     if(Enemies.IsEmpty()){EndRun(false);return false;}
@@ -150,6 +160,7 @@ bool AAlchemyWorld::EnterGreyfordBoss() {
     UpdateCharacterVisual(0,false);UpdateBossVisual(Boss);UpdateCamera(0);UpdateCharacterVisual(0,false);
     PlayerShadow->SetActorLocation(VillageVisualPoint(PlayerPos+FVector(0,0,5)));
     Message(TEXT("雾界草甸 · 击败Boss后结算；本场不能返回，Q炼金、B换技能均暂停。"));
+    if(bRandomBattleScene)ToastTime=0; // Preparation HUD already carries this guidance; keep the character unobscured.
     UE_LOG(LogTemp,Display,TEXT("GREYFORD_BOSS_ENTER hp_before=%.1f hp_after=%.1f spacing=1000 materials=%d,%d,%d,%d,%d,%d"),BeforeHP,HP,Inventory[0],Inventory[1],Inventory[2],Inventory[3],Inventory[4],Inventory[5]);return true;
 }
 

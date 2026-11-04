@@ -190,6 +190,13 @@ public:
     UPROPERTY() TArray<TObjectPtr<AGreyfordReferenceRegion>> ReferenceRegions;
     UPROPERTY() TObjectPtr<UBattleReferenceWidget> BattleWidget;
     bool bBattleReference=false;
+    bool bRandomBattleScene=false;
+    bool bStageBuildFailed=false;
+    int32 RandomMapSeed=77;
+    bool BuildRandomBattleScene(bool Boss);
+    void ClearRandomBattleScene();
+    void UpdateRandomBattleCamera(float Dt);
+    bool RandomLayerCheck(float Dt);
     UPROPERTY() TArray<TObjectPtr<AGreyfordReferenceRegion>> BattleRegions;
     UPROPERTY() TArray<TObjectPtr<AActor>> BattleCards;
     TArray<TWeakObjectPtr<AActor>> BattleHiddenActors;

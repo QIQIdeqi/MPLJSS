@@ -1,0 +1,96 @@
+{
+  "task_started": "2026-11-04",
+  "verified": "2026-11-05",
+  "baseline": "d294ddd",
+  "builds": [
+    {
+      "target": "editor",
+      "result": "Succeeded",
+      "log_sha256": "626aff48cbb1de5a9b56463e52606f919ba568b9dcf29d4adacdd1000f3b6101"
+    },
+    {
+      "target": "game",
+      "result": "Succeeded",
+      "log_sha256": "0eb1c28fc994698a0be60dea0ec5012d0130ab2a12c7ef99cbd320647ab31a7a"
+    }
+  ],
+  "editor_assertions": 75,
+  "editor_entries": 2,
+  "runs": [
+    {
+      "name": "1280x720-60",
+      "assertions": 106,
+      "unique_assertions": 33,
+      "log_sha256": "8e4e88a69898ad9125be44b2664d6e50e8a2ca20125d92f59d2e2eebedfb337c",
+      "log": "Evidence\\RandomLayers_20261104\\Native\\1280x720-60\\native.log"
+    },
+    {
+      "name": "1024x768-60",
+      "assertions": 106,
+      "unique_assertions": 33,
+      "log_sha256": "d162a95c606816b927dee45751868b3ad20e68587b5102894d50caa1b747d7f6",
+      "log": "Evidence\\RandomLayers_20261104\\Native\\1024x768-60\\native.log"
+    },
+    {
+      "name": "2560x1080-60",
+      "assertions": 106,
+      "unique_assertions": 33,
+      "log_sha256": "1780e5431dd91432c117ded18e88d7c03b681c50a67dfc69c45b608b44a077c6",
+      "log": "Evidence\\RandomLayers_20261104\\Native\\2560x1080-60\\native.log"
+    },
+    {
+      "name": "producer",
+      "assertions": 39,
+      "unique_assertions": 33,
+      "log_sha256": "53f22f732f5d837f842904ed298d6c1ceec4fe49b44b185868933ed593cf8828",
+      "log": "Evidence\\RandomLayers_20261104\\producer.log"
+    },
+    {
+      "name": "boss",
+      "assertions": 28,
+      "unique_assertions": 28,
+      "log_sha256": "bd9047786dea6c864fdcf26c0ee461fdd562a84041082d0092e6e8e4b0ab8485",
+      "log": "Evidence\\RandomLayers_20261104\\boss.log"
+    },
+    {
+      "name": "flow",
+      "assertions": 42,
+      "unique_assertions": 42,
+      "log_sha256": "b80c244996216b2499748d20a6a57e4a5cf0795a78dd7b53db23d8c5b30eeb09",
+      "log": "Evidence\\RandomLayers_20261104\\flow.log"
+    },
+    {
+      "name": "brew",
+      "assertions": 94,
+      "unique_assertions": 92,
+      "log_sha256": "448225052e78b51c37616f893d2b26747a07d9a8285c39a53be88b5d45ea1260",
+      "log": "Evidence\\RandomLayers_20261104\\brew.log"
+    },
+    {
+      "name": "legacy-reference",
+      "assertions": 48,
+      "unique_assertions": 32,
+      "log_sha256": "ef890b9a94f90d31d27b1ac24e599ae1668514bf6c26cd2c8a99840ce9aee552",
+      "log": "Evidence\\Reference60_20261031\\1672x940\\native.log"
+    }
+  ],
+  "source_asset_sha256": {
+    "Content/Greyford/Maps/Outskirts_Blockout.umap": "ea75bcb6a8622e4b0de58718c98b635186daf17d9dc31e8e520dd6f77b9d08a2",
+    "Content/Greyford/Maps/Greyford_Boss.umap": "8ca210abd8b05edcd7fc4934545d8271cabef6dc15f88a24b703f9561f698c02",
+    "Content/Design/M_RandomGroundBlend.uasset": "08371b4465d6861fc6af133461bcd71853f0af9507135a02fcf3572b364634a6",
+    "Source/AlchemyHD2D/AlchemyDesignTools.h": "367ab39875ea693b0fde90e7330c364c4a041c2099d097f0960890af3072cacc",
+    "Source/AlchemyHD2D/AlchemyDesignTools.cpp": "cac50c55790ec77e96646fcfe3fae96fdb1c0ec567686fb03d57befa40dbcf21",
+    "Source/AlchemyHD2D/AlchemyWorld.h": "81f9b363ac4ea889cbf6dd6476d277694449cf716daf88b6b56e7a003e226230",
+    "Source/AlchemyHD2D/AlchemyWorld.cpp": "95f2c28c772749dd32c124ecf129bf2a56f78bcb526f66a3e0e2caa3732fb820",
+    "Source/AlchemyHD2D/RandomBattleScene.inl": "0a67cc047b8aaa2e842a7fe24c196d7a49ba3574244bb6d24ed7641f955d4171",
+    "Source/AlchemyHD2D/RandomLayerChecks.inl": "c2f8b28a8329afa3b97fbffb1e2224b05f96f983f3f2993d92bcc862f78be6e1",
+    "Source/AlchemyHD2D/GreyfordFlow.inl": "dac250eba90e400279a3d596d1a2279ee2c6510028a022fd24928d4b113e3126",
+    "Source/AlchemyHD2D/GreyfordCombat.inl": "fe99abb1d320c6d5dc736eae6272042340bbb4bad697f26f58a0dc036161769d",
+    "Source/AlchemyHD2D/BattleReferenceScene.inl": "2831b5f45a9ae9e3c137aa16c26d618ae1c853ae2af49b0b3b2c2d52f4c4f045"
+  },
+  "scope_notes": [
+    "Isolated native state-boundary/render fixtures; not human balance or FPS performance acceptance.",
+    "Last compatibility-only change hides new Designer cells in legacy reference Boss; default random tests precede that unchanged branch.",
+    "Legacy reference explicitly uses -ReferenceScene and is not new random-map coverage."
+  ]
+}

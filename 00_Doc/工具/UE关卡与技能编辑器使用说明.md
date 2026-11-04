@@ -1,15 +1,21 @@
 # UE关卡与技能编辑器
 
+## 2026-11-04 两层随机地图方向与现有工具边界
+
+普通局内和Boss均已确认采用地面纹理随机与物件随机摆放，并保留可用战斗空间；完整规则只维护在[1.4关卡](../协作策划/1.4关卡.md)文首。2026-11-05已扩展原Designer并接入正式Flow；当前操作、分层重抽/锁定、两套场地预设及验证见[工程说明](../../02_Prototype/AlchemyHD2D/Docs/随机关卡_两层编辑与验证.md)。地面和物件各自抽样，不再同格二选一。
+
+新配置独立加入外围和Boss子关卡，保留旧Designer/锁格与Research；正式模式只从实际生成物件建立碰撞，固定参考用-ReferenceScene显式对照。下文的Research、75/20/5与八块固定碰撞为Legacy工具历史基线，不套用到新随机模式。
+
 适用当前UE5.8.4工程 `02_Prototype/AlchemyHD2D`。这是引擎编辑模式工具；Windows试玩包用于运行游戏，编辑工作使用完整UE工程。当前默认地图、技能表已放入工程，无需先手工搭建。
 
 ## 第一次打开
 
-1. 双击工程目录中的 `打开关卡与技能编辑器.cmd`。它先编译编辑器模块，再打开Research地图并选中工具Actor。
+1. 双击工程目录中的 `打开关卡与技能编辑器.cmd`。它先编译编辑器模块，再打开Greyford_Flow并选中普通场随机配置；打开Boss随机关卡编辑器.cmd选中Boss配置。旧Research可用Tools/OpenDesigner.ps1 -Scene Legacy打开。
 2. 若自动查找不到引擎，在PowerShell执行 `Tools/OpenDesigner.ps1 -EngineRoot '你的UE5.8目录'`，或设置 `UE_ENGINE_ROOT`。支持本机D盘、已知F盘安装与UE5.8注册路径；需要UE和C++编译环境。
-3. 世界大纲搜索 `Alchemy_Level_Designer`，选中它，在右侧Details使用“关卡工具”“技能工具”按钮。
+3. 世界大纲搜索 `Alchemy_Random_Normal` 或 `Alchemy_Random_Boss`（Legacy为 `Alchemy_Level_Designer`），选中它，在右侧Details使用“关卡工具”“技能工具”按钮。
 4. 编辑前停止Play；改完保存，再按Play试玩。工具不会在修改参数时擅自随机重做关卡。
 
-## 关卡：生成后直接微调
+## Legacy Research：生成后直接微调
 
 默认24列×18行、每格600cm、Seed=77，共432个地面格；另有8个独立可编辑碰撞块，保留原Layout A的碰撞布局。
 
