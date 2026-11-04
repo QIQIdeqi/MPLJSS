@@ -8,4 +8,4 @@
 
 恢复构建时，将`source/`三个文件复制到本地`04_Web/alchemy-official/`（不要覆盖已有编辑），从该目录执行`python build.py`和`python check_site.py`。按其README将Markdown安装到SSD的`04_Web/tooling/python`。构建还需要项目素材与本地`02_Prototype/AlchemyHD2D/Evidence/ALCH002_Alchemy.png`；后者的共享副本放在本目录`source-inputs/`，新电脑可复制回该位置。`source/README.md`是原始说明快照，部署状态以迁移记录为准。
 
-静态下载目录的大ZIP、迁移整包、发布tar.gz及本机Python依赖可重建，保持在SSD但不重复上传。恢复迁移下载包时，从Git LFS取得`03_Build/HD2D_PC_UI/冒牌炼金术士_Demo_Win64_最新测试版.zip`，复制到`migrations/2026-10-30_cloudbase/public/downloads/alchemy-demo-win64-2026-10-29.zip`；同目录.sha256用于校验。也可先恢复官网dist，再按原prepare.py生成迁移包。
+`migrations/2026-10-30_cloudbase/` 是当时的部署快照，旧 ZIP 下载及 `prepare.py` 的重建依赖已于2026-11-04从当前仓库移除，不再作为现行下载入口。官网源码 `source/build.py` 已改为指向当前 UE 工程试玩说明；本轮仅更新 Git 源码，没有重新部署网站或清除外部站点存储。
