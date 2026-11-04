@@ -675,6 +675,8 @@ void AAlchemyWorld::StartRun() {
         Random.Initialize(RunSeed);
         UE_LOG(LogTemp,Display,TEXT("ALCHEMY_RUN_SEED %d material=%d brew=%d elite_loot=%d"),RunSeed,MaterialSeed,BrewSeed,EliteLootSeed);
     }
+    UE_LOG(LogTemp,Display,TEXT("MATERIAL_FRAGMENT_CONFIG mode=%s chance=%.3f talent=%d"),
+        bDrop001?TEXT("trial40"):TEXT("legacy22"),MaterialDropChance(),Progress->Talents[9]);
     RunTime=0; Kills=0; RunCoins=0; CraftCount=0; ChainCount=0; bBossSpawned=false;
     Inventory={0,0,0,0,0,0}; Selected=Inventory; Levels.Init(0,NumSkills());Levels[0]=1; Equipped={0}; Bag.Empty();
     for(int32& Stock:BrewOnlyStock) Stock=0;
@@ -929,8 +931,9 @@ FString AAlchemyWorld::ChainHintFor(int32 Skill) const {
 }
 
 float AAlchemyWorld::MaterialDropChance() const {
-    // DROP-001 baseline (22% x 70% = 15.4% by default), then 材料掉落提高 (Talents[9]) x1.30.
-    float Chance = bDrop001 ? 0.154f : 0.22f;
+    // V0.2 material supply trial: one fragment per successful normal-enemy roll.
+    // Keep the legacy 22% comparison mode and the existing talent multiplier.
+    float Chance = bDrop001 ? 0.40f : 0.22f;
     if(Progress->Talents[9]>0) Chance *= 1.30f;
     return Chance;
 }

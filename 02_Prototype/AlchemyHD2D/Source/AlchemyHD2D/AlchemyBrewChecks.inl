@@ -62,6 +62,15 @@ bool AAlchemyWorld::BrewV02Check(float Delta) {
         Progress->TutorialComplete=true;
         Progress->AlchemyMode=0;
         StartRun();ClearEnemies();
+        Check(bDrop001 && Progress->Talents[9]==0 && FMath::IsNearlyEqual(MaterialDropChance(),0.40f),
+              TEXT("normal_fragment_trial_chance_is_40_percent"));
+        Progress->Talents[9]=1;
+        Check(FMath::IsNearlyEqual(MaterialDropChance(),0.52f),
+              TEXT("fragment_drop_talent_scales_trial_chance_to_52_percent"));
+        bDrop001=false;
+        Check(FMath::IsNearlyEqual(MaterialDropChance(),0.286f,0.00001f),
+              TEXT("legacy_22_percent_mode_retains_talent_multiplier"));
+        bDrop001=true;Progress->Talents[9]=0;
         Check(Progress->BrewV02Introduced && Inventory[0]==1 && Inventory[1]==1 && Inventory[2]==1 &&
               BrewOnlyStock[0]==1 && BrewOnlyStock[1]==1 && BrewOnlyStock[2]==1 &&
               !bOpeningSupplyEligible && !bOpeningSupplyGranted,

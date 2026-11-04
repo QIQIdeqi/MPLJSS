@@ -578,7 +578,7 @@ void AAlchemyHUD::DrawHUD() {
             Button(TEXT("upright"),World->bUprightSprites?TEXT("F3 角色竖直"):TEXT("F3 角色面向相机"),104,300,524);Button(TEXT("tilt"),FString::Printf(TEXT("F4 俯角 %.0f°"),World->CameraPitch),654,300,524);
             Button(TEXT("dof"),World->bDepthOfField?TEXT("F5 景深开启"):TEXT("F5 景深关闭"),104,365,524);
             Button(TEXT("tune"),World->bTune001B?TEXT("战斗：测试配置"):TEXT("战斗：原始基线"),104,450,524,!World->bCombat);
-            Button(TEXT("drop"),World->bSmoke || World->bCapture?(World->bDrop001?TEXT("材料掉落：15.4%"):TEXT("材料掉落：22%")):(World->bDrop001?TEXT("碎片触发：15.4%"):TEXT("碎片触发：22%")),654,450,524,!World->bCombat);
+            Button(TEXT("drop"),FString::Printf(TEXT("%s：%.1f%%"),World->bSmoke || World->bCapture?TEXT("材料掉落"):TEXT("碎片触发"),World->MaterialDropChance()*100.0f),654,450,524,!World->bCombat);
             Paragraph(TEXT("[ / ] 调整视野宽度。战斗与掉落配置仅限据点切换。"),104,535,1074,20,Dim);
         } else if(P==TEXT("talents")) {
             Text(FString::Printf(TEXT("永久金币 %d；所有强化独立开放，金币足够即可购买。"),World->Progress->Coins),104,181,18,Dim);
