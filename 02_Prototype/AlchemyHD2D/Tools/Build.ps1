@@ -4,7 +4,7 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot 'Evidence') | Out-Null
 if (-not $EngineRoot) { $EngineRoot = $env:UE_ENGINE_ROOT }
 if (-not $EngineRoot) {
-    $engineCandidates=@('D:\02_UnrealEngine\UE_5.8','F:\EPIC GAME\UE_5.8')
+    $engineCandidates=@('D:\other\UE\UE_5.8','D:\02_UnrealEngine\UE_5.8','F:\EPIC GAME\UE_5.8')
     $installed=(Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\EpicGames\Unreal Engine\5.8' -ErrorAction SilentlyContinue).InstalledDirectory
     if($installed) {$engineCandidates=@($installed)+$engineCandidates}
     $EngineRoot=$engineCandidates | Where-Object {Test-Path -LiteralPath (Join-Path $_ 'Engine/Build/BatchFiles/Build.bat')} | Select-Object -First 1
