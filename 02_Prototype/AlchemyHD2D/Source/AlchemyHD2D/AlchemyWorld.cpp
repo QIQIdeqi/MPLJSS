@@ -1,5 +1,7 @@
 #include "AlchemyWorld.h"
 #include "BattleReferenceWidget.h"
+#include "MainMenuWorld.h"
+#include "MainMenuWidget.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/SlateBlueprintLibrary.h"
@@ -155,7 +157,16 @@ FVector DesignPosition(float X,float Y) { return FVector(-100*X,-100*Y,0); }
 #include "VillagePerspective.inl"
 
 AAlchemyMode::AAlchemyMode() { DefaultPawnClass=nullptr; HUDClass=AAlchemyHUD::StaticClass(); }
-void AAlchemyMode::StartPlay() { Super::StartPlay(); GetWorld()->SpawnActor<AAlchemyWorld>(); }
+void AAlchemyMode::StartPlay() {
+    Super::StartPlay();
+    // 主菜单关卡显示主菜单，其余关卡进入战斗世界。
+    const FString MapName=GetWorld()->GetMapName();
+    if(MapName.Contains(TEXT("MainMenu")) || MapName.Contains(TEXT("StartScreen"))) {
+        GetWorld()->SpawnActor<AMainMenuWorld>();
+    } else {
+        GetWorld()->SpawnActor<AAlchemyWorld>();
+    }
+}
 AAlchemyWorld::AAlchemyWorld() { PrimaryActorTick.bCanEverTick=true; }
 
 void AAlchemyWorld::BeginPlay() {
@@ -220,6 +231,15 @@ void AAlchemyWorld::BeginPlay() {
     Progress->UITextScale=1; // Retained only to read older saves; use independent font groups now.
     Progress->MediumTextScale=FMath::Clamp(Progress->MediumTextScale,.5f,1.2f);
     Progress->LargeTextScale=FMath::Clamp(Progress->LargeTextScale,.5f,1.2f);
+    // 从主菜单用户设置（MainMenuSettings 槽）应用画面选项与字体缩放。
+    if(auto* UserSettings=Cast<UMainMenuSettings>(UGameplayStatics::LoadGameFromSlot(TEXT("MainMenuSettings"),0))) {
+        bPerspective=UserSettings->bPerspective;
+        bLitSprites=UserSettings->bLitSprites;
+        bUprightSprites=UserSettings->bUprightSprites;
+        bDepthOfField=UserSettings->bDepthOfField;
+        Progress->MediumTextScale=FMath::Clamp(UserSettings->MediumTextScale,.5f,1.2f);
+        Progress->LargeTextScale=FMath::Clamp(UserSettings->LargeTextScale,.5f,1.2f);
+    }
     PotionBreakAtlas=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Art/T_PotionBreakAtlas.T_PotionBreakAtlas"));
     Levels.Init(0,NumSkills());Levels[0]=1;
     ImpactFX=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyImpact.NS_AlchemyImpact"));
