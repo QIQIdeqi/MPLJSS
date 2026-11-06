@@ -44,12 +44,13 @@ void FAlchemistSpriteAnimation::Face(FVector2D D) {
     Mirror=Facing==0 && D.X<0;
 }
 bool FAlchemistSpriteAnimation::Throw(FVector2D Direction) {
-    // Moving keeps its gait and facing. Projectile aiming is independent in the combat world.
-    if(Throwing || Moving || Hurting || Dead) return false;
-    Face(Direction);Throwing=true;Time=0;Apply();return true;
+    // 攻击动画暂不启用：保持待机/行走姿态，投射物发射逻辑独立不受影响。
+    return false;
 }
 void FAlchemistSpriteAnimation::Reset() {Time=0;Throwing=Moving=Hurting=Dead=false;Apply();}
-void FAlchemistSpriteAnimation::Hit() {if(!Dead) {Hurting=true;Throwing=false;Time=0;Apply();}}
+void FAlchemistSpriteAnimation::Hit() {
+    // 受击动画暂不启用：保持当前姿态，受伤无敌闪烁由 HurtInv 逻辑独立驱动。
+}
 void FAlchemistSpriteAnimation::Die() {if(!Dead) {Dead=true;Hurting=Throwing=Moving=false;Time=0;Apply();}}
 bool FAlchemistSpriteAnimation::Advance(float Delta,FVector2D Direction,bool IsMoving) {
     if(Dead) {Time=FMath::Min(.75f,Time+Delta);Apply();return false;}
