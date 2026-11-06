@@ -14,7 +14,7 @@ import unreal as u
 
 ROOT = Path(u.Paths.project_dir())
 TEST_MAP = '/Game/Tests/RandomLayers_20261104'
-OUTPUT = ROOT / 'Evidence/RandomLayers_20261104/editor-checks.json'
+OUTPUT = ROOT / 'Evidence/RandomLayers_20261106/editor-checks.json'
 REPORT = {'result': 'FAIL', 'checks': [], 'samples': [],
           'test_map': TEST_MAP, 'production_assets_saved': False,
           'scope': 'editor generation, locking, failure preservation and test-map reload',
@@ -164,6 +164,46 @@ def repeat_samples(designer, label):
     check(label + '_sampled_seeds_vary', len(set(variants)) > 1)
 
 
+def range_contracts():
+    designer = new_designer()
+    designer.set_actor_label('RandomLayers_Ranges')
+    brushes = list(prop(designer, 'palette'))
+    set_props(brushes[0], count_range=u.IntPoint(7, 7), density_range=u.Vector2D(.5, .75))
+    set_props(brushes[1], density_range=u.Vector2D(.4, .5))
+    set_props(brushes[2], count_range=u.IntPoint(2, 2), density_range=u.Vector2D(.15, .25))
+    set_props(brushes[3], count_range=u.IntPoint(0, 0))
+    set_props(designer, palette=brushes, object_density=0.0)
+    generate(designer, 3, 'count_density_intersection_generated')
+    counts = {name: 0 for name in ('Grass', 'Dirt', 'Oak', 'Bush')}
+    for cell in owned(designer):
+        counts[prop(cell, 'brush_name')] += 1
+    check('count_density_caps_and_minima_apply_to_both_layers',
+          counts == {'Grass': 7, 'Dirt': 5, 'Oak': 2, 'Bush': 0}, counts)
+    before = signature(designer)
+    generate(designer, 3, 'bounded_seed_repeat_generated')
+    check('bounded_seed_reproducible', signature(designer) == before)
+
+    locked = owned(designer, False)[0]
+    set_props(locked, lock_random=True)
+    generate(designer, 2, 'locked_prop_counts_toward_minimum')
+    check('locked_prop_counts_toward_exact_total', len(owned(designer, False)) == 2 and locked in owned(designer))
+
+    set_props(brushes[2], count_range=u.IntPoint(0, 0), density_range=u.Vector2D(-1, -1))
+    set_props(designer, palette=brushes)
+    failure_preserves(designer, 2, 'locked_prop_exceeds_configured_maximum')
+    set_props(brushes[2], count_range=u.IntPoint(2, 2), allowed_grounds=['MissingGround'])
+    set_props(designer, palette=brushes)
+    failure_preserves(designer, 2, 'no_legal_sites_for_configured_minimum')
+    set_props(brushes[2], allowed_grounds=[])
+    set_props(brushes[0], density_range=u.Vector2D(0, .25))
+    set_props(designer, palette=brushes)
+    failure_preserves(designer, 1, 'count_and_density_conflict')
+    set_props(brushes[0], density_range=u.Vector2D(.5, .75))
+    set_props(designer, palette=brushes)
+    generate(designer, 3, 'valid_ranges_recover')
+    return signature(designer)
+
+
 def render_contracts(designer, locked_ground):
     designer.set_editor_property('camera_facing_objects', True)
     designer.refresh_cells()
@@ -264,6 +304,7 @@ def main():
     boss = new_designer(boss=True)
     repeat_samples(boss, 'boss')
     render_contracts(d, locked_ground)
+    expected_ranges = range_contracts()
     expected = signature(d)
     check('save_test_map_only', LEVELS.save_current_level())
     # Switch only between dedicated test maps; never save or edit Research/Flow.
@@ -279,6 +320,13 @@ def main():
     check('saved_both_lock_types_exist',
           any(prop(c, 'lock_random') for c in owned(d, True))
           and any(prop(c, 'lock_random') for c in owned(d, False)))
+    bounded = next(a for a in ACTORS.get_all_level_actors()
+                   if isinstance(a, u.AlchemyLevelDesigner) and a.get_actor_label() == 'RandomLayers_Ranges')
+    brushes = prop(bounded, 'palette')
+    check('range_settings_and_placement_survive_reload',
+          prop(brushes[0], 'count_range').x == 7 and prop(brushes[0], 'count_range').y == 7
+          and vector(prop(brushes[0], 'density_range')) == (.5, .75)
+          and signature(bounded) == expected_ranges)
     REPORT['result'] = 'PASS'
 
 

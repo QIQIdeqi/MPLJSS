@@ -84,6 +84,8 @@ struct FAlchemyTileBrush {
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ToolTip="优先使用此材质；留空时用Texture生成显示材质")) TObjectPtr<UMaterialInterface> Material;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bGround=true;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0")) float RandomWeight=0;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(DisplayName="数量范围（X下限，Y上限）",ToolTip="统计最终同层格子，含锁定格。单个端点为-1表示该端不限。")) FIntPoint CountRange=FIntPoint(-1,-1);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(DisplayName="密度范围（X下限，Y上限）",ToolTip="笔刷占总网格的比例，取值0到1，与数量范围取交集。单个端点为-1表示该端不限。")) FVector2D DensityRange=FVector2D(-1,-1);
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D VisualSize=FVector2D(240,320);
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bBlocksMovement=false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D CollisionHalfSize=FVector2D(60,60);

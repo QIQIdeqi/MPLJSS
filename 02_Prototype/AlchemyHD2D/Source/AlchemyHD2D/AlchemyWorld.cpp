@@ -38,6 +38,7 @@
 #include "Engine/PointLight.h"
 #include "Engine/PostProcessVolume.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/ScopeExit.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
 #include "InputCoreTypes.h"
@@ -171,6 +172,11 @@ AAlchemyWorld::AAlchemyWorld() { PrimaryActorTick.bCanEverTick=true; }
 
 void AAlchemyWorld::BeginPlay() {
     Super::BeginPlay();
+    bTODEnabled=!FParse::Param(FCommandLine::Get(),TEXT("NoTOD"));
+    FParse::Value(FCommandLine::Get(),TEXT("TODStartHour="),TODSettings.StartHour);
+    FParse::Value(FCommandLine::Get(),TEXT("TODCycleSeconds="),TODSettings.CycleSeconds);
+    FParse::Value(FCommandLine::Get(),TEXT("TODShadowOpacity="),TODSettings.ShadowOpacity);
+    bTODFixedHour=FParse::Value(FCommandLine::Get(),TEXT("TODHour="),TODSettings.StartHour);
 #if WITH_EDITOR
     if(FParse::Param(FCommandLine::Get(),TEXT("AlchemyBuildVFX"))) {
         bool OK=AlchemyVFXBuilder::Build();FPlatformMisc::RequestExitWithStatus(false,OK?0:1);return;
@@ -188,6 +194,7 @@ void AAlchemyWorld::BeginPlay() {
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) || FParse::Param(FCommandLine::Get(),TEXT("VillagePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("UnifiedPresentationTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("Reference60Test"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("RandomLayersTest"));
+    bCapture |= FParse::Param(FCommandLine::Get(),TEXT("GreyfordTODTest"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("MotionPreview"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationTest")) || FParse::Param(FCommandLine::Get(),TEXT("BattlePresentationCapture"));
     bCapture |= FParse::Param(FCommandLine::Get(),TEXT("CombatFeedbackTest"));
@@ -1445,6 +1452,7 @@ void AAlchemyWorld::Tick(float Dt) {
     if(FParse::Param(FCommandLine::Get(),TEXT("VillagePerspectiveTest")) && VillagePerspectiveCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("Reference60Test")) && Reference60Check(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("RandomLayersTest")) && RandomLayerCheck(Dt))return;
+    if(FParse::Param(FCommandLine::Get(),TEXT("GreyfordTODTest")) && GreyfordTODCheck(Dt))return;
     if(FParse::Param(FCommandLine::Get(),TEXT("MotionPreview"))){MotionPreview(Dt);return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("ProducerRegression"))){ProducerRegression();return;}
     if(FParse::Param(FCommandLine::Get(),TEXT("BrewV02Test")) && BrewV02Check(Dt))return;
@@ -1588,6 +1596,13 @@ void AAlchemyWorld::Tick(float Dt) {
         else if(CaptureStep==9 && VisualTime>15) { Capture(TEXT("05_Perspective_Lit.png")); CaptureStep++; }
         else if(CaptureStep==10 && VisualTime>16) {UE_LOG(LogTemp,Display,TEXT("ALCHEMY_CAPTURE_DONE")); FPlatformMisc::RequestExit(false); CaptureStep++;}
     }
+    // Refresh ground projections after movement and combat, including frames that pause early.
+    ON_SCOPE_EXIT {
+        if(bRandomBattleScene && bTODEnabled && IsValid(Camera)){
+            UpdateGreyfordTOD();
+            if(PC->PlayerCameraManager)PC->PlayerCameraManager->UpdateCamera(0);
+        }
+    };
     if(PendingResultSkill>=0 || PendingIsNuclear)Panel=TEXT("result");
     else if(PendingLevelUps>0 && Panel.IsEmpty()) RollLevelupChoices();
     if(!bGreyfordReference && !bBattleReference && !bReferenceBossScene)UpdateCamera(Dt);
@@ -2005,6 +2020,7 @@ void AAlchemyWorld::UpdateCharacterVisual(float Delta,bool Moving) {
 #include "EnemyCreationChecks.inl"
 #include "Reference60Checks.inl"
 #include "RandomBattleScene.inl"
+#include "GreyfordTODChecks.inl"
 #include "RandomLayerChecks.inl"
 #include "MotionPreview.inl"
 #include "VillagePerspectiveChecks.inl"

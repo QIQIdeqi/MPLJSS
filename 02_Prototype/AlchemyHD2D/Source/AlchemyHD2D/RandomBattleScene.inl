@@ -1,5 +1,10 @@
 // The shared authoring generator produces both layers; production queries own traversal.
 void AAlchemyWorld::ClearRandomBattleScene(){
+    if(bRandomBattleScene && bTODEnabled && IsValid(Camera))
+        Camera->GetCameraComponent()->PostProcessSettings.bOverride_ColorGain=false;
+    GreyfordTOD.Clear();
+    TODPropCasters.Reset();
+    TODVisibleCasters.Reset();
     if(bRandomBattleScene && IsValid(Designer)){
         if(Designer->GetWorld())Designer->SetRuntimeVisible(false);
         Designer->CanPlaceObject=nullptr;Designer->ValidateBlockingLayout=nullptr;
@@ -38,7 +43,18 @@ bool AAlchemyWorld::BuildRandomBattleScene(bool Boss){
     Layout->SetRuntimeVisible(true);
     int Ground=0,Objects=0;
     for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It)if(It->GetOwner()==Layout){
-        if(It->bGround)Ground++;else Objects++;
+        if(It->bGround)Ground++;
+        else {
+            Objects++;
+            if(bTODEnabled && It->Texture && It->Image){
+                FVector Foot=It->GetActorLocation();Foot.Z=1;
+                const auto& ImageTransform=It->Image->GetComponentTransform();
+                const FVector ImageWidth=ImageTransform.TransformVector(FVector(100,0,0));
+                const float Height=ImageTransform.TransformVector(FVector(0,100,0)).Size()*.66f;
+                TODPropCasters.Add({Foot,float(ImageWidth.Size2D()),Height,It->bBlocksMovement?1.f:.6f,
+                    It->Texture.Get(),It->FootFraction,ImageWidth.GetSafeNormal2D()});
+            }
+        }
         if(It->bBlocksMovement)Obstacles.Add({FVector2D(It->GetActorLocation()),It->WorldHalfSize()});
     }
     auto Floor=Mesh(TEXT("Plane"),FVector(0,0,-2),FVector((Layout->PlayHalfSize.X+2500)/50,(Layout->PlayHalfSize.Y+2500)/50,1),FLinearColor::White);
@@ -48,11 +64,46 @@ bool AAlchemyWorld::BuildRandomBattleScene(bool Boss){
         Edge->GetStaticMeshComponent()->SetMaterial(0,Material(TEXT("M_ArenaRing")));Edge->GetStaticMeshComponent()->SetCastShadow(false);BattleCards.Add(Edge);}
     bPerspective=true;bUprightSprites=false;bDepthOfField=false;CameraPitch=60;CameraFOV=50;ViewWidth=2400;
     PlayerPos=Boss?FVector(0,-500,0):FVector::ZeroVector;
+    if(bTODEnabled)BindGreyfordTOD();
     UpdateRandomBattleCamera(0);
     UE_LOG(LogTemp,Display,TEXT("RANDOM_LAYERS_READY stage=%d master_seed=%d seed=%d ground=%d objects=%d blockers=%d"),Boss?2:1,RandomMapSeed,Layout->Seed,Ground,Objects,Obstacles.Num());
     const bool Ready=Ground>0 && Walkable(PlayerPos,45);
     if(!Ready)ClearRandomBattleScene();
     return Ready;
+}
+
+void AAlchemyWorld::BindGreyfordTOD(){
+    ADirectionalLight* Sun=nullptr;
+    ASkyLight* Sky=nullptr;
+    // Flow owns a shared pair in its persistent level. Prefer an authored active-stage pair if present.
+    for(TActorIterator<ADirectionalLight> It(GetWorld());It;++It){
+        if(It->GetLevel()==GreyfordActiveLevel){Sun=*It;break;}
+        if(It->GetLevel()==GetWorld()->PersistentLevel && !Sun)Sun=*It;
+    }
+    for(TActorIterator<ASkyLight> It(GetWorld());It;++It){
+        if(It->GetLevel()==GreyfordActiveLevel){Sky=*It;break;}
+        if(It->GetLevel()==GetWorld()->PersistentLevel && !Sky)Sky=*It;
+    }
+    GreyfordTOD.BindLights(Sun,Sky);
+    if(!TODShadowMaterial)TODShadowMaterial=LoadObject<UMaterialInterface>(nullptr,TEXT("/Game/Design/M_TODPropShadow.M_TODPropShadow"));
+    UE_LOG(LogTemp,Display,TEXT("GREYFORD_TOD stage=%d sun=%s sky=%s prop_casters=%d material=%s"),GreyfordStage,
+        *GetNameSafe(Sun),*GetNameSafe(Sky),TODPropCasters.Num(),*GetNameSafe(TODShadowMaterial));
+}
+
+void AAlchemyWorld::UpdateGreyfordTOD(){
+    if(!bTODEnabled)return;
+    GreyfordTOD.Update(bTODFixedHour?0.f:RunTime,TODSettings);
+    const auto Tint=GreyfordTOD.GetSceneTint();
+    auto& Grade=Camera->GetCameraComponent()->PostProcessSettings;
+    Grade.bOverride_ColorGain=true;
+    Grade.ColorGain=FVector4(Tint.R,Tint.G,Tint.B,1);
+
+    TODVisibleCasters.Reset();
+    // Include off-screen casters whose long shadow can reach the camera's view.
+    const float Radius=ViewWidth*.75f+TODSettings.MaxShadowLength;
+    for(const auto& Caster:TODPropCasters)
+        if(FVector::DistSquared2D(Caster.Foot,PlayerPos)<FMath::Square(Radius))TODVisibleCasters.Add(Caster);
+    GreyfordTOD.UpdateShadows(GetWorld(),TODShadowMaterial,TODVisibleCasters);
 }
 
 void AAlchemyWorld::UpdateRandomBattleCamera(float Dt){
@@ -102,5 +153,6 @@ void AAlchemyWorld::UpdateRandomBattleCamera(float Dt){
     PP.bOverride_DepthOfFieldFstop=true;PP.DepthOfFieldFstop=32;
     const FVector Goal=Focus-Forward*Distance;
     Camera->SetActorLocation(Dt<=0?Goal:FMath::VInterpTo(Camera->GetActorLocation(),Goal,Dt,10));
+    if(Dt<=0)UpdateGreyfordTOD();
     if(PC->PlayerCameraManager)PC->PlayerCameraManager->UpdateCamera(0);
 }

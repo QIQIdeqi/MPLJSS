@@ -178,16 +178,61 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
     TUniquePtr<FScopedTransaction> Undo;
     if(Editor){Undo=MakeUnique<FScopedTransaction>(NSLOCTEXT("Alchemy","GenerateLayers","Generate ground and objects"));Modify();GetLevel()->Modify();}
 #endif
+    const int32 GridSlots=Columns*Rows;
     TArray<int32> Pools[2];float Totals[2]={0,0};
+    bool LayerLimited[2]={false,false};
+    TArray<int32> Minimum, Maximum, Counts;
+    Minimum.Init(0,Palette.Num());
+    Maximum.Init(GridSlots,Palette.Num());
+    Counts.Init(0,Palette.Num());
     for(int32 I=0;I<Palette.Num();I++){
         const auto& B=Palette[I];if(!FMath::IsFinite(B.RandomWeight)||B.RandomWeight<0)return Fail(FString::Printf(TEXT("笔刷%s权重无效"),*B.Name));
+        const int32 Layer=B.bGround?0:1;
+        if ((InLayerMask&(1<<Layer)) && (B.CountRange!=FIntPoint(-1,-1) || B.DensityRange!=FVector2D(-1,-1))) {
+            const auto ValidDensity=[](double Value){return Value==-1. || (Value>=0. && Value<=1.);};
+            if (B.CountRange.X<-1 || B.CountRange.Y<-1 || !ValidDensity(B.DensityRange.X) || !ValidDensity(B.DensityRange.Y)) {
+                return Fail(FString::Printf(TEXT("笔刷%s的数量/密度端点无效"),*B.Name));
+            }
+            int32 Named=0;
+            for (const auto& Other:Palette) Named+=(Other.bGround==B.bGround && Other.Name==B.Name);
+            if (B.Name.IsEmpty() || Named!=1) {
+                return Fail(FString::Printf(TEXT("范围笔刷%s需要同层唯一名称，以便统计锁定格"),*B.Name));
+            }
+            LayerLimited[Layer]=true;
+            Minimum[I]=FMath::Max(0,B.CountRange.X);
+            if (B.CountRange.Y>=0) Maximum[I]=FMath::Min(GridSlots,B.CountRange.Y);
+            // Snap numerical noise around an integer slot before taking the inclusive limits.
+            const auto SlotsAtDensity=[&](double Value) {
+                const double Slots=Value*GridSlots;
+                const double Rounded=FMath::RoundToDouble(Slots);
+                return FMath::IsNearlyEqual(Slots,Rounded,1.e-9)?Rounded:Slots;
+            };
+            if (B.DensityRange.X>=0.) Minimum[I]=FMath::Max(Minimum[I],FMath::CeilToInt32(SlotsAtDensity(B.DensityRange.X)));
+            if (B.DensityRange.Y>=0.) Maximum[I]=FMath::Min(Maximum[I],FMath::FloorToInt32(SlotsAtDensity(B.DensityRange.Y)));
+            if (Minimum[I]>Maximum[I]) {
+                return Fail(FString::Printf(TEXT("笔刷%s的数量/密度无共同范围（%d至%d格）"),*B.Name,Minimum[I],Maximum[I]));
+            }
+        }
         if(B.RandomWeight==0)continue;
         if((!B.Texture && !B.Material) || !FMath::IsFinite(B.VisualSize.X+B.VisualSize.Y+B.FootFraction+B.CollisionHalfSize.X+B.CollisionHalfSize.Y+B.ScaleRange.X+B.ScaleRange.Y+B.YawRange.X+B.YawRange.Y) || B.VisualSize.X<=0 || B.VisualSize.Y<=0 || B.CollisionHalfSize.X<0 || B.CollisionHalfSize.Y<0 || B.FootFraction<0 || B.FootFraction>1 || B.ScaleRange.X<=0 || B.ScaleRange.Y<B.ScaleRange.X || B.YawRange.Y<B.YawRange.X)return Fail(FString::Printf(TEXT("笔刷%s素材/占地/脚点无效"),*B.Name));
-        const int Layer=B.bGround?0:1;Pools[Layer].Add(I);Totals[Layer]+=B.RandomWeight;
+        Pools[Layer].Add(I);Totals[Layer]+=B.RandomWeight;
     }
     if(!FMath::IsFinite(Totals[0]+Totals[1]))return Fail(TEXT("素材权重总和无效；原布局保留"));
     if((InLayerMask&1) && Pools[0].IsEmpty())return Fail(TEXT("地面池为空；旧地面保留"));
     const auto Pick=[&](int Layer,FRandomStream& Stream){float Roll=Stream.FRand()*Totals[Layer];for(int I:Pools[Layer])if((Roll-=Palette[I].RandomWeight)<=0)return I;return Pools[Layer].Last();};
+    const auto PickAvailable=[&](int32 Layer,FRandomStream& Stream) {
+        if (!LayerLimited[Layer]) return Pick(Layer,Stream);
+        float Total=0;
+        int32 Last=INDEX_NONE;
+        for (const int32 I:Pools[Layer]) if (Counts[I]<Maximum[I]) {
+            Total+=Palette[I].RandomWeight;
+            Last=I;
+        }
+        if (Last==INDEX_NONE) return Last;
+        float Roll=Stream.FRand()*Total;
+        for (const int32 I:Pools[Layer]) if (Counts[I]<Maximum[I] && (Roll-=Palette[I].RandomWeight)<=0.f) return I;
+        return Last;
+    };
     TArray<AAlchemyTileCell*> Remove,Keep;TMap<FIntPoint,AAlchemyTileCell*> Ground,Objects;
     for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It)if(It->GetOwner()==this){
         auto C=*It;const int Bit=C->bGround?1:2;
@@ -197,6 +242,24 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
             if(C->GridX>=Columns || C->GridY>=Rows)return Fail(FString::Printf(TEXT("保留格%s超出新网格；未解锁"),*C->GetName()));
             auto& Map=C->bGround?Ground:Objects;const FIntPoint Key(C->GridX,C->GridY);
             if(Map.Contains(Key))return Fail(FString::Printf(TEXT("同层重复锁定格(%d,%d)"),Key.X,Key.Y));Map.Add(Key,C);
+        }
+    }
+    for (auto* Cell:Keep) {
+        if (Cell->GridX<0 || Cell->GridY<0 || !LayerLimited[Cell->bGround?0:1]) continue;
+        const int32 Brush=Palette.IndexOfByPredicate([&](const auto& B) {
+            if (B.bGround!=Cell->bGround) return false;
+            if (!Cell->BrushName.IsEmpty()) return B.Name==Cell->BrushName;
+            return (B.Material && B.Material==Cell->MaterialOverride) || (B.Texture && B.Texture==Cell->Texture);
+        });
+        if (Brush!=INDEX_NONE) ++Counts[Brush];
+    }
+    for (int32 I=0;I<Palette.Num();++I) {
+        if (!LayerLimited[Palette[I].bGround?0:1]) continue;
+        if (Counts[I]>Maximum[I]) {
+            return Fail(FString::Printf(TEXT("笔刷%s的保留格%d超过上限%d，旧层及锁定保留"),*Palette[I].Name,Counts[I],Maximum[I]));
+        }
+        if (Counts[I]<Minimum[I] && Palette[I].RandomWeight==0.f) {
+            return Fail(FString::Printf(TEXT("笔刷%s权重为0且保留格%d未达到下限%d"),*Palette[I].Name,Counts[I],Minimum[I]));
         }
     }
     struct FPlan{int X,Y,Brush;FVector Local;float Scale,Yaw;};TArray<FPlan> Plan;
@@ -211,6 +274,35 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
             const FIntPoint Key(X,Y);if(Ground.Contains(Key))continue;
             int Choice=0;double Best=TNumericLimits<double>::Max();for(const auto& Patch:Patches){const double D=FVector2D::DistSquared(Patch.Center,FVector2D(X+.5,Y+.5));if(D<Best){Best=D;Choice=Patch.Brush;}}
             GroundNames.Add(Key,Palette[Choice].Name);Plan.Add({X,Y,Choice,FVector((X-(Columns-1)*.5)*CellSize,(Y-(Rows-1)*.5)*CellSize,1),1,0});
+            if (LayerLimited[0]) ++Counts[Choice];
+        }
+    }
+    if (LayerLimited[0]) {
+        const auto Reassign=[&](FPlan& Cell,int32 Brush) {
+            --Counts[Cell.Brush];
+            ++Counts[Brush];
+            Cell.Brush=Brush;
+            GroundNames.FindChecked(FIntPoint(Cell.X,Cell.Y))=Palette[Brush].Name;
+        };
+        // Satisfy minima from overfull brushes first. Each transfer then fixes both constraints.
+        for (const int32 Brush:Pools[0]) {
+            for (const bool ExcessOnly:{true,false}) {
+                for (auto& Cell:Plan) {
+                    if (Counts[Brush]>=Minimum[Brush]) break;
+                    const int32 Donor=Cell.Brush;
+                    if (Donor==Brush || Counts[Donor]<=(ExcessOnly?Maximum[Donor]:Minimum[Donor])) continue;
+                    Reassign(Cell,Brush);
+                }
+            }
+            if (Counts[Brush]<Minimum[Brush]) {
+                return Fail(FString::Printf(TEXT("笔刷%s缺少可调整地面格，数量%d未达到下限%d"),*Palette[Brush].Name,Counts[Brush],Minimum[Brush]));
+            }
+        }
+        for (auto& Cell:Plan) {
+            if (Counts[Cell.Brush]<=Maximum[Cell.Brush]) continue;
+            const int32 Choice=PickAvailable(0,GroundStream);
+            if (Choice==INDEX_NONE) return Fail(TEXT("地面笔刷上限合计不足以铺满网格"));
+            Reassign(Cell,Choice);
         }
     }
     if(GroundNames.Num()!=Columns*Rows)return Fail(TEXT("物件层需要完整地面；请先生成地面，旧布局保留"));
@@ -225,22 +317,58 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
         const FBox2D Box(FVector2D(Local)-Half,FVector2D(Local)+Half);for(const auto& Other:Occupied)if(Box.ExpandBy(ObjectSpacing).Intersect(Other))return Fail(FString::Printf(TEXT("保留/锁定物件%s间距冲突"),*C->GetName()));
         AddObject(Local,Half,C->bBlocksMovement);
     }
+    const auto TryPlaceObject=[&](int32 Choice,FIntPoint Key,FRandomStream& CellStream) {
+        const auto& B=Palette[Choice];
+        if (!B.AllowedGrounds.IsEmpty() && !B.AllowedGrounds.Contains(GroundNames.FindRef(Key))) return false;
+        const float Scale=CellStream.FRandRange(B.ScaleRange.X,B.ScaleRange.Y);
+        const float Yaw=CellStream.FRandRange(B.YawRange.X,B.YawRange.Y);
+        const float C=FMath::Abs(FMath::Cos(FMath::DegreesToRadians(Yaw)));
+        const float S=FMath::Abs(FMath::Sin(FMath::DegreesToRadians(Yaw)));
+        const auto H=B.CollisionHalfSize*Scale;
+        const FVector2D Half(H.X*C+H.Y*S,H.X*S+H.Y*C);
+        const FVector Local((Key.X-(Columns-1)*.5+CellStream.FRandRange(-.4f,.4f))*CellSize,
+                            (Key.Y-(Rows-1)*.5+CellStream.FRandRange(-.4f,.4f))*CellSize,2);
+        if (!PlacementAllowed(Local,Half,B.bBlocksMovement,B.bBossInterior)) return false;
+        const FBox2D Box(FVector2D(Local)-Half,FVector2D(Local)+Half);
+        if (Occupied.ContainsByPredicate([&](const FBox2D& Other){return Box.ExpandBy(ObjectSpacing).Intersect(Other);})) return false;
+        AddObject(Local,Half,B.bBlocksMovement);
+        Plan.Add({Key.X,Key.Y,Choice,Local,Scale,Yaw});
+        ++Counts[Choice];
+        return true;
+    };
+    TSet<FIntPoint> MinimumSlots;
+    if (LayerLimited[1]) {
+        // Reserve required objects before the ordinary density roll, using a separate deterministic stream.
+        FRandomStream MinimumStream(int32(LayoutSeed^uint32(ObjectSeedOffset)^0x39a5c7d1u));
+        for (const int32 Brush:Pools[1]) {
+            if (Counts[Brush]>=Minimum[Brush]) continue;
+            const int32 First=MinimumStream.RandHelper(GridSlots);
+            for (int32 Step=0;Step<GridSlots && Counts[Brush]<Minimum[Brush];++Step) {
+                const int32 Slot=(First+Step)%GridSlots;
+                const FIntPoint Key(Slot%Columns,Slot/Columns);
+                if (Objects.Contains(Key) || MinimumSlots.Contains(Key)) continue;
+                FRandomStream CellStream(MinimumStream.RandHelper(MAX_int32));
+                for (int32 Attempt=0;Attempt<12;++Attempt) {
+                    if (TryPlaceObject(Brush,Key,CellStream)) {
+                        MinimumSlots.Add(Key);
+                        break;
+                    }
+                }
+            }
+            if (Counts[Brush]<Minimum[Brush]) {
+                return Fail(FString::Printf(TEXT("笔刷%s仅找到%d个合法物件，要求%d至%d，旧层及锁定保留"),*Palette[Brush].Name,Counts[Brush],Minimum[Brush],Maximum[Brush]));
+            }
+        }
+    }
     FRandomStream ObjectStream(int32(LayoutSeed^uint32(ObjectSeedOffset)^0x682471cfu));
-    if((InLayerMask&2) && !Pools[1].IsEmpty())for(int Y=0;Y<Rows;Y++)for(int X=0;X<Columns;X++){
+    if ((InLayerMask&2) && !Pools[1].IsEmpty()) for (int Y=0;Y<Rows;Y++) for (int X=0;X<Columns;X++) {
         // Consume per-cell entropy even under locks, so locks do not reshuffle unrelated cells.
         FRandomStream CellStream(ObjectStream.RandHelper(MAX_int32));
-        if(CellStream.FRand()>=ObjectDensity || Objects.Contains(FIntPoint(X,Y)))continue;
-        for(int Attempt=0;Attempt<12;Attempt++){
-            const int Choice=Pick(1,CellStream);const auto& B=Palette[Choice];
-            if(!B.AllowedGrounds.IsEmpty() && !B.AllowedGrounds.Contains(GroundNames.FindRef(FIntPoint(X,Y))))continue;
-            const float Scale=CellStream.FRandRange(B.ScaleRange.X,B.ScaleRange.Y),Yaw=CellStream.FRandRange(B.YawRange.X,B.YawRange.Y);
-            const float C=FMath::Abs(FMath::Cos(FMath::DegreesToRadians(Yaw))),S=FMath::Abs(FMath::Sin(FMath::DegreesToRadians(Yaw)));
-            const auto H=B.CollisionHalfSize*Scale;const FVector2D Half(H.X*C+H.Y*S,H.X*S+H.Y*C);
-            const FVector Local((X-(Columns-1)*.5+CellStream.FRandRange(-.4f,.4f))*CellSize,(Y-(Rows-1)*.5+CellStream.FRandRange(-.4f,.4f))*CellSize,2);
-            if(!PlacementAllowed(Local,Half,B.bBlocksMovement,B.bBossInterior))continue;
-            const FBox2D Box(FVector2D(Local)-Half,FVector2D(Local)+Half);
-            if(Occupied.ContainsByPredicate([&](const FBox2D& Other){return Box.ExpandBy(ObjectSpacing).Intersect(Other);}))continue;
-            AddObject(Local,Half,B.bBlocksMovement);Plan.Add({X,Y,Choice,Local,Scale,Yaw});break;
+        const FIntPoint Key(X,Y);
+        if (CellStream.FRand()>=ObjectDensity || Objects.Contains(Key) || MinimumSlots.Contains(Key)) continue;
+        for (int Attempt=0;Attempt<12;Attempt++) {
+            const int32 Choice=PickAvailable(1,CellStream);
+            if (Choice==INDEX_NONE || TryPlaceObject(Choice,Key,CellStream)) break;
         }
     }
     if(ValidateBlockingLayout && !ValidateBlockingLayout(Blocking))return Fail(TEXT("实际通路/传送候选校验失败；所有旧层及锁定内容保留"));

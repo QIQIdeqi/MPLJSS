@@ -11,6 +11,7 @@
 #include "AlchemyEnemyDefinitions.h"
 #include "AlchemistSpriteAnimation.h"
 #include "GreyfordReferenceRegion.h"
+#include "GreyfordTOD.h"
 #include "AlchemyWorld.generated.h"
 
 // Native off-axis frustum follows the subject without disturbing registered scenery layers.
@@ -162,8 +163,16 @@ public:
     // Reuse combat in the authored Greyford map with temporary progress.
     UPROPERTY(EditAnywhere, Category="HD2D") bool bGreyfordScene=false;
     UPROPERTY(EditAnywhere, Category="HD2D") bool bGreyfordFlow=false;
+    UPROPERTY(EditAnywhere, Category="TOD") FGreyfordTODSettings TODSettings;
     UPROPERTY() TObjectPtr<ULevel> GreyfordActiveLevel;
     int32 GreyfordStage=0;
+    FGreyfordTOD GreyfordTOD;
+    TArray<FGreyfordTODCaster> TODPropCasters, TODVisibleCasters;
+    UPROPERTY(Transient) TObjectPtr<UMaterialInterface> TODShadowMaterial;
+    bool bTODEnabled=true, bTODFixedHour=false;
+    void BindGreyfordTOD();
+    void UpdateGreyfordTOD();
+    bool GreyfordTODCheck(float Dt);
     bool bGreyfordReference=false;
     int32 ReferencePreviousAA=-1;
     UPROPERTY(EditAnywhere,Category="Reference") float ReferenceZoom=2.41153846f;

@@ -19,8 +19,14 @@ def _focus_after_startup(delta):
                 if stream and stream.get_loaded_level():
                     u.EditorLevelUtils.set_level_visibility(stream.get_loaded_level(),name==('Greyford_Boss' if boss_editor else 'Outskirts_Blockout'),False)
         designers=[x for x in a.get_all_level_actors() if isinstance(x,u.AlchemyLevelDesigner)]
-        d=next((x for x in designers if 'AlchemyRandomStage' in [str(t) for t in x.tags] and (not random_editor or x.get_editor_property('boss_layout')==boss_editor)),designers[0] if designers else None)
-        if d and 'AlchemyRandomStage' in [str(t) for t in d.tags]:
+        if random_editor:
+            d=next((x for x in designers if x.actor_has_tag('AlchemyRandomStage') and x.get_editor_property('boss_layout')==boss_editor),None)
+            if d is None:
+                a.set_selected_level_actors([])
+                raise RuntimeError('Missing random stage preset: '+('Alchemy_Random_Boss' if boss_editor else 'Alchemy_Random_Normal'))
+        else:
+            d=designers[0] if designers else None
+        if random_editor:
             for old in a.get_all_level_actors():
                 if old!=d and old.get_owner()!=d and not isinstance(old,(u.Light,u.CameraActor)):
                     old.set_is_temporarily_hidden_in_editor(True)
@@ -34,6 +40,8 @@ def _focus_after_startup(delta):
             u.log('ALCHEMY_DESIGNER_FOCUSED')
         if '-AlchemyVerifyRandomEditor' in u.SystemLibrary.get_command_line():
             assert d and 'AlchemyRandomStage' in [str(t) for t in d.tags]
+            assert d.get_actor_label()==('Alchemy_Random_Boss' if boss_editor else 'Alchemy_Random_Normal')
+            assert a.get_selected_level_actors()==[d]
             assert d.get_editor_property('boss_layout')==boss_editor
             assert d.get_editor_property('camera_facing_objects') and d.get_editor_property('ground_blend_material')
             assert all(callable(getattr(d,n,None)) for n in ('randomize_ground','randomize_objects','generate_layers','paint_cell','save_design'))
