@@ -147,7 +147,9 @@ void AAlchemyWorld::UpdateRandomBattleCamera(float Dt){
     }
     C->ProjectionOffset=FVector2D::ZeroVector;C->ProjectionMode=ECameraProjectionMode::Perspective;C->SetFieldOfView(50);
     C->bConstrainAspectRatio=false;C->SetAspectRatio(Aspect);C->bOverrideAspectRatioAxisConstraint=true;C->SetAspectRatioAxisConstraint(EAspectRatioAxisConstraint::AspectRatio_MaintainXFOV);
-    auto& PP=C->PostProcessSettings;PP.bOverride_VignetteIntensity=true;PP.VignetteIntensity=0;PP.bOverride_BloomIntensity=true;PP.BloomIntensity=0;
+    auto& PP=C->PostProcessSettings;PP.bOverride_VignetteIntensity=true;PP.VignetteIntensity=0;
+    PP.bOverride_BloomIntensity=true;PP.BloomIntensity=GreyfordStage==1?.26f:0.f;
+    PP.bOverride_BloomThreshold=true;PP.BloomThreshold=1.75f;
     PP.bOverride_ToneCurveAmount=true;PP.ToneCurveAmount=0;PP.bOverride_ExpandGamut=true;PP.ExpandGamut=0;
     PP.bOverride_AutoExposureMinBrightness=PP.bOverride_AutoExposureMaxBrightness=true;PP.AutoExposureMinBrightness=PP.AutoExposureMaxBrightness=1;
     PP.bOverride_DepthOfFieldFstop=true;PP.DepthOfFieldFstop=32;

@@ -19,10 +19,11 @@ void AAlchemyWorld::GrantFragment(int32 Index,FVector Position) {
         return;
     }
     FragmentCount[Index]++;
-    if(FragmentCount[Index]<AlchemyBrewPrototype::FragmentThreshold) return;
+    if(FragmentCount[Index]<AlchemyBrewPrototype::FragmentThreshold) {PlayCue(TEXT("Fragment"));return;}
     if(Inventory[Index]>=10) {FragmentCount[Index]=AlchemyBrewPrototype::FragmentThreshold-1;return;}
     FragmentCount[Index]=0;
     Inventory[Index]++;
+    PlayCue(TEXT("Fragment"));
     if(Progress && !Progress->Materials.Contains(Index)) {Progress->Materials.Add(Index);SaveProgress();}
     Message(FString::Printf(TEXT("%s碎片归集为材料"),MaterialNames[Index]));
 }
@@ -134,6 +135,7 @@ bool AAlchemyWorld::BeginBrew() {
     bBrewActive=true;
     CraftCount++;
     Panel.Empty();
+    PlayCue(TEXT("BrewStart"));
     Message(BrewMode==1?TEXT("驻留坩埚起炼：留在原地完成炼制"):TEXT("随身试剂起炼：可边移动边炼制"));
     return true;
 }
@@ -191,6 +193,7 @@ void AAlchemyWorld::CompleteBrew() {
     }
     bV02Pending=true;
     Panel=TEXT("result");
+    PlayCue(TEXT("BrewDone"));
     Message(TEXT("炼制完成：比较新旧丹药后决定是否接收"));
 }
 

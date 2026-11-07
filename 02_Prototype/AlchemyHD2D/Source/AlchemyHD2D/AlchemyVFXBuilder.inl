@@ -31,6 +31,68 @@ bool Save(UObject* Asset) {
     const FString File=FPackageName::LongPackageNameToFilename(Asset->GetOutermost()->GetName(),FPackageName::GetAssetPackageExtension());
     return UPackage::SavePackage(Asset->GetOutermost(),Asset,*File,Args);
 }
+bool BuildDropParticles() {
+    // The existing trail contains a looping Fountain with an alpha-over-life curve.
+    auto* Template=LoadObject<UNiagaraSystem>(nullptr,TEXT("/Game/VFX/NS_AlchemyTrail.NS_AlchemyTrail"));
+    if(!Template || Template->GetEmitterHandles().Num()!=1) {
+        UE_LOG(LogTemp,Error,TEXT("ALCHEMY_DROP_PARTICLES_FAIL missing Fountain trail template"));
+        return false;
+    }
+    Template->WaitForCompilationComplete();
+    auto* Package=CreatePackage(TEXT("/Game/VFX/NS_AlchemyXPOrb"));
+    Package->FullyLoad();
+    auto* System=DuplicateObject<UNiagaraSystem>(Template,Package,TEXT("NS_AlchemyXPOrb"));
+    System->SetFlags(RF_Public|RF_Standalone);
+    auto* Emitter=System->GetEmitterHandles()[0].GetInstance().GetEmitterData();
+    if(!Emitter) return false;
+    Emitter->bLocalSpace=false;
+
+    // Tune the template's live inputs, never add unused rapid-iteration keys.
+    const auto SetInput=[&](const TCHAR* Suffix,const FNiagaraTypeDefinition& Type,auto Value) {
+        bool Found=false;
+        for(auto* Script:{Emitter->EmitterUpdateScriptProps.Script.Get(),Emitter->SpawnScriptProps.Script.Get(),Emitter->UpdateScriptProps.Script.Get()}) {
+            if(!Script) continue;
+            TArray<FNiagaraVariable> Inputs;
+            Script->RapidIterationParameters.GetParameters(Inputs);
+            for(const auto& Input:Inputs)
+                if(Input.GetType()==Type && Input.GetName().ToString().EndsWith(Suffix))
+                    Found |= Script->RapidIterationParameters.SetParameterValue(Value,Input);
+        }
+        return Found;
+    };
+    const auto SetFloat=[&](const TCHAR* Suffix,float Value) {
+        return SetInput(Suffix,FNiagaraTypeDefinition::GetFloatDef(),Value);
+    };
+    bool Tuned=SetFloat(TEXT(".SpawnRate.SpawnRate"),7.f);
+    Tuned &= SetFloat(TEXT(".InitializeParticle.Lifetime Min"),.36f);
+    Tuned &= SetFloat(TEXT(".InitializeParticle.Lifetime Max"),.60f);
+    Tuned &= SetFloat(TEXT(".InitializeParticle.Uniform Sprite Size Min"),10.f);
+    Tuned &= SetFloat(TEXT(".InitializeParticle.Uniform Sprite Size Max"),15.f);
+    Tuned &= SetFloat(TEXT(".ShapeLocation.Sphere Radius"),4.f);
+    Tuned &= SetFloat(TEXT(".AddVelocity.Cone Angle"),18.f);
+    Tuned &= SetInput(TEXT(".AddVelocity.Cone Axis"),FNiagaraTypeDefinition::GetVec3Def(),FVector3f(0,0,1));
+    Tuned &= SetInput(TEXT(".GravityForce.Gravity"),FNiagaraTypeDefinition::GetVec3Def(),FVector3f::ZeroVector);
+    // Fountain's cone speed can be a literal or a linked Random Range Float.
+    const bool FixedSpeed=SetFloat(TEXT(".AddVelocity.Velocity Speed Scale"),65.f);
+    const bool MinSpeed=SetFloat(TEXT(".RandomRangeFloat.Minimum"),45.f);
+    const bool MaxSpeed=SetFloat(TEXT(".RandomRangeFloat.Maximum"),80.f);
+    if(!Tuned || !(FixedSpeed || (MinSpeed && MaxSpeed))) {
+        UE_LOG(LogTemp,Error,TEXT("ALCHEMY_DROP_PARTICLES_FAIL unexpected Fountain input layout"));
+        return false;
+    }
+
+    System->PostEditChange();
+    System->RequestCompile(true);
+    System->WaitForCompilationComplete(true);
+    FAssetCompilingManager::Get().FinishAllCompilation();
+    bool OK=System->IsReadyToRun();
+    if(OK) {
+        FAssetRegistryModule::AssetCreated(System);
+        OK=Save(System);
+    }
+    UE_LOG(LogTemp,Display,TEXT("ALCHEMY_DROP_PARTICLES_%s asset=%s"),OK?TEXT("PASS"):TEXT("FAIL"),*System->GetPathName());
+    return OK;
+}
 bool Build() {
     auto* MP=CreatePackage(TEXT("/Game/VFX/M_AlchemyParticle"));
     MP->FullyLoad();

@@ -126,6 +126,9 @@ class ALCHEMYHD2D_API AAlchemyLevelDesigner : public AActor {
     GENERATED_BODY()
 public:
     AAlchemyLevelDesigner();
+#if WITH_EDITOR
+    virtual bool IsListedInSceneOutliner() const override;
+#endif
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡",meta=(ClampMin="1",ClampMax="64")) int32 Columns=24;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡",meta=(ClampMin="1",ClampMax="64")) int32 Rows=18;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="关卡",meta=(ClampMin="100",Units="cm")) float CellSize=600;

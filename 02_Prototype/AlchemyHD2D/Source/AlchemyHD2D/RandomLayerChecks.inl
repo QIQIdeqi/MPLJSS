@@ -3,7 +3,8 @@ bool AAlchemyWorld::RandomLayerCheck(float Dt) {
     static int Phase=0,Sample=0;static float Wait=0;static bool OK=true;
     static TArray<FString> FieldGround,FieldObjects,BossObjects;
     const int Seed=77+Sample;
-    const FString Dir=FPaths::ProjectDir()/TEXT("Evidence/RandomLayers_20261104/Native");
+    const bool RecoveryTrial=FParse::Param(FCommandLine::Get(),TEXT("AlchemyRecoveryTrial"));
+    const FString Dir=FPaths::ProjectDir()/(RecoveryTrial?TEXT("Evidence/RandomLayers_20261106/RecoveryTrial"):TEXT("Evidence/RandomLayers_20261104/Native"));
     const auto Check=[&](bool Good,const TCHAR* Name){OK &= Good;UE_LOG(LogTemp,Display,TEXT("RANDOM_LAYERS_CHECK %s %s seed=%d"),Name,Good?TEXT("PASS"):TEXT("FAIL"),Seed);};
     const auto Signature=[&](bool Ground){TArray<FString> Rows;
         for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It)if(It->GetOwner()==Designer && It->bGround==Ground)
@@ -55,13 +56,54 @@ bool AAlchemyWorld::RandomLayerCheck(float Dt) {
         StartRun();RandomMapSeed=Seed;
         const bool Built=SwitchGreyfordStage(1);Check(Built,TEXT("field_build"));
         if(Built){VerifyLayers();const FString G=Signature(true),P=Signature(false);FieldGround.Add(G);FieldObjects.Add(P);
+            IFileManager::Get().MakeDirectory(*Dir,true);
+            FFileHelper::SaveStringToFile(G,*FPaths::Combine(Dir,FString::Printf(TEXT("seed_%d_ground.txt"),Seed)));
+            FFileHelper::SaveStringToFile(P,*FPaths::Combine(Dir,FString::Printf(TEXT("seed_%d_props.txt"),Seed)));
+            TWeakObjectPtr<AAlchemyTileCell> PreviewGround,PreviewObject;
+            for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It) if(It->GetOwner()==Designer) {
+                auto& Preview=It->bGround?PreviewGround:PreviewObject;
+                if(!Preview.IsValid()) { Preview=*It;It->bLockRandom=true; }
+            }
+            Check(PreviewGround.IsValid() && PreviewObject.IsValid(),TEXT("preview_lock_fixture_both_layers"));
             Check(SwitchGreyfordStage(1),TEXT("same_seed_rebuild"));
+            Check(!PreviewGround.IsValid() && !PreviewObject.IsValid(),TEXT("runtime_replaces_locked_preview_cells"));
             Check(G==Signature(true) && P==Signature(false),TEXT("same_seed_reproduces_both_layers"));
             if(Sample==0){
                 const float Density=Designer->ObjectDensity;Designer->ObjectDensity=0;
                 Check(SwitchGreyfordStage(1) && Signature(false).IsEmpty() && G==Signature(true),TEXT("zero_object_density_is_valid_production_layout"));
                 Designer->ObjectDensity=Density;
                 Check(SwitchGreyfordStage(1) && G==Signature(true) && P==Signature(false),TEXT("restore_density_reproduces_layout"));
+                if(!RecoveryTrial) {
+                    const auto SavedPalette=Designer->Palette;
+                    const int32 GridSlots=Designer->Columns*Designer->Rows;
+                    for(auto& Brush:Designer->Palette) {
+                        if(Brush.bGround) {
+                            const int32 Count=Brush.Name==TEXT("Grass")?GridSlots-1:Brush.Name==TEXT("Stone")?1:0;
+                            Brush.CountRange=FIntPoint(Count,Count);
+                        } else if(Brush.Name==TEXT("Oak")) {
+                            Brush.CountRange=FIntPoint(2,2);
+                            Brush.DensityRange=FVector2D(2./GridSlots,2./GridSlots);
+                        }
+                    }
+                    const auto CheckConfigured=[&](int32 TrialSeed,FVector& Stone){
+                        RandomMapSeed=TrialSeed;
+                        if(!SwitchGreyfordStage(1)) return false;
+                        int32 Grass=0,Stones=0,Oak=0;
+                        for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It) if(It->GetOwner()==Designer) {
+                            Grass+=It->bGround && It->BrushName==TEXT("Grass");
+                            Oak+=!It->bGround && It->BrushName==TEXT("Oak");
+                            if(It->bGround && It->BrushName==TEXT("Stone")) { ++Stones;Stone=It->GetActorLocation(); }
+                        }
+                        return Grass==GridSlots-1 && Stones==1 && Oak==2;
+                    };
+                    FVector FirstStone=FVector::ZeroVector,SecondStone=FVector::ZeroVector;
+                    const bool First=CheckConfigured(Seed,FirstStone);
+                    const bool Second=CheckConfigured(Seed+1,SecondStone);
+                    Check(First && Second && FirstStone!=SecondStone,TEXT("configured_counts_and_density_hold_across_seeds_with_random_terrain_location"));
+                    Designer->Palette=SavedPalette;
+                    RandomMapSeed=Seed;
+                    Check(SwitchGreyfordStage(1) && G==Signature(true) && P==Signature(false),TEXT("restore_palette_reproduces_layout"));
+                }
             }
             Check(Walkable(FVector::ZeroVector,45),TEXT("field_origin_clear"));
             int Routes=0;bool Reachable=true;
@@ -84,6 +126,56 @@ bool AAlchemyWorld::RandomLayerCheck(float Dt) {
             Check(Solid,TEXT("solid_blocks_move_and_path_goes_around"));Check(Decor,TEXT("decoration_is_traversable"));
             RunTime=300;UpdateGreyfordPortal();TArray<FVector> Path;
             Check(GreyfordPortalReady && Walkable(GreyfordPortalPos,240) && FindPath(PlayerPos,GreyfordPortalPos,45,Path),TEXT("portal_real_candidate_clear_and_reachable"));
+            if(Sample==0 && !RecoveryTrial) {
+                FAlchemyEnemy Enemy;
+                Enemy.Type=0;
+                Enemy.Pos=PlayerPos+FVector(250,160,0);
+                const auto SavedRandom=Random;
+                Random.Initialize(0);
+                RewardEnemy(Enemy);
+                Random=SavedRandom;
+                const auto* XP=Drops.FindByPredicate([](const auto& D){return D.Kind==-2;});
+                const auto* Coin=Drops.FindByPredicate([](const auto& D){return D.Kind==-1;});
+                Check(XP && Coin && IsValid(XP->Body) && IsValid(Coin->Body) && !XP->Pos.Equals(Coin->Pos)
+                    && XP->Body->GetStaticMeshComponent()->GetMaterial(0)->GetMaterial()!=Coin->Body->GetStaticMeshComponent()->GetMaterial(0)->GetMaterial(),
+                    TEXT("normal_reward_distinct_coin_and_experience_orb"));
+                if(XP && Coin) {
+                    const float PreviousXP=RunXP;
+                    const int32 PreviousCoins=RunCoins;
+                    CollectDrop(XP->Kind,XP->Count);
+                    CollectDrop(Coin->Kind,Coin->Count);
+                    Check(RunXP==PreviousXP+1 && RunCoins==PreviousCoins+1,TEXT("experience_and_coin_reward_values"));
+                    RunXP=PreviousXP;
+                    RunCoins=PreviousCoins;
+                }
+            }
+            if(RecoveryTrial) {
+                TArray<const AAlchemyTileCell*> Fences,Crates;
+                for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It) if(It->GetOwner()==Designer && !It->bGround) {
+                    if(It->BrushName==TEXT("Fence")) Fences.Add(*It);
+                    if(It->BrushName==TEXT("Crates")) Crates.Add(*It);
+                }
+                const AAlchemyTileCell* Landmark=nullptr;
+                for(const auto* Fence:Fences) for(const auto* Crate:Crates) {
+                    const auto Delta=Crate->GetActorLocation()-Fence->GetActorLocation();
+                    if(FMath::IsNearlyEqual(FMath::Abs(Delta.X),Designer->CellSize,.1) && FMath::IsNearlyZero(Delta.Y,.1))
+                        Landmark=Fence;
+                }
+                if(Landmark) {
+                    const FVector Center=Landmark->GetActorLocation();
+                    const FVector2D Half=Landmark->WorldHalfSize();
+                    const FVector Front=Center+FVector(0,-Half.Y-145,0);
+                    const FVector Back=Center+FVector(0,Half.Y+145,0);
+                    TArray<FVector> Approach;
+                    Check(FindPath(PlayerPos,Front,45,Approach),TEXT("recovery_front_reachable"));
+                    for(int32 Side:{-1,1}) {
+                        const FVector End(Side*(Half.X+85),0,0);
+                        const auto Step=[&](FVector A,FVector B){return Walkable(A,45) && FVector::DistSquared2D(Move(A,B-A,45),B)<1.;};
+                        Check(Step(Front,Front+End) && Step(Front+End,Back+End) && Step(Back+End,Back),
+                            Side<0?TEXT("recovery_left_route_walkable"):TEXT("recovery_right_route_walkable"));
+                    }
+                }
+            }
         }
         Phase=1;return true;
     }

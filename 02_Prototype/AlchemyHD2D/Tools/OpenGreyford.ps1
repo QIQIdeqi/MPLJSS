@@ -1,4 +1,5 @@
-﻿param([ValidateSet('Village','Outskirts')][string]$Scene='Village',[switch]$Play)
+﻿param([ValidateSet('Village','Outskirts')][string]$Scene='Village',[switch]$Play,
+      [ValidateSet('A','B')][string]$RecoveryCompare,[int]$Seed=77)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
 $engineExe='D:\02_UnrealEngine\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
@@ -11,6 +12,10 @@ if(-not (Test-Path -LiteralPath $mapFile)) {throw "Greyford map is missing: $map
 $editorArgs=@(('"'+$projectFile+'"'),$map)
 if($Play){
     $editorArgs+=@('-game','-windowed','-ResX=1280','-ResY=720')
+    if($RecoveryCompare){
+        $editorArgs+=@('-AlchemyRecoveryCompare','-AlchemyStartCombat',"-MapSeed=$Seed")
+        if($RecoveryCompare -eq 'B'){$editorArgs+='-AlchemyRecoveryTrial'}
+    }
 }
 else {
     $aliasRoot='D:\03_UEProject\AlchemyHD2DResearch'

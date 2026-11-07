@@ -71,6 +71,7 @@ void AAlchemyWorld::UpdateEliteSpawning(float Dt) {
         EliteWarning.Position=P;EliteWarning.Remaining=EliteWarningSeconds;
         const float Radius=FMath::Max(110.f,EnemyRadius(ID)+45);
         EliteWarning.Marker=Mesh(TEXT("Cylinder"),P+FVector(0,0,-6),FVector(Radius/50,Radius/50,.015f),FLinearColor(1,.48f,.08f,.7f));
+        PlayCue(TEXT("EnemyWarn"),.85f);
         return;
     }
     EliteWarning.Retry=1;

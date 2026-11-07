@@ -9,10 +9,16 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "UObject/ConstructorHelpers.h"
 #if WITH_EDITOR
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Editor.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Misc/App.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #include "FileHelpers.h"
 #include "ScopedTransaction.h"
@@ -96,6 +102,14 @@ FVector2D AAlchemyTileCell::WorldHalfSize() const {
     return FVector2D(H.X*C+H.Y*S,H.X*S+H.Y*C);
 }
 AAlchemyLevelDesigner::AAlchemyLevelDesigner() {RootComponent=CreateDefaultSubobject<USceneComponent>(TEXT("Root"));PrimaryActorTick.bCanEverTick=false;}
+#if WITH_EDITOR
+bool AAlchemyLevelDesigner::IsListedInSceneOutliner() const {
+    const bool bArchivedOutskirtsDesigner=!bUseInGame && GetLevel()
+        && GetLevel()->GetOutermost()->GetName()==TEXT("/Game/Greyford/Maps/Outskirts_Blockout")
+        && GetActorLabel(false)==TEXT("GF_关卡编辑器_地块与素材库");
+    return !bArchivedOutskirtsDesigner && Super::IsListedInSceneOutliner();
+}
+#endif
 void AAlchemyLevelDesigner::ImportPalette() {
 #if WITH_EDITOR
     FScopedTransaction Undo(NSLOCTEXT("Alchemy","ImportPalette","Import image palette"));Modify();
@@ -171,9 +185,25 @@ bool AAlchemyLevelDesigner::PlacementAllowed(FVector Local,FVector2D Half,bool B
     return true;
 }
 bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
-    const auto Fail=[&](FString Why){Status=MoveTemp(Why);UE_LOG(LogTemp,Warning,TEXT("ALCHEMY_LAYER_GENERATE_FAIL seed=%d ground=%d objects=%d boss=%d mask=%d %s"),Seed,GroundSeedOffset,ObjectSeedOffset,bBossLayout,InLayerMask,*Status);return false;};
+    const auto Notify=[&](bool bSuccess) {
+#if WITH_EDITOR
+        if(!GetWorld() || GetWorld()->IsGameWorld() || !FSlateApplication::IsInitialized() || FApp::IsUnattended()) return;
+        FNotificationInfo Info(FText::FromString(Status));
+        Info.ExpireDuration=bSuccess?4.f:9.f;
+        Info.bUseSuccessFailIcons=true;
+        if(auto Item=FSlateNotificationManager::Get().AddNotification(Info))
+            Item->SetCompletionState(bSuccess?SNotificationItem::CS_Success:SNotificationItem::CS_Fail);
+#endif
+    };
+    const auto Fail=[&](FString Why){
+        Status=MoveTemp(Why);
+        UE_LOG(LogTemp,Warning,TEXT("ALCHEMY_LAYER_GENERATE_FAIL seed=%d ground=%d objects=%d boss=%d mask=%d %s"),Seed,GroundSeedOffset,ObjectSeedOffset,bBossLayout,InLayerMask,*Status);
+        Notify(false);
+        return false;
+    };
     if(!GetWorld() || InLayerMask<1 || InLayerMask>3 || Columns<1 || Columns>64 || Rows<1 || Rows>64 || !FMath::IsFinite(CellSize) || CellSize<100 || PlayHalfSize.X<=0 || PlayHalfSize.Y<=0 || GroundPatchSize<1 || GroundPatchSize>16 || !FMath::IsFinite(ObjectDensity+ObjectSpacing+ProtectedPathHalfWidth) || ObjectDensity<0 || ObjectDensity>1 || ObjectSpacing<0 || ProtectedPathHalfWidth<100 || BossHalfSize.X<=0 || BossHalfSize.Y<=0)return Fail(TEXT("两层生成参数无效；原布局保留"));
     const bool Editor=!GetWorld()->IsGameWorld();
+    const bool RuntimeRandomStage=!Editor && ActorHasTag(TEXT("AlchemyRandomStage"));
 #if WITH_EDITOR
     TUniquePtr<FScopedTransaction> Undo;
     if(Editor){Undo=MakeUnique<FScopedTransaction>(NSLOCTEXT("Alchemy","GenerateLayers","Generate ground and objects"));Modify();GetLevel()->Modify();}
@@ -191,7 +221,7 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
         if ((InLayerMask&(1<<Layer)) && (B.CountRange!=FIntPoint(-1,-1) || B.DensityRange!=FVector2D(-1,-1))) {
             const auto ValidDensity=[](double Value){return Value==-1. || (Value>=0. && Value<=1.);};
             if (B.CountRange.X<-1 || B.CountRange.Y<-1 || !ValidDensity(B.DensityRange.X) || !ValidDensity(B.DensityRange.Y)) {
-                return Fail(FString::Printf(TEXT("笔刷%s的数量/密度端点无效"),*B.Name));
+                return Fail(FString::Printf(TEXT("「%s」范围输入无效。数量填非负整数，密度填 0 到 1，-1 表示不限。"),*B.Name));
             }
             int32 Named=0;
             for (const auto& Other:Palette) Named+=(Other.bGround==B.bGround && Other.Name==B.Name);
@@ -210,7 +240,7 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
             if (B.DensityRange.X>=0.) Minimum[I]=FMath::Max(Minimum[I],FMath::CeilToInt32(SlotsAtDensity(B.DensityRange.X)));
             if (B.DensityRange.Y>=0.) Maximum[I]=FMath::Min(Maximum[I],FMath::FloorToInt32(SlotsAtDensity(B.DensityRange.Y)));
             if (Minimum[I]>Maximum[I]) {
-                return Fail(FString::Printf(TEXT("笔刷%s的数量/密度无共同范围（%d至%d格）"),*B.Name,Minimum[I],Maximum[I]));
+                return Fail(FString::Printf(TEXT("「%s」至少要 %d 格，最多只能放 %d 格。请检查数量和密度。只按数量控制时，密度 X、Y 都填 -1。"),*B.Name,Minimum[I],Maximum[I]));
             }
         }
         if(B.RandomWeight==0)continue;
@@ -236,7 +266,7 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
     TArray<AAlchemyTileCell*> Remove,Keep;TMap<FIntPoint,AAlchemyTileCell*> Ground,Objects;
     for(TActorIterator<AAlchemyTileCell> It(GetWorld());It;++It)if(It->GetOwner()==this){
         auto C=*It;const int Bit=C->bGround?1:2;
-        if(C->GridX>=0 && C->GridY>=0 && (InLayerMask&Bit) && !C->bLockRandom){Remove.Add(C);continue;}
+        if((InLayerMask&Bit) && (RuntimeRandomStage || (C->GridX>=0 && C->GridY>=0 && !C->bLockRandom))){Remove.Add(C);continue;}
         Keep.Add(C);
         if(C->GridX>=0 && C->GridY>=0){
             if(C->GridX>=Columns || C->GridY>=Rows)return Fail(FString::Printf(TEXT("保留格%s超出新网格；未解锁"),*C->GetName()));
@@ -262,7 +292,7 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
             return Fail(FString::Printf(TEXT("笔刷%s权重为0且保留格%d未达到下限%d"),*Palette[I].Name,Counts[I],Minimum[I]));
         }
     }
-    struct FPlan{int X,Y,Brush;FVector Local;float Scale,Yaw;};TArray<FPlan> Plan;
+    struct FPlan{int X,Y,Brush;FVector Local;float Scale,Yaw;FVector2D Half=FVector2D::ZeroVector;};TArray<FPlan> Plan;
     TMap<FIntPoint,FString> GroundNames;
     for(const auto& Item:Ground){FString Name=Item.Value->BrushName;if(Name.IsEmpty())for(const auto& B:Palette)if(B.bGround && ((B.Material && B.Material==Item.Value->MaterialOverride)||(B.Texture && B.Texture==Item.Value->Texture))){Name=B.Name;break;}GroundNames.Add(Item.Key,Name);}
     const uint32 LayoutSeed=uint32(Seed)^(bBossLayout?0x53e29b17u:0x128f42abu);
@@ -278,6 +308,11 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
         }
     }
     if (LayerLimited[0]) {
+        // A forced rare terrain tile still needs a seeded position rather than the first grid cell.
+        TArray<int32> GroundOrder;
+        GroundOrder.Reserve(Plan.Num());
+        for(int32 I=0;I<Plan.Num();++I) GroundOrder.Add(I);
+        for(int32 I=GroundOrder.Num()-1;I>0;--I) GroundOrder.Swap(I,GroundStream.RandRange(0,I));
         const auto Reassign=[&](FPlan& Cell,int32 Brush) {
             --Counts[Cell.Brush];
             ++Counts[Brush];
@@ -287,8 +322,9 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
         // Satisfy minima from overfull brushes first. Each transfer then fixes both constraints.
         for (const int32 Brush:Pools[0]) {
             for (const bool ExcessOnly:{true,false}) {
-                for (auto& Cell:Plan) {
+                for (const int32 Index:GroundOrder) {
                     if (Counts[Brush]>=Minimum[Brush]) break;
+                    auto& Cell=Plan[Index];
                     const int32 Donor=Cell.Brush;
                     if (Donor==Brush || Counts[Donor]<=(ExcessOnly?Maximum[Donor]:Minimum[Donor])) continue;
                     Reassign(Cell,Brush);
@@ -298,7 +334,8 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
                 return Fail(FString::Printf(TEXT("笔刷%s缺少可调整地面格，数量%d未达到下限%d"),*Palette[Brush].Name,Counts[Brush],Minimum[Brush]));
             }
         }
-        for (auto& Cell:Plan) {
+        for (const int32 Index:GroundOrder) {
+            auto& Cell=Plan[Index];
             if (Counts[Cell.Brush]<=Maximum[Cell.Brush]) continue;
             const int32 Choice=PickAvailable(0,GroundStream);
             if (Choice==INDEX_NONE) return Fail(TEXT("地面笔刷上限合计不足以铺满网格"));
@@ -332,7 +369,7 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
         const FBox2D Box(FVector2D(Local)-Half,FVector2D(Local)+Half);
         if (Occupied.ContainsByPredicate([&](const FBox2D& Other){return Box.ExpandBy(ObjectSpacing).Intersect(Other);})) return false;
         AddObject(Local,Half,B.bBlocksMovement);
-        Plan.Add({Key.X,Key.Y,Choice,Local,Scale,Yaw});
+        Plan.Add({Key.X,Key.Y,Choice,Local,Scale,Yaw,Half});
         ++Counts[Choice];
         return true;
     };
@@ -372,6 +409,71 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
         }
     }
     if(ValidateBlockingLayout && !ValidateBlockingLayout(Blocking))return Fail(TEXT("实际通路/传送候选校验失败；所有旧层及锁定内容保留"));
+    if(RuntimeRandomStage && !bBossLayout && InLayerMask==3 && FParse::Param(FCommandLine::Get(),TEXT("AlchemyRecoveryTrial"))) {
+        // Move one already-budgeted crate beside a seeded fence. The complete scatter plan is the fallback.
+        TArray<int32> Fences;
+        int32 CrateIndex=INDEX_NONE;
+        TSet<FIntPoint> ObjectSlots;
+        for(int32 I=0;I<Plan.Num();++I) {
+            const auto& Item=Plan[I];
+            const auto& Brush=Palette[Item.Brush];
+            if(Brush.bGround) continue;
+            ObjectSlots.Add(FIntPoint(Item.X,Item.Y));
+            if(Brush.Name==TEXT("Fence")) Fences.Add(I);
+            if(Brush.Name==TEXT("Crates")) CrateIndex=I;
+        }
+        Fences.StableSort([&](int32 A,int32 B){return Plan[A].Local.SizeSquared2D()<Plan[B].Local.SizeSquared2D();});
+        bool Applied=false;
+        if(CrateIndex!=INDEX_NONE) {
+            auto& Crate=Plan[CrateIndex];
+            const auto& Brush=Palette[Crate.Brush];
+            ObjectSlots.Remove(FIntPoint(Crate.X,Crate.Y));
+            for(int32 FenceIndex:Fences) {
+                const auto& Fence=Plan[FenceIndex];
+                const FVector2D Center(Fence.Local);
+                // Both ends and the two faces must fit a continuous, clear loop around the fence.
+                const FVector2D LoopHalf=Fence.Half+FVector2D(135,300);
+                const FBox2D Loop(Center-LoopHalf,Center+LoopHalf);
+                if(FMath::Abs(Center.X)+LoopHalf.X>=PlayHalfSize.X || FMath::Abs(Center.Y)+LoopHalf.Y>=PlayHalfSize.Y) continue;
+                for(int32 Side:{-1,1}) {
+                    const FIntPoint Slot(Fence.X+Side,Fence.Y);
+                    if(Slot.X<0 || Slot.X>=Columns || ObjectSlots.Contains(Slot)) continue;
+                    if(!Brush.AllowedGrounds.IsEmpty() && !Brush.AllowedGrounds.Contains(GroundNames.FindRef(Slot))) continue;
+                    const FVector Local=Fence.Local+FVector(Side*CellSize,0,0);
+                    if(!PlacementAllowed(Local,Crate.Half,Brush.bBlocksMovement,Brush.bBossInterior)) continue;
+                    const FVector2D Point(Local);
+                    const FBox2D CrateBox(Point-Crate.Half,Point+Crate.Half);
+                    if(CrateBox.Intersect(Loop)) continue;
+                    bool Clear=true;
+                    for(int32 I=0;I<Plan.Num();++I) {
+                        const auto& Other=Plan[I];
+                        if(I==CrateIndex || Palette[Other.Brush].bGround) continue;
+                        const FVector2D OtherCenter(Other.Local);
+                        const FBox2D OtherBox(OtherCenter-Other.Half,OtherCenter+Other.Half);
+                        if(CrateBox.ExpandBy(ObjectSpacing).Intersect(OtherBox) ||
+                            (I!=FenceIndex && Loop.Intersect(OtherBox))) {Clear=false;break;}
+                    }
+                    if(!Clear) continue;
+                    const auto Previous=Crate;
+                    Crate.X=Slot.X;
+                    Crate.Y=Slot.Y;
+                    Crate.Local=Local;
+                    Blocking.Reset();
+                    for(const auto& Item:Plan) if(!Palette[Item.Brush].bGround && Palette[Item.Brush].bBlocksMovement) {
+                        const FVector Extent(Item.Half,0);
+                        const FBox WorldBox=FBox(Item.Local-Extent,Item.Local+Extent).TransformBy(GetActorTransform());
+                        Blocking.Add(FBox2D(FVector2D(WorldBox.Min),FVector2D(WorldBox.Max)));
+                    }
+                    if(ValidateBlockingLayout && !ValidateBlockingLayout(Blocking)) {Crate=Previous;continue;}
+                    UE_LOG(LogTemp,Display,TEXT("RECOVERY_TRIAL_APPLIED seed=%d fence=%s crate=%s"),Seed,*Fence.Local.ToString(),*Local.ToString());
+                    Applied=true;
+                    break;
+                }
+                if(Applied) break;
+            }
+        }
+        if(!Applied) UE_LOG(LogTemp,Display,TEXT("RECOVERY_TRIAL_FALLBACK seed=%d"),Seed);
+    }
     TArray<AAlchemyTileCell*> Created;
     for(const auto& Item:Plan){
         FActorSpawnParameters Params;Params.Owner=this;Params.OverrideLevel=GetLevel();Params.ObjectFlags|=Editor?RF_Transactional:RF_Transient;
@@ -389,7 +491,14 @@ bool AAlchemyLevelDesigner::GenerateLayers(int32 InLayerMask) {
     if(Editor)MarkPackageDirty();
 #endif
     RefreshCells();
-    Status=FString::Printf(TEXT("双层生成成功 Seed=%d mask=%d：新建%d，保留%d；地面斑块/物件独立序列"),Seed,InLayerMask,Created.Num(),Keep.Num());
+    if(InLayerMask==2) {
+        int32 KeptProps=0;
+        for(const auto* Cell:Keep) if(!Cell->bGround) ++KeptProps;
+        Status=FString::Printf(TEXT("物件重摇完成。新摆 %d 个，保留 %d 个，地面保留。"),Created.Num(),KeptProps);
+    } else {
+        Status=FString::Printf(TEXT("关卡生成完成。新建 %d 格，保留 %d 格。"),Created.Num(),Keep.Num());
+    }
+    Notify(true);
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_LAYER_GENERATE_PASS %s"),*Status);return true;
 }
 void AAlchemyLevelDesigner::PaintCell() {

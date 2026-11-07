@@ -61,13 +61,16 @@ bool AAlchemyWorld::SpawnMerchant() {
     UpdateMerchantVisual(0);
     static const float Times[]={80,175,265},Jitter[]={10,15,10};
     NextMerchantTime=MerchantVisit<3?FMath::Max(RunTime+60,Times[MerchantVisit]+MerchantRandom.FRandRange(-Jitter[MerchantVisit],Jitter[MerchantVisit])):300;
+    PlayCue(TEXT("MerchantArrive"));
     Message(TEXT("流浪商人出现 · 靠近金色标记按 F 交易，停留35秒"));
     UE_LOG(LogTemp,Display,TEXT("MERCHANT_SPAWN visit=%d time=%.2f pos=(%.0f,%.0f) stock=%d,%d,%d"),MerchantVisit,RunTime,MerchantPos.X,MerchantPos.Y,MerchantStock[0],MerchantStock[1],MerchantStock[2]);
     return true;
 }
 bool AAlchemyWorld::OpenMerchant() {
     if(!CanTrade() || !Panel.IsEmpty() || PendingLevelUps>0 || PendingResultSkill>=0 || PendingIsNuclear) return false;
-    Selected={0,0,0,0,0,0};MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;Panel=TEXT("merchant");UpdateFeedback(0);MerchantSay(TEXT("缺材料可以买，多出来的我也收。"));return true;
+    Selected={0,0,0,0,0,0};MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;Panel=TEXT("merchant");UpdateFeedback(0);MerchantSay(TEXT("缺材料可以买，多出来的我也收。"));
+    PlayCue(TEXT("Interact"));
+    return true;
 }
 bool AAlchemyWorld::BuyMerchant(int32 Slot) {
     if(!CanTrade() || Panel!=TEXT("merchant") || Slot<0 || Slot>=3 || MerchantSoldOut[Slot]) return false;
@@ -195,7 +198,8 @@ void AAlchemyWorld::MerchantTradeFeedback(int32 Delta,FVector2D From,FVector2D T
     MerchantTradeSerial++;if(MerchantCoinEffects.Num()>=12) MerchantCoinEffects.RemoveAt(0);
     MerchantCoinEffects.Add({From,To,VisualTime,Delta});MerchantSay(Line);
     auto* Sound=Delta>0?MerchantSellSound.Get():MerchantBuySound.Get();
-    if(Sound) {MerchantSoundEvents++;UGameplayStatics::PlaySound2D(this,Sound,.6f);}
+    if(Sound) MerchantSoundEvents++;
+    PlayCue(Delta>0?TEXT("MerchantSell"):TEXT("MerchantBuy"),.6f);
 }
 void AAlchemyWorld::UpdateMerchantFeedback() {
     MerchantCoinEffects.RemoveAll([&](const FMerchantCoinEffect& E){return VisualTime-E.Born>1.1f;});

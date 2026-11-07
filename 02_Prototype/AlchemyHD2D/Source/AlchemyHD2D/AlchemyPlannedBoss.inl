@@ -98,7 +98,7 @@ FVector AAlchemyWorld::BossStraightMove(FVector From,FVector Delta,float Radius)
 
 void AAlchemyWorld::BossLockCue() {
     PlannedBossLockSounds++;
-    if(BossLockSound)UGameplayStatics::PlaySound2D(this,BossLockSound,.55f);
+    PlayCue(TEXT("BossLock"),.55f);
 }
 
 void AAlchemyWorld::ShowPlannedBossLines(FAlchemyEnemy& E,bool Dash,bool Locked) {
@@ -151,6 +151,7 @@ void AAlchemyWorld::FirePlannedBossWave(FAlchemyEnemy& E,float FrameOffset) {
         M->SetVectorParameterValue(TEXT("Tint"),S.Color);S.Body->GetStaticMeshComponent()->SetMaterial(0,M);
     }
     PlannedBossWavesFired++;ClearBossTelegraphs();
+    PlayCue(TEXT("BossAttack"));
     for(auto A:PlannedBossLines)if(IsValid(A))A->SetActorHiddenInGame(true);
 }
 
@@ -163,6 +164,7 @@ void AAlchemyWorld::UpdatePlannedBoss(FAlchemyEnemy& E,float Dt) {
             E.BossAttack=E.BossSequence==0?Random.RandRange(0,1):1-E.BossAttack;
             E.BossSequence++;E.PlannedTime=0;E.PlannedLocked=false;E.BossDashHit=false;
             E.PlannedState=E.BossAttack==0?1:4;
+            PlayCue(TEXT("EnemyWarn"));
             E.DashDirection=(PlayerPos-E.Pos).GetSafeNormal2D();
             if(E.DashDirection.IsNearlyZero())E.DashDirection=FVector(0,-1,0);
             BossAttackCounts[E.BossAttack]++;
@@ -175,6 +177,7 @@ void AAlchemyWorld::UpdatePlannedBoss(FAlchemyEnemy& E,float Dt) {
             if(!E.PlannedLocked)E.DashDirection=(PlayerPos-E.Pos).GetSafeNormal2D();
             if(E.PlannedTime+KINDA_SMALL_NUMBER>=1) {
                 Hide();E.PlannedState=2;E.PlannedTime=0;E.PlannedDistance=0;
+                PlayCue(TEXT("BossAttack"));
                 SpawnVFX(BlastFX,E.Pos+FVector(0,0,35),FLinearColor(1,.4f,.1f),.65f,.6f);
             }
         } else if(E.PlannedState==2) {

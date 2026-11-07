@@ -90,6 +90,7 @@ void AAlchemyWorld::UpdateBoss(FAlchemyEnemy& E,float Dt) {
         E.Windup=FMath::Max(0.f,E.Windup-Dt);
         if(E.Windup>0) return;
         ClearBossTelegraphs();
+        PlayCue(TEXT("BossAttack"));
         BossAttackCounts[E.BossAttack]++;
         const FVector D=(E.Aim-E.Pos).GetSafeNormal2D();
         if(E.BossAttack==0) {E.BossActive=.85f;E.DashDirection=D;E.BossDashHit=false;}
@@ -111,6 +112,7 @@ void AAlchemyWorld::UpdateBoss(FAlchemyEnemy& E,float Dt) {
         E.BossAttack=E.BossSequence++%3;E.Aim=PlayerPos;
         if(FVector::DistSquared2D(E.Aim,E.Pos)<1) E.Aim=E.Pos+FVector(1,0,0);
         E.Windup=E.BossAttack==0?1.1f:E.BossAttack==1?1.25f:1.35f;
+        PlayCue(TEXT("EnemyWarn"));
         const FVector D=(E.Aim-E.Pos).GetSafeNormal2D();
         const float Length=1800;
         const float Width=E.BossAttack==0?310.f:E.BossAttack==1?126.f:300.f;

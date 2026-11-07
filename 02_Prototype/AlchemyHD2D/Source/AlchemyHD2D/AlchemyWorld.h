@@ -83,6 +83,7 @@ struct FAlchemyEliteWarning {
     TWeakObjectPtr<AStaticMeshActor> Marker;
 };
 struct FAlchemyEnemy {
+    float AudioStepDistance=0.f;
     AStaticMeshActor* Body=nullptr;
     AStaticMeshActor* Shadow=nullptr;
     FVector Pos=FVector::ZeroVector;
@@ -118,7 +119,10 @@ struct FAlchemyShot {
 struct FAlchemyDrop {
     AStaticMeshActor* Body=nullptr;
     FVector Pos=FVector::ZeroVector;
-    int32 Kind=0, Count=1; // -1 currency, 0..5 materials, 6..8 elite chests
+    FVector VisualBase=FVector::ZeroVector;
+    float SpawnTime=0;
+    TWeakObjectPtr<UNiagaraComponent> Motes;
+    int32 Kind=0, Count=1; // -2 experience, -1 currency, 0..5 materials, 6..8 elite chests
 };
 struct FAlchemyFX { AStaticMeshActor* Body=nullptr; float Life=0, Total=0; float Radius=0; bool PotionBreak=false,New=true; };
 struct FAlchemyObstacle { FVector2D Center; FVector2D Half; };
@@ -352,6 +356,7 @@ public:
     UPROPERTY() TObjectPtr<UNiagaraSystem> ImpactFX;
     UPROPERTY() TObjectPtr<UNiagaraSystem> BlastFX;
     UPROPERTY() TObjectPtr<UNiagaraSystem> TrailFX;
+    UPROPERTY() TObjectPtr<UNiagaraSystem> XPDropFX;
     UPROPERTY() TObjectPtr<UMaterialInterface> ParticleMaterial;
     int32 HitFXThisFrame=0, DamageSerial=0, VFXSpawnCount=0;
     TArray<FAlchemyObstacle> Obstacles;
@@ -557,6 +562,16 @@ public:
     int32 Area(FVector Pos,float Radius,float Damage,FLinearColor Color,float Slow=0,float SlowFactor=0.65f,UNiagaraSystem* CastSystem=nullptr,UNiagaraSystem* HitSystem=nullptr,float EffectScale=1,float CastLife=1.25f,float HitLife=.7f);
     void Hurt(float Damage);
     void Drop(FVector Pos,int32 Kind,int32 Count=1);
+    void PlayCue(FName Cue,float Gain=1.f,float Pitch=1.f);
+    void PlayEnemyCue(FName Cue,const FAlchemyEnemy& Enemy);
+    void UpdateGameMusic();
+    void GameAudioAudit(float Dt);
+    TMap<FName,double> CueLastTime;
+    FRandomStream AudioRandom{7919};
+    FName CurrentMusic;
+    float PlayerStepDistance=0.f;
+    void UpdateDropVisuals();
+    void DropArtCheck(float Dt);
     void CastSkills(float Delta);
     FAlchemySkillStats EvaluateSkillStats(int32 Skill,int32 Level,const FAlchemyPillState& Pill) const;
     FAlchemySkillStats CurrentSkillStats(int32 Skill) const;

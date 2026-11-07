@@ -125,6 +125,7 @@ void AAlchemyWorld::UpdateGreyfordPortal() {
     GreyfordPortalPos=P;GreyfordPortalReady=true;
     GreyfordPortal=SpawnPixelFX(2,P);
     ensureMsgf(Cast<APixelFXActor>(GreyfordPortal)->IsReady(),TEXT("Boss portal PixelFX assets must be cooked"));
+    PlayCue(TEXT("Portal"));
     Message(TEXT("Boss传送阵已开放 · 跟随箭头，站入阵内按F确认挑战。"));
     UE_LOG(LogTemp,Display,TEXT("GREYFORD_PORTAL_READY time=%.2f pos=(%.1f,%.1f) clearance=240 path_nodes=%d"),RunTime,P.X,P.Y,Path.Num());
 }
@@ -159,6 +160,7 @@ bool AAlchemyWorld::EnterGreyfordBoss() {
     bBossSpawned=bBossArenaActive=true;BossArenaCenter=FVector::ZeroVector;
     UpdateCharacterVisual(0,false);UpdateBossVisual(Boss);UpdateCamera(0);UpdateCharacterVisual(0,false);
     PlayerShadow->SetActorLocation(VillageVisualPoint(PlayerPos+FVector(0,0,5)));
+    PlayCue(TEXT("Portal"));
     Message(TEXT("雾界草甸 · 击败Boss后结算；本场不能返回，Q炼金、B换技能均暂停。"));
     if(bRandomBattleScene)ToastTime=0; // Preparation HUD already carries this guidance; keep the character unobscured.
     UE_LOG(LogTemp,Display,TEXT("GREYFORD_BOSS_ENTER hp_before=%.1f hp_after=%.1f spacing=1000 materials=%d,%d,%d,%d,%d,%d"),BeforeHP,HP,Inventory[0],Inventory[1],Inventory[2],Inventory[3],Inventory[4],Inventory[5]);return true;

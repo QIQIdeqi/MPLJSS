@@ -1,8 +1,7 @@
 #include "MainMenuWorld.h"
 #include "MainMenuWidget.h"
+#include "GameAudio.h"
 #include "Engine/Texture2D.h"
-#include "Sound/SoundClass.h"
-#include "Sound/SoundMix.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Blueprint/UserWidget.h"
@@ -27,10 +26,8 @@ void AMainMenuWorld::BeginPlay() {
     // 加载独立用户设置。
     Settings=Cast<UMainMenuSettings>(UGameplayStatics::LoadGameFromSlot(TEXT("MainMenuSettings"),0));
     if(!Settings) Settings=NewObject<UMainMenuSettings>(this);
-    // 应用音量（SoundMix + SoundClass）。
-    if(!MasterSoundClass) MasterSoundClass=LoadObject<USoundClass>(nullptr,TEXT("/Game/Audio/SC_Master.SC_Master"));
-    if(!MasterSoundMix) MasterSoundMix=LoadObject<USoundMix>(nullptr,TEXT("/Game/Audio/SM_Master.SM_Master"));
     ApplyMasterVolume();
+    AlchemyGameAudio::SetMusic(this,TEXT("Music_Menu"));
     // 创建并显示主菜单 Widget。
     MenuWidget=CreateWidget<UMainMenuWidget>(PC,UMainMenuWidget::StaticClass());
     if(MenuWidget) {
@@ -51,10 +48,14 @@ bool AMainMenuWorld::HasValidSave() const {
 
 void AMainMenuWorld::StartNewGame() { EnterGame(false); }
 void AMainMenuWorld::LoadGame() { EnterGame(true); }
-void AMainMenuWorld::QuitGame() { UKismetSystemLibrary::QuitGame(this,nullptr,EQuitPreference::Quit,false); }
+void AMainMenuWorld::QuitGame() {
+    AlchemyGameAudio::Play(this,TEXT("UICancel"));
+    UKismetSystemLibrary::QuitGame(this,nullptr,EQuitPreference::Quit,false);
+}
 
 void AMainMenuWorld::EnterGame(bool bContinue) {
     // 进入战斗关卡 Greyford_Flow，由关卡内的 AAlchemyWorld 处理存档。
+    AlchemyGameAudio::Play(this,TEXT("UIConfirm"));
     UGameplayStatics::OpenLevel(this,FName(TEXT("Greyford_Flow")));
 }
 
@@ -70,10 +71,7 @@ float AMainMenuWorld::GetMasterVolume() const {
 }
 
 void AMainMenuWorld::ApplyMasterVolume() {
-    if(!MasterSoundClass || !MasterSoundMix) return;
-    const float V=Settings?Settings->MasterVolume:1.f;
-    UGameplayStatics::SetSoundMixClassOverride(this,MasterSoundMix,MasterSoundClass,V,1.f,0.f,true);
-    UGameplayStatics::PushSoundMixModifier(this,MasterSoundMix);
+    AlchemyGameAudio::ApplyVolume(this,GetMasterVolume());
 }
 
 void AMainMenuWorld::SaveSettings() {

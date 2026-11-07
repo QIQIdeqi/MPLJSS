@@ -1,5 +1,6 @@
 #include "MainMenuWidget.h"
 #include "MainMenuWorld.h"
+#include "GameAudio.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -226,13 +227,20 @@ float UMainMenuWidget::GetVolumePercent() const {
 
 void UMainMenuWidget::OnStartClicked() { if(MenuWorld) MenuWorld->StartNewGame(); }
 void UMainMenuWidget::OnContinueClicked() { if(MenuWorld) MenuWorld->LoadGame(); }
-void UMainMenuWidget::OnSettingsClicked() { SyncSettingsToUI(); ShowSettings(true); }
+void UMainMenuWidget::OnSettingsClicked() {
+    if(MenuWorld) AlchemyGameAudio::Play(MenuWorld,TEXT("UISelect"));
+    SyncSettingsToUI();
+    ShowSettings(true);
+}
 void UMainMenuWidget::OnQuitClicked() { if(MenuWorld) MenuWorld->QuitGame(); }
 void UMainMenuWidget::OnVolumeChanged(float Value) {
     if(VolumeText) VolumeText->SetText(FText::FromString(FString::Printf(TEXT("%.0f%%"),Value)));
     if(MenuWorld) MenuWorld->SetMasterVolume(Value/100.f);
 }
-void UMainMenuWidget::OnReturnClicked() { ShowSettings(false); }
+void UMainMenuWidget::OnReturnClicked() {
+    if(MenuWorld) AlchemyGameAudio::Play(MenuWorld,TEXT("UICancel"));
+    ShowSettings(false);
+}
 
 void UMainMenuWidget::SyncSettingsToUI() {
     if(!MenuWorld || !MenuWorld->GetSettings()) return;
