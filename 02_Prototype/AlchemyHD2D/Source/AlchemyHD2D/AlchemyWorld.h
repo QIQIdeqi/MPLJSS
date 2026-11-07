@@ -401,7 +401,7 @@ public:
     FVector2D CombatHalfSize=FVector2D(7060,5330);
     ACameraActor* Camera=nullptr;
     AStaticMeshActor* Player=nullptr;
-    UPROPERTY() FAlchemistSpriteAnimation CharacterAnimation;
+    UPROPERTY(EditAnywhere,Category="Character Size") FAlchemistSpriteAnimation CharacterAnimation;
     void UpdateCharacterVisual(float Delta,bool Moving);
     void CharacterSmoke(float Delta);
     void CharacterV3Smoke(float Delta);

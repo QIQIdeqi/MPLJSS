@@ -44,21 +44,17 @@ void FAlchemistSpriteAnimation::Face(FVector2D D) {
     Mirror=Facing==0 && D.X<0;
 }
 bool FAlchemistSpriteAnimation::Throw(FVector2D Direction) {
-    // 攻击动画暂不启用：保持待机/行走姿态，投射物发射逻辑独立不受影响。
+    // 攻击动画已屏蔽（后续开放）：保持待机/行走姿态，投射物发射逻辑独立不受影响。
     return false;
 }
 void FAlchemistSpriteAnimation::Reset() {Time=0;Throwing=Moving=Hurting=Dead=false;Apply();}
 void FAlchemistSpriteAnimation::Hit() {
-    // 受击动画暂不启用：保持当前姿态，受伤无敌闪烁由 HurtInv 逻辑独立驱动。
+    // 受击动画已删除：不再进入受击姿态，受伤无敌闪烁由 HurtInv 逻辑独立驱动。
 }
 void FAlchemistSpriteAnimation::Die() {if(!Dead) {Dead=true;Hurting=Throwing=Moving=false;Time=0;Apply();}}
 bool FAlchemistSpriteAnimation::Advance(float Delta,FVector2D Direction,bool IsMoving) {
     if(Dead) {Time=FMath::Min(.75f,Time+Delta);Apply();return false;}
-    if(Hurting) {
-        Time+=Delta;Moving=IsMoving;
-        if(Time>=.4f) {Hurting=false;Time=0;}
-        Apply();return false;
-    }
+    // 受击动画已删除，不再有 Hurting 播放分支。
     if(IsMoving && Throwing) {Throwing=false;Time=0;}
     Face(Direction);
     if(Moving!=IsMoving && !Throwing) Time=0;
@@ -71,11 +67,11 @@ bool FAlchemistSpriteAnimation::Advance(float Delta,FVector2D Direction,bool IsM
 void FAlchemistSpriteAnimation::Apply() {
     if(RoseMage && Material && Atlases.Num()==4) {
         const bool Attack=Throwing && !Hurting && !Dead;
-        // Motion pack drives idle/walk/hurt/dead; attack keeps its own authored sheet.
-        if(HasRoseMotion() && !Attack && (Dead || Hurting || Moving || !Throwing)) {
-            const int MotionRow=Dead?3:Hurting?2:Moving?1:0;
-            Row=Dead?4:Hurting?3:Moving?1:0;
-            Frame=Dead?FMath::Min(5,FMath::FloorToInt(Time*8)):Hurting?FMath::Min(3,FMath::FloorToInt(Time*10)):Moving?FMath::FloorToInt(Time*8)%7:FMath::FloorToInt(Time*2)%3;
+        // Motion pack drives idle/walk/dead; attack keeps its own authored sheet.
+        if(HasRoseMotion() && !Attack && (Dead || Moving || !Throwing)) {
+            const int MotionRow=Dead?3:Moving?1:0;
+            Row=Dead?4:Moving?1:0;
+            Frame=Dead?FMath::Min(5,FMath::FloorToInt(Time*8)):Moving?FMath::FloorToInt(Time*8)%7:FMath::FloorToInt(Time*2)%3;
             Material->SetTextureParameterValue(TEXT("SpriteSheet"),RoseMotionAtlases[Facing]);
             Material->SetVectorParameterValue(TEXT("UVScale"),FLinearColor(1.f/7,1.f/4,0,0));
             Material->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(Frame/7.f,MotionRow/4.f,0,0));
@@ -83,17 +79,17 @@ void FAlchemistSpriteAnimation::Apply() {
             return;
         }
         // Static/attack art remains available if the optional authored motion pack is absent.
-        Row=Attack?2:Dead?4:Hurting?3:Moving?1:0;
+        Row=Attack?2:Dead?4:Moving?1:0;
         Frame=Attack?FMath::Min(7,FMath::FloorToInt(Time*10)):0;
         Material->SetTextureParameterValue(TEXT("SpriteSheet"),Attack && HasRoseAttack()?RoseAttackAtlases[Facing]:Atlases[Attack?3:Facing]);
         Material->SetVectorParameterValue(TEXT("UVScale"),FLinearColor(Attack?1.f/8:1,1,0,0));
         Material->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(Attack?Frame/8.f:0,0,0,0));
         const float Alpha=Dead?1-FMath::Clamp(Time/.75f,0.f,1.f):1;
-        Material->SetVectorParameterValue(TEXT("SpriteTint"),Hurting?FLinearColor(1,.45f,.45f,Alpha):FLinearColor(1,1,1,Alpha));
+        Material->SetVectorParameterValue(TEXT("SpriteTint"),FLinearColor(1,1,1,Alpha));
         return;
     }
-    Row=Dead?4:Hurting?3:Moving?1:Throwing?2:0;
-    Frame=Dead?FMath::Min(5,FMath::FloorToInt(Time*8)):Hurting?FMath::Min(3,FMath::FloorToInt(Time*10)):Throwing?FMath::Min(5,FMath::FloorToInt(Time*8)):FMath::FloorToInt(Time*(Moving?8:4))%(Moving?6:4);
+    Row=Dead?4:Moving?1:Throwing?2:0;
+    Frame=Dead?FMath::Min(5,FMath::FloorToInt(Time*8)):Throwing?FMath::Min(5,FMath::FloorToInt(Time*8)):FMath::FloorToInt(Time*(Moving?8:4))%(Moving?6:4);
     if(Material && Atlases.IsValidIndex(Facing)) {
         Material->SetTextureParameterValue(TEXT("SpriteSheet"),Atlases[Facing]);
         Material->SetVectorParameterValue(TEXT("UVOffset"),FLinearColor(Frame/6.f,Row/5.f,0,0));
