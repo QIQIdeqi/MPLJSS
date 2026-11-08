@@ -154,59 +154,48 @@ void AAlchemyHUD::DrawHUD() {
         DrawToast();return;
     }
     if(World->bCombat && World->Panel.IsEmpty()) {
-        // V0.2: the live brew advances with combat time; fragments collect into materials.
-        // Keep this independent of the editable reference UMG so both battle presentations show it.
-        if(!FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) {
-            const float X=HUDLeft+18,W=326,H=World->bBrewActive?124.f:52.f;
+        // 炼制进度：仅正在炼金时显示（材料获取/碎片信息已移除）。
+        if(!FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) && World->bBrewActive) {
+            const float X=HUDLeft+18,W=326,H=72.f;
             const float Preferred=HUDTop+290;
             const float Y=FMath::Clamp(ClearPanelY(X,W,H,Preferred,true),HUDTop+116,HUDBottom-H-142);
             Box(X,Y,W,H,Surface);Box(X,Y,3,H,Gold);
-            Text(FString::Printf(TEXT("碎片  火 %d  ·  露 %d  ·  魔 %d"),World->FragmentCount[0],World->FragmentCount[1],World->FragmentCount[2]),X+13,Y+9,17,Gold);
-            FString SupplyLine;
-            if(World->bBossSpawned) SupplyLine=TEXT("Boss战无普通碎片补给，存量仍可炼制");
-            else if(World->bOpeningSupplyEligible && !World->bOpeningSupplyGranted)
-                SupplyLine=FString::Printf(TEXT("首测补给：普通怪 %d/8（清场不计）"),FMath::Clamp(World->OpeningSupplyNormalDeaths,0,8));
-            else if(World->bOpeningSupplyGranted) SupplyLine=TEXT("首测补给已发放 · 碎片仍可归集");
-            else SupplyLine=TEXT("普通怪少量掉落，碎片自动归集为材料");
-            Text(SupplyLine,X+13,Y+31,15,Dim);
-            if(World->bBrewActive) {
-                const float StationDistance=FVector::Dist2D(World->PlayerPos,World->BrewOrigin);
-                const bool bStationPaused=World->BrewMode==1 && StationDistance>120.f;
-                FString ReturnDirection=TEXT("向起炼点");
-                if(World->BrewMode==1) {
-                    FVector2D OriginScreen,PlayerScreen;
-                    const bool bOriginVisible=PC->ProjectWorldLocationToScreen(World->BrewOrigin+FVector(0,0,12),OriginScreen);
-                    const bool bPlayerVisible=PC->ProjectWorldLocationToScreen(World->PlayerPos+FVector(0,0,50),PlayerScreen);
-                    if(bOriginVisible && bPlayerVisible) {
-                        const FVector2D Delta=OriginScreen-PlayerScreen;
-                        ReturnDirection=FMath::Abs(Delta.X)>FMath::Abs(Delta.Y)?
-                            (Delta.X<0?TEXT("向左"):TEXT("向右")):(Delta.Y<0?TEXT("向上"):TEXT("向下"));
-                    }
-                    if(bStationPaused && bOriginVisible) {
-                        const float MarkerX=(OriginScreen.X-OX)/S,MarkerY=(OriginScreen.Y-OY)/S;
-                        const float HUDRight=(Canvas->SizeX-OX)/S;
-                        const bool bOnscreen=MarkerX>HUDLeft+24 && MarkerX<HUDRight-88 && MarkerY>HUDTop+92 && MarkerY<HUDBottom-98;
-                        const bool bOverCard=MarkerX>=X-20 && MarkerX<=X+W+20 && MarkerY>=Y-20 && MarkerY<=Y+H+20;
-                        const bool bOverPlayer=bPlayerVisible && FVector2D::Distance(OriginScreen,PlayerScreen)<52.f*S;
-                        if(bOnscreen && !bOverCard && !bOverPlayer) {
-                            Box(MarkerX-6,MarkerY-6,12,12,Gold);
-                            Box(MarkerX-2,MarkerY-2,4,4,Surface);
-                            Text(TEXT("起炼点"),MarkerX+11,MarkerY-9,14,Gold);
-                        }
+            const float StationDistance=FVector::Dist2D(World->PlayerPos,World->BrewOrigin);
+            const bool bStationPaused=World->BrewMode==1 && StationDistance>120.f;
+            FString ReturnDirection=TEXT("向起炼点");
+            if(World->BrewMode==1) {
+                FVector2D OriginScreen,PlayerScreen;
+                const bool bOriginVisible=PC->ProjectWorldLocationToScreen(World->BrewOrigin+FVector(0,0,12),OriginScreen);
+                const bool bPlayerVisible=PC->ProjectWorldLocationToScreen(World->PlayerPos+FVector(0,0,50),PlayerScreen);
+                if(bOriginVisible && bPlayerVisible) {
+                    const FVector2D Delta=OriginScreen-PlayerScreen;
+                    ReturnDirection=FMath::Abs(Delta.X)>FMath::Abs(Delta.Y)?
+                        (Delta.X<0?TEXT("向左"):TEXT("向右")):(Delta.Y<0?TEXT("向上"):TEXT("向下"));
+                }
+                if(bStationPaused && bOriginVisible) {
+                    const float MarkerX=(OriginScreen.X-OX)/S,MarkerY=(OriginScreen.Y-OY)/S;
+                    const float HUDRight=(Canvas->SizeX-OX)/S;
+                    const bool bOnscreen=MarkerX>HUDLeft+24 && MarkerX<HUDRight-88 && MarkerY>HUDTop+92 && MarkerY<HUDBottom-98;
+                    const bool bOverCard=MarkerX>=X-20 && MarkerX<=X+W+20 && MarkerY>=Y-20 && MarkerY<=Y+H+20;
+                    const bool bOverPlayer=bPlayerVisible && FVector2D::Distance(OriginScreen,PlayerScreen)<52.f*S;
+                    if(bOnscreen && !bOverCard && !bOverPlayer) {
+                        Box(MarkerX-6,MarkerY-6,12,12,Gold);
+                        Box(MarkerX-2,MarkerY-2,4,4,Surface);
+                        Text(TEXT("起炼点"),MarkerX+11,MarkerY-9,14,Gold);
                     }
                 }
-                Text(World->BrewMode==1?
-                    (bStationPaused?FString::Printf(TEXT("驻留暂停 · 距起炼点 %.0fcm"),StationDistance):
-                        FString::Printf(TEXT("驻留推进 · 距起炼点 %.0fcm"),StationDistance)):
-                    FString(TEXT("随身试剂 · 移动中推进（首测）")),X+13,Y+55,16,bStationPaused?Gold:White);
-                Box(X+13,Y+84,W-26,10,FLinearColor(.07f,.10f,.12f));
-                const float Ratio=World->BrewDuration>0?FMath::Clamp(World->BrewProgress/World->BrewDuration,0.f,1.f):0.f;
-                Box(X+13,Y+84,(W-26)*Ratio,10,Teal);
-                Text(World->BrewMode==1?
-                    (bStationPaused?FString::Printf(TEXT("返回120cm内恢复 · %s · %.0f%%"),*ReturnDirection,Ratio*100):
-                        FString::Printf(TEXT("120cm内持续推进 · %.0f%%"),Ratio*100)):
-                    FString::Printf(TEXT("炼制 %.0f%% · 可继续走位"),Ratio*100),X+13,Y+100,16,Dim);
             }
+            Text(World->BrewMode==1?
+                (bStationPaused?FString::Printf(TEXT("驻留暂停 · 距起炼点 %.0fcm"),StationDistance):
+                    FString::Printf(TEXT("驻留推进 · 距起炼点 %.0fcm"),StationDistance)):
+                FString(TEXT("随身试剂 · 移动中推进（首测）")),X+13,Y+9,16,bStationPaused?Gold:White);
+            Box(X+13,Y+34,W-26,10,FLinearColor(.07f,.10f,.12f));
+            const float Ratio=World->BrewDuration>0?FMath::Clamp(World->BrewProgress/World->BrewDuration,0.f,1.f):0.f;
+            Box(X+13,Y+34,(W-26)*Ratio,10,Teal);
+            Text(World->BrewMode==1?
+                (bStationPaused?FString::Printf(TEXT("返回120cm内恢复 · %s · %.0f%%"),*ReturnDirection,Ratio*100):
+                    FString::Printf(TEXT("120cm内持续推进 · %.0f%%"),Ratio*100)):
+                FString::Printf(TEXT("炼制 %.0f%% · 可继续走位"),Ratio*100),X+13,Y+50,16,Dim);
         }
         for(const auto& E:World->Enemies) if(E.HP>0 && E.Type>=7 && E.Type!=10) {
             FVector2D Screen;
@@ -225,9 +214,6 @@ void AAlchemyHUD::DrawHUD() {
         }
         // 参考图场景用 UMG（BattleReferenceWidget）；普通战斗用 Canvas 直绘简洁 HUD。
         if(!World->bBattleReference) {
-        // 左上角：素材列表（系统 UI V0.2 §6.2，未编号但必须保留）。
-        Box(24,108,260,142,Surface);Box(24,108,4,142,Gold);
-        for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d / 10"),MaterialNames[I],World->Inventory[I]),42,120+I*40,20,I==0?Gold:White);
         // 脚底血条：跟随玩家世界坐标，画在角色脚下（简洁，无头像/数字）。
         {
             FVector2D Foot;
