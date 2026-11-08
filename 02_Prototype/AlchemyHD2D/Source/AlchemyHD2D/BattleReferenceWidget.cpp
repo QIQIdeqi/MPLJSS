@@ -108,8 +108,8 @@ FText UBattleReferenceWidget::XPTooltip() const{return BattleWorld?FText::FromSt
 void UBattleReferenceWidget::NativeTick(const FGeometry& MyGeometry,float InDeltaTime){
     Super::NativeTick(MyGeometry,InDeltaTime);
     if(!BattleWorld || !HPBar || !BattleWorld->Progress)return;
-    // Hidden still ticks, so leaving a modal never strands the HUD in Collapsed visibility.
-    const bool Show=BattleWorld->bCombat && BattleWorld->Panel.IsEmpty() && !BattleWorld->bRunEnded;
+    // 参考图场景才显示 UMG 参考图 HUD；普通战斗走 Canvas 直绘（AlchemyHUD.inl）。
+    const bool Show=BattleWorld->bBattleReference && BattleWorld->bCombat && BattleWorld->Panel.IsEmpty() && !BattleWorld->bRunEnded;
     SetRenderOpacity(Show?1:0);SetVisibility(Show?ESlateVisibility::SelfHitTestInvisible:ESlateVisibility::HitTestInvisible);
     if(!Show)return;
     HPBar->SetPercent(FMath::Clamp(BattleWorld->HP/FMath::Max(1.f,BattleWorld->MaxHP),0.f,1.f));DodgeBar->SetPercent(1-FMath::Clamp(BattleWorld->DodgeCD/2.f,0.f,1.f));

@@ -61,7 +61,11 @@ void AAlchemyHUD::NotifyHitBoxClick(FName Name) {
     if(!World) return;
     FString Id=Name.ToString();FocusIndex=FMath::Max(0,FocusOrder.Find(Id));
     if(Id.StartsWith(TEXT("material"))) {
-        DragMaterial=FCString::Atoi(*Id.Mid(8));if(auto R=ButtonRects.Find(Id)) DragSource=*R;
+        DragMaterial=FCString::Atoi(*Id.Mid(8));DragRole=0;if(auto R=ButtonRects.Find(Id)) DragSource=*R;
+    } else if(Id.StartsWith(TEXT("bagmain"))) {
+        DragMaterial=FCString::Atoi(*Id.Mid(7));DragRole=0;if(auto R=ButtonRects.Find(Id)) DragSource=*R;
+    } else if(Id.StartsWith(TEXT("bagsub"))) {
+        DragMaterial=FCString::Atoi(*Id.Mid(6));DragRole=1;if(auto R=ButtonRects.Find(Id)) DragSource=*R;
     } else Activate(Id);
 }
 void AAlchemyHUD::DrawHUD() {
@@ -82,7 +86,27 @@ void AAlchemyHUD::DrawHUD() {
     }
     if(DragMaterial>=0 && PC->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
         float X,Y;PC->GetMousePosition(X,Y);FVector2D Mouse((X-OX)/S,(Y-OY)/S);
-        if(World->Panel==TEXT("alchemy") && (World->TutorialActive() || FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) && (DragSource.IsInsideOrOn(Mouse)||Furnace.IsInsideOrOn(Mouse))) World->AddMaterial(DragMaterial);
+        if(World->Panel==TEXT("alchemy") && !World->TutorialActive()) {
+            // 主材槽区（左列 x120~310）与副材槽区（右列 x326~516），y232~406。
+            const FBox2D MainArea(FVector2D(120,232),FVector2D(310,406));
+            const FBox2D SubArea(FVector2D(326,232),FVector2D(516,406));
+            const bool InMain=MainArea.IsInsideOrOn(Mouse);
+            const bool InSub=SubArea.IsInsideOrOn(Mouse);
+            if(DragRole==0 && InMain) {
+                // 主材拖入主材区：选择主材。
+                if(World->BrewOperation==3) World->Message(TEXT("换辅材操作下主材已锁定"));
+                else if(World->Inventory[DragMaterial]<1) World->Message(TEXT("该主材库存不足"));
+                else {World->BrewMain=DragMaterial;World->BrewMainCount=FMath::Max(1,World->BrewMainCount);World->PlayCue(TEXT("UIConfirm"));}
+            } else if(DragRole==0 && InSub) {
+                World->Message(TEXT("主材只能放入主材区域"));
+            } else if(DragRole==1 && InSub) {
+                if(World->BrewOperation==1 || World->BrewOperation==2) World->Message(TEXT("该操作不消耗辅材"));
+                else if(World->Inventory[DragMaterial]<1) World->Message(TEXT("该副材库存不足"));
+                else {World->BrewSupport=DragMaterial;World->BrewSupportCount=FMath::Max(1,World->BrewSupportCount);World->PlayCue(TEXT("UIConfirm"));}
+            } else if(DragRole==1 && InMain) {
+                World->Message(TEXT("副材只能放入副材区域"));
+            }
+        }
         DragMaterial=-1;
     }
     if(World->Panel!=TEXT("alchemy")) DragMaterial=-1;
@@ -199,32 +223,97 @@ void AAlchemyHUD::DrawHUD() {
             FLinearColor Color(1,.9f,.55f,FMath::Min(1.f,Number.Life/.2f));
             Text(FString::Printf(TEXT("%.0f"),Number.Value),X,Y,19+4*FMath::Max(0.f,1-Age/.12f),Color);
         }
-        // Reference artwork, live bars, skill slots and minimap are owned by BattleReferenceWidget.
-        if(!World->BattleWidget) {
-        // 左上角：素材列表（系统 UI V0.2 §6.2）。
+        // 参考图场景用 UMG（BattleReferenceWidget）；普通战斗用 Canvas 直绘简洁 HUD。
+        if(!World->bBattleReference) {
+        // 左上角：素材列表（系统 UI V0.2 §6.2，未编号但必须保留）。
         Box(24,108,260,142,Surface);Box(24,108,4,142,Gold);
         for(int I=0;I<3;I++) Text(FString::Printf(TEXT("%s    %d / 10"),MaterialNames[I],World->Inventory[I]),42,120+I*40,20,I==0?Gold:White);
-        // 脚底血条：跟随玩家世界坐标（§6.4）。
+        // 脚底血条：跟随玩家世界坐标，画在角色脚下（简洁，无头像/数字）。
         {
-            FVector2D HP;if(PC->ProjectWorldLocationToScreen(World->PlayerPos+FVector(0,0,40),HP)) {
-                float HX=(HP.X-OX)/S-45, HY=(HP.Y-OY)/S-28;
-                Box(HX-2,HY-2,94,12,Ink);Box(HX,HY,90*FMath::Clamp(World->HP/World->MaxHP,0.f,1.f),8,World->HP/World->MaxHP>.3f?Teal:FLinearColor(0.9f,0.2f,0.15f));
-                Text(FString::Printf(TEXT("%.0f/%.0f"),World->HP,World->MaxHP),HX+10,HY-18,14,White);
+            FVector2D Foot;
+            if(PC->ProjectWorldLocationToScreen(World->PlayerPos+FVector(0,0,10),Foot)) {
+                const float Fx=(Foot.X-OX)/S, Fy=(Foot.Y-OY)/S;
+                const float BW=72.f, BH=6.f;
+                const float BX=Fx-BW*.5f, BY=Fy+12;
+                Box(BX-1,BY-1,BW+2,BH+2,Ink);
+                Box(BX,BY,BW*FMath::Clamp(World->HP/World->MaxHP,0.f,1.f),BH,World->HP/World->MaxHP>.3f?Teal:FLinearColor(0.9f,0.2f,0.15f));
             }
         }
-        // No-widget fallback only; production status bars and timer belong to UMG.
-        Text(FString::Printf(TEXT("击败 %d   金币 %d"),World->Kills,World->RunCoins),850,60,20,Gold);
-        Button(TEXT("pausebtn"),TEXT("暂停"),1180,52,80,true,40);
-        float Start=(1280-World->Equipped.Num()*146)/2.f;
-        for(int I=0;I<World->Equipped.Num();I++) {
-            int K=World->Equipped[I];float X=Start+I*146;Box(X,578,138,76,Surface);
-            Text(World->SkillName(K),X+10,587,17,White);Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),X+10,621,18,Gold);
+        // ==== 编号1：本局计时（顶部中央）====
+        Text(FString::Printf(TEXT("%02d:%02d"),int(World->RunTime)/60,int(World->RunTime)%60),596,48,32,Gold);
+        // ==== 编号2：击杀数 + 金币（右上，独立计数）====
+        Text(FString::Printf(TEXT("击杀 %d"),World->Kills),1000,48,20,Gold);
+        Text(FString::Printf(TEXT("金币 %d"),World->RunCoins),1120,48,20,Gold);
+        // ==== 编号3：小地图（右上，只显示玩家/精英/BOSS/传送入口）====
+        const float MapX=1000.f, MapY=84.f, MapW=240.f, MapH=150.f;
+        Box(MapX,MapY,MapW,MapH,FLinearColor(.03f,.06f,.07f,.92f));Box(MapX,MapY,MapW,2,Gold);Box(MapX,MapY,2,MapH,Gold);Box(MapX+MapW-2,MapY,2,MapH,Gold);Box(MapX,MapY+MapH-2,MapW,2,Gold);
+        {
+            const FVector Right=World->Camera->GetActorRightVector().GetSafeNormal2D();
+            const FVector Up=World->Camera->GetActorForwardVector().GetSafeNormal2D();
+            const float RX=FMath::Max(1.f,float(FMath::Abs(Right.X)*World->CombatHalfSize.X+FMath::Abs(Right.Y)*World->CombatHalfSize.Y));
+            const float RY=FMath::Max(1.f,float(FMath::Abs(Up.X)*World->CombatHalfSize.X+FMath::Abs(Up.Y)*World->CombatHalfSize.Y));
+            const auto MapPoint=[&](FVector P)->FVector2D{
+                return FVector2D(MapX+MapW*.5f+float(FVector::DotProduct(P,Right)/RX)*(MapW*.5f-8),MapY+MapH*.5f-float(FVector::DotProduct(P,Up)/RY)*(MapH*.5f-8));
+            };
+            // 精英/BOSS 红点（只显示 Type>=7，不显示普通怪）。
+            for(const auto& E:World->Enemies) if(E.HP>0 && E.Type>=7) {
+                const FVector2D M=MapPoint(E.Pos);
+                if(M.X>MapX+4 && M.X<MapX+MapW-4 && M.Y>MapY+4 && M.Y<MapY+MapH-4) Box(M.X-3,M.Y-3,6,6,E.Type==10?FLinearColor(1,.25f,.15f):FLinearColor(.95f,.45f,.2f));
+            }
+            // BOSS 传送入口标记。
+            if(World->GreyfordPortalReady) {
+                const FVector2D M=MapPoint(World->GreyfordPortalPos);
+                Box(M.X-4,M.Y-4,8,8,FLinearColor(.15f,.95f,.9f));
+            }
+            // 玩家箭头（黄色）。
+            const FVector2D M=MapPoint(World->PlayerPos);
+            Box(M.X-3,M.Y-3,6,6,FLinearColor(1,.86f,.4f));
         }
-        // Q 炼金 / B 背包入口 + 经验条（§6.2/6.7）。
-        Text(TEXT("Q 炼金"),60,648,18,Gold);Text(TEXT("B 背包"),1190,648,18,Gold);
-        int NeedXP=World->RequiredXP(World->RunLevel);
-        Text(FString::Printf(TEXT("Lv.%d  %.0f / %d"),World->RunLevel,World->RunXP,NeedXP),560,648,18,Gold);
-        Box(500,666,280,8,Ink);Box(500,666,280*FMath::Clamp(World->RunXP/NeedXP,0.f,1.f),8,Gold);
+        // ==== 编号4：按键提示面板（小地图下方，纯展示不响应点击）====
+        {
+            const float HX=MapX, HY=MapY+MapH+12;
+            Box(HX,HY,MapW,150,FLinearColor(.03f,.05f,.06f,.85f));Box(HX,HY,3,150,Gold);
+            Text(TEXT("WASD  移动"),HX+14,HY+12,16,Dim);
+            Text(TEXT("Space  闪避"),HX+14,HY+38,16,Dim);
+            Text(TEXT("Q  炼金"),HX+14,HY+64,16,Dim);
+            Text(TEXT("B  技能背包"),HX+14,HY+90,16,Dim);
+            Text(TEXT("Esc  暂停"),HX+14,HY+116,16,Dim);
+        }
+        // ==== 编号5/6/7：底部技能栏（Q左、B右、中央固定6格）====
+        const float QBtnX=24.f, QBtnY=578.f, QBtnW=90.f, QBtnH=76.f;
+        const float BBtnX=1166.f, BBtnY=578.f, BBtnW=90.f, BBtnH=76.f;
+        Button(TEXT("alchemy"),TEXT("Q 炼金"),QBtnX,QBtnY,QBtnW,true,QBtnH);
+        Button(TEXT("skills"),TEXT("B 背包"),BBtnX,BBtnY,BBtnW,true,BBtnH);
+        // 6 格固定技能栏（中央）。
+        const float SlotW=92.f, SlotH=76.f, SlotGap=8.f;
+        const float BarTotal=6*SlotW+5*SlotGap;
+        const float BarStart=(1280-BarTotal)/2.f;
+        for(int I=0;I<6;I++) {
+            const float X=BarStart+I*(SlotW+SlotGap);
+            if(I<World->Equipped.Num()) {
+                const int K=World->Equipped[I];
+                Box(X,578,SlotW,SlotH,Surface);
+                Text(World->SkillName(K),X+6,587,14,White);
+                Text(FString::Printf(TEXT("Lv.%d"),World->Levels[K]),X+6,621,16,Gold);
+                // 冷却遮罩。
+                if(World->SkillCD.IsValidIndex(K) && World->SkillCD[K]>0) {
+                    const float MaxCD=World->SkillConfig(K).CD;
+                    const float Ratio=MaxCD>0?FMath::Clamp(World->SkillCD[K]/MaxCD,0.f,1.f):0.f;
+                    Box(X,578+SlotH*(1-Ratio),SlotW,SlotH*Ratio,FLinearColor(0,0,0,.55f));
+                }
+            } else {
+                Box(X,578,SlotW,SlotH,FLinearColor(.05f,.07f,.08f,.7f));
+            }
+        }
+        // ==== 编号8：等级 + 经验条（最底部）====
+        {
+            const float BarX=120.f, BarW=1040.f, BarY=668.f, BarH=14.f;
+            int NeedXP=World->RequiredXP(World->RunLevel);
+            Text(FString::Printf(TEXT("Lv.%d"),World->RunLevel),BarX-60,BarY-4,20,Gold);
+            Box(BarX,BarY,BarW,BarH,Ink);
+            Box(BarX,BarY,BarW*FMath::Clamp(NeedXP>0?World->RunXP/NeedXP:0.f,0.f,1.f),BarH,Gold);
+            Text(FString::Printf(TEXT("%.0f / %d"),World->RunXP,NeedXP),BarX+BarW+8,BarY-4,16,Dim);
+        }
         } else {
             const float HintX=HUDLeft+18,HintY=ClearPanelY(HintX,264,26,HUDBottom-36,true);
             const FString Prefix=TEXT("Q 炼金 · B 技能 · "),Pause=TEXT("Esc 暂停");
@@ -311,129 +400,110 @@ void AAlchemyHUD::DrawHUD() {
             Button(TEXT("enterboss"),TEXT("确认挑战Boss"),104,500,524);Button(TEXT("bossportalstay"),TEXT("继续在草原成长"),654,500,524);
         }
         else if(P==TEXT("merchant") || P==TEXT("merchantconfirm")) DrawMerchant();
-        else if(P==TEXT("alchemy") && !World->TutorialActive() && !FParse::Param(FCommandLine::Get(),TEXT("UIV02Test"))) {
-            Text(TEXT("主材决定技能本体，辅材影响效果词条；模式决定炼制过程。首测未启用负面变异。"),104,179,17,Dim);
-            const TCHAR* Operations[]={TEXT("新制丹药"),TEXT("同方强化"),TEXT("换主材重炼"),TEXT("换辅材重炼")};
-            const float OperationX[]={104.f,374.f,644.f,914.f};
+        else if(P==TEXT("alchemy") && !World->TutorialActive()) {
+            // 炼丹界面重构：左侧炼金炉（主材左/副材右 + 锅），右侧素材背包 + 同方强化，底部清空/确认炼丹。
+            // 操作类型页签。
+            const TCHAR* Operations[]={TEXT("新制"),TEXT("同方强化"),TEXT("换主材"),TEXT("换辅材")};
+            const float OperationX[]={104.f,224.f,344.f,464.f};
             for(int I=0;I<4;I++) {
-                Button(FString::Printf(TEXT("brewop%d"),I),Operations[I],OperationX[I],211,248,!World->bBrewActive,44);
-                if(World->BrewOperation==I)Box(OperationX[I],211,248,3,Gold);
+                Button(FString::Printf(TEXT("brewop%d"),I),Operations[I],OperationX[I],184,112,!World->bBrewActive,40);
+                if(World->BrewOperation==I)Box(OperationX[I],184,112,3,Gold);
             }
-            Box(104,269,1074,61,FLinearColor(.055f,.095f,.11f));
-            const bool HasTarget=World->BrewTarget>=0 && World->PillStates.IsValidIndex(World->BrewTarget)
-                && World->PillStates[World->BrewTarget].Main>=0
-                && World->Levels.IsValidIndex(World->BrewTarget) && World->Levels[World->BrewTarget]>0;
+            // ==== 左侧炼金炉区（x 104~546，约 442 宽）====
+            Box(104,164,442,400,FLinearColor(.055f,.095f,.11f));
+            Text(TEXT("炼金锅"),120,172,20,Gold);
+            // 投料槽：左 3 个主材槽 + 中间「＋」 + 右 3 个副材槽。
             const bool UsesMain=World->BrewOperation!=3;
             const bool ChoosesMain=World->BrewOperation==0 || World->BrewOperation==2;
             const bool UsesSupport=World->BrewOperation==0 || World->BrewOperation==3;
-            if(World->BrewOperation==0) {
-                Text(TEXT("目标：新丹药 · 当前已装备的丹药不会被替换"),122,286,20,White);
-            } else {
-                Button(TEXT("brewtargetprev"),TEXT("上一个"),114,277,126,!World->bBrewActive,44);
-                Button(TEXT("brewtargetnext"),TEXT("下一个"),1042,277,126,!World->bBrewActive,44);
-                Text(HasTarget?FString::Printf(TEXT("目标丹药：%s · Lv.%d"),World->SkillName(World->BrewTarget),World->Levels[World->BrewTarget]):TEXT("暂无可改造丹药，请先新制"),260,287,19,HasTarget?Gold:Dim);
-            }
-            Text(UsesMain?TEXT("必要主材 · 决定本体"):TEXT("原有主材 · 保留，不消耗"),104,343,19,Gold);
-            Text(UsesSupport?TEXT("辅助材料 · 决定词条倾向"):TEXT("辅助材料 · 本次不参与"),650,343,19,Gold);
+            Text(UsesMain?TEXT("主材料"):TEXT("主材·锁定"),120,204,16,Gold);
+            Text(UsesSupport?TEXT("副材料"):TEXT("副材·锁定"),326,204,16,Gold);
+            // 主材 3 槽（左列）。
             for(int I=0;I<3;I++) {
-                const float X=104+I*174;
-                Button(FString::Printf(TEXT("brewm%d"),I),MaterialNames[I],X,370,166,!World->bBrewActive && ChoosesMain,44);
-                const int32 DisplayMain=!UsesMain && HasTarget?World->PillStates[World->BrewTarget].Main:World->BrewMain;
-                if(DisplayMain==I)Box(X,370,166,3,Gold);
-            }
-            const TCHAR* SupportNames[]={TEXT("不加辅材"),TEXT("火粉"),TEXT("露水"),TEXT("魔法碎片")};
-            const TCHAR* SupportIds[]={TEXT("brewsnone"),TEXT("brews0"),TEXT("brews1"),TEXT("brews2")};
-            for(int I=0;I<4;I++) {
-                const float X=650+I*134;
-                Button(SupportIds[I],SupportNames[I],X,370,126,!World->bBrewActive && UsesSupport,44);
-                if(World->BrewSupport==I-1)Box(X,370,126,3,Gold);
-            }
-            TArray<int32> Candidates;TArray<float> Weights;
-            if(ChoosesMain) {
-                World->BuildBrewBodyOptions(World->BrewMain,World->BrewMainCount,World->BrewOperation==2?World->BrewTarget:-1,Candidates,Weights);
-                const TCHAR* BodyCategory=World->BrewMain==0?TEXT("火焰"):World->BrewMain==1?TEXT("寒霜"):World->BrewMain==2?TEXT("魔法/混融"):TEXT("本体");
-                if(Candidates.IsEmpty()) Text(FString::Printf(TEXT("%s候选：无可接收的新技能"),BodyCategory),104,416,15,Gold);
-                else {
-                    float Total=0;for(float Weight:Weights) Total+=Weight;
-                    float UseWeights[5]={0,0,0,0,0};
-                    for(int32 I=0;I<Candidates.Num();I++) {
-                        const EAlchemyCast Cast=World->SkillConfig(Candidates[I]).Cast;
-                        const int32 Use=(Cast==EAlchemyCast::Bolt || Cast==EAlchemyCast::Direct)?0:
-                            Cast==EAlchemyCast::SelfArea?1:Cast==EAlchemyCast::TargetArea?2:Cast==EAlchemyCast::Bounce?3:4;
-                        UseWeights[Use]+=Weights[I];
-                    }
-                    const TCHAR* UseNames[5]={TEXT("单体"),TEXT("近身范围"),TEXT("落点范围"),TEXT("弹跳"),TEXT("其他")};
-                    const int32 UseOrder[3][5]={{0,2,1,3,4},{1,0,2,3,4},{3,2,0,1,4}};
-                    FString UseLine=FString::Printf(TEXT("%s用途："),BodyCategory);
-                    bool bFirstUse=true;
-                    for(int32 Position=0;Position<5;Position++) {
-                        const int32 Use=UseOrder[FMath::Clamp(World->BrewMain,0,2)][Position];
-                        if(UseWeights[Use]<=0) continue;
-                        if(!bFirstUse) UseLine+=TEXT(" · ");
-                        UseLine+=FString::Printf(TEXT("%s %.1f%%"),UseNames[Use],UseWeights[Use]*100.f/Total);
-                        bFirstUse=false;
-                    }
-                    Text(UseLine,104,416,14,Gold);
-                    FString FirstLine(TEXT("本体：")),SecondLine;
-                    for(int32 I=0;I<Candidates.Num();I++) {
-                        const FString Name=World->Progress->Recipes.Contains(Candidates[I])?FString(World->SkillName(Candidates[I])):FString::Printf(TEXT("未知本体%d"),I+1);
-                        const FString Entry=FString::Printf(TEXT("%s %.1f%%"),*Name,Weights[I]*100.f/Total);
-                        FString& Line=I<3?FirstLine:SecondLine;
-                        if(I!=0 && I!=3) Line+=TEXT(" · ");
-                        Line+=Entry;
-                    }
-                    Text(FirstLine,104,435,14,Dim);
-                    if(!SecondLine.IsEmpty()) Text(SecondLine,104,453,14,Dim);
+                const float Y=232+I*58;
+                const int32 DisplayMain=!UsesMain?World->PillStates.IsValidIndex(World->BrewTarget)&&World->PillStates[World->BrewTarget].Main>=0?World->PillStates[World->BrewTarget].Main:-1:World->BrewMain;
+                Box(120,Y,190,48,FLinearColor(.075f,.135f,.16f));
+                if(DisplayMain==I)Box(120,Y,190,3,Gold);
+                if(DisplayMain==I) {
+                    Text(MaterialNames[I],130,Y+13,17,Gold);
+                    if(UsesMain && World->BrewMainCount>0) Text(FString::Printf(TEXT("×%d"),World->BrewMainCount),270,Y+13,17,Gold);
+                } else {
+                    Text(TEXT("空"),130,Y+13,17,Dim);
                 }
-            } else Text(HasTarget?FString::Printf(TEXT("本体保留：%s"),World->SkillName(World->BrewTarget)):TEXT("本体保留：请先选择丹药"),104,416,15,Dim);
-            if(!UsesSupport) Text(HasTarget?FString::Printf(TEXT("词条保留：%s"),TraitName(World->PillStates[World->BrewTarget].Trait)):TEXT("词条不重抽"),650,415,15,Dim);
-            else if(World->BrewSupport<0 || World->BrewSupportCount<1) Text(TEXT("不加辅材：本炉不会生成词条"),650,415,15,Dim);
-            else if(World->bBrewConvertTrait) Text(FString::Printf(TEXT("虚空晶定向：%s 100%%"),TraitName(World->BrewSupport)),650,415,15,Gold);
-            else {
-                float TraitWeights[3];World->BuildBrewTraitWeights(World->BrewSupport,World->BrewSupportCount,TraitWeights);
-                const float Total=TraitWeights[0]+TraitWeights[1]+TraitWeights[2];
-                Text(TEXT("词条实际概率："),650,415,15,Dim);
-                Text(FString::Printf(TEXT("强击 %.1f%% · 延伸 %.1f%% · 迅捷 %.1f%%"),TraitWeights[0]*100.f/Total,TraitWeights[1]*100.f/Total,TraitWeights[2]*100.f/Total),650,435,14,Dim);
             }
-            Text(UsesMain?(World->BrewOperation==1?FString(TEXT("强化固定消耗1份主材（首测）")):FString::Printf(TEXT("主材投入 %d / 3 份（首测）"),World->BrewMainCount)):TEXT("沿用原主材 · 本炉不扣"),104,486,18,White);
-            Button(TEXT("brewmainminus"),TEXT("－"),369,474,84,!World->bBrewActive && UsesMain && World->BrewOperation!=1 && World->BrewMainCount>1,42);
-            Button(TEXT("brewmainplus"),TEXT("＋"),465,474,84,!World->bBrewActive && ChoosesMain && Candidates.Num()>1 && World->BrewMainCount<3,42);
-            Text(UsesSupport?FString::Printf(TEXT("辅材投入 %d / 3 份（首测）"),World->BrewSupportCount):TEXT("本炉不扣辅材"),650,486,18,White);
-            Button(TEXT("brewsupportminus"),TEXT("－"),972,474,94,!World->bBrewActive && UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount>1,42);
-            Button(TEXT("brewsupportplus"),TEXT("＋"),1078,474,94,!World->bBrewActive && UsesSupport && !World->bBrewConvertTrait && World->BrewSupport>=0 && World->BrewSupportCount<3,42);
-            const int32 Main=World->BrewMain,Support=World->BrewSupport;
-            int32 Cost[6];World->BuildBrewCost(Cost);
-            const auto CostLine=[&](int32 Kind) {
-                const int32 Remaining=World->Inventory[Kind]-Cost[Kind];
-                return FString::Printf(TEXT("%s 需%d / 现有%d · %s%d"),MaterialNames[Kind],Cost[Kind],World->Inventory[Kind],Remaining>=0?TEXT("余"):TEXT("缺"),FMath::Abs(Remaining));
-            };
-            const bool SameColor=UsesMain && UsesSupport && Main>=0 && Main<3 && Main==Support && World->BrewSupportCount>0;
-            if(SameColor) {
-                const int32 Remaining=World->Inventory[Main]-Cost[Main];
-                Text(FString(TEXT("主辅同色合计："))+CostLine(Main),104,517,18,Remaining>=0?Teal:Gold);
-                Text(TEXT("主辅材共用此库存"),650,517,16,Dim);
+            // 副材 3 槽（右列）。
+            for(int I=0;I<3;I++) {
+                const float Y=232+I*58;
+                const int32 DisplaySupport=World->BrewSupport;
+                Box(326,Y,190,48,FLinearColor(.075f,.135f,.16f));
+                const bool SupportFilled=DisplaySupport==I && World->BrewSupportCount>0;
+                if(SupportFilled)Box(326,Y,190,3,Gold);
+                if(SupportFilled) {
+                    Text(MaterialNames[I],336,Y+13,17,Gold);
+                    Text(FString::Printf(TEXT("×%d"),World->BrewSupportCount),476,Y+13,17,Gold);
+                } else {
+                    Text(TEXT("空"),336,Y+13,17,Dim);
+                }
+            }
+            // 中间「＋」。
+            Text(TEXT("＋"),298,320,22,Gold);
+            // 炼金锅（占位矩形 + 状态文字）。
+            Box(120,414,396,120,FLinearColor(.05f,.09f,.1f));
+            Text(TEXT("炼金锅 · 药液状态"),130,424,16,Dim);
+            FString CauldronState=World->bBrewActive?TEXT("炼制中…"):(World->BrewMain>=0&&World->BrewMainCount>0)?TEXT("已投料"):TEXT("空闲 · 尚未投料");
+            Text(CauldronState,130,452,18,World->bBrewActive?Gold:World->BrewMainCount>0?White:Dim);
+            // 投料状态信息。
+            Text(UsesMain?FString::Printf(TEXT("主材投入 %d 份"),World->BrewMainCount):TEXT("主材沿用原丹药"),120,544,15,White);
+            Text(UsesSupport?(World->BrewSupportCount>0?FString::Printf(TEXT("副材投入 %d 份"),World->BrewSupportCount):TEXT("副材未投入")):TEXT("副材沿用原丹药"),326,544,15,White);
+            // ==== 右侧操作区（x 580~1222）====
+            // 素材背包：主材背包 + 副材背包。
+            Box(580,164,642,130,FLinearColor(.055f,.095f,.11f));
+            Text(TEXT("主材料背包"),596,172,18,White);
+            for(int I=0;I<3;I++) {
+                const float X=596+I*208;
+                const int32 Remain=World->Inventory[I]-(World->BrewMain==I?World->BrewMainCount:0);
+                Button(FString::Printf(TEXT("bagmain%d"),I),FString::Printf(TEXT("%s  %d"),MaterialNames[I],Remain),X,198,196,World->Inventory[I]>0&&UsesMain&&ChoosesMain&&!World->bBrewActive,48);
+            }
+            Box(580,300,642,130,FLinearColor(.055f,.095f,.11f));
+            Text(TEXT("副材料背包"),596,308,18,White);
+            for(int I=0;I<3;I++) {
+                const float X=596+I*208;
+                const int32 Remain=World->Inventory[I]-(World->BrewSupport==I?World->BrewSupportCount:0);
+                Button(FString::Printf(TEXT("bagsub%d"),I),FString::Printf(TEXT("%s  %d"),MaterialNames[I],Remain),X,334,196,World->Inventory[I]>0&&UsesSupport&&!World->bBrewActive,48);
+            }
+            // 同方强化列表（原「合成图鉴」）。
+            Box(580,436,642,172,FLinearColor(.055f,.095f,.11f));
+            Text(TEXT("同方强化"),596,444,18,White);
+            TArray<int32> OwnedPills;
+            for(int32 Skill:World->Equipped) if(Skill>0 && World->PillStates.IsValidIndex(Skill) && World->PillStates[Skill].Main>=0) OwnedPills.AddUnique(Skill);
+            for(int32 Skill:World->Bag) if(Skill>0 && World->PillStates.IsValidIndex(Skill) && World->PillStates[Skill].Main>=0) OwnedPills.AddUnique(Skill);
+            if(OwnedPills.IsEmpty()) {
+                Text(TEXT("暂无可强化的丹药，先完成一次炼丹吧。"),596,486,16,Dim);
             } else {
-                Text(!UsesMain?TEXT("原主材会随旧丹保留"):Main>=0 && Main<3?CostLine(Main):TEXT("请选择主材"),104,517,18,UsesMain && Main>=0 && Main<3 && Cost[Main]>World->Inventory[Main]?Gold:Dim);
-                Text(!UsesSupport?TEXT("该操作不重抽词条"):Support>=0 && Support<3?CostLine(Support):TEXT("无辅材投入"),650,517,18,UsesSupport && Support>=0 && Support<3 && Cost[Support]>World->Inventory[Support]?Gold:Dim);
+                const int PerPage=2,Pages=FMath::Max(1,(OwnedPills.Num()+PerPage-1)/PerPage);
+                DetailPage=FMath::Clamp(DetailPage,0,Pages-1);
+                for(int Row=0;Row<PerPage;Row++) {
+                    const int Idx=DetailPage*PerPage+Row;if(!OwnedPills.IsValidIndex(Idx))break;
+                    const int Skill=OwnedPills[Idx];const float Y=472+Row*60;
+                    const FAlchemyPillState& Pill=World->PillStates[Skill];
+                    Text(FString::Printf(TEXT("%s · Lv.%d · %s"),World->SkillName(Skill),World->Levels[Skill],Pill.Main>=0&&Pill.Main<3?MaterialNames[Pill.Main]:TEXT("?")),596,Y+6,16,Gold);
+                    Button(FString::Printf(TEXT("fillpill%d"),Skill),TEXT("一键填入"),1022,Y,184,!World->bBrewActive,40);
+                }
+                Button(TEXT("noteprev"),TEXT("上一页"),596,592,120,DetailPage>0,30);
+                Text(FString::Printf(TEXT("%d / %d"),DetailPage+1,Pages),860,599,16,Dim);
+                Button(TEXT("notenext"),TEXT("下一页"),1102,592,120,DetailPage<Pages-1,30);
             }
-            Text(FString::Printf(TEXT("碎片：火 %d · 露 %d · 魔 %d，自动归集成材料"),World->FragmentCount[0],World->FragmentCount[1],World->FragmentCount[2]),104,541,17,Teal);
-            const bool CanConvert=UsesSupport && World->BrewSupport>=0 && World->BrewSupportCount==1;
-            const FString ConvertLabel=World->BrewSupportCount>1 && !World->bBrewConvertTrait?FString(TEXT("先将辅材减至1份，再选虚空晶定向转换")):
-                FString::Printf(TEXT("%s虚空晶 · 额外需1 / 现有%d%s"),World->bBrewConvertTrait?TEXT("已选 "):TEXT("选择 "),World->Inventory[4],Cost[4]>World->Inventory[4]?TEXT(" · 缺1"):TEXT(""));
-            Button(TEXT("brewconvert"),ConvertLabel,650,539,528,!World->bBrewActive && (CanConvert || World->bBrewConvertTrait) && (World->Inventory[4]>0 || World->bBrewConvertTrait),42);
-            if(World->bBrewConvertTrait && CanConvert)Box(650,539,528,3,Gold);
-            Text(TEXT("起炼即扣，拒绝成品不返料。虚空晶仅定词条，本体仍随机。"),104,560,15,Dim);
+            // ==== 底部操作按钮 ====
+            Button(TEXT("clear"),TEXT("清空材料"),580,616,300,!World->bBrewActive,46);
             FString Reason;
             const bool CanStart=World->CanStartBrew(Reason);
-            const TCHAR* OperationHint=World->BrewOperation==0?TEXT("新制一颗丹药；旧丹仍可使用。"):
-                World->BrewOperation==1?TEXT("保留本体与词条，提升成长；暂用 Lv.5 上限。"):
-                World->BrewOperation==2?TEXT("换主材重抽本体，保留兼容词条与成长。"):
-                TEXT("换辅材重抽词条，保留本体与成长。");
-            Paragraph(CanStart?FString(OperationHint):Reason,104,583,760,16,CanStart?Dim:Gold);
-            Text(World->BrewMode==1?
-                TEXT("驻留1.2秒，离点120cm暂停；新制稳定起25%升精良；强化至少稳定、25%尝试升档（精良封顶）"):
-                TEXT("随身2.5秒可移动；新制粗制起25%升稳定；强化保留旧品质、25%尝试升档（精良封顶）"),104,610,16,Dim);
-            Button(TEXT("brewstart"),World->bBrewActive?TEXT("正在炼制中"):TEXT("确认起炼 · 返回战场"),888,587,290,CanStart && !World->bBrewActive,46);
+            const FString ConfirmLabel=World->bBrewConfirmPending?TEXT("再次确认炼丹"):(World->bBrewActive?TEXT("正在炼制中"):TEXT("确认炼丹"));
+            Button(TEXT("brewstart"),ConfirmLabel,922,616,300,CanStart&&!World->bBrewActive,46);
+            if(World->bBrewConfirmPending && CanStart) Text(TEXT("确认将消耗主材与副材并开始炼制"),580,666,15,Gold);
+            else if(!CanStart && !World->bBrewActive) Text(Reason,580,666,15,Gold);
+            // 底部返回提示。
+            Text(TEXT("Esc 返回战场"),1100,700,14,Dim);
+            if(DragMaterial>=0) {float X,Y;PC->GetMousePosition(X,Y);Text(MaterialNames[DragMaterial],(X-OX)/S+16,(Y-OY)/S,22,Gold);}
         }
         else if(P==TEXT("alchemy")) {
             Text(TEXT("点击或拖入材料；点击炉内材料取回。"),104,181,18,Dim);

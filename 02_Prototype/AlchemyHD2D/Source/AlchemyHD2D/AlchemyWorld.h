@@ -296,14 +296,29 @@ public:
     // RESULT-001: pending craft result before accept, plus one-shot reroll state.
     int32 PendingResultSkill=-1, PendingResultCombination=-1, PendingResultTotal=0;
     bool PendingIsNuclear=false, PendingRefreshed=false;
+    // ===== 炼丹界面布局参数（可视化可调，编辑器详情面板直接改，PIE 实时预览）=====
+    // 逻辑分辨率 1280×720；以下坐标均为逻辑坐标。
+    UPROPERTY(EditAnywhere,Category="炼丹界面|左侧炼金炉") FVector2D CauldronPanelPos=FVector2D(104,164);
+    UPROPERTY(EditAnywhere,Category="炼丹界面|左侧炼金炉") FVector2D CauldronPanelSize=FVector2D(442,400);
+    UPROPERTY(EditAnywhere,Category="炼丹界面|投料槽") FVector2D MainSlotPos=FVector2D(120,232);   // 主材槽左上角
+    UPROPERTY(EditAnywhere,Category="炼丹界面|投料槽") FVector2D SubSlotPos=FVector2D(326,232);    // 副材槽左上角
+    UPROPERTY(EditAnywhere,Category="炼丹界面|投料槽") FVector2D SlotSize=FVector2D(190,48);       // 单个槽位宽高
+    UPROPERTY(EditAnywhere,Category="炼丹界面|投料槽") float SlotGap=58.f;                          // 槽位纵向间距
+    UPROPERTY(EditAnywhere,Category="炼丹界面|右侧背包") FVector2D BagPanelPos=FVector2D(580,164);  // 素材背包区左上角
+    UPROPERTY(EditAnywhere,Category="炼丹界面|右侧背包") FVector2D BagPanelSize=FVector2D(642,130); // 单个背包面板宽高
+    UPROPERTY(EditAnywhere,Category="炼丹界面|右侧背包") float BagGap=136.f;                        // 主材背包与副材背包纵向间距
+    UPROPERTY(EditAnywhere,Category="炼丹界面|同方强化") FVector2D FormulaPanelPos=FVector2D(580,436);
+    UPROPERTY(EditAnywhere,Category="炼丹界面|同方强化") FVector2D FormulaPanelSize=FVector2D(642,172);
     // V0.2 run-local brewing prototype. The fixed skill ID is the body; trait is a separate layer.
     TArray<FAlchemyPillState> PillStates;
-    int32 BrewMode=0, BrewOperation=0, BrewTarget=-1, BrewMain=0, BrewSupport=-1;
-    int32 BrewMainCount=1, BrewSupportCount=0, FragmentCount[3]={0,0,0};
+    int32 BrewMode=0, BrewOperation=0, BrewTarget=-1, BrewMain=-1, BrewSupport=-1;
+    int32 BrewMainCount=0, BrewSupportCount=0, FragmentCount[3]={0,0,0};
     int32 OpeningSupplyNormalDeaths=0;
     bool bOpeningSupplyEligible=false, bOpeningSupplyGranted=false;
     bool bBrewConvertTrait=false, bBrewCommittedConvertTrait=false, bPendingTraitConverted=false;
     bool bBrewActive=false, bV02Pending=false;
+    // 炼丹二次确认：第一次点「确认炼丹」进入确认态，第二次才真正起炼。
+    bool bBrewConfirmPending=false;
     float BrewProgress=0, BrewDuration=0;
     FVector BrewOrigin=FVector::ZeroVector;
     int32 BrewCommittedMode=0, BrewCommittedOperation=0, BrewCommittedTarget=-1;
@@ -595,6 +610,7 @@ public:
     virtual void DrawHUD() override;
     virtual void NotifyHitBoxClick(FName BoxName) override;
     int32 DragMaterial=-1;
+    int32 DragRole=0; // 0=主材，1=副材（拖拽投料的角色区分）
     AAlchemyWorld* World=nullptr;
     float S=1, OX=0, OY=0;
     int32 FocusIndex=0, DetailPage=0;

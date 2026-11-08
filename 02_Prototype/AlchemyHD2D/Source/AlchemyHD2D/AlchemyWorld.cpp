@@ -738,9 +738,10 @@ void AAlchemyWorld::StartRun() {
     PendingResultSkill=-1; PendingResultCombination=-1; PendingResultTotal=0; PendingIsNuclear=false; PendingRefreshed=false;
     PillStates.Init(FAlchemyPillState(),NumSkills());
     BrewMode=FMath::Clamp(Progress->AlchemyMode,0,1);
-    BrewOperation=0;BrewTarget=-1;BrewMain=0;BrewSupport=-1;BrewMainCount=1;BrewSupportCount=0;
+    BrewOperation=0;BrewTarget=-1;BrewMain=-1;BrewSupport=-1;BrewMainCount=0;BrewSupportCount=0;
     FragmentCount[0]=FragmentCount[1]=FragmentCount[2]=0;
     bBrewActive=bV02Pending=false;bBrewConvertTrait=bBrewCommittedConvertTrait=bPendingTraitConverted=false;BrewProgress=BrewDuration=0;
+    bBrewConfirmPending=false;
     PendingOldSkill=-1;PendingTrait=-1;PendingMain=-1;PendingBrewOperation=-1;
     RunLevel=1; RunXP=0; PendingLevelUps=0;LevelupChoices[0]=LevelupChoices[1]=LevelupChoices[2]=-1;for(int A=0;A<7;A++) RunAttrs[A]=0;
     // 开局高级材料 removed per system UI V0.2 (not among the 10 upgrades).
@@ -1378,8 +1379,33 @@ void AAlchemyWorld::Action(FString Id) {
         return;
     }
     if(bCombat && !TutorialActive() && Panel==TEXT("alchemy")) {
+        // 素材背包点击：选择主材（左）或副材（右）。
+        if(Id.Len()==8 && Id.StartsWith(TEXT("bagmain"))) {
+            const int I=FMath::Clamp(FCString::Atoi(*Id.Mid(7)),0,2);
+            if(BrewOperation==3) {Message(TEXT("换辅材操作下主材已锁定"));return;}
+            if(Inventory[I]<1) {Message(TEXT("该主材库存不足"));return;}
+            BrewMain=I;BrewMainCount=FMath::Max(1,BrewMainCount);return;
+        }
+        if(Id.Len()==7 && Id.StartsWith(TEXT("bagsub"))) {
+            const int I=FMath::Clamp(FCString::Atoi(*Id.Mid(6)),0,2);
+            if(BrewOperation==1 || BrewOperation==2) {Message(TEXT("该操作不消耗辅材"));return;}
+            if(Inventory[I]<1) {Message(TEXT("该副材库存不足"));return;}
+            BrewSupport=I;BrewSupportCount=FMath::Max(1,BrewSupportCount);return;
+        }
+        // 同方强化一键填入：读取该丹药原主材，切入同方强化。
+        if(Id.StartsWith(TEXT("fillpill"))) {
+            const int Skill=FCString::Atoi(*Id.Mid(8));
+            if(!Levels.IsValidIndex(Skill) || Levels[Skill]<=0 || !PillStates.IsValidIndex(Skill) || PillStates[Skill].Main<0) {Message(TEXT("丹药无效"));return;}
+            if((!Equipped.Contains(Skill) && !Bag.Contains(Skill))) {Message(TEXT("该丹药不在技能栏"));return;}
+            BrewOperation=1;BrewTarget=Skill;
+            BrewMain=PillStates[Skill].Main;BrewMainCount=1;
+            BrewSupport=-1;BrewSupportCount=0;bBrewConvertTrait=false;
+            Message(FString::Printf(TEXT("已载入「%s」原配方：主材 %s ×1，请确认炼丹"),SkillName(Skill),BrewMain>=0&&BrewMain<3?MaterialNames[BrewMain]:TEXT("?")));
+            return;
+        }
         if(Id.Len()==7 && Id.StartsWith(TEXT("brewop"))) {
             BrewOperation=FMath::Clamp(FCString::Atoi(*Id.Mid(6)),0,3);
+            bBrewConfirmPending=false;
             if(BrewOperation==1) {
                 BrewMainCount=1;
                 if(PillStates.IsValidIndex(BrewTarget)) BrewMain=PillStates[BrewTarget].Main;
@@ -1421,7 +1447,19 @@ void AAlchemyWorld::Action(FString Id) {
             return;
         }
         if(Id==TEXT("brewsupportminus")) {BrewSupportCount=FMath::Max(BrewSupport>=0?1:0,BrewSupportCount-1);return;}
-        if(Id==TEXT("brewstart")) {BeginBrew();return;}
+        if(Id==TEXT("brewstart")) {
+            // 二次确认：第一次点击进入确认态，第二次才真正起炼。
+            if(!bBrewConfirmPending) {
+                FString Reason;
+                if(!CanStartBrew(Reason)) {Message(Reason);return;}
+                bBrewConfirmPending=true;
+                Message(TEXT("确认开始本次炼丹？再次点击「确认炼丹」正式消耗材料并起炼。"));
+                return;
+            }
+            bBrewConfirmPending=false;
+            BeginBrew();
+            return;
+        }
     }
     if(Id==TEXT("close")) {
         if(Panel==TEXT("merchantconfirm")) {MerchantSellKind=-1;MerchantSellCount=MerchantSellInventorySnapshot=0;Panel=TEXT("merchant");return;}
@@ -1469,7 +1507,13 @@ void AAlchemyWorld::Action(FString Id) {
         Panel=TEXT("alchemy");
         return;
     }
-    if(Id==TEXT("clear")) { Selected={0,0,0,0,0,0}; return; }
+    if(Id==TEXT("clear")) {
+        // 清空材料：重置炼丹投料（主材/副材/暂存），不扣除任何库存。
+        Selected={0,0,0,0,0,0};
+        BrewMain=-1;BrewSupport=-1;BrewMainCount=0;BrewSupportCount=0;
+        bBrewConvertTrait=false;bBrewConfirmPending=false;
+        return;
+    }
     if(Id==TEXT("alchemy") || Id==TEXT("codex") || Id==TEXT("skills") || Id==TEXT("talents") || Id==TEXT("level") || Id==TEXT("research")) {if(Panel!=Id)PlayCue(TEXT("UISelect"));Panel=Id;return;}
     if((bBattleReference || bRandomBattleScene) && (Id==TEXT("ortho") || Id==TEXT("tilt"))){Message(TEXT("局内场景保持60°透视与统一角色比例"));return;}
     if(Id==TEXT("ortho")) bPerspective=!bPerspective;

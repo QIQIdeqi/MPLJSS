@@ -73,7 +73,7 @@ bool AAlchemyWorld::CanStartBrew(FString& Reason) const {
         }
     }
     if(BrewOperation!=3 && (BrewMain<0 || BrewMain>=3 || BrewMainCount<1 || BrewMainCount>3)) {
-        Reason=TEXT("主材需投入1至3份");return false;
+        Reason=BrewMain<0?TEXT("请先从背包拖入主材料"):TEXT("主材需投入1至3份");return false;
     }
     if(BrewSupportCount<0 || BrewSupportCount>3 ||
        (BrewSupportCount>0 && (BrewSupport<0 || BrewSupport>=3))) {
