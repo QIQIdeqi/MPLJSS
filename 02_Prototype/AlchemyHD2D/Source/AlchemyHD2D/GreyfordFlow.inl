@@ -102,6 +102,7 @@ bool AAlchemyWorld::ReferenceSweep(FVector A,FVector B,float Radius) const {
 }
 
 void AAlchemyWorld::EndPlay(const EEndPlayReason::Type Reason){
+    if(BrewWidget)BrewWidget->RemoveFromParent();
     ClearRandomBattleScene();
     ClearEliteWarning();
     if(ReferencePreviousAA>=0)if(auto AA=IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))AA->Set(ReferencePreviousAA,ECVF_SetByCode);

@@ -202,6 +202,7 @@ public:
     FString AmbientCSV;
     UPROPERTY() TArray<TObjectPtr<AGreyfordReferenceRegion>> ReferenceRegions;
     UPROPERTY() TObjectPtr<UBattleReferenceWidget> BattleWidget;
+    UPROPERTY() TObjectPtr<class UAlchemyBrewWidget> BrewWidget;
     bool bBattleReference=false;
     bool bRandomBattleScene=false;
     bool bStageBuildFailed=false;

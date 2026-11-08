@@ -1,5 +1,6 @@
 #include "AlchemyWorld.h"
 #include "BattleReferenceWidget.h"
+#include "AlchemyBrewWidget.h"
 #include "MainMenuWorld.h"
 #include "MainMenuWidget.h"
 #include "GameAudio.h"
@@ -294,6 +295,11 @@ void AAlchemyWorld::BeginPlay() {
     auto WidgetClass=LoadClass<UBattleReferenceWidget>(nullptr,TEXT("/Game/UI/Reference/WBP_BattleReference.WBP_BattleReference_C"));
     BattleWidget=CreateWidget<UBattleReferenceWidget>(PC,WidgetClass?WidgetClass:UBattleReferenceWidget::StaticClass());
     if(BattleWidget){BattleWidget->InitializeForWorld(this);BattleWidget->AddToViewport(0);}
+    if(!FParse::Param(FCommandLine::Get(),TEXT("UIV02Test")) && !FParse::Param(FCommandLine::Get(),TEXT("UIAccessTest"))) {
+        const auto BrewClass=LoadClass<UAlchemyBrewWidget>(nullptr,TEXT("/Game/UI/Alchemy/WBP_Alchemy.WBP_Alchemy_C"));
+        if(BrewClass)BrewWidget=CreateWidget<UAlchemyBrewWidget>(PC,BrewClass);
+        if(BrewWidget){BrewWidget->Setup(this);BrewWidget->AddToViewport(5);}
+    }
     UE_LOG(LogTemp,Display,TEXT("ALCHEMY_READY UE5.8 HD2D research; W0 initial=8; cap=300"));
     if(bGreyfordScene) {
         if(!bGreyfordFlow){Progress->TutorialComplete=true;StartRun();}
@@ -1341,6 +1347,9 @@ void AAlchemyWorld::TogglePanel(const FString& Id) {
 }
 
 void AAlchemyWorld::Action(FString Id) {
+    const auto Draft=[&](){return MakeTuple(BrewOperation,BrewTarget,BrewMain,BrewMainCount,BrewSupport,BrewSupportCount,bBrewConvertTrait);};
+    const auto Before=Draft();
+    ON_SCOPE_EXIT { if(Before!=Draft())bBrewConfirmPending=false; };
     if(bRunEnded && CharacterAnimation.Dead && !CharacterAnimation.DeathFinished())return;
     if((PendingResultSkill>=0 || PendingIsNuclear) && Id!=TEXT("acceptresult") && Id!=TEXT("reroll") && Id!=TEXT("rejectresult")) {Panel=TEXT("result");return;}
     if(bRunEnded && Panel==TEXT("savefailed")) {
@@ -1622,6 +1631,7 @@ void AAlchemyWorld::Tick(float Dt) {
         const bool bBrewVisual=FParse::Param(FCommandLine::Get(),TEXT("BrewV02Visual"));
         const bool bBrewResultVisual=bBrewVisual && FParse::Param(FCommandLine::Get(),TEXT("BrewV02ResultVisual"));
         const bool bBrewSupplyVisual=bBrewVisual && FParse::Param(FCommandLine::Get(),TEXT("BrewV02SupplyVisual"));
+        const bool bFurnaceVisual=bBrewVisual && FParse::Param(FCommandLine::Get(),TEXT("BrewV02FurnaceVisual"));
         const bool bBrewStationVisual=bBrewVisual && FParse::Param(FCommandLine::Get(),TEXT("BrewV02StationVisual"));
         static FString BrewVisualScreenshot;
         if(bBrewVisual && CaptureStep==3) {
@@ -1668,6 +1678,12 @@ void AAlchemyWorld::Tick(float Dt) {
                                 UE_LOG(LogTemp,Error,TEXT("BREW_V02_VISUAL_FAIL station_not_paused_outside"));
                                 FPlatformMisc::RequestExitWithStatus(false,1);return;
                             }
+                        } else if(bFurnaceVisual) {
+                            if(!BeginBrew()) {
+                                UE_LOG(LogTemp,Error,TEXT("BREW_V02_VISUAL_FAIL furnace_begin_failed"));
+                                FPlatformMisc::RequestExitWithStatus(false,1);return;
+                            }
+                            UpdateBrew(BrewDuration*.42f);
                         } else if(bBrewSupplyVisual) {
                             Panel.Empty();OpeningSupplyNormalDeaths=7;
                             bOpeningSupplyEligible=true;bOpeningSupplyGranted=false;
@@ -1705,8 +1721,13 @@ void AAlchemyWorld::Tick(float Dt) {
                 const FString ScreenshotPath=Folder/(bBrewVisual?
                     FString::Printf(TEXT("BrewV02_PC_%dx%d_%u.png"),X,Y,static_cast<uint32>(FPlatformTime::Cycles64())):
                     FString::Printf(TEXT("PC_%dx%d_%02d.png"),X,Y,CaptureStep));
-                if(bBrewVisual) BrewVisualScreenshot=ScreenshotPath;
-                FScreenshotRequest::RequestScreenshot(ScreenshotPath,false,false);
+                if(bBrewVisual) {
+                    BrewVisualScreenshot=ScreenshotPath;
+                    FTimerHandle Shot;
+                    GetWorld()->GetTimerManager().SetTimer(Shot,[ScreenshotPath](){
+                        FScreenshotRequest::RequestScreenshot(ScreenshotPath,true,false);
+                    },.55f,false);
+                } else FScreenshotRequest::RequestScreenshot(ScreenshotPath,false,false);
             }
             UE_LOG(LogTemp,Display,TEXT("PC_UI_FRAME step=%d viewport=%dx%d scale=%.2f panel=%s"),CaptureStep,X,Y,Progress->UITextScale,*Panel);
             CaptureStep++;
