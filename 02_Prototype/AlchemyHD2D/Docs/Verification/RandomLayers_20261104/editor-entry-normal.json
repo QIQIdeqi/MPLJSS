@@ -1,8 +1,0 @@
-{
-  "actor": "/Game/Greyford/Maps/Outskirts_Blockout.Outskirts_Blockout:PersistentLevel.AlchemyLevelDesigner_1",
-  "boss": false,
-  "ground": 432,
-  "objects": 107,
-  "result": "PASS",
-  "scope": "Editor startup selection and native reflected APIs; not mouse clicks or human usability."
-}

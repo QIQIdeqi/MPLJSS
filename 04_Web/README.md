@@ -1,5 +1,7 @@
 # 官网源码与部署记录
 
+> 当前游戏源码入口为 [Godot 工程](../02_Prototype/AlchemyGodot/README.md)。下文的 Unreal 下载及部署记录对应历史版本。
+
 策划正文继续在`00_Doc/协作策划/`维护，网站是只读快照。此次仅归档和同步Git，没有重新部署。
 
 - `source/`：独立Sites工作区`alchemy-official/`的build.py、check_site.py、README.md源码快照。原独立Git仓库及其.openai配置保持本地，不作为主仓库子模块上传。

@@ -1,0 +1,70 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://levels/preset.gd" id="1"]
+[ext_resource type="Script" path="res://levels/brush.gd" id="2"]
+[ext_resource type="Texture2D" path="res://art/grass.png" id="Grass"]
+[ext_resource type="Texture2D" path="res://art/dirt.png" id="Dirt"]
+[ext_resource type="Texture2D" path="res://art/cobblestone.png" id="Stone"]
+[ext_resource type="Texture2D" path="res://art/bush.png" id="Bush"]
+[ext_resource type="Texture2D" path="res://art/fence.png" id="Fence"]
+[ext_resource type="Texture2D" path="res://art/crates.png" id="Crates"]
+
+[sub_resource type="Resource" id="Brush_Grass"]
+resource_name = "草地"
+script = ExtResource("2")
+display_name = "草地"
+texture = ExtResource("Grass")
+ground = true
+weight = 78.0
+
+[sub_resource type="Resource" id="Brush_Dirt"]
+resource_name = "泥地"
+script = ExtResource("2")
+display_name = "泥地"
+texture = ExtResource("Dirt")
+ground = true
+weight = 20.0
+
+[sub_resource type="Resource" id="Brush_Stone"]
+resource_name = "鹅卵石路"
+script = ExtResource("2")
+display_name = "鹅卵石路"
+texture = ExtResource("Stone")
+ground = true
+weight = 2.0
+
+[sub_resource type="Resource" id="Brush_Bush"]
+resource_name = "灌木"
+script = ExtResource("2")
+display_name = "灌木"
+texture = ExtResource("Bush")
+weight = 6.0
+size = Vector2(45, 28)
+boss_interior = true
+
+[sub_resource type="Resource" id="Brush_Fence"]
+resource_name = "木栅栏"
+script = ExtResource("2")
+display_name = "木栅栏"
+texture = ExtResource("Fence")
+weight = 2.0
+size = Vector2(90, 68)
+collision = Vector2(56, 16)
+
+[sub_resource type="Resource" id="Brush_Crates"]
+resource_name = "货箱"
+script = ExtResource("2")
+display_name = "货箱"
+texture = ExtResource("Crates")
+weight = 1.0
+size = Vector2(64, 64)
+collision = Vector2(29, 22)
+
+[resource]
+resource_name = "Alchemy_Random_Boss"
+script = ExtResource("1")
+grid = Vector2i(14, 12)
+object_density = 0.3
+boss = true
+preview_seed = 1112494878
+palette = Array[ExtResource("2")]([SubResource("Brush_Grass"), SubResource("Brush_Dirt"), SubResource("Brush_Stone"), SubResource("Brush_Bush"), SubResource("Brush_Fence"), SubResource("Brush_Crates")])

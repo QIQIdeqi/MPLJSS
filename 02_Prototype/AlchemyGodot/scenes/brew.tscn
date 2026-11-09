@@ -1,0 +1,379 @@
+[gd_scene load_steps=12 format=3]
+[ext_resource type="Script" path="res://scripts/brew.gd" id="1"]
+[ext_resource type="Script" path="res://ui/ingredient.gd" id="2"]
+[ext_resource type="Texture2D" path="res://art/panel_ornate.png" id="3"]
+[ext_resource type="Texture2D" path="res://art/art_cauldron.png" id="4"]
+[ext_resource type="Texture2D" path="res://art/button_normal.png" id="5"]
+[ext_resource type="Texture2D" path="res://art/button_hover.png" id="6"]
+[ext_resource type="Texture2D" path="res://art/button_pressed.png" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/fx/furnace.tscn" id="8"]
+[sub_resource type="StyleBoxTexture" id="normal"]
+texture = ExtResource("5")
+texture_margin_left = 24.0
+texture_margin_right = 24.0
+[sub_resource type="StyleBoxTexture" id="hover"]
+texture = ExtResource("6")
+texture_margin_left = 24.0
+texture_margin_right = 24.0
+[sub_resource type="StyleBoxTexture" id="pressed"]
+texture = ExtResource("7")
+texture_margin_left = 24.0
+texture_margin_right = 24.0
+[node name="Alchemy" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.73)
+[node name="Panel" type="Control" parent="."]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 75.0
+offset_right = 1180.0
+offset_bottom = 645.0
+[node name="Frame" type="NinePatchRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("3")
+patch_margin_left = 95
+patch_margin_top = 90
+patch_margin_right = 95
+patch_margin_bottom = 90
+mouse_filter = 2
+[node name="Sparks" parent="Panel" instance=ExtResource("8")]
+position = Vector2(260, 235)
+z_index = 2
+
+[node name="Sound" type="AudioStreamPlayer" parent="."]
+volume_db = -12.0
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 36.0
+offset_right = 310.0
+offset_bottom = 76.0
+text = "炼金"
+theme_override_font_sizes/font_size = 34
+
+[node name="Cauldron" type="TextureRect" parent="Panel"]
+layout_mode = 0
+offset_left = 85.0
+offset_top = 187.0
+offset_right = 435.0
+offset_bottom = 477.0
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="MainSlot" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = 66.0
+offset_top = 119.0
+offset_right = 231.0
+offset_bottom = 178.0
+text = "主材"
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+
+[node name="SupportSlot" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = 255.0
+offset_top = 119.0
+offset_right = 420.0
+offset_bottom = 178.0
+text = "副材（可选）"
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+is_support = true
+
+[node name="MainLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 129.0
+offset_right = 1010.0
+offset_bottom = 162.0
+text = "主材料背包"
+theme_override_font_sizes/font_size = 23
+
+[node name="MainBag" type="Control" parent="Panel"]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 167.0
+offset_right = 1020.0
+offset_bottom = 230.0
+
+[node name="Ingredient0" type="Button" parent="Panel/MainBag"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 164.0
+offset_bottom = 62.0
+text = ""
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+material_id = 0
+is_support = false
+
+[node name="Ingredient1" type="Button" parent="Panel/MainBag"]
+layout_mode = 0
+offset_left = 171.0
+offset_top = 0.0
+offset_right = 335.0
+offset_bottom = 62.0
+text = ""
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+material_id = 1
+is_support = false
+
+[node name="Ingredient2" type="Button" parent="Panel/MainBag"]
+layout_mode = 0
+offset_left = 342.0
+offset_top = 0.0
+offset_right = 506.0
+offset_bottom = 62.0
+text = ""
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+material_id = 2
+is_support = false
+
+[node name="SupportLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 231.0
+offset_right = 1010.0
+offset_bottom = 265.0
+text = "辅材料背包"
+theme_override_font_sizes/font_size = 23
+
+[node name="SupportBag" type="Control" parent="Panel"]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 269.0
+offset_right = 1020.0
+offset_bottom = 334.0
+
+[node name="Ingredient0" type="Button" parent="Panel/SupportBag"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 164.0
+offset_bottom = 62.0
+text = ""
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+material_id = 0
+is_support = true
+
+[node name="Ingredient1" type="Button" parent="Panel/SupportBag"]
+layout_mode = 0
+offset_left = 171.0
+offset_top = 0.0
+offset_right = 335.0
+offset_bottom = 62.0
+text = ""
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+material_id = 1
+is_support = true
+
+[node name="Ingredient2" type="Button" parent="Panel/SupportBag"]
+layout_mode = 0
+offset_left = 342.0
+offset_top = 0.0
+offset_right = 506.0
+offset_bottom = 62.0
+text = ""
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+script = ExtResource("2")
+material_id = 2
+is_support = true
+
+[node name="Message" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 375.0
+offset_right = 1040.0
+offset_bottom = 451.0
+text = "点击材料或拖到对应料槽"
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 19
+
+[node name="Close" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = 921.0
+offset_top = 38.0
+offset_right = 1033.0
+offset_bottom = 76.0
+text = "返回"
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+
+[node name="Clear" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 460.0
+offset_right = 643.0
+offset_bottom = 510.0
+text = "清空"
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+
+[node name="Confirm" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = 663.0
+offset_top = 460.0
+offset_right = 843.0
+offset_bottom = 510.0
+text = "确认炼丹"
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+
+[node name="Reject" type="Button" parent="Panel"]
+layout_mode = 0
+offset_left = 863.0
+offset_top = 460.0
+offset_right = 1013.0
+offset_bottom = 510.0
+text = "放弃成品"
+expand_icon = true
+theme_override_constants/icon_max_width = 38
+theme_override_styles/normal = SubResource("normal")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/pressed = SubResource("pressed")
+theme_override_styles/disabled = SubResource("normal")
+
+[node name="Mode" type="OptionButton" parent="Panel"]
+offset_left = 490.0
+offset_top = 38.0
+offset_right = 697.0
+offset_bottom = 76.0
+
+[node name="Operation" type="OptionButton" parent="Panel"]
+offset_left = 490.0
+offset_top = 82.0
+offset_right = 652.0
+offset_bottom = 120.0
+
+[node name="Target" type="OptionButton" parent="Panel"]
+offset_left = 668.0
+offset_top = 82.0
+offset_right = 900.0
+offset_bottom = 120.0
+
+[node name="Equip" type="Button" parent="Panel"]
+offset_left = 915.0
+offset_top = 82.0
+offset_right = 1013.0
+offset_bottom = 120.0
+text = "装配"
+
+[node name="MainMinus" type="Button" parent="Panel"]
+offset_left = 112.0
+offset_top = 183.0
+offset_right = 146.0
+offset_bottom = 217.0
+text = "−"
+
+[node name="MainPlus" type="Button" parent="Panel"]
+offset_left = 151.0
+offset_top = 183.0
+offset_right = 185.0
+offset_bottom = 217.0
+text = "+"
+
+[node name="SupportMinus" type="Button" parent="Panel"]
+offset_left = 302.0
+offset_top = 183.0
+offset_right = 336.0
+offset_bottom = 217.0
+text = "−"
+
+[node name="SupportPlus" type="Button" parent="Panel"]
+offset_left = 341.0
+offset_top = 183.0
+offset_right = 375.0
+offset_bottom = 217.0
+text = "+"
+
+[node name="Convert" type="CheckButton" parent="Panel"]
+offset_left = 490.0
+offset_top = 335.0
+offset_right = 718.0
+offset_bottom = 368.0
+text = "虚空晶定向词条 ×0"
+
+[node name="Progress" type="Label" parent="."]
+offset_left = 50.0
+offset_top = 596.0
+offset_right = 440.0
+offset_bottom = 644.0
+mouse_filter = 2
+theme_override_colors/font_shadow_color = Color(0.1, 0.04, 0.1, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 21
+text = "随身试剂起炼 · 可边移动边炼制"

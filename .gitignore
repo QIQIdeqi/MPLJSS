@@ -138,3 +138,7 @@ memory/archives/2026-10-27-old-build-saves/
 /02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/*/run/*.log
 /02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/**/*.sg-rwlock
 /02_Prototype/AlchemyHD2D/ArtSource/RoseMageAttack_20261101/Runtime/Frames/
+
+# Local legacy checkout and historical Unreal build copies.
+/02_Prototype/AlchemyHD2D/
+/03_Build/Greyford_Current_Win64_20261109/

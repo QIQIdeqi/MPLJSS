@@ -1,0 +1,30 @@
+extends RefCounted
+
+# Stable IDs and tuning copied from Unreal Docs/DesignerCSV/DT_Skills.csv.
+const ROWS := {
+	0: {"name": "试作魔弹", "damage": 18.000000, "cd": 1.000000, "range": 900.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Bolt", "targets": 1, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	1: {"name": "炎弹", "damage": 26.000000, "cd": 1.800000, "range": 900.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Bolt", "targets": 1, "color": Color(1.000000, 0.250000, 0.035000), "speed": 1000.000000},
+	2: {"name": "寒霜环", "damage": 14.000000, "cd": 3.200000, "range": 1000.000000, "radius": 220.000000, "slow": 1.000000, "factor": 0.750000, "cast": "SelfArea", "targets": 1, "color": Color(0.150000, 0.650000, 1.000000), "speed": 1000.000000},
+	3: {"name": "雷链", "damage": 20.000000, "cd": 2.800000, "range": 900.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Bounce", "targets": 3, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	4: {"name": "酸蚀瓶", "damage": 28.000000, "cd": 3.800000, "range": 1000.000000, "radius": 180.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(0.300000, 1.000000, 0.200000), "speed": 1000.000000},
+	5: {"name": "石刺", "damage": 38.000000, "cd": 2.000000, "range": 800.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Direct", "targets": 1, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	6: {"name": "炽焰波", "damage": 30.000000, "cd": 4.400000, "range": 1000.000000, "radius": 240.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(1.000000, 0.250000, 0.035000), "speed": 1000.000000},
+	7: {"name": "兽核脉冲", "damage": 44.000000, "cd": 4.500000, "range": 900.000000, "radius": 240.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	8: {"name": "虚空噬弹", "damage": 58.000000, "cd": 4.800000, "range": 900.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Bolt", "targets": 1, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	9: {"name": "根须脉冲", "damage": 32.000000, "cd": 4.000000, "range": 1000.000000, "radius": 240.000000, "slow": 1.200000, "factor": 0.650000, "cast": "SelfArea", "targets": 1, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	10: {"name": "灰烬弹", "damage": 18.000000, "cd": 1.500000, "range": 900.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Bolt", "targets": 1, "color": Color(1.000000, 0.250000, 0.035000), "speed": 1000.000000},
+	11: {"name": "灼热旋流", "damage": 20.000000, "cd": 4.000000, "range": 1000.000000, "radius": 160.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(1.000000, 0.250000, 0.035000), "speed": 1000.000000},
+	12: {"name": "炎陨药瓶", "damage": 44.000000, "cd": 5.000000, "range": 1000.000000, "radius": 260.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(1.000000, 0.250000, 0.035000), "speed": 1000.000000},
+	13: {"name": "凝露针", "damage": 18.000000, "cd": 1.600000, "range": 600.000000, "radius": 0.000000, "slow": 0.800000, "factor": 0.900000, "cast": "Direct", "targets": 1, "color": Color(0.150000, 0.650000, 1.000000), "speed": 1000.000000},
+	14: {"name": "寒霜花", "damage": 25.000000, "cd": 3.000000, "range": 1000.000000, "radius": 200.000000, "slow": 1.000000, "factor": 0.850000, "cast": "SelfArea", "targets": 1, "color": Color(0.150000, 0.650000, 1.000000), "speed": 1000.000000},
+	15: {"name": "冰潮涌动", "damage": 36.000000, "cd": 4.500000, "range": 1000.000000, "radius": 300.000000, "slow": 1.500000, "factor": 0.650000, "cast": "SelfArea", "targets": 1, "color": Color(0.150000, 0.650000, 1.000000), "speed": 1000.000000},
+	16: {"name": "以太碎片", "damage": 12.000000, "cd": 2.800000, "range": 900.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Bounce", "targets": 2, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	17: {"name": "奥术脉冲", "damage": 30.000000, "cd": 2.500000, "range": 900.000000, "radius": 0.000000, "slow": 0.000000, "factor": 1.000000, "cast": "Bounce", "targets": 5, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	18: {"name": "星坠裂隙", "damage": 44.000000, "cd": 4.500000, "range": 1000.000000, "radius": 250.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(0.650000, 0.300000, 1.000000), "speed": 1000.000000},
+	19: {"name": "蒸汽爆裂", "damage": 20.000000, "cd": 2.500000, "range": 1000.000000, "radius": 160.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(1.000000, 0.250000, 0.035000), "speed": 1000.000000},
+	20: {"name": "雷焰爆裂", "damage": 46.000000, "cd": 4.800000, "range": 1000.000000, "radius": 220.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(1.000000, 0.250000, 0.035000), "speed": 1000.000000},
+	21: {"name": "霜刃", "damage": 20.000000, "cd": 2.300000, "range": 600.000000, "radius": 0.000000, "slow": 0.800000, "factor": 0.900000, "cast": "Direct", "targets": 1, "color": Color(0.150000, 0.650000, 1.000000), "speed": 1000.000000},
+	22: {"name": "霜雷风暴", "damage": 42.000000, "cd": 4.500000, "range": 1000.000000, "radius": 280.000000, "slow": 1.200000, "factor": 0.700000, "cast": "SelfArea", "targets": 1, "color": Color(0.150000, 0.650000, 1.000000), "speed": 1000.000000},
+	23: {"name": "混融酸滴", "damage": 22.000000, "cd": 2.600000, "range": 1000.000000, "radius": 160.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(0.300000, 1.000000, 0.200000), "speed": 1000.000000},
+	24: {"name": "原初催化弹", "damage": 48.000000, "cd": 5.200000, "range": 1000.000000, "radius": 280.000000, "slow": 0.000000, "factor": 1.000000, "cast": "TargetArea", "targets": 1, "color": Color(0.300000, 1.000000, 0.200000), "speed": 1000.000000},
+}
