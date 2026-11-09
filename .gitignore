@@ -66,7 +66,6 @@ memory/archives/2026-10-27-old-build-saves/
 /03_Build/**/Evidence/
 /03_Build/**/*.pdb
 /03_Build/**/Manifest_DebugFiles_Win64.txt
-/03_Build/**/Windows/
 /00_Doc/*_qa/
 **/__pycache__/
 **/.venv/
@@ -89,7 +88,7 @@ memory/archives/2026-10-27-old-build-saves/
 /03_Build/冒牌炼金术士_动态村庄_Win64_2026-10-30.zip
 /03_Build/冒牌炼金术士_动态村庄_Win64_2026-10-30.zip.sha256
 /03_Build/Greyford_Latest_Win64_20261031/
-# Current unpacked local playable build; generated Windows files stay on this SSD.
+# Superseded local unpacked build; the current 2026-11-09 package is tracked through Git LFS.
 /03_Build/Greyford_DropTune_Win64_20261104/
 
 # Generated reviews, duplicate frame exports and repair snapshots stay on the SSD.
