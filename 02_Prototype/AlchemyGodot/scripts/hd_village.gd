@@ -13,8 +13,16 @@ const STREET_OFFSET := Vector3(0, 2.90, 6.24)
 const DISTRICTS := preload("res://scripts/hd_village_districts.gd")
 const GARDENS := preload("res://scripts/hd_village_gardens.gd")
 
+# ===== 局外角色尺寸（可视化可调，Inspector 实时预览）=====
+# 角色在 3D 世界里的目标身高（米）。局内 2D 角色由 lilita.tscn 的 Art.scale 控制，
+# 局外 3D 贴片由这里的 walker_height 控制；两者独立，需分别调成视觉一致。
+@export var walker_height := 0.76
+# 是否显示身高参考标尺（一根半透明立柱，高度 = walker_height，跟随角色，用于对比）。
+@export var show_height_guide := false
+
 var walker: CharacterBody2D
 var walker_card: Sprite3D
+var height_guide: MeshInstance3D
 var camera: Camera3D
 var sun: DirectionalLight3D
 var atmosphere: Environment
@@ -95,15 +103,18 @@ func setup(source: CharacterBody2D, road: PackedVector2Array) -> void:
 						image.decompress()
 					masks[texture] = image
 				foreground_cards[prop] = masks[texture]
-	walker_card = make_card(null, 0.83)
+	walker_card = make_card(null, walker_height)
 	walker_card.name = "LilitaCard"
 	walker_card.rotation_degrees.x = 0.0
 	walker_card.scale.y = 1.8
 	walker_card.region_enabled = true
 	walker_card.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	walker_card.pixel_size = 0.76 / 512.0
-	walker_card.offset.y = 232.0
+	walker_card.pixel_size = walker_height / 256.0
+	walker_card.offset.y = 107.0
 	add_child(walker_card)
+	if show_height_guide:
+		height_guide = make_height_guide(walker_height)
+		add_child(height_guide)
 	for at in [Vector2(344, 210), Vector2(704, 177), Vector2(775, 346), Vector2(956, 252), Vector2(1042, 287), Vector2(1112, 295)]:
 		add_lamp(at)
 	add_particles(Vector2(1170, 310), true)
@@ -129,6 +140,23 @@ func make_card(texture: Texture2D, height: float) -> Sprite3D:
 	else:
 		card.pixel_size = height / 512
 	return card
+
+# 身高参考标尺：一根半透明立柱，高度 = walker_height，用于局外直观对比角色大小。
+func make_height_guide(height: float) -> MeshInstance3D:
+	var guide := MeshInstance3D.new()
+	guide.name = "HeightGuide"
+	var box := BoxMesh.new()
+	box.size = Vector3(0.08, height, 0.08)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(1.0, 0.35, 0.2, 0.45)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	box.material = material
+	guide.mesh = box
+	guide.position = Vector3.ZERO
+	guide.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return guide
 
 func add_bank_support(card: Sprite3D, at: Vector2, size: Vector2, texture: Texture2D, tint: Color) -> void:
 	var footing := MeshInstance3D.new()
@@ -264,6 +292,8 @@ func update_view(delta: float) -> void:
 	clock += delta
 	var at := TERRAIN.world_at(walker.position)
 	walker_card.position = at
+	if height_guide:
+		height_guide.position = at + Vector3(0.32, walker_height * 0.5, -0.06)
 	var art: Sprite2D = walker.get_node("Art")
 	if walker_card.texture != art.texture:
 		walker_card.texture = art.texture

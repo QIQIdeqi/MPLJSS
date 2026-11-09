@@ -1,17 +1,17 @@
 extends CharacterBody2D
 
-const MOTION := [
-	preload("res://art/lilita_motion/front.png"),
-	preload("res://art/lilita_motion/back.png"),
-	preload("res://art/lilita_motion/side.png"),
-]
-const FRAME_SIZE := 512
-const FEET_OFFSET := 232
+# 单张规范序列帧：5 行 × 7 列，每帧 256×256。
+# 行顺序（从上到下）：0 待机(3帧) / 1 死亡(6帧) / 2 移动·左走(7帧,右走镜像) / 3 上走(7帧) / 4 下走(7帧)。
+const SHEET := preload("res://art/lilita_motion/sprite_sheet.png")
+const FRAME_SIZE := 256
+const FEET_OFFSET := 107  # 脚底(帧内 y=235)相对帧中心(128)的向下偏移
+const FRAME_COUNT := {0: 3, 1: 6, 2: 7, 3: 7, 4: 7}
 
+enum Row { IDLE, DEATH, MOVE, UP, DOWN }
 enum Pose { IDLE, WALK, HURT, DEAD, DODGE }
 @export var clamp_to_battle_bounds := true
 
-var facing := 0
+var facing := 0  # 0=下 1=上 2=左右(移动)
 var pose := Pose.IDLE
 var elapsed := 0.0
 var hurt_time := 0.0
@@ -25,6 +25,7 @@ var knockback_time := 0.0
 @onready var art: Sprite2D = $Art
 
 func _ready() -> void:
+	art.texture = SHEET
 	art.position.y = -FEET_OFFSET * art.scale.y
 	art.region_enabled = true
 	art.region_filter_clip_enabled = true
@@ -44,7 +45,7 @@ func _physics_process(delta: float) -> void:
 		direction = move
 		if absf(move.x) > absf(move.y):
 			facing = 2
-			art.flip_h = move.x < 0
+			art.flip_h = move.x > 0  # 行2为左走，向右移动镜像
 		else:
 			facing = 0 if move.y > 0 else 1
 			art.flip_h = false
@@ -73,22 +74,40 @@ func show_death() -> void:
 	dead = true
 	update_pose(Pose.DEAD, 0.0)
 
+func _row(pose_value: Pose) -> int:
+	match pose_value:
+		Pose.DEAD:
+			return Row.DEATH
+		Pose.IDLE, Pose.HURT:
+			return Row.IDLE
+		_:
+			# WALK / DODGE 按朝向选行
+			match facing:
+				1: return Row.UP
+				2: return Row.MOVE
+				_: return Row.DOWN
+
 func update_pose(next: Pose, delta: float) -> void:
 	if pose != next:
 		elapsed = 0.0
 		pose = next
 	elapsed += delta
-	var row := int(pose)
+	var row := _row(pose)
+	var count: int = FRAME_COUNT[row]
 	var frame := 0
 	match pose:
 		Pose.WALK:
-			frame = int(elapsed * 8.0) % 6
+			frame = int(elapsed * 8.0) % count
 		Pose.DODGE:
-			row = Pose.WALK
-			frame = int(elapsed * 16.0) % 6
+			frame = int(elapsed * 16.0) % count
 		Pose.HURT:
-			frame = mini(3, int(elapsed * 10.0))
+			# 受击无专属动画：短暂闪白（modulate 由外部闪红亦可），复用待机帧。
+			frame = 0
+			art.modulate = Color(1, 0.55, 0.55) if fmod(elapsed * 10.0, 2.0) < 1.0 else Color(1, 1, 1)
 		Pose.DEAD:
-			frame = mini(5, int(elapsed * 8.0))
-	art.texture = MOTION[facing]
+			frame = mini(count - 1, int(elapsed * 8.0))
+		_:
+			frame = int(elapsed * 4.0) % count
+	if pose != Pose.HURT:
+		art.modulate = Color.WHITE
 	art.region_rect = Rect2(frame * FRAME_SIZE, row * FRAME_SIZE, FRAME_SIZE, FRAME_SIZE)

@@ -15,6 +15,7 @@ const STATIONARY_RADIUS := 24.0
 const WORLD_SCALE := 0.2
 const SKILLS := preload("res://data/brew_skills.gd").ROWS
 const TRAIL := preload("res://scenes/fx/trail.tscn")
+const FX := preload("res://scripts/battle_fx.gd")
 
 var field
 var main := -1
@@ -472,6 +473,9 @@ func cast_equipped(delta: float, at: Vector2, enemies: Array, apply_hit: Callabl
 		match stats.cast:
 			"SelfArea", "TargetArea":
 				var center: Vector2 = at if stats.cast == "SelfArea" else enemy.body.position
+				if stats.cast == "SelfArea" and skill == 2:
+					# 寒霜环：自身范围释放，播水面涟漪序列帧。
+					FX.frost_ring(field.effects, center, stats.radius * WORLD_SCALE * 2.0)
 				for entry in enemies.duplicate():
 					if living(entry) and entry.body.position.distance_to(center) <= stats.radius * WORLD_SCALE:
 						apply_skill_hit(entry, stats, apply_hit)

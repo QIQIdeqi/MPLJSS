@@ -19,9 +19,15 @@ const XP_MOTES := preload("res://scenes/fx/xp_motes.tscn")
 const BURST := preload("res://scenes/fx/burst.tscn")
 const TRAIL := preload("res://scenes/fx/trail.tscn")
 const COIN_SHINE := preload("res://scenes/fx/coin_shine.gdshader")
+const FROST_RING := preload("res://art/fx/frost_ring.png")
+const FROST_FRAME := 128
+const FROST_COLS := 6
+const FROST_COUNT := 24
 const FPS := 30.0
 
 static var additive: CanvasItemMaterial
+static var frost_frames: SpriteFrames
+static var frost_material: CanvasItemMaterial
 var cards: Array[Sprite2D] = []
 var age := 0.0
 var frames := 0
@@ -47,6 +53,34 @@ static func burst(parent: Node2D, at: Vector2, tint: Color) -> CPUParticles2D:
 	particles.global_position = at
 	particles.emitting = true
 	return particles
+
+# 寒霜环：水面涟漪扩散序列帧（24帧，加法混合，播放一次后消失）。
+static func frost_ring(parent: Node2D, at: Vector2, diameter_px: float) -> AnimatedSprite2D:
+	if frost_frames == null:
+		frost_frames = SpriteFrames.new()
+		if not frost_frames.has_animation("default"):
+			frost_frames.add_animation("default")
+			frost_frames.set_animation_loop("default", false)
+			frost_frames.set_animation_speed("default", 24.0)
+			for i in FROST_COUNT:
+				var frame := AtlasTexture.new()
+				frame.atlas = FROST_RING
+				frame.region = Rect2((i % FROST_COLS) * FROST_FRAME, (i / FROST_COLS) * FROST_FRAME, FROST_FRAME, FROST_FRAME)
+				frame.filter_clip = true
+				frost_frames.add_frame("default", frame)
+	if frost_material == null:
+		frost_material = CanvasItemMaterial.new()
+		frost_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	var effect := AnimatedSprite2D.new()
+	effect.sprite_frames = frost_frames
+	effect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	effect.material = frost_material
+	effect.scale = Vector2.ONE * (diameter_px / FROST_FRAME)
+	effect.animation_finished.connect(effect.queue_free)
+	_fx_parent(parent).add_child(effect)
+	effect.global_position = at
+	effect.play("default")
+	return effect
 
 static func trail(parent: Node2D, from: Vector2, to: Vector2, tint: Color,
 		duration := 0.18) -> CPUParticles2D:
