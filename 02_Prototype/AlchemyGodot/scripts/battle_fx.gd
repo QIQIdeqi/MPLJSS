@@ -24,10 +24,11 @@ const FROST_FRAME := 128
 const FROST_COLS := 6
 const FROST_COUNT := 24
 const FPS := 30.0
+const LIGHT_MATTE := preload("res://shaders/battle_light_matte.gdshader")
 
-static var additive: CanvasItemMaterial
+static var additive: ShaderMaterial
 static var frost_frames: SpriteFrames
-static var frost_material: CanvasItemMaterial
+static var frost_material: ShaderMaterial
 var cards: Array[Sprite2D] = []
 var age := 0.0
 var frames := 0
@@ -69,8 +70,8 @@ static func frost_ring(parent: Node2D, at: Vector2, diameter_px: float) -> Anima
 				frame.filter_clip = true
 				frost_frames.add_frame("default", frame)
 	if frost_material == null:
-		frost_material = CanvasItemMaterial.new()
-		frost_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		frost_material = ShaderMaterial.new()
+		frost_material.shader = LIGHT_MATTE
 	var effect := AnimatedSprite2D.new()
 	effect.sprite_frames = frost_frames
 	effect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -120,8 +121,8 @@ static func _atlas(parent: Node2D, at: Vector2, textures: Array, origin: Vector2
 	effect.looping = loop
 	effect.y_sort_enabled = true
 	if additive == null:
-		additive = CanvasItemMaterial.new()
-		additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		additive = ShaderMaterial.new()
+		additive.shader = LIGHT_MATTE
 	for i in textures.size():
 		var card := Sprite2D.new()
 		card.texture = textures[i]

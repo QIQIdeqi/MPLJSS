@@ -16,6 +16,7 @@ const WORLD_SCALE := 0.2
 const SKILLS := preload("res://data/brew_skills.gd").ROWS
 const TRAIL := preload("res://scenes/fx/trail.tscn")
 const FX := preload("res://scripts/battle_fx.gd")
+const RESULT_REVEAL := preload("res://scenes/fx/brew_result_reveal.tscn")
 
 var field
 var main := -1
@@ -38,6 +39,8 @@ var origin := Vector2.ZERO
 var progress := 0.0
 var duration := 0.0
 var spark_origin := Vector2.ZERO
+var result_fx: Node2D
+var result_reveal: Tween
 
 @onready var panel: Control = $Panel
 @onready var shade: ColorRect = $Shade
@@ -109,6 +112,7 @@ func toggle() -> void:
 		phase = 0
 
 func cancel_run() -> void:
+	clear_result_reveal()
 	phase = 0
 	pending.clear()
 	clear_projectiles()
@@ -121,6 +125,7 @@ func clear_projectiles() -> void:
 	bolts.clear()
 
 func reset() -> void:
+	clear_result_reveal()
 	main = -1
 	support = -1
 	main_count = 0
@@ -156,13 +161,16 @@ func change_target(index: int) -> void:
 	draft_changed()
 
 func equip_from_bag() -> void:
-	if not bag.has(target):
+	equip_skill(target)
+	draft_changed()
+
+func equip_skill(id: int) -> void:
+	if not bag.has(id):
 		return
-	bag.erase(target)
+	bag.erase(id)
 	if equipped.size() >= EQUIPPED_LIMIT - 1:
 		bag.append(equipped.pop_back())
-	equipped.append(target)
-	draft_changed()
+	equipped.append(id)
 
 func change_conversion(pressed: bool) -> void:
 	convert_trait = pressed
@@ -290,14 +298,15 @@ func validate_recipe() -> String:
 func refresh() -> void:
 	panel.visible = phase != 2
 	shade.visible = phase != 2
-	'progress_label.visible = phase == 2
+	progress_label.visible = phase == 2
 	var spark_parent: Node = progress_label if phase == 2 else panel
 	if sparks.get_parent() != spark_parent:
 		sparks.reparent(spark_parent, false)
 		sparks.position = Vector2(32, -10) if phase == 2 else spark_origin
-	message.position.y = 344 if phase == 3 else 375
-	message.size.y = 111 if phase == 3 else 76
-	convert_button.visible = phase != 3'
+	message.position.y = 377
+	message.size.y = 116
+	$Panel/RecipeHeading.text = "炼制结果" if phase == 3 else "配方预览"
+	convert_button.visible = phase != 3
 	mouse_filter = Control.MOUSE_FILTER_IGNORE if phase == 2 else Control.MOUSE_FILTER_STOP
 	for row in [$Panel/MainBag, $Panel/SupportBag]:
 		for button in row.get_children():
@@ -305,12 +314,10 @@ func refresh() -> void:
 			button.text = "%s ×%d" % [NAMES[kind], stock(kind)]
 			button.disabled = phase >= 2 or not available(kind, button.is_support)
 	var visible_main := int(pills[target].main) if operation == 3 and pills.has(target) else main
-	main_slot.icon = ICONS[visible_main] if visible_main >= 0 else null
-	support_slot.icon = ICONS[support] if support >= 0 else null
-	main_slot.text = "主材" if visible_main < 0 else "%s%s" % [NAMES[visible_main], " ×%d" % main_count if operation != 3 else ""]
-	support_slot.text = "辅材（可选）" if support < 0 else "%s ×%d" % [NAMES[support], support_count]
 	main_slot.disabled = phase >= 2 or not uses_slot(false)
 	support_slot.disabled = phase >= 2 or not uses_slot(true)
+	update_wells(main_slot, visible_main, (1 if visible_main >= 0 else 0) if operation == 3 else main_count)
+	update_wells(support_slot, support, support_count)
 	for button in [clear_button, close_button, mode_picker, operation_picker, target_picker]:
 		button.disabled = phase >= 2
 	$Panel/MainMinus.disabled = phase >= 2 or not uses_slot(false) or main_count <= 1
@@ -357,6 +364,14 @@ func refresh() -> void:
 			var weights := trait_weights()
 			details += "\n定向词条：%s" % TRAITS[support] if convert_trait else "\n词条权重（火/露/魔）：%d / %d / %d" % [weights[0], weights[1], weights[2]]
 		message.tooltip_text = details
+
+func update_wells(slot: Button, material: int, count: int) -> void:
+	for i in range(3):
+		var well: TextureRect = slot.get_node("Well%d" % i)
+		var icon: TextureRect = well.get_node("Icon")
+		icon.texture = ICONS[material] if material >= 0 and i < count else null
+		well.modulate = Color(0.83, 0.79, 0.76) if slot.disabled and material < 0 else Color.WHITE
+	slot.tooltip_text = "%s ×%d" % [NAMES[material], count] if material >= 0 else "拖入材料"
 
 func confirm_brew() -> void:
 	if phase == 3:
@@ -412,11 +427,50 @@ func complete_brew() -> void:
 	sound.play()
 	phase = 3
 	refresh()
-	cauldron.modulate = Color(1.3, 0.75, 1.3)
-	message.modulate.a = 0.0
-	var reveal := create_tween().set_parallel()
-	reveal.tween_property(cauldron, "modulate", Color.WHITE, 0.4)
-	reveal.tween_property(message, "modulate:a", 1.0, 0.35)
+	play_result_reveal()
+
+func play_result_reveal() -> void:
+	result_fx = RESULT_REVEAL.instantiate()
+	panel.add_child(result_fx)
+	result_fx.position = spark_origin
+	var mist: CPUParticles2D = result_fx.get_node("Mist")
+	var burst: CPUParticles2D = result_fx.get_node("Sparks")
+	var flash: Sprite2D = result_fx.get_node("Flash")
+	var ring: Sprite2D = result_fx.get_node("Ring")
+	var vial: Sprite2D = result_fx.get_node("Vial")
+	mist.emitting = true
+	burst.emitting = true
+
+	cauldron.pivot_offset = spark_origin - cauldron.position
+	cauldron.scale = Vector2(1.035, 1.02)
+	cauldron.modulate = Color(1.18, 0.96, 1.26)
+	message.modulate.a = 0.78
+	$Panel/RecipeHeading.modulate = Color(1.35, 1.11, 0.72)
+
+	result_reveal = create_tween().set_parallel().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	result_reveal.tween_property(cauldron, "scale", Vector2.ONE, 0.30)
+	result_reveal.tween_property(cauldron, "modulate", Color.WHITE, 0.38)
+	result_reveal.tween_property(flash, "scale", Vector2(7.0, 3.4), 0.24)
+	result_reveal.tween_property(flash, "modulate:a", 0.0, 0.22)
+	result_reveal.tween_property(ring, "scale", Vector2(1.32, 0.48), 0.31)
+	result_reveal.tween_property(ring, "modulate:a", 0.0, 0.31)
+	result_reveal.tween_property(vial, "position:y", -47.0, 0.37)
+	result_reveal.tween_property(vial, "scale", Vector2.ONE * 0.72, 0.34)
+	result_reveal.tween_property(vial, "modulate:a", 1.0, 0.20)
+	result_reveal.tween_property(message, "modulate:a", 1.0, 0.22)
+	result_reveal.tween_property($Panel/RecipeHeading, "modulate", Color.WHITE, 0.38)
+
+func clear_result_reveal() -> void:
+	if not is_instance_valid(result_fx):
+		return
+	result_reveal.kill()
+	result_fx.hide()
+	result_fx.queue_free()
+	result_fx = null
+	cauldron.scale = Vector2.ONE
+	cauldron.modulate = Color.WHITE
+	message.modulate = Color.WHITE
+	$Panel/RecipeHeading.modulate = Color.WHITE
 
 func settle(accept: bool) -> void:
 	if phase != 3:
@@ -474,7 +528,6 @@ func cast_equipped(delta: float, at: Vector2, enemies: Array, apply_hit: Callabl
 			"SelfArea", "TargetArea":
 				var center: Vector2 = at if stats.cast == "SelfArea" else enemy.body.position
 				if stats.cast == "SelfArea" and skill == 2:
-					# 寒霜环：自身范围释放，播水面涟漪序列帧。
 					FX.frost_ring(field.effects, center, stats.radius * WORLD_SCALE * 2.0)
 				for entry in enemies.duplicate():
 					if living(entry) and entry.body.position.distance_to(center) <= stats.radius * WORLD_SCALE:

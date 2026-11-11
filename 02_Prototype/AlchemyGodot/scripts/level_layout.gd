@@ -79,7 +79,7 @@ static func build(preset: Preset, seed_value: int, bounds: Rect2, spawn: Vector2
 		tiles.append({"cell": cell, "brush": ground_cells[cell], "rect": Rect2(_corner(cell, grid, size, bounds.position), size), "texture": brush.texture})
 
 	var props: Array[Dictionary] = []
-	var arena := arena_half_size if arena_half_size != Vector2.ZERO else bounds.size * Vector2(0.29, 0.34)
+	var arena := arena_half_size if arena_half_size != Vector2.ZERO else preset.arena_half_size(bounds)
 	for cell: int in prop_cells:
 		var id: int = prop_cells[cell]
 		if id == -1:
@@ -170,12 +170,15 @@ static func _fits(item: Dictionary, preset: Preset, bounds: Rect2, spawn: Vector
 	var corridor := maxf(preset.protected_half_width, 20.0)
 	if not bounds.grow(-24.0).has_point(at):
 		return false
+	var playable := preset.playable_bounds(bounds)
+	if not Rect2(playable.position + half, playable.size - half * 2.0).has_point(at):
+		return false
 	if absf(at.x - spawn.x) < corridor + half.x or absf(at.y - spawn.y) < corridor + half.y:
 		return false
 	if at.distance_to(spawn) < 105.0 + half.length():
 		return false
 	if not preset.boss:
-		var portal := bounds.position + bounds.size * Vector2(0.875, 0.458333)
+		var portal := preset.portal_position(bounds)
 		var path := Geometry2D.get_closest_point_to_segment(at, spawn, portal)
 		if at.distance_to(portal) < 82.0 + half.length() or at.distance_to(path) < corridor + half.length():
 			return false
@@ -185,8 +188,10 @@ static func _fits(item: Dictionary, preset: Preset, bounds: Rect2, spawn: Vector
 	for other in props:
 		if at.distance_to(other.position) < preset.object_spacing:
 			return false
-		var occupied := Rect2(at - half, half * 2.0).grow(12.0)
-		if occupied.intersects(Rect2(other.position - other.collision * 0.5, other.collision).grow(12.0)):
+		# Two solid footprints leave at least 32 px between them for Lilita's 28 px collider.
+		var padding := 16.0 if half != Vector2.ZERO and other.collision != Vector2.ZERO else 12.0
+		var occupied := Rect2(at - half, half * 2.0).grow(padding)
+		if occupied.intersects(Rect2(other.position - other.collision * 0.5, other.collision).grow(padding)):
 			return false
 	return true
 

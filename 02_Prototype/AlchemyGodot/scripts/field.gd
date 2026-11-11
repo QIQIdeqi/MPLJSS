@@ -1,39 +1,46 @@
 extends Node2D
 
-const ENEMIES := [preload("res://art/enemy0.png"), preload("res://art/enemy1.png"), preload("res://art/enemy2.png"), preload("res://art/enemy3.png")]
+const FIELD_ENEMY := preload("res://scripts/field_enemy.gd")
+const ENEMY_WAVES := preload("res://levels/enemy_wave_table.gd")
+const ENEMY_ROW := preload("res://levels/enemy_spawn_row.gd")
 const DROPS := [preload("res://art/coin.png"), preload("res://art/xp.png")]
+const HD_BATTLE := preload("res://scripts/hd_battle_view.gd")
 const HD_VILLAGE := preload("res://scripts/hd_village_view.gd")
 const BREW := preload("res://scenes/brew.tscn")
 const BOSS := preload("res://scenes/boss_arena.tscn")
 const FX := preload("res://scripts/battle_fx.gd")
 const LEVEL_LAYOUT := preload("res://scripts/level_layout.gd")
+const LEVEL_PRESET := preload("res://levels/preset.gd")
 const NORMAL_LAYOUT := preload("res://levels/normal.tres")
 const BOSS_LAYOUT := preload("res://levels/boss.tres")
 const GATE := Vector2(1155, 329)
-const PORTAL := Vector2(1120, 330)
+const PORTAL := LEVEL_PRESET.DEFAULT_PORTAL
 const SPAWN := Vector2(640, 430)
 const BOSS_SPAWN := Vector2(640, 450)
-const MAP := Rect2(0, 0, 1280, 720)
+const MAP := LEVEL_PRESET.MAP_BOUNDS
 const CAMERA_ZOOM := 1.45
 
 @export var combat := false
+@export var enemy_config: ENEMY_WAVES
 @export var field_seed: int = 0
 @export_range(0, 600) var portal_open_seconds := 300.0
 @export var save_path := "user://progress.cfg"
 @onready var actors: Node2D = $Actors
 @onready var player = $Actors/Lilita
-@onready var status: Label = $Interface/Status
+@onready var status: Label = get_node_or_null("Interface/Status")
 @onready var hint: Label = $Interface/Hint
 @onready var music: AudioStreamPlayer = $Music
 
 var rng := RandomNumberGenerator.new()
 var tiles: Array = []
 var enemies: Array[Dictionary] = []
+var defeated_art: Dictionary[Node2D, Sprite2D] = {}
 var pickups: Array[Dictionary] = []
 var props: Array[Node2D] = []
 var blocks: Array[StaticBody2D] = []
 var run_time := 0.0
-var until_spawn := 2.6
+var until_spawn := 0.0
+var spawn_wave := 0
 var until_attack := 0.0
 var hurt_cooldown := 0.0
 var hp := 120.0
@@ -45,9 +52,15 @@ var enemy_death_sound: AudioStreamPlayer
 var inventory := [0, 0, 0, 0, 0, 0]
 var brew
 var boss
+var boss_death: Tween
 var effects: Node2D
+var web_layer: Node2D
+var web_shots: Array[Dictionary] = []
+var spore_patches: Array[Dictionary] = []
 var camera: Camera2D
+var hd_view: HD_BATTLE
 var portal: Node2D
+var portal_position := PORTAL
 var portal_dialog: ConfirmationDialog
 var portal_ready := false
 var ended := false
@@ -73,6 +86,9 @@ func _ready() -> void:
 		if not generate_field(false, rng.seed):
 			finish(false)
 			return
+		web_layer = Node2D.new()
+		actors.add_child(web_layer)
+		web_layer.draw.connect(draw_webs)
 		enemy_death_sound = AudioStreamPlayer.new()
 		enemy_death_sound.stream = preload("res://audio/S_EnemyDeath.wav")
 		enemy_death_sound.volume_db = -16
@@ -80,6 +96,7 @@ func _ready() -> void:
 		brew = BREW.instantiate()
 		$Interface.add_child(brew)
 		brew.attach(self)
+		$Interface/CombatHUD.attach(self, MAP)
 		brew.brew_settled.connect(on_brew_settled)
 		first_brew = not bool(save.get_value("tutorial", "brew_introduced", false))
 		opening_supply_eligible = not first_brew
@@ -96,8 +113,17 @@ func _ready() -> void:
 		portal_dialog.exclusive = true
 		portal_dialog.confirmed.connect(enter_boss)
 		$Interface.add_child(portal_dialog)
-		for i in 8:
-			spawn_enemy()
+		if enemy_config:
+			var count := mini(enemy_config.opening_count, enemy_config.alive_cap(0))
+			var phase := rng.randf()
+			for i in count:
+				add_enemy(enemy_config.pick_row(0, (i + phase) / count))
+			until_spawn = enemy_config.interval(0)
+		if DisplayServer.get_name() != "headless":
+			hd_view = HD_BATTLE.new()
+			add_child(hd_view)
+			hd_view.attach(self)
+			queue_redraw()
 		play_music(preload("res://audio/Music_Field.wav"))
 	else:
 		if DisplayServer.get_name() != "headless":
@@ -114,10 +140,13 @@ func play_music(stream: AudioStreamWAV) -> void:
 	music.play()
 
 func generate_field(boss_stage: bool, layout_seed: int) -> bool:
-	var layout: Dictionary = LEVEL_LAYOUT.build(BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT, layout_seed, MAP, BOSS_SPAWN if boss_stage else SPAWN)
+	var preset: LEVEL_PRESET = BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT
+	var layout: Dictionary = LEVEL_LAYOUT.build(preset, layout_seed, MAP, BOSS_SPAWN if boss_stage else SPAWN)
 	if not layout.error.is_empty():
 		push_error(layout.error)
 		return false
+	player.movement_bounds = preset.playable_bounds()
+	portal_position = preset.portal_position()
 	for prop in props:
 		prop.queue_free()
 	for block in blocks:
@@ -130,6 +159,8 @@ func generate_field(boss_stage: bool, layout_seed: int) -> bool:
 		props.append(make_sprite(prop.texture, prop.position, prop.size, prop.foot_fraction))
 		if prop.collision != Vector2.ZERO:
 			add_block(prop.position, prop.collision)
+	if is_instance_valid(hd_view):
+		hd_view.rebuild()
 	queue_redraw()
 	return true
 
@@ -145,9 +176,10 @@ func add_block(at: Vector2, size: Vector2) -> void:
 	blocks.append(block)
 
 func _draw() -> void:
-	if combat:
+	if combat and not is_instance_valid(hd_view):
 		for tile in tiles:
 			draw_texture_rect(tile.texture, tile.rect, false)
+		draw_rect(player.movement_bounds, Color(1.0, 0.55, 0.58, 0.60), false, 2.0, true)
 
 func make_sprite(texture: Texture2D, at: Vector2, size: Vector2, foot_fraction := 0.38) -> Sprite2D:
 	var sprite := Sprite2D.new()
@@ -164,12 +196,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().change_scene_to_file("res://scenes/battle.tscn")
 		elif ended:
 			get_tree().change_scene_to_file("res://scenes/village.tscn")
-		elif portal_ready and player.position.distance_to(PORTAL) < 60 and not brew.is_open():
+		elif portal_ready and player.position.distance_to(portal_position) < 60 and not brew.is_open():
 			portal_dialog.popup_centered()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("ui_cancel") and not combat:
 		get_tree().change_scene_to_file("res://scenes/menu.tscn")
-	if combat and not ended and not portal_dialog.visible and (event.is_action_pressed("alchemy") or (event.is_action_pressed("ui_cancel") and brew.is_open())):
+	if combat and not ended and not boss_death and not portal_dialog.visible and (event.is_action_pressed("alchemy") or (event.is_action_pressed("ui_cancel") and brew.is_open())):
 		brew.toggle()
 		get_viewport().set_input_as_handled()
 
@@ -198,13 +230,11 @@ func _physics_process(delta: float) -> void:
 		status.text = "格雷弗德村庄   ·   金币 %d" % int(save.get_value("village", "coins", 0))
 		hint.text = "F  穿过雾门" if player.position.distance_to(GATE) < 92 else "WASD 移动   ·   前往右侧雾门   ·   T 时段  ·  Y 天气   ·   V 切换视角   ·   Esc 返回开始界面"
 		return
-	if ended:
+	if ended or boss_death:
 		player.locked = true
 		return
 	var paused: bool = brew.blocks_world() or portal_dialog.visible
 	player.locked = paused or (is_instance_valid(boss) and boss.preparation > 0.0)
-	status.text = "%s   ·   生命 %d / 120   ·   等级 %d   ·   经验 %d / %d   ·   金币 %d   ·   %02d:%02d" % [
-		"雾界草甸" if boss else "村庄外围", ceili(hp), level, xp, level * 6, coins, floori(run_time / 60.0), int(run_time) % 60]
 	if paused:
 		return
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
@@ -217,23 +247,28 @@ func _physics_process(delta: float) -> void:
 		run_time += delta
 		if not portal_ready and run_time >= portal_open_seconds:
 			portal_ready = true
-			portal = FX.portal(effects, PORTAL)
+			portal = FX.portal(effects, portal_position)
 		update_field_hint()
-		until_spawn -= delta
-		if until_spawn <= 0 and enemies.size() < 48:
-			spawn_enemy()
-			until_spawn = maxf(0.25, 1.25 - run_time * 0.011)
+		if enemy_config:
+			var wave := enemy_config.wave_index(run_time)
+			if wave != spawn_wave:
+				spawn_wave = wave
+				until_spawn = minf(until_spawn, enemy_config.interval(wave))
+			until_spawn -= delta
+			if until_spawn <= 0.0 and enemies.size() < enemy_config.alive_cap(wave):
+				spawn_enemy()
+				until_spawn = enemy_config.interval(wave)
+		advance_webs(delta)
+		if ended:
+			return
 		for entry in enemies:
-			var body: CharacterBody2D = entry.body
-			var offset: Vector2 = player.position - body.position
+			var body: FIELD_ENEMY = entry.body
 			var slow_left := maxf(0, float(entry.get("slow_left", 0.0)) - delta)
 			entry.slow_left = slow_left
-			body.velocity = offset.normalized() * 92.0 * (float(entry.get("slow_factor", 1.0)) if slow_left > 0 else 1.0)
-			body.move_and_slide()
-			if offset.length_squared() < 27.0 * 27.0:
-				hurt(9.0)
-				if ended:
-					return
+			var slow := float(entry.get("slow_factor", 1.0)) if slow_left > 0.0 else 1.0
+			body.advance(delta, player.global_position, hurt, fire_web, slow)
+			if ended:
+				return
 	until_attack -= delta
 	if until_attack <= 0:
 		var nearest: Dictionary = {}
@@ -247,7 +282,7 @@ func _physics_process(delta: float) -> void:
 			until_attack = 0.47
 			attack_feedback(nearest.body.position)
 			damage_enemy(nearest, 1.0 + float((level - 1) / 3))
-	if ended:
+	if ended or boss_death:
 		return
 	brew.cast_equipped(delta, player.position, enemies, damage_brew_enemy)
 	for i in range(pickups.size() - 1, -1, -1):
@@ -269,7 +304,7 @@ func _physics_process(delta: float) -> void:
 
 func update_field_hint() -> void:
 	if portal_ready:
-		var difference: Vector2 = PORTAL - player.position
+		var difference: Vector2 = portal_position - player.position
 		if difference.length() < 60:
 			hint.text = "F  进入 Boss 传送阵   ·   可继续探索"
 		else:
@@ -281,15 +316,19 @@ func update_field_hint() -> void:
 		hint.text = "WASD 移动   ·   Space 闪避   ·   Q 炼金   ·   自动攻击"
 
 func enter_boss() -> void:
-	if ended or boss or not portal_ready or player.position.distance_to(PORTAL) >= 60 or brew.is_open():
+	if ended or boss or not portal_ready or player.position.distance_to(portal_position) >= 60 or brew.is_open():
 		return
 	if not generate_field(true, int(rng.randi()) + 1):
 		hint.text = "Boss 场地生成失败，可继续探索"
 		return
 	brew.clear_projectiles()
+	clear_webs()
 	for entry in enemies:
 		entry.body.queue_free()
 	enemies.clear()
+	for body in defeated_art:
+		body.queue_free()
+	defeated_art.clear()
 	for pickup in pickups:
 		pickup.sprite.queue_free()
 	pickups.clear()
@@ -302,7 +341,7 @@ func enter_boss() -> void:
 	player.locked = true
 	boss = BOSS.instantiate()
 	add_child(boss)
-	boss.setup(actors, rng.randf() < 0.5)
+	boss.setup(actors, rng.randf() < 0.5, player.movement_bounds)
 	enemies.append(boss.entry)
 	update_camera(0.0)
 	play_music(preload("res://audio/Music_Boss.wav"))
@@ -321,7 +360,7 @@ func persist() -> bool:
 	return OS.get_cmdline_user_args().has("--migration-test") or save.save(save_path) == OK
 
 func hurt(amount: float, knock_direction := Vector2.ZERO) -> bool:
-	if ended or hurt_cooldown > 0 or player.dodge > 0:
+	if ended or boss_death or hurt_cooldown > 0 or player.dodge > 0:
 		return false
 	hurt_cooldown = 0.55
 	hp = maxf(0.0, hp - amount)
@@ -335,25 +374,111 @@ func hurt(amount: float, knock_direction := Vector2.ZERO) -> bool:
 			player.knockback_time = 0.15
 	return true
 
-func spawn_enemy() -> void:
-	var at := Vector2(rng.randf_range(46, 1230), 115 if player.position.y > 340 else 650)
-	var kind := rng.randi_range(0, ENEMIES.size() - 1)
-	var body := CharacterBody2D.new()
-	body.collision_layer = 4
-	body.collision_mask = 1
-	var collision := CollisionShape2D.new()
-	var circle := CircleShape2D.new()
-	circle.radius = 9
-	collision.shape = circle
-	body.add_child(collision)
-	var art := Sprite2D.new()
-	art.texture = ENEMIES[kind]
-	art.scale = Vector2.ONE * 1.25
-	art.position.y = -8
-	body.add_child(art)
+func spawn_enemy(kind: int = -1) -> void:
+	if not enemy_config:
+		return
+	var row := enemy_config.row_for_kind(kind) if kind >= 0 else enemy_config.pick_row(enemy_config.wave_index(run_time), rng.randf())
+	add_enemy(row)
+
+func add_enemy(row: ENEMY_ROW) -> void:
+	if not row or row.kind < 0 or row.kind >= FIELD_ENEMY.Kind.size():
+		return
+	var area: Rect2 = player.movement_bounds
+	var at := Vector2(rng.randf_range(area.position.x + 14.0, area.end.x - 14.0),
+		area.position.y + 5.0 if player.position.y > area.get_center().y else area.end.y - 5.0)
+	var body := FIELD_ENEMY.new()
+	body.setup(row.kind, area, row.atlas)
 	actors.add_child(body)
 	body.position = at
 	enemies.append({"body": body, "hp": 2.0, "boss": false})
+
+func fire_web(at: Vector2, direction: Vector2, kind: int = FIELD_ENEMY.Kind.SPIDER) -> void:
+	if kind == FIELD_ENEMY.Kind.MUSHROOM:
+		spore_patches.append({"position": at, "remaining": 2.8, "next_hit": 0.32})
+	else:
+		var water := kind == FIELD_ENEMY.Kind.WATER_SPIRIT
+		web_shots.append({"position": at, "direction": direction, "remaining": 1.0 if water else 1.15, "water": water})
+	web_layer.queue_redraw()
+
+func advance_webs(delta: float) -> void:
+	if web_shots.is_empty() and spore_patches.is_empty():
+		return
+	advance_spores(delta)
+	if ended:
+		return
+	for i in range(web_shots.size() - 1, -1, -1):
+		var shot := web_shots[i]
+		var at: Vector2 = shot.position
+		var speed := 330.0 if shot.water else 280.0
+		var step: Vector2 = shot.direction * speed * minf(delta, shot.remaining)
+		var goal := at + step
+		var ray := PhysicsRayQueryParameters2D.create(at, goal, 1)
+		ray.hit_from_inside = true
+		var obstacle := get_world_2d().direct_space_state.intersect_ray(ray)
+		var player_at: Vector2 = player.global_position
+		var end: Vector2 = obstacle.get("position", goal)
+		var nearest := Geometry2D.get_closest_point_to_segment(player_at, at, end)
+		var hit_player := nearest.distance_squared_to(player_at) <= 15.0 * 15.0
+		if hit_player and not obstacle.is_empty():
+			hit_player = (player_at - at).dot(shot.direction) < at.distance_to(end)
+		shot.remaining -= delta
+		if hit_player or not obstacle.is_empty() or shot.remaining <= 0.0 or not MAP.has_point(to_local(goal)):
+			web_shots.remove_at(i)
+		else:
+			shot.position = goal
+		if hit_player:
+			hurt(FIELD_ENEMY.DAMAGE)
+			if ended:
+				return
+	web_layer.queue_redraw()
+
+func advance_spores(delta: float) -> void:
+	for i in range(spore_patches.size() - 1, -1, -1):
+		var patch := spore_patches[i]
+		patch.remaining -= delta
+		if patch.remaining <= 0.0:
+			spore_patches.remove_at(i)
+			continue
+		patch.next_hit -= delta
+		if patch.next_hit <= 0.0 and player.global_position.distance_squared_to(patch.position) <= FIELD_ENEMY.SPORE_RADIUS ** 2:
+			patch.next_hit = 0.68
+			hurt(FIELD_ENEMY.DAMAGE)
+			if ended:
+				return
+
+func clear_webs() -> void:
+	web_shots.clear()
+	spore_patches.clear()
+	if is_instance_valid(web_layer):
+		web_layer.queue_redraw()
+
+func draw_webs() -> void:
+	for patch in spore_patches:
+		var at := web_layer.to_local(patch.position)
+		var radius := FIELD_ENEMY.SPORE_RADIUS
+		var age: float = 2.8 - patch.remaining
+		var visibility := minf(patch.remaining / 0.45, 1.0)
+		var armed := age >= 0.32
+		web_layer.draw_circle(at, radius, Color(0.63, 0.32, 0.73, (0.29 if armed else 0.12) * visibility))
+		web_layer.draw_arc(at, radius, 0, TAU, 32, Color(0.89, 0.69, 0.94, 0.78 * visibility), 2.0, true)
+		if armed:
+			for mote in range(7):
+				var angle := mote * 2.39996 + age * 0.85
+				var offset := Vector2.from_angle(angle) * (11.0 + mote * 4.0)
+				web_layer.draw_circle(at + offset, 1.5 + (mote % 3) * 0.45, Color(0.93, 0.77, 1.0, 0.62 * visibility))
+	for shot in web_shots:
+		var at := web_layer.to_local(shot.position)
+		var direction: Vector2 = shot.direction
+		if shot.water:
+			web_layer.draw_line(at - direction * 18.0, at, Color("#319bcf"), 5.0, true)
+			web_layer.draw_circle(at, 6.0, Color("#48c2fb"))
+			web_layer.draw_circle(at + Vector2(-1, -2), 2.5, Color("#d0f8ff"))
+		else:
+			var lateral := direction.orthogonal()
+			var tint := Color("#e1f2f7")
+			web_layer.draw_line(at - direction * 16.0 + lateral * 3.0, at, tint, 1.6, true)
+			web_layer.draw_line(at - direction * 16.0 - lateral * 3.0, at, tint, 1.6, true)
+			web_layer.draw_circle(at, 4.0, tint)
 
 func damage_brew_enemy(entry: Dictionary, damage: float, slow_seconds: float, slow_factor: float, color: Color) -> void:
 	if ended or not enemies.has(entry):
@@ -370,18 +495,34 @@ func damage_brew_enemy(entry: Dictionary, damage: float, slow_seconds: float, sl
 	damage_enemy(entry, damage)
 
 func damage_enemy(entry: Dictionary, damage: float) -> void:
+	if ended or boss_death or not enemies.has(entry):
+		return
+	var body: Node2D = entry.body
 	entry.hp -= damage
 	if entry.hp > 0:
+		if entry.boss:
+			boss.show_hurt()
+		else:
+			body.show_hurt()
 		return
-	var at: Vector2 = entry.body.position
-	entry.body.queue_free()
+	var at := body.position
 	enemies.erase(entry)
 	kills += 1
 	enemy_death_sound.play()
 	burst(at, Color(0.4, 0.8, 0.6))
 	if entry.boss:
-		finish(true)
+		defeated_art[body] = boss.art
+		player.locked = true
+		hint.text = "腐化之源正在崩解"
+		boss_death = boss.play_death()
+		boss_death.finished.connect(func() -> void:
+			remove_defeated(body)
+			boss_death = null
+			finish(true), CONNECT_ONE_SHOT)
 		return
+	defeated_art[body] = body.art
+	var death: Tween = body.play_death()
+	death.finished.connect(remove_defeated.bind(body), CONNECT_ONE_SHOT)
 	inventory[(kills - 1) % 3] += 1
 	if kills == 8 and opening_supply_eligible:
 		for i in 3:
@@ -391,6 +532,10 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 		inventory[4] += 1
 	add_pickup(at + Vector2(-9, 0), 0)
 	add_pickup(at + Vector2(9, 0), 1)
+
+func remove_defeated(body: Node2D) -> void:
+	defeated_art.erase(body)
+	body.queue_free()
 
 func add_pickup(at: Vector2, kind: int) -> void:
 	var sprite := make_sprite(DROPS[kind], at, Vector2(21, 21))
@@ -405,13 +550,18 @@ func burst(at: Vector2, color: Color) -> void:
 	FX.burst(effects, at, color)
 
 func attack_feedback(at: Vector2) -> void:
-	FX.hit(effects, at)
-	FX.trail(effects, player.position - Vector2(0, 30), at, Color(1.0, 0.32, 0.55))
+	var impact := FX.hit(effects, at)
+	var tint := Color(1.0, 0.32, 0.55)
+	if is_instance_valid(hd_view):
+		hd_view.world_view.raise_attack(impact, player.position, at, tint)
+	else:
+		FX.trail(effects, player.position - Vector2(0, 30), at, tint)
 
 func finish(victory: bool) -> void:
 	if ended:
 		return
 	ended = true
+	clear_webs()
 	player.locked = true
 	if brew:
 		brew.cancel_run()

@@ -9,5 +9,5 @@ collision_mask = 1
 [node name="Feet" type="CollisionShape2D" parent="."]
 shape = SubResource("feet")
 [node name="Art" type="Sprite2D" parent="."]
-position = Vector2(0, -32)
-scale = Vector2(0.3, 0.3)
+position = Vector2(0, -29)
+scale = Vector2(0.125, 0.125)

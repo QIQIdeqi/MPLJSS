@@ -1,0 +1,93 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Texture2D" path="res://scenes/fx/glow.tres" id="Glow"]
+[ext_resource type="Texture2D" path="res://scenes/fx/brew_result_vial.png" id="Vial"]
+
+[sub_resource type="CanvasItemMaterial" id="Additive"]
+blend_mode = 1
+
+[sub_resource type="Gradient" id="RingGradient"]
+offsets = PackedFloat32Array(0, 0.66, 0.76, 0.85, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0.75, 1, 1, 1, 0.15, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="Ring"]
+gradient = SubResource("RingGradient")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="MistFade"]
+offsets = PackedFloat32Array(0, 0.18, 0.46, 1)
+colors = PackedColorArray(0.61, 0.28, 0.88, 0, 0.64, 0.36, 0.91, 0.23, 0.54, 0.29, 0.81, 0.16, 0.39, 0.2, 0.66, 0)
+
+[sub_resource type="Gradient" id="SparkFade"]
+offsets = PackedFloat32Array(0, 0.18, 0.60, 1)
+colors = PackedColorArray(1, 0.98, 0.8, 1, 1, 0.72, 0.25, 0.96, 0.87, 0.39, 0.91, 0.58, 0.47, 0.23, 0.9, 0)
+
+[sub_resource type="Curve" id="MistSize"]
+_data = [Vector2(0, 0.55), 0.0, 1.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[node name="BrewResultReveal" type="Node2D"]
+z_index = 3
+
+[node name="Mist" type="CPUParticles2D" parent="."]
+texture = ExtResource("Glow")
+emitting = false
+amount = 13
+lifetime = 0.65
+one_shot = true
+explosiveness = 1.0
+lifetime_randomness = 0.28
+emission_shape = 1
+emission_sphere_radius = 15.0
+direction = Vector2(0, -1)
+spread = 65.0
+gravity = Vector2(0, -12)
+initial_velocity_min = 15.0
+initial_velocity_max = 53.0
+scale_amount_min = 1.8
+scale_amount_max = 4.0
+scale_amount_curve = SubResource("MistSize")
+color_ramp = SubResource("MistFade")
+
+[node name="Flash" type="Sprite2D" parent="."]
+material = SubResource("Additive")
+texture = ExtResource("Glow")
+scale = Vector2(4.5, 2.4)
+modulate = Color(0.93, 0.57, 1, 0.86)
+
+[node name="Ring" type="Sprite2D" parent="."]
+material = SubResource("Additive")
+texture = SubResource("Ring")
+scale = Vector2(0.32, 0.12)
+modulate = Color(0.83, 0.38, 1, 0.78)
+
+[node name="Sparks" type="CPUParticles2D" parent="."]
+material = SubResource("Additive")
+texture = ExtResource("Glow")
+emitting = false
+amount = 21
+lifetime = 0.46
+one_shot = true
+explosiveness = 1.0
+lifetime_randomness = 0.36
+emission_shape = 1
+emission_sphere_radius = 11.0
+direction = Vector2(0, -1)
+spread = 82.0
+gravity = Vector2(0, 106)
+initial_velocity_min = 60.0
+initial_velocity_max = 150.0
+scale_amount_min = 0.19
+scale_amount_max = 0.47
+color_ramp = SubResource("SparkFade")
+
+[node name="Vial" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("Vial")
+position = Vector2(0, -4)
+scale = Vector2(0.42, 0.42)
+modulate = Color(1, 1, 1, 0)

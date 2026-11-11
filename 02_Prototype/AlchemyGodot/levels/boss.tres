@@ -1,13 +1,13 @@
-[gd_resource type="Resource" format=3]
+[gd_resource type="Resource" format=3 uid="uid://b52xkg7p0ai7h"]
 
-[ext_resource type="Script" path="res://levels/preset.gd" id="1"]
-[ext_resource type="Script" path="res://levels/brush.gd" id="2"]
-[ext_resource type="Texture2D" path="res://art/grass.png" id="Grass"]
-[ext_resource type="Texture2D" path="res://art/dirt.png" id="Dirt"]
-[ext_resource type="Texture2D" path="res://art/cobblestone.png" id="Stone"]
-[ext_resource type="Texture2D" path="res://art/bush.png" id="Bush"]
-[ext_resource type="Texture2D" path="res://art/fence.png" id="Fence"]
-[ext_resource type="Texture2D" path="res://art/crates.png" id="Crates"]
+[ext_resource type="Script" uid="uid://bp3mga5es71t8" path="res://levels/preset.gd" id="1"]
+[ext_resource type="Script" uid="uid://b3ajis5hpt0we" path="res://levels/brush.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://yoyh4pvav1g" path="res://art/bush.png" id="Bush"]
+[ext_resource type="Texture2D" uid="uid://bg0iihl7gknks" path="res://art/crates.png" id="Crates"]
+[ext_resource type="Texture2D" uid="uid://dkiuyix5k4h7u" path="res://art/dirt.png" id="Dirt"]
+[ext_resource type="Texture2D" uid="uid://beni73k1gvrdw" path="res://art/fence.png" id="Fence"]
+[ext_resource type="Texture2D" uid="uid://bl13cdpc0rd3x" path="res://art/grass.png" id="Grass"]
+[ext_resource type="Texture2D" uid="uid://cubswndd8e3ql" path="res://art/cobblestone.png" id="Stone"]
 
 [sub_resource type="Resource" id="Brush_Grass"]
 resource_name = "草地"
@@ -49,16 +49,14 @@ display_name = "木栅栏"
 texture = ExtResource("Fence")
 weight = 2.0
 size = Vector2(90, 68)
-collision = Vector2(56, 16)
+collision = Vector2(68, 18)
 
 [sub_resource type="Resource" id="Brush_Crates"]
 resource_name = "货箱"
 script = ExtResource("2")
 display_name = "货箱"
 texture = ExtResource("Crates")
-weight = 1.0
-size = Vector2(64, 64)
-collision = Vector2(29, 22)
+collision = Vector2(50, 26)
 
 [resource]
 resource_name = "Alchemy_Random_Boss"
@@ -66,5 +64,8 @@ script = ExtResource("1")
 grid = Vector2i(14, 12)
 object_density = 0.3
 boss = true
-preview_seed = 1112494878
 palette = Array[ExtResource("2")]([SubResource("Brush_Grass"), SubResource("Brush_Dirt"), SubResource("Brush_Stone"), SubResource("Brush_Bush"), SubResource("Brush_Fence"), SubResource("Brush_Crates")])
+playable_size = Vector2i(640, 360)
+preview_seed = 1112494877
+ground_seed_offset = 3
+prop_seed_offset = 10

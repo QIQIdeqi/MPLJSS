@@ -124,6 +124,8 @@ func run() -> void:
 	await physics_frame
 	if not require(battle.boss.phase == battle.boss.Phase.DASH, "dash starts"): return
 	battle.damage_enemy(battle.boss.entry, battle.boss.MAX_HP)
+	if not require(battle.boss_death != null and not battle.ended, "Boss death plays before settlement"): return
+	await battle.boss_death.finished
 	if not require(battle.ended and battle.save.get_value("village", "coins") == 1, "Boss victory settles coins"): return
 	battle._unhandled_input(action(&"interact"))
 	await scene_changed

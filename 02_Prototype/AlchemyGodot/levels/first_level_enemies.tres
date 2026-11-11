@@ -1,0 +1,84 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://levels/enemy_wave_table.gd" id="table"]
+
+[ext_resource type="Script" path="res://levels/enemy_spawn_row.gd" id="row"]
+
+[ext_resource type="Texture2D" path="res://art/enemies/slime.png" id="slime"]
+
+[ext_resource type="Texture2D" path="res://art/enemies/skeleton.png" id="skeleton"]
+
+[ext_resource type="Texture2D" path="res://art/enemies/wolf.png" id="wolf"]
+
+[ext_resource type="Texture2D" path="res://art/enemies/bat.png" id="bat"]
+
+[ext_resource type="Texture2D" path="res://art/enemies/spider.png" id="spider"]
+
+[ext_resource type="Texture2D" path="res://art/enemies/mushroom.png" id="mushroom"]
+
+[ext_resource type="Texture2D" path="res://art/enemies/water_spirit.png" id="water_spirit"]
+
+[sub_resource type="Resource" id="enemy_slime"]
+resource_name = "水蓝史莱姆"
+script = ExtResource("row")
+kind = 4
+display_name = "水蓝史莱姆"
+atlas = ExtResource("slime")
+wave_weights = PackedFloat32Array(65, 43, 34, 27, 22, 18)
+
+[sub_resource type="Resource" id="enemy_skeleton"]
+resource_name = "骨棒骷髅"
+script = ExtResource("row")
+kind = 0
+display_name = "骨棒骷髅"
+atlas = ExtResource("skeleton")
+wave_weights = PackedFloat32Array(35, 32, 27, 23, 21, 18)
+
+[sub_resource type="Resource" id="enemy_wolf"]
+resource_name = "灰鬃幼狼"
+script = ExtResource("row")
+kind = 3
+display_name = "灰鬃幼狼"
+atlas = ExtResource("wolf")
+wave_weights = PackedFloat32Array(0, 25, 23, 19, 17, 15)
+
+[sub_resource type="Resource" id="enemy_bat"]
+resource_name = "白翼蝙蝠"
+script = ExtResource("row")
+kind = 1
+display_name = "白翼蝙蝠"
+atlas = ExtResource("bat")
+wave_weights = PackedFloat32Array(0, 0, 16, 16, 14, 13)
+
+[sub_resource type="Resource" id="enemy_spider"]
+resource_name = "黑斑蛛"
+script = ExtResource("row")
+kind = 2
+display_name = "黑斑蛛"
+atlas = ExtResource("spider")
+wave_weights = PackedFloat32Array(0, 0, 0, 15, 13, 13)
+
+[sub_resource type="Resource" id="enemy_mushroom"]
+resource_name = "赤斑菇"
+script = ExtResource("row")
+kind = 5
+display_name = "赤斑菇"
+atlas = ExtResource("mushroom")
+wave_weights = PackedFloat32Array(0, 0, 0, 0, 13, 12)
+
+[sub_resource type="Resource" id="enemy_water_spirit"]
+resource_name = "流水灵"
+script = ExtResource("row")
+kind = 6
+display_name = "流水灵"
+atlas = ExtResource("water_spirit")
+wave_weights = PackedFloat32Array(0, 0, 0, 0, 0, 11)
+
+[resource]
+script = ExtResource("table")
+level_name = "第一关 · 格雷弗德外围"
+opening_count = 8
+start_seconds = PackedFloat32Array(0, 30, 60, 95, 135, 170)
+spawn_intervals = PackedFloat32Array(2.3, 1.95, 1.6, 1.37, 1.15, 0.94)
+alive_caps = PackedInt32Array(12, 17, 22, 27, 32, 38)
+rows = Array[ExtResource("row")]([SubResource("enemy_slime"), SubResource("enemy_skeleton"), SubResource("enemy_wolf"), SubResource("enemy_bat"), SubResource("enemy_spider"), SubResource("enemy_mushroom"), SubResource("enemy_water_spirit")])

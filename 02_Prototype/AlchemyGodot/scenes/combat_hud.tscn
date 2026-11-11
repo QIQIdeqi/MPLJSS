@@ -1,0 +1,1086 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/combat_hud.gd" id="hud"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/panel_secondary_9.png" id="panel_secondary"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/minimap_border_9.png" id="minimap_border"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/skill_tray_9.png" id="skill_tray"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/skill_slot.png" id="skill_slot"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/title_plaque.png" id="title_plaque"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/icon_alchemy.png" id="icon_alchemy"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/icon_skill_bag.png" id="icon_skill_bag"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/icon_skull.png" id="icon_skull"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/icon_coin.png" id="icon_coin"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/panel_grain.png" id="grain"]
+
+[ext_resource type="Texture2D" path="res://art/ui/combat/keycap_9.png" id="keycap_9"]
+
+[sub_resource type="StyleBoxFlat" id="health_track"]
+bg_color = Color(0.08, 0.04, 0.04, 0.92)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxFlat" id="health_fill"]
+bg_color = Color(0.85, 0.20, 0.24, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxTexture" id="key"]
+texture = ExtResource("keycap_9")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxEmpty" id="xp_empty"]
+
+[sub_resource type="StyleBoxFlat" id="xp_track"]
+bg_color = Color(0.12, 0.09, 0.08, 0.96)
+border_color = Color(0.81, 0.64, 0.40, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxFlat" id="xp_fill"]
+bg_color = Color(0.05, 0.69, 0.84, 1)
+border_color = Color(0.37, 0.93, 0.97, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="normal"]
+bg_color = Color(0.17, 0.11, 0.09, 0.96)
+border_color = Color(0.56, 0.39, 0.23, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+bg_color = Color(0.29, 0.19, 0.12, 0.98)
+border_color = Color(0.92, 0.72, 0.43, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+
+[sub_resource type="StyleBoxFlat" id="pressed"]
+bg_color = Color(0.11, 0.07, 0.06, 0.98)
+border_color = Color(0.72, 0.52, 0.29, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+
+[sub_resource type="StyleBoxFlat" id="disabled"]
+bg_color = Color(0.13, 0.10, 0.09, 0.9)
+border_color = Color(0.30, 0.24, 0.19, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+bg_color = Color(0, 0, 0, 0)
+border_color = Color(0.95, 0.77, 0.45, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_left = 7
+corner_radius_bottom_right = 7
+
+[sub_resource type="Theme" id="modal_buttons"]
+Button/styles/normal = SubResource("normal")
+Button/styles/hover = SubResource("hover")
+Button/styles/pressed = SubResource("pressed")
+Button/styles/disabled = SubResource("disabled")
+Button/styles/focus = SubResource("focus")
+Button/colors/font_color = Color(1, 0.92, 0.79, 1)
+Button/colors/font_hover_color = Color(1, 0.97, 0.86, 1)
+Button/font_sizes/font_size = 16
+
+[node name="CombatHUD" type="Control"]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+process_mode = 3
+mouse_filter = 2
+script = ExtResource("hud")
+
+[node name="Top" type="Control" parent="."]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -102.0
+offset_top = 12.0
+offset_right = 102.0
+offset_bottom = 56.0
+mouse_filter = 2
+
+[node name="ClockFrame" type="TextureRect" parent="Top"]
+offset_left = -1.0
+offset_top = 0.0
+offset_right = 205.0
+offset_bottom = 44.0
+texture = ExtResource("title_plaque")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Time" type="Label" parent="Top"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 204.0
+offset_bottom = 42.0
+text = "00:00"
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Right" type="Control" parent="."]
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -235.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 384.0
+mouse_filter = 2
+
+[node name="KillsFrame" type="NinePatchRect" parent="Right"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 109.0
+offset_bottom = 40.0
+texture = ExtResource("panel_secondary")
+mouse_filter = 2
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+draw_center = false
+patch_margin_left = 11
+patch_margin_top = 11
+patch_margin_right = 11
+patch_margin_bottom = 11
+
+[node name="KillsIcon" type="TextureRect" parent="Right"]
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 33.0
+offset_bottom = 32.0
+texture = ExtResource("icon_skull")
+expand_mode = 1
+mouse_filter = 2
+
+[node name="Kills" type="Label" parent="Right"]
+offset_left = 36.0
+offset_top = 0.0
+offset_right = 104.0
+offset_bottom = 40.0
+text = "0"
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="CoinsFrame" type="NinePatchRect" parent="Right"]
+offset_left = 112.0
+offset_top = 0.0
+offset_right = 221.0
+offset_bottom = 40.0
+texture = ExtResource("panel_secondary")
+mouse_filter = 2
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+draw_center = false
+patch_margin_left = 11
+patch_margin_top = 11
+patch_margin_right = 11
+patch_margin_bottom = 11
+
+[node name="CoinsIcon" type="TextureRect" parent="Right"]
+offset_left = 122.0
+offset_top = 8.0
+offset_right = 145.0
+offset_bottom = 32.0
+texture = ExtResource("icon_coin")
+expand_mode = 1
+mouse_filter = 2
+
+[node name="Coins" type="Label" parent="Right"]
+offset_left = 148.0
+offset_top = 0.0
+offset_right = 216.0
+offset_bottom = 40.0
+text = "0"
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Map" type="Control" parent="Right"]
+offset_left = 35.0
+offset_top = 61.0
+offset_right = 213.0
+offset_bottom = 216.0
+mouse_filter = 2
+clip_contents = true
+
+[node name="MapFrame" type="NinePatchRect" parent="Right"]
+offset_left = 27.0
+offset_top = 53.0
+offset_right = 221.0
+offset_bottom = 224.0
+texture = ExtResource("minimap_border")
+mouse_filter = 2
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+draw_center = false
+patch_margin_left = 39
+patch_margin_top = 39
+patch_margin_right = 39
+patch_margin_bottom = 39
+
+[node name="ControlsFrame" type="NinePatchRect" parent="Right"]
+offset_left = 67.0
+offset_top = 236.0
+offset_right = 221.0
+offset_bottom = 404.0
+texture = ExtResource("panel_secondary")
+mouse_filter = 2
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+draw_center = false
+patch_margin_left = 11
+patch_margin_top = 11
+patch_margin_right = 11
+patch_margin_bottom = 11
+
+[node name="Action0" type="Label" parent="Right"]
+offset_left = 163.0
+offset_top = 246.0
+offset_right = 213.0
+offset_bottom = 268.0
+text = "移动"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Key1" type="Panel" parent="Right"]
+offset_left = 88.0
+offset_top = 276.0
+offset_right = 136.0
+offset_bottom = 298.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="KeyText1" type="Label" parent="Right"]
+offset_left = 88.0
+offset_top = 276.0
+offset_right = 136.0
+offset_bottom = 298.0
+text = "Space"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Action1" type="Label" parent="Right"]
+offset_left = 163.0
+offset_top = 276.0
+offset_right = 213.0
+offset_bottom = 298.0
+text = "闪避"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Key2" type="Panel" parent="Right"]
+offset_left = 98.0
+offset_top = 306.0
+offset_right = 126.0
+offset_bottom = 328.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="KeyText2" type="Label" parent="Right"]
+offset_left = 98.0
+offset_top = 306.0
+offset_right = 126.0
+offset_bottom = 328.0
+text = "Q"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Action2" type="Label" parent="Right"]
+offset_left = 163.0
+offset_top = 306.0
+offset_right = 213.0
+offset_bottom = 328.0
+text = "炼金"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Key3" type="Panel" parent="Right"]
+offset_left = 98.0
+offset_top = 336.0
+offset_right = 126.0
+offset_bottom = 358.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="KeyText3" type="Label" parent="Right"]
+offset_left = 98.0
+offset_top = 336.0
+offset_right = 126.0
+offset_bottom = 358.0
+text = "B"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Action3" type="Label" parent="Right"]
+offset_left = 163.0
+offset_top = 336.0
+offset_right = 213.0
+offset_bottom = 358.0
+text = "技能背包"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Key4" type="Panel" parent="Right"]
+offset_left = 98.0
+offset_top = 366.0
+offset_right = 126.0
+offset_bottom = 388.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="KeyText4" type="Label" parent="Right"]
+offset_left = 98.0
+offset_top = 366.0
+offset_right = 126.0
+offset_bottom = 388.0
+text = "Esc"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Action4" type="Label" parent="Right"]
+offset_left = 163.0
+offset_top = 366.0
+offset_right = 213.0
+offset_bottom = 388.0
+text = "暂停"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Bottom" type="Control" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -285.33
+offset_top = -117.33
+offset_right = 285.33
+offset_bottom = -13.33
+mouse_filter = 2
+
+[node name="Tray" type="NinePatchRect" parent="Bottom"]
+offset_left = 91.56
+offset_top = 5.33
+offset_right = 479.11
+offset_bottom = 68.44
+texture = ExtResource("skill_tray")
+mouse_filter = 2
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+draw_center = false
+patch_margin_left = 12
+patch_margin_top = 11
+patch_margin_right = 12
+patch_margin_bottom = 11
+
+[node name="Slot0" type="TextureRect" parent="Bottom"]
+offset_left = 118.22
+offset_top = 11.56
+offset_right = 168.0
+offset_bottom = 61.33
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon0" type="TextureRect" parent="Bottom"]
+offset_left = 128.89
+offset_top = 16.89
+offset_right = 157.33
+offset_bottom = 43.56
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Level0" type="Label" parent="Bottom"]
+offset_left = 118.22
+offset_top = 40.89
+offset_right = 168.0
+offset_bottom = 60.44
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Slot1" type="TextureRect" parent="Bottom"]
+offset_left = 175.11
+offset_top = 11.56
+offset_right = 224.89
+offset_bottom = 61.33
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon1" type="TextureRect" parent="Bottom"]
+offset_left = 185.78
+offset_top = 16.89
+offset_right = 214.22
+offset_bottom = 43.56
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Level1" type="Label" parent="Bottom"]
+offset_left = 175.11
+offset_top = 40.89
+offset_right = 224.89
+offset_bottom = 60.44
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Slot2" type="TextureRect" parent="Bottom"]
+offset_left = 232.0
+offset_top = 11.56
+offset_right = 281.78
+offset_bottom = 61.33
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon2" type="TextureRect" parent="Bottom"]
+offset_left = 242.67
+offset_top = 16.89
+offset_right = 271.11
+offset_bottom = 43.56
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Level2" type="Label" parent="Bottom"]
+offset_left = 232.0
+offset_top = 40.89
+offset_right = 281.78
+offset_bottom = 60.44
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Slot3" type="TextureRect" parent="Bottom"]
+offset_left = 288.89
+offset_top = 11.56
+offset_right = 338.67
+offset_bottom = 61.33
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon3" type="TextureRect" parent="Bottom"]
+offset_left = 299.56
+offset_top = 16.89
+offset_right = 328.0
+offset_bottom = 43.56
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Level3" type="Label" parent="Bottom"]
+offset_left = 288.89
+offset_top = 40.89
+offset_right = 338.67
+offset_bottom = 60.44
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Slot4" type="TextureRect" parent="Bottom"]
+offset_left = 345.78
+offset_top = 11.56
+offset_right = 395.56
+offset_bottom = 61.33
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon4" type="TextureRect" parent="Bottom"]
+offset_left = 356.44
+offset_top = 16.89
+offset_right = 384.89
+offset_bottom = 43.56
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Level4" type="Label" parent="Bottom"]
+offset_left = 345.78
+offset_top = 40.89
+offset_right = 395.56
+offset_bottom = 60.44
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Slot5" type="TextureRect" parent="Bottom"]
+offset_left = 402.67
+offset_top = 11.56
+offset_right = 452.44
+offset_bottom = 61.33
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon5" type="TextureRect" parent="Bottom"]
+offset_left = 413.33
+offset_top = 16.89
+offset_right = 441.78
+offset_bottom = 43.56
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Level5" type="Label" parent="Bottom"]
+offset_left = 402.67
+offset_top = 40.89
+offset_right = 452.44
+offset_bottom = 60.44
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Alchemy" type="Button" parent="Bottom"]
+offset_left = 17.78
+offset_top = 0.0
+offset_right = 80.0
+offset_bottom = 70.22
+tooltip_text = "炼金"
+focus_mode = 0
+flat = true
+
+[node name="Frame" type="TextureRect" parent="Bottom/Alchemy"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 62.22
+offset_bottom = 64.0
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon" type="TextureRect" parent="Bottom/Alchemy"]
+offset_left = 9.78
+offset_top = 6.22
+offset_right = 52.44
+offset_bottom = 48.89
+texture = ExtResource("icon_alchemy")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Key" type="Panel" parent="Bottom/Alchemy"]
+offset_left = 16.0
+offset_top = 47.11
+offset_right = 46.22
+offset_bottom = 70.22
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="KeyText" type="Label" parent="Bottom/Alchemy"]
+offset_left = 16.0
+offset_top = 47.11
+offset_right = 46.22
+offset_bottom = 70.22
+text = "Q"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Bag" type="Button" parent="Bottom"]
+offset_left = 489.78
+offset_top = 0.0
+offset_right = 552.0
+offset_bottom = 70.22
+tooltip_text = "技能背包"
+focus_mode = 0
+flat = true
+
+[node name="Frame" type="TextureRect" parent="Bottom/Bag"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 62.22
+offset_bottom = 64.0
+texture = ExtResource("skill_slot")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Icon" type="TextureRect" parent="Bottom/Bag"]
+offset_left = 9.78
+offset_top = 6.22
+offset_right = 52.44
+offset_bottom = 48.89
+texture = ExtResource("icon_skill_bag")
+expand_mode = 1
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Key" type="Panel" parent="Bottom/Bag"]
+offset_left = 16.0
+offset_top = 47.11
+offset_right = 46.22
+offset_bottom = 70.22
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="KeyText" type="Label" parent="Bottom/Bag"]
+offset_left = 16.0
+offset_top = 47.11
+offset_right = 46.22
+offset_bottom = 70.22
+text = "B"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="LevelFrame" type="Panel" parent="Bottom"]
+offset_left = 0.0
+offset_top = 80.0
+offset_right = 51.56
+offset_bottom = 102.22
+mouse_filter = 2
+theme_override_styles/panel = SubResource("xp_track")
+
+[node name="Level" type="Label" parent="Bottom"]
+offset_left = 0.0
+offset_top = 80.0
+offset_right = 51.56
+offset_bottom = 102.22
+text = "Lv.1"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="XPTrack" type="Panel" parent="Bottom"]
+offset_left = 57.78
+offset_top = 80.89
+offset_right = 570.67
+offset_bottom = 101.33
+mouse_filter = 2
+theme_override_styles/panel = SubResource("xp_track")
+
+[node name="XP" type="ProgressBar" parent="Bottom"]
+offset_left = 60.78
+offset_top = 83.89
+offset_right = 567.67
+offset_bottom = 98.33
+mouse_filter = 2
+show_percentage = false
+theme_override_styles/background = SubResource("xp_empty")
+theme_override_styles/fill = SubResource("xp_fill")
+
+[node name="XPText" type="Label" parent="Bottom"]
+offset_left = 57.78
+offset_top = 80.89
+offset_right = 570.67
+offset_bottom = 101.33
+text = "0 / 6"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Notice" type="Control" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -334.0
+offset_top = -151.0
+offset_right = 334.0
+offset_bottom = -121.0
+mouse_filter = 2
+
+[node name="Text" type="Label" parent="Notice"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 668.0
+offset_bottom = 30.0
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+theme_override_constants/outline_size = 3
+theme_override_colors/font_outline_color = Color(0.1, 0.07, 0.04, 0.95)
+
+[node name="Boss" type="Control" parent="."]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -180.0
+offset_top = 62.0
+offset_right = 180.0
+offset_bottom = 103.0
+mouse_filter = 2
+visible = false
+
+[node name="Name" type="Label" parent="Boss"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 360.0
+offset_bottom = 20.0
+text = "腐化之源"
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(1, 0.93, 0.81, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Health" type="ProgressBar" parent="Boss"]
+offset_top = 21.0
+offset_right = 360.0
+offset_bottom = 32.0
+mouse_filter = 2
+show_percentage = false
+theme_override_styles/background = SubResource("health_track")
+theme_override_styles/fill = SubResource("health_fill")
+
+[node name="Foot" type="ProgressBar" parent="."]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 66.0
+offset_bottom = 7.0
+mouse_filter = 2
+show_percentage = false
+theme_override_styles/background = SubResource("health_track")
+theme_override_styles/fill = SubResource("health_fill")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+color = Color(0.035, 0.022, 0.015, 0.73)
+
+[node name="Frame" type="NinePatchRect" parent="Overlay"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -111.0
+offset_right = 180.0
+offset_bottom = 111.0
+texture = ExtResource("panel_secondary")
+patch_margin_left = 11
+patch_margin_right = 11
+patch_margin_top = 11
+patch_margin_bottom = 11
+mouse_filter = 2
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+draw_center = false
+
+[node name="Content" type="VBoxContainer" parent="Overlay/Frame"]
+offset_left = 28.0
+offset_top = 19.0
+offset_right = -28.0
+offset_bottom = -22.0
+theme_override_constants/separation = 14
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = SubResource("modal_buttons")
+
+[node name="Title" type="Label" parent="Overlay/Frame/Content"]
+text = "暂停"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 0.89, 0.69, 1)
+
+[node name="Scroll" type="ScrollContainer" parent="Overlay/Frame/Content"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Actions" type="VBoxContainer" parent="Overlay/Frame/Content/Scroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+[node name="Grain" type="TextureRect" parent="Bottom/Tray"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+mouse_filter = 2
+texture = ExtResource("grain")
+expand_mode = 1
+stretch_mode = 1
+show_behind_parent = true
+
+[node name="Grain" type="TextureRect" parent="Right/KillsFrame"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+mouse_filter = 2
+texture = ExtResource("grain")
+expand_mode = 1
+stretch_mode = 1
+show_behind_parent = true
+
+[node name="Grain" type="TextureRect" parent="Right/CoinsFrame"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+mouse_filter = 2
+texture = ExtResource("grain")
+expand_mode = 1
+stretch_mode = 1
+show_behind_parent = true
+
+[node name="Grain" type="TextureRect" parent="Right/ControlsFrame"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+mouse_filter = 2
+texture = ExtResource("grain")
+expand_mode = 1
+stretch_mode = 1
+show_behind_parent = true
+
+[node name="MoveKey0" type="Panel" parent="Right"]
+offset_left = 76.0
+offset_top = 246.0
+offset_right = 94.0
+offset_bottom = 268.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="MoveKeyText0" type="Label" parent="Right"]
+offset_left = 76.0
+offset_top = 246.0
+offset_right = 94.0
+offset_bottom = 268.0
+mouse_filter = 2
+text = "W"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+
+[node name="MoveKey1" type="Panel" parent="Right"]
+offset_left = 96.0
+offset_top = 246.0
+offset_right = 114.0
+offset_bottom = 268.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="MoveKeyText1" type="Label" parent="Right"]
+offset_left = 96.0
+offset_top = 246.0
+offset_right = 114.0
+offset_bottom = 268.0
+mouse_filter = 2
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+
+[node name="MoveKey2" type="Panel" parent="Right"]
+offset_left = 116.0
+offset_top = 246.0
+offset_right = 134.0
+offset_bottom = 268.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="MoveKeyText2" type="Label" parent="Right"]
+offset_left = 116.0
+offset_top = 246.0
+offset_right = 134.0
+offset_bottom = 268.0
+mouse_filter = 2
+text = "S"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+
+[node name="MoveKey3" type="Panel" parent="Right"]
+offset_left = 136.0
+offset_top = 246.0
+offset_right = 154.0
+offset_bottom = 268.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("key")
+
+[node name="MoveKeyText3" type="Label" parent="Right"]
+offset_left = 136.0
+offset_top = 246.0
+offset_right = 154.0
+offset_bottom = 268.0
+mouse_filter = 2
+text = "D"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.18, 0.11, 0.07, 1)
+
+[node name="Grain" type="TextureRect" parent="Overlay/Frame"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 7.0
+offset_top = 7.0
+offset_right = -7.0
+offset_bottom = -7.0
+mouse_filter = 2
+texture = ExtResource("grain")
+expand_mode = 1
+stretch_mode = 1
+show_behind_parent = true
