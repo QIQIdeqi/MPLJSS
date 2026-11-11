@@ -13,7 +13,13 @@ cd MPLJSS
 git lfs pull
 ```
 
-Git LFS 用于仓库中的部分共享素材。当前提供 Godot 工程与运行资源。Windows 独立试玩包属于单独交付。
+Git LFS 用于仓库中的部分共享素材和试玩包。
+
+## Windows 试玩
+
+[下载 2026-11-11 Windows 64 位试玩 ZIP](03_Build/AlchemyGodot_Win64_20261111.zip) · [SHA-256](03_Build/AlchemyGodot_Win64_20261111.zip.sha256)
+
+解压整个 ZIP，双击 `AlchemyGodot.exe`。`AlchemyGodot.pck` 需放在同目录，源工程提交号见包内的 `VERSION.txt`。
 
 ## 策划与协作
 
