@@ -66,7 +66,7 @@ static func frost_ring(parent: Node2D, at: Vector2, diameter_px: float) -> Anima
 			for i in FROST_COUNT:
 				var frame := AtlasTexture.new()
 				frame.atlas = FROST_RING
-				frame.region = Rect2((i % FROST_COLS) * FROST_FRAME, (i / FROST_COLS) * FROST_FRAME, FROST_FRAME, FROST_FRAME)
+				frame.region = Rect2((i % FROST_COLS) * FROST_FRAME, floori(i / FROST_COLS) * FROST_FRAME, FROST_FRAME, FROST_FRAME)
 				frame.filter_clip = true
 				frost_frames.add_frame("default", frame)
 	if frost_material == null:

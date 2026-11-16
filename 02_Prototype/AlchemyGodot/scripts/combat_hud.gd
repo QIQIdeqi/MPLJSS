@@ -44,23 +44,24 @@ func _process(_delta: float) -> void:
 	if $Boss.visible:
 		$Boss/Health.max_value = field.boss.MAX_HP
 		$Boss/Health.value = field.boss.entry.hp
-	if is_instance_valid(field.brew):
+	if is_instance_valid(field.alchemy_system):
 		update_slots()
 	$Bottom/Bag.disabled = field.ended
 	$Bottom/Alchemy.disabled = field.ended
 	minimap.queue_redraw()
 
 func update_slots() -> void:
+	var runtimes: Array = field.alchemy_system.skills.runtimes if is_instance_valid(field.alchemy_system) else []
 	for i in range(6):
 		var icon: TextureRect = get_node("Bottom/Icon%d" % i)
 		var rank: Label = get_node("Bottom/Level%d" % i)
 		var slot: TextureRect = get_node("Bottom/Slot%d" % i)
-		if i < field.brew.equipped.size():
-			var id: int = field.brew.equipped[i]
-			var pill: Dictionary = field.brew.pills[id]
-			icon.texture = INGREDIENTS[int(pill.main)]
-			rank.text = "Lv.%d" % pill.level
-			slot.tooltip_text = SKILLS[id].name
+		if i < runtimes.size():
+			var rt = runtimes[i]
+			icon.texture = null
+			icon.modulate = rt.base.get("color", Color.WHITE)
+			rank.text = "Lv.%d" % rt.level
+			slot.tooltip_text = rt.base.get("name", "")
 		else:
 			icon.texture = null
 			rank.text = ""
@@ -130,21 +131,29 @@ func open_panel(kind: String) -> void:
 		add_action("继续战斗", close_panel)
 		add_action("返回开始界面", return_to_menu)
 	else:
-		title.text = "技能背包"
-		if field.brew.equipped.is_empty() and field.brew.bag.is_empty():
+		title.text = "已装备技能"
+		var runtimes: Array = field.alchemy_system.skills.runtimes if is_instance_valid(field.alchemy_system) else []
+		if runtimes.is_empty():
 			var empty := Label.new()
-			empty.text = "使用炼金获得技能"
+			empty.text = "升级获得新技能"
 			empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			empty.custom_minimum_size.y = 42
 			empty.add_theme_font_size_override("font_size", 15)
 			empty.add_theme_color_override("font_color", Color("#ddc5a5"))
 			actions.add_child(empty)
-		for id in field.brew.equipped:
-			add_action("已装配 · %s  Lv.%d" % [SKILLS[id].name, field.brew.pills[id].level], Callable())
-		for id in field.brew.bag:
-			add_action("装配 · %s  Lv.%d" % [SKILLS[id].name, field.brew.pills[id].level], equip_skill.bind(id))
+		for rt in runtimes:
+			add_action("%s  Lv.%d  ·  %s" % [rt.base.get("name", ""), rt.level, _element_name(rt.element())], Callable())
 		add_action("返回战斗", close_panel)
+
+func _element_name(el: StringName) -> String:
+	match el:
+		&"fire": return "火"
+		&"ice": return "冰"
+		&"thunder": return "雷"
+		&"wind": return "风"
+		&"poison": return "毒"
+		_: return "无元素"
 
 func add_action(caption: String, callback: Callable) -> void:
 	var button := Button.new()

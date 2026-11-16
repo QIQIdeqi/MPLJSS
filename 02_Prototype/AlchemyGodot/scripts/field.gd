@@ -9,8 +9,17 @@ const HD_VILLAGE := preload("res://scripts/hd_village_view.gd")
 const BREW := preload("res://scenes/brew.tscn")
 const BOSS := preload("res://scenes/boss_arena.tscn")
 const FX := preload("res://scripts/battle_fx.gd")
+const SKILL_FX := preload("res://scripts/skill_fx.gd")
 const LEVEL_LAYOUT := preload("res://scripts/level_layout.gd")
 const LEVEL_PRESET := preload("res://levels/preset.gd")
+const ALCHEMY_SYSTEM := preload("res://scripts/alchemy/alchemy_system.gd")
+const ALCHEMY_MANAGER := preload("res://scripts/alchemy/alchemy_manager.gd")
+const UPGRADE_UI := preload("res://scenes/upgrade_ui.tscn")
+const ENTRY_SELECT := preload("res://scenes/entry_select_ui.tscn")
+const WORKBENCH := preload("res://scenes/workbench_ui.tscn")
+const MATERIALS := preload("res://data/materials/material_data.gd")
+const DROP_TABLE := preload("res://data/materials/drop_table.gd")
+const RECIPES := preload("res://data/materials/recipe_data.gd")
 const NORMAL_LAYOUT := preload("res://levels/normal.tres")
 const BOSS_LAYOUT := preload("res://levels/boss.tres")
 const GATE := Vector2(1155, 329)
@@ -51,8 +60,15 @@ var kills := 0
 var enemy_death_sound: AudioStreamPlayer
 var inventory := [0, 0, 0, 0, 0, 0]
 var brew
+var alchemy_system: ALCHEMY_SYSTEM
+var village_alchemy  # 村庄场景的炼金管理器（入场选择用）
+var upgrade_ui
+var entry_select_ui
+var workbench_ui
 var boss
 var boss_death: Tween
+var run_manager  # RunManager 本局素材账本 + 统一结算
+var profile_store  # ProfileStore 永久库存
 var effects: Node2D
 var web_layer: Node2D
 var web_shots: Array[Dictionary] = []
@@ -98,6 +114,26 @@ func _ready() -> void:
 		brew.attach(self)
 		$Interface/CombatHUD.attach(self, MAP)
 		brew.brew_settled.connect(on_brew_settled)
+		# 新炼金能力与技能联动系统
+		alchemy_system = ALCHEMY_SYSTEM.new()
+		alchemy_system.name = "AlchemySystem"
+		add_child(alchemy_system)
+		alchemy_system.ability_id = RunConfig.selected_ability
+		alchemy_system.setup(self, save)
+		alchemy_system.upgrade_offered.connect(on_upgrade_offered)
+		# 本局素材账本 + 永久库存（V1.1 资源闭环）
+		profile_store = ProfileStore.new()
+		profile_store.setup(save)
+		run_manager = RunManager.new()
+		run_manager.setup(profile_store)
+		run_manager.start_run("run_%d" % Time.get_ticks_msec())
+		run_manager.material_collected.connect(on_material_collected)
+		# 入场消耗（初始能力不消耗）
+		consume_entry_ability()
+		upgrade_ui = UPGRADE_UI.instantiate()
+		add_child(upgrade_ui)
+		upgrade_ui.setup(self)
+		upgrade_ui.chosen.connect(apply_upgrade)
 		first_brew = not bool(save.get_value("tutorial", "brew_introduced", false))
 		opening_supply_eligible = not first_brew
 		if first_brew:
@@ -130,7 +166,27 @@ func _ready() -> void:
 			var view := HD_VILLAGE.new()
 			add_child(view)
 			view.attach(self)
+		# 村庄：初始化永久库存 + 炼金服务 + 入场选择 + 炼金工房
+		profile_store = ProfileStore.new()
+		profile_store.setup(save)
+		village_alchemy = ALCHEMY_MANAGER.new()
+		village_alchemy.setup(save)
+		entry_select_ui = ENTRY_SELECT.instantiate()
+		add_child(entry_select_ui)
+		entry_select_ui.setup(self, profile_store)
+		entry_select_ui.selected.connect(on_entry_selected)
+		var alchemy_service := AlchemyService.new()
+		alchemy_service.setup(profile_store)
+		workbench_ui = WORKBENCH.instantiate()
+		add_child(workbench_ui)
+		workbench_ui.setup(self, alchemy_service, profile_store)
 		play_music(preload("res://audio/Music_Village.wav"))
+
+func on_entry_selected(ability_id: StringName) -> void:
+	if ability_id == &"":
+		return  # 取消入场
+	RunConfig.set_ability(ability_id)
+	get_tree().change_scene_to_file("res://scenes/battle.tscn")
 
 func play_music(stream: AudioStreamWAV) -> void:
 	var loop := stream.duplicate() as AudioStreamWAV
@@ -193,17 +249,28 @@ func make_sprite(texture: Texture2D, at: Vector2, size: Vector2, foot_fraction :
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		if not combat and player.position.distance_to(GATE) < 92:
-			get_tree().change_scene_to_file("res://scenes/battle.tscn")
+			if is_instance_valid(entry_select_ui) and not entry_select_ui.visible:
+				entry_select_ui.open()
+			get_viewport().set_input_as_handled()
 		elif ended:
 			get_tree().change_scene_to_file("res://scenes/village.tscn")
 		elif portal_ready and player.position.distance_to(portal_position) < 60 and not brew.is_open():
 			portal_dialog.popup_centered()
 			get_viewport().set_input_as_handled()
+	if event.is_action_pressed("alchemy"):
+		# 村庄：按 Q 呼出炼金工房（制作能力）
+		if not combat and is_instance_valid(workbench_ui) and not workbench_ui.visible:
+			workbench_ui.open()
+			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("ui_cancel") and not combat:
-		get_tree().change_scene_to_file("res://scenes/menu.tscn")
-	if combat and not ended and not boss_death and not portal_dialog.visible and (event.is_action_pressed("alchemy") or (event.is_action_pressed("ui_cancel") and brew.is_open())):
-		brew.toggle()
+		if is_instance_valid(workbench_ui) and workbench_ui.visible:
+			workbench_ui.close()
+		elif is_instance_valid(entry_select_ui) and entry_select_ui.visible:
+			entry_select_ui.close()
+		else:
+			get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		get_viewport().set_input_as_handled()
+	# V1.1：局内不提供炼金工房，Q 键不再呼出旧炼丹 UI（素材自动掉落+拾取，返回时统一结算）
 
 func update_camera(delta: float) -> void:
 	var target: Vector2 = player.position + Vector2(0, -16)
@@ -228,7 +295,7 @@ func _physics_process(delta: float) -> void:
 	update_camera(delta)
 	if not combat:
 		status.text = "格雷弗德村庄   ·   金币 %d" % int(save.get_value("village", "coins", 0))
-		hint.text = "F  穿过雾门" if player.position.distance_to(GATE) < 92 else "WASD 移动   ·   前往右侧雾门   ·   T 时段  ·  Y 天气   ·   V 切换视角   ·   Esc 返回开始界面"
+		hint.text = "F  选择能力入场" if player.position.distance_to(GATE) < 92 else "WASD 移动   ·   Q 炼金工房   ·   前往右侧雾门   ·   Esc 返回开始界面"
 		return
 	if ended or boss_death:
 		player.locked = true
@@ -284,7 +351,9 @@ func _physics_process(delta: float) -> void:
 			damage_enemy(nearest, 1.0 + float((level - 1) / 3))
 	if ended or boss_death:
 		return
-	brew.cast_equipped(delta, player.position, enemies, damage_brew_enemy)
+	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
+	if alchemy_system:
+		alchemy_system.tick(delta, player.position, enemies, damage_brew_enemy)
 	for i in range(pickups.size() - 1, -1, -1):
 		var pickup := pickups[i]
 		var art: Sprite2D = pickup.sprite
@@ -299,6 +368,7 @@ func _physics_process(delta: float) -> void:
 				if xp >= level * 6:
 					xp -= level * 6
 					level += 1
+					offer_upgrade()
 			art.queue_free()
 			pickups.remove_at(i)
 
@@ -309,11 +379,10 @@ func update_field_hint() -> void:
 			hint.text = "F  进入 Boss 传送阵   ·   可继续探索"
 		else:
 			var direction: String = ["→", "↘", "↓", "↙", "←", "↖", "↑", "↗"][posmod(roundi(difference.angle() / (PI / 4)), 8)]
-			hint.text = "%s Boss 传送阵已开放   ·   靠近按 F   ·   Q 炼金" % direction
-	elif first_brew:
-		hint.text = "首局材料已备好   ·   WASD 移动 / Space 闪避   ·   Q 选择主材与辅材，制成第一颗丹药"
+			hint.text = "%s Boss 传送阵已开放   ·   靠近按 F" % direction
 	else:
-		hint.text = "WASD 移动   ·   Space 闪避   ·   Q 炼金   ·   自动攻击"
+		var mat_total: int = run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
+		hint.text = "WASD 移动   ·   Space 闪避   ·   自动攻击   ·   素材 %d" % mat_total
 
 func enter_boss() -> void:
 	if ended or boss or not portal_ready or player.position.distance_to(portal_position) >= 60 or brew.is_open():
@@ -355,6 +424,79 @@ func on_brew_settled(accepted: bool, result: Dictionary) -> void:
 		discoveries.append(result.skill)
 		save.set_value("tutorial", "recipes", discoveries)
 		persist()
+
+# 升级三选一触发（由经验升级时调用）
+func offer_upgrade() -> void:
+	if not alchemy_system:
+		return
+	var candidates: Array = alchemy_system.roll_upgrades()
+	if candidates.is_empty():
+		return
+	if is_instance_valid(upgrade_ui):
+		upgrade_ui.offer(candidates)
+
+func apply_upgrade(pick: Dictionary) -> void:
+	if alchemy_system:
+		alchemy_system.apply_upgrade(pick)
+
+# 入场消耗能力（V1.1 第6.3节：成功启动本局才扣，初始能力不扣）
+func consume_entry_ability() -> void:
+	if not alchemy_system or not profile_store:
+		return
+	var id: StringName = alchemy_system.ability_id
+	if id == preload("res://data/alchemy_abilities/alchemy_ability_data.gd").ABILITY_INITIAL:
+		return
+	# 成功进入本局（_ready 已执行）才扣除一份，失败加载不会走到这里
+	if profile_store.consume_ability(String(id)):
+		profile_store.save_profile()
+
+func on_upgrade_offered(candidates: Array) -> void:
+	pass
+
+# 元素联动效果回调（由 AlchemySystem 触发）
+func on_synergy_effect(syn: Dictionary, at: Vector2) -> void:
+	# 联动视觉 + 伤害（对范围内敌人结算一次）
+	var radius: float = float(syn.get("radius", 100.0)) * 0.2
+	var dmg: float = float(syn.get("damage", 20.0))
+	var color: Color = syn.get("color", Color.WHITE)
+	for entry in enemies:
+		if entry.get("hp", 0.0) > 0.0 and is_instance_valid(entry.body):
+			if entry.body.position.distance_to(at) <= radius:
+				damage_brew_enemy(entry, dmg, 0.0, 1.0, color)
+	SKILL_FX.explosion(effects, at, color, radius * 2.0)
+
+# 技能释放视觉表现（由 SkillManager 通过 alchemy_system 回调触发）
+# info: {"skill_id", "behavior", "from", "target", "color", "radius", "speed", "element"}
+func play_skill_fx(info: Dictionary) -> void:
+	var behavior: String = String(info.get("behavior", ""))
+	var from: Vector2 = info.get("from", Vector2.ZERO)
+	var target: Vector2 = info.get("target", Vector2.ZERO)
+	var color: Color = info.get("color", Color.WHITE)
+	var radius: float = float(info.get("radius", 0.0))
+	var speed: float = float(info.get("speed", 620.0))
+	match behavior:
+		"projectile":
+			SKILL_FX.projectile(effects, from, target, color, speed)
+		"blast":
+			SKILL_FX.blast(effects, from, target, color, maxf(radius, 30.0), speed)
+		"line":
+			SKILL_FX.line(effects, from, target, color)
+		"instant":
+			SKILL_FX.lightning(effects, target, color)
+		"boomerang":
+			SKILL_FX.line(effects, from, target, color)
+		"orbit":
+			SKILL_FX.orbit(effects, from, color, maxf(radius, 40.0))
+		"zone":
+			SKILL_FX.zone(effects, target, color, maxf(radius, 60.0))
+		"aoe":
+			SKILL_FX.aoe(effects, target, color, maxf(radius, 50.0))
+		"beam":
+			SKILL_FX.beam(effects, from, target, color)
+		"spike":
+			SKILL_FX.spike(effects, target, color)
+		_:
+			SKILL_FX.projectile(effects, from, target, color, speed)
 
 func persist() -> bool:
 	return OS.get_cmdline_user_args().has("--migration-test") or save.save(save_path) == OK
@@ -523,7 +665,8 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 	defeated_art[body] = body.art
 	var death: Tween = body.play_death()
 	death.finished.connect(remove_defeated.bind(body), CONNECT_ONE_SHOT)
-	inventory[(kills - 1) % 3] += 1
+	# 素材掉落（V1.1 第3章）：按掉落表生成，自动拾取写入本局账本
+	drop_materials(at, entry.get("elite", false), entry.boss)
 	if kills == 8 and opening_supply_eligible:
 		for i in 3:
 			if inventory[i] == 0:
@@ -536,6 +679,30 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 func remove_defeated(body: Node2D) -> void:
 	defeated_art.erase(body)
 	body.queue_free()
+
+# 怪物死亡素材掉落（V1.1 第3.2节）：按掉落表生成，自动拾取入账本
+func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
+	if not run_manager:
+		return
+	var enemy_type := "boss" if boss_entity else ("elite" if elite else "common")
+	var drops: Array = DROP_TABLE.for_enemy_type(enemy_type)
+	for entry in drops:
+		if rng.randf() > float(entry.chance):
+			continue
+		var amount := rng.randi_range(int(entry.min), int(entry.max))
+		if amount <= 0:
+			continue
+		# 自动拾取：直接写入本局账本（V1.1 明确自动拾取，不要求按键）
+		run_manager.collect_material(String(entry.material_id), amount)
+
+func on_material_collected(run_id: String, material_id: String, amount: int) -> void:
+	# HUD 更新本局素材数量（可在此扩展获得提示）
+	pass
+
+# 统一素材结算（V1.1 第4章）：所有返回入口调用
+func settle_run() -> void:
+	if run_manager:
+		run_manager.settle_run_materials("exit")
 
 func add_pickup(at: Vector2, kind: int) -> void:
 	var sprite := make_sprite(DROPS[kind], at, Vector2(21, 21))
@@ -568,6 +735,9 @@ func finish(victory: bool) -> void:
 	if is_instance_valid(boss):
 		boss.shots.clear()
 		boss.queue_redraw()
+	# 统一素材结算：本局已拾取素材全部带出（V1.1 第4章）
+	settle_run()
 	save.set_value("village", "coins", int(save.get_value("village", "coins", 0)) + coins)
 	var saved := persist()
-	hint.text = "%s   ·   %s   ·   F 返回村庄" % ["腐化之源已击败" if victory else "试炼结束", "已结算 %d 金币" % coins if saved else "保存失败"]
+	var mat_total: int = run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
+	hint.text = "%s   ·   %s   ·   素材 +%d   ·   F 返回村庄" % ["腐化之源已击败" if victory else "试炼结束", "已结算 %d 金币" % coins if saved else "保存失败", mat_total]
