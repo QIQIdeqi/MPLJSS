@@ -336,19 +336,22 @@ func _physics_process(delta: float) -> void:
 			body.advance(delta, player.global_position, hurt, fire_web, slow)
 			if ended:
 				return
-	until_attack -= delta
-	if until_attack <= 0:
-		var nearest: Dictionary = {}
-		var reach := 148.0
-		for entry in enemies:
-			var dist: float = player.position.distance_to(entry.body.position)
-			if dist < reach:
-				reach = dist
-				nearest = entry
-		if not nearest.is_empty():
-			until_attack = 0.47
-			attack_feedback(nearest.body.position)
-			damage_enemy(nearest, 1.0 + float((level - 1) / 3))
+	# 新技能系统接管战斗时不再运行旧自动普攻；否则旧普攻的更远射程会
+	# 先杀死敌人，使 SkillManager 没有施放目标，也不会产生技能特效。
+	if not is_instance_valid(alchemy_system):
+		until_attack -= delta
+		if until_attack <= 0:
+			var nearest: Dictionary = {}
+			var reach := 148.0
+			for entry in enemies:
+				var dist: float = player.position.distance_to(entry.body.position)
+				if dist < reach:
+					reach = dist
+					nearest = entry
+			if not nearest.is_empty():
+				until_attack = 0.47
+				attack_feedback(nearest.body.position)
+				damage_enemy(nearest, 1.0 + float((level - 1) / 3))
 	if ended or boss_death:
 		return
 	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
@@ -468,12 +471,49 @@ func on_synergy_effect(syn: Dictionary, at: Vector2) -> void:
 # 技能释放视觉表现（由 SkillManager 通过 alchemy_system 回调触发）
 # info: {"skill_id", "behavior", "from", "target", "color", "radius", "speed", "element"}
 func play_skill_fx(info: Dictionary) -> void:
+	var skill_id: String = String(info.get("skill_id", ""))
 	var behavior: String = String(info.get("behavior", ""))
 	var from: Vector2 = info.get("from", Vector2.ZERO)
 	var target: Vector2 = info.get("target", Vector2.ZERO)
 	var color: Color = info.get("color", Color.WHITE)
 	var radius: float = float(info.get("radius", 0.0))
 	var speed: float = float(info.get("speed", 620.0))
+	# HD 战斗视图不会直接显示 Actors 下的普通 2D 节点；同一施法事件
+	# 只交给其 3D 呈现层，避免与下方 2D 特效双播；非 HD 才继续走 2D。
+	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+		hd_view.world_view.show_skill_fx(info)
+		return
+	match skill_id:
+		"magic_bolt":
+			SKILL_FX.magic_bolt(effects, from, target, color, speed)
+			return
+		"fireball":
+			SKILL_FX.fireball(effects, from, target, color, maxf(radius, 30.0), speed)
+			return
+		"ice_spike":
+			SKILL_FX.ice_spike(effects, from, target, color)
+			return
+		"thunder":
+			SKILL_FX.thunder(effects, target, color)
+			return
+		"wind_blade":
+			SKILL_FX.wind_blade(effects, from, target, color)
+			return
+		"cyclone":
+			SKILL_FX.cyclone(effects, from, color, maxf(radius, 40.0))
+			return
+		"poison_fog":
+			SKILL_FX.zone(effects, target, color, maxf(radius, 60.0))
+			return
+		"rockfall":
+			SKILL_FX.rockfall(effects, target, color, maxf(radius, 50.0))
+			return
+		"beam":
+			SKILL_FX.beam_strike(effects, from, target, color)
+			return
+		"earth_spike":
+			SKILL_FX.earth_spike(effects, target, color)
+			return
 	match behavior:
 		"projectile":
 			SKILL_FX.projectile(effects, from, target, color, speed)
@@ -627,13 +667,15 @@ func damage_brew_enemy(entry: Dictionary, damage: float, slow_seconds: float, sl
 		return
 	entry.slow_left = maxf(slow_seconds, float(entry.get("slow_left", 0.0)))
 	entry.slow_factor = slow_factor
-	if color.g > 0.62 and color.r < 0.5 and color.b < 0.55:
-		var cloud: Node2D = FX.poison(effects, entry.body.position)
-		get_tree().create_timer(2.0).timeout.connect(func() -> void:
-			if is_instance_valid(cloud):
-				cloud.queue_free())
-	else:
-		burst(entry.body.position, color)
+	# HD 技能已有专属 3D 表现，跳过通用 2D 命中爆点，防止同次命中重复显示。
+	if not is_instance_valid(hd_view):
+		if color.g > 0.62 and color.r < 0.5 and color.b < 0.55:
+			var cloud: Node2D = FX.poison(effects, entry.body.position)
+			get_tree().create_timer(2.0).timeout.connect(func() -> void:
+				if is_instance_valid(cloud):
+					cloud.queue_free())
+		else:
+			burst(entry.body.position, color)
 	damage_enemy(entry, damage)
 
 func damage_enemy(entry: Dictionary, damage: float) -> void:

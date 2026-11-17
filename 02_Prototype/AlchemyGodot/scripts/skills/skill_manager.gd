@@ -68,6 +68,8 @@ func cast(rt: SkillRuntime, player_pos: Vector2, target: Dictionary, enemies: Ar
 	var info := {"skill": rt.skill_id, "behavior": behavior, "pos": player_pos,
 		"target": target.body.position, "color": rt.config.get("color", Color.WHITE),
 		"element": rt.element(), "ctx": ctx}
+	# 在伤害结算前发出施法视觉，避免脆弱敌人死亡后没有机会播放特效。
+	_notify_skill_fx(rt, player_pos, target)
 	match behavior:
 		SKILLS.BEHAVIOR_PROJECTILE:
 			cast_projectile(rt, player_pos, target, enemies, apply_hit, ctx)
@@ -93,8 +95,6 @@ func cast(rt: SkillRuntime, player_pos: Vector2, target: Dictionary, enemies: Ar
 			cast_projectile(rt, player_pos, target, enemies, apply_hit, ctx)
 	# 元素联动检测（区域类技能）
 	_check_synergy(rt, player_pos, target, enemies, apply_hit, ctx)
-	# 视觉表现：通知 field 层渲染对应特效
-	_notify_skill_fx(rt, player_pos, target)
 	return info
 
 # 通知 field 层渲染技能特效（经 alchemy_system 转发）

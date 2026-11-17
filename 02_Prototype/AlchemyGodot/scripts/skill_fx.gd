@@ -5,6 +5,14 @@ extends RefCounted
 
 const FX := preload("res://scripts/battle_fx.gd")
 const ORBIT_BLADE := preload("res://scripts/fx/orbit_blade.gd")
+const FIRE_SHEET := preload("res://art/vfx/generated/fire_projectile_24f_concept.png")
+const ICE_SHEET := preload("res://art/vfx/generated/ice_ring_24f_concept.png")
+const EARTH_SHEET := preload("res://art/vfx/generated/earth_strike_24f_concept.png")
+const THUNDER_SHEET := preload("res://art/vfx/generated/thunder_strike_24f.png")
+const WIND_SHEET := preload("res://art/vfx/generated/wind_blade_24f.png")
+const CYCLONE_SHEET := preload("res://art/vfx/generated/cyclone_24f.png")
+const BEAM_SHEET := preload("res://art/vfx/generated/arcane_beam_24f.png")
+const EARTH_SPIKE_SHEET := preload("res://art/vfx/generated/earth_spike_24f.png")
 
 
 # ---- 投射物（魔法弹）：飞行的发光弹丸，命中后消失 ----
@@ -118,6 +126,80 @@ static func spike(parent: Node2D, at: Vector2, color: Color) -> void:
 	tw.tween_property(s, "scale", Vector2.ONE, 0.12).from(Vector2(0.3, 0.3))
 	tw.tween_interval(0.18)
 	tw.tween_callback(s.queue_free)
+
+
+# ---- 当前十技能的专属组合 ----
+# 保留行为层的命中和伤害规则；这里仅组合现有透明 PixelFX、冰环和基础形状，
+# 让不同施法方式具备可辨识的释放与命中尾帧。
+static func magic_bolt(parent: Node2D, from: Vector2, to: Vector2, color: Color, speed: float) -> void:
+	# 保留原有魔法弹：紫色弹丸、拖尾和命中闪光，不使用新增图集。
+	projectile(parent, from, to, color, speed, func() -> void:
+		FX.hit(parent, to, 0.46))
+
+static func fireball(parent: Node2D, from: Vector2, to: Vector2, color: Color, radius_px: float, speed: float) -> void:
+	FX.generated_sheet(parent, from.lerp(to, 0.58), FIRE_SHEET, maxf(104.0, radius_px * 2.0))
+	var ball := _glow_dot(color, 10.0)
+	_fx_root(parent).add_child(ball)
+	ball.global_position = from
+	var dur := maxf(0.05, from.distance_to(to) / maxf(speed, 1.0))
+	FX.trail(parent, from, to, color, dur)
+	var tw := ball.create_tween()
+	tw.tween_property(ball, "global_position", to, dur)
+	tw.tween_callback(func() -> void:
+		ball.queue_free()
+		explosion(parent, to, color, radius_px)
+		FX.hit(parent, to, maxf(0.55, radius_px / 90.0)))
+
+static func ice_spike(parent: Node2D, from: Vector2, to: Vector2, color: Color) -> void:
+	FX.generated_sheet(parent, to, ICE_SHEET, 108.0)
+	line(parent, from, to, color)
+	FX.frost_ring(parent, to, 48.0)
+
+static func thunder(parent: Node2D, at: Vector2, color: Color) -> void:
+	FX.generated_sheet(parent, at, THUNDER_SHEET, 116.0)
+	lightning(parent, at, color)
+	FX.hit(parent, at, 0.64)
+
+static func wind_blade(parent: Node2D, from: Vector2, to: Vector2, color: Color) -> void:
+	FX.generated_sheet(parent, from.lerp(to, 0.56), WIND_SHEET, 76.0)
+	line(parent, from, to, color)
+	var carrier := Node2D.new()
+	_fx_root(parent).add_child(carrier)
+	var tw := carrier.create_tween()
+	tw.tween_interval(0.16)
+	tw.tween_callback(func() -> void: FX.trail(parent, to, from, color, 0.16))
+	tw.tween_interval(0.32)
+	tw.tween_callback(carrier.queue_free)
+
+static func cyclone(parent: Node2D, center: Vector2, color: Color, radius_px: float) -> void:
+	FX.generated_sheet(parent, center, CYCLONE_SHEET, maxf(110.0, radius_px * 2.4))
+	orbit(parent, center, color, radius_px, 0.95)
+	FX.frost_ring(parent, center, radius_px * 1.3)
+
+static func rockfall(parent: Node2D, at: Vector2, color: Color, radius_px: float) -> void:
+	FX.generated_sheet(parent, at, EARTH_SHEET, maxf(112.0, radius_px * 2.1))
+	aoe(parent, at, color, radius_px)
+	var carrier := Node2D.new()
+	_fx_root(parent).add_child(carrier)
+	var tw := carrier.create_tween()
+	tw.tween_interval(0.18)
+	tw.tween_callback(func() -> void: FX.hit(parent, at, maxf(0.6, radius_px / 90.0)))
+	tw.tween_callback(carrier.queue_free)
+
+static func beam_strike(parent: Node2D, from: Vector2, to: Vector2, color: Color) -> void:
+	FX.generated_sheet(parent, from.lerp(to, 0.62), BEAM_SHEET, 92.0)
+	beam(parent, from, to, color, 0.38)
+	FX.hit(parent, to, 0.58)
+
+static func earth_spike(parent: Node2D, at: Vector2, color: Color) -> void:
+	FX.generated_sheet(parent, at, EARTH_SPIKE_SHEET, 112.0)
+	spike(parent, at, color)
+	var carrier := Node2D.new()
+	_fx_root(parent).add_child(carrier)
+	var tw := carrier.create_tween()
+	tw.tween_interval(0.10)
+	tw.tween_callback(func() -> void: FX.hit(parent, at, 0.48))
+	tw.tween_callback(carrier.queue_free)
 
 
 # ---- 内部工具 ----

@@ -7,8 +7,19 @@ const COIN_SHADER := preload("res://shaders/hd_battle_coin.gdshader")
 const PORTAL_LIGHT := preload("res://shaders/hd_battle_portal_light.gdshader")
 const BOUNDARY_SHADER := preload("res://shaders/hd_battle_boundary.gdshader")
 const GLOW := preload("res://scenes/fx/glow.tres")
+const FIRE_SHEET := preload("res://art/vfx/generated/fire_projectile_24f_concept.png")
+const ICE_SHEET := preload("res://art/vfx/generated/ice_ring_24f_concept.png")
+const EARTH_SHEET := preload("res://art/vfx/generated/earth_strike_24f_concept.png")
+const THUNDER_SHEET := preload("res://art/vfx/generated/thunder_strike_24f.png")
+const WIND_SHEET := preload("res://art/vfx/generated/wind_blade_24f.png")
+const CYCLONE_SHEET := preload("res://art/vfx/generated/cyclone_24f.png")
+const BEAM_SHEET := preload("res://art/vfx/generated/arcane_beam_24f.png")
+const EARTH_SPIKE_SHEET := preload("res://art/vfx/generated/earth_spike_24f.png")
 const UNITS_PER_PIXEL := 0.01
 const SOURCE_HIDDEN_LAYER := 4
+const GENERATED_FRAME := 256
+const GENERATED_COLS := 6
+const GENERATED_COUNT := 24
 
 var field
 var landscape: LANDSCAPE
@@ -16,6 +27,7 @@ var actor_cards: Dictionary[int, Sprite3D] = {}
 var raised_hits: Array[Node2D] = []
 var attack_effects := Node3D.new()
 var particle_mesh: QuadMesh
+var generated_frames: Dictionary = {}
 var battle_focus := Vector3.ZERO
 var view_angle := ViewAngle.MID
 var boundary: MeshInstance3D
@@ -231,6 +243,137 @@ func raise_attack(impact: Node2D, from: Vector2, at: Vector2, tint: Color) -> vo
 	travel.tween_callback(trail.set_emitting.bind(false))
 	travel.tween_interval(trail.lifetime)
 	travel.tween_callback(trail.queue_free)
+
+# 技能系统的视觉桥接。技能伤害仍在 2D 逻辑层结算；这里仅在 HD 战斗
+# 视图中呈现同一次施法，避免效果被地面捕获画布压暗或遮挡。
+func show_skill_fx(info: Dictionary) -> void:
+	var skill_id := String(info.get("skill_id", ""))
+	var from: Vector2 = info.get("from", Vector2.ZERO)
+	var target: Vector2 = info.get("target", from)
+	var tint: Color = info.get("color", Color.WHITE)
+	var radius := maxf(float(info.get("radius", 0.0)), 18.0)
+	match skill_id:
+		"magic_bolt":
+			_skill_travel(from, target, tint, 0.30, 15, 0.50)
+			_skill_burst(target, tint, 14, 0.42)
+		"fireball":
+			_skill_sheet(from.lerp(target, 0.58), FIRE_SHEET, maxf(104.0, radius * 2.0))
+			_skill_travel(from, target, tint, 0.36, 24, 0.80)
+			_skill_burst(target, tint, 28, clampf(radius / 34.0, 0.72, 1.30))
+		"ice_spike":
+			_skill_sheet(target, ICE_SHEET, 108.0)
+			_skill_travel(from, target, tint, 0.18, 20, 0.62)
+			_skill_burst(target, tint, 18, 0.64)
+		"thunder":
+			_skill_sheet(target, THUNDER_SHEET, 116.0)
+			_skill_strike(target, tint, 32, 0.90)
+		"wind_blade":
+			_skill_sheet(from.lerp(target, 0.56), WIND_SHEET, 76.0)
+			_skill_travel(from, target, tint, 0.17, 18, 0.56)
+			_skill_travel(target, from, tint, 0.17, 12, 0.44, 0.19)
+		"cyclone":
+			_skill_sheet(from, CYCLONE_SHEET, maxf(110.0, radius * 2.4))
+			_skill_burst(from, tint, 30, clampf(radius / 24.0, 0.76, 1.16), 0.52)
+		"poison_fog":
+			_skill_burst(target, tint, 36, clampf(radius / 24.0, 0.86, 1.30), 0.86)
+		"rockfall":
+			_skill_sheet(target, EARTH_SHEET, maxf(112.0, radius * 2.1))
+			_skill_strike(target, tint, 28, clampf(radius / 28.0, 0.76, 1.20))
+		"beam":
+			_skill_sheet(from.lerp(target, 0.62), BEAM_SHEET, 92.0)
+			_skill_travel(from, target, tint, 0.08, 42, 0.42)
+			_skill_burst(target, tint, 16, 0.54)
+		"earth_spike":
+			_skill_sheet(target, EARTH_SPIKE_SHEET, 112.0)
+			_skill_strike(target, tint, 20, 0.66)
+		_:
+			_skill_travel(from, target, tint, 0.24, 14, 0.48)
+
+func _skill_sheet(at: Vector2, atlas: Texture2D, diameter_px: float) -> void:
+	var key := atlas.resource_path
+	if not generated_frames.has(key):
+		var frames := SpriteFrames.new()
+		frames.add_animation("default")
+		frames.set_animation_loop("default", false)
+		frames.set_animation_speed("default", 30.0)
+		for i in GENERATED_COUNT:
+			var frame := AtlasTexture.new()
+			frame.atlas = atlas
+			frame.region = Rect2((i % GENERATED_COLS) * GENERATED_FRAME,
+				floori(i / GENERATED_COLS) * GENERATED_FRAME, GENERATED_FRAME, GENERATED_FRAME)
+			frame.filter_clip = true
+			frames.add_frame("default", frame)
+		generated_frames[key] = frames
+	var effect := AnimatedSprite3D.new()
+	effect.sprite_frames = generated_frames[key]
+	effect.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	effect.pixel_size = UNITS_PER_PIXEL
+	effect.scale = Vector3.ONE * (diameter_px / GENERATED_FRAME)
+	effect.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	effect.shaded = false
+	effect.no_depth_test = true
+	effect.position = world_at(at) + Vector3.UP * 0.33
+	effect.animation_finished.connect(effect.queue_free)
+	attack_effects.add_child(effect)
+	effect.play("default")
+
+func _skill_travel(from: Vector2, to: Vector2, tint: Color, duration: float, amount: int,
+		scale: float, delay := 0.0) -> void:
+	var trail := add_particles(attack_effects, _skill_fade(tint))
+	trail.position = world_at(from) + Vector3.UP * 0.34
+	trail.amount = amount
+	trail.lifetime = maxf(duration, 0.08)
+	trail.spread = 22.0
+	trail.initial_velocity_min = 0.02
+	trail.initial_velocity_max = 0.10
+	trail.scale_amount_min = scale * 0.72
+	trail.scale_amount_max = scale
+	var travel := trail.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+	if delay > 0.0:
+		travel.tween_interval(delay)
+	travel.tween_callback(trail.set_emitting.bind(true))
+	travel.tween_property(trail, "position", world_at(to) + Vector3.UP * 0.30, maxf(duration, 0.08))
+	travel.tween_callback(trail.set_emitting.bind(false))
+	travel.tween_interval(trail.lifetime)
+	travel.tween_callback(trail.queue_free)
+
+func _skill_burst(at: Vector2, tint: Color, amount: int, scale: float, lifetime := 0.36) -> void:
+	var burst := add_particles(attack_effects, _skill_fade(tint))
+	burst.position = world_at(at) + Vector3.UP * 0.27
+	burst.amount = amount
+	burst.lifetime = lifetime
+	burst.spread = 180.0
+	burst.initial_velocity_min = 0.10
+	burst.initial_velocity_max = 0.42
+	burst.scale_amount_min = scale * 0.70
+	burst.scale_amount_max = scale
+	burst.emitting = true
+	var clear := burst.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+	clear.tween_interval(lifetime * 1.35)
+	clear.tween_callback(burst.queue_free)
+
+func _skill_strike(at: Vector2, tint: Color, amount: int, scale: float) -> void:
+	var strike := add_particles(attack_effects, _skill_fade(tint))
+	strike.position = world_at(at) + Vector3.UP * 1.08
+	strike.amount = amount
+	strike.lifetime = 0.30
+	strike.direction = Vector3.DOWN
+	strike.spread = 10.0
+	strike.initial_velocity_min = 2.4
+	strike.initial_velocity_max = 3.4
+	strike.scale_amount_min = scale * 0.68
+	strike.scale_amount_max = scale
+	strike.emitting = true
+	var clear := strike.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+	clear.tween_interval(0.44)
+	clear.tween_callback(strike.queue_free)
+	_skill_burst(at, tint, maxi(10, amount / 2), scale * 0.78, 0.28)
+
+func _skill_fade(tint: Color) -> Gradient:
+	var fade := Gradient.new()
+	fade.colors = PackedColorArray([Color(tint, 0.95), Color(tint, 0.0)])
+	fade.offsets = PackedFloat32Array([0.0, 1.0])
+	return fade
 
 func add_particles(parent: Node3D, fade: Gradient) -> CPUParticles3D:
 	if not particle_mesh:

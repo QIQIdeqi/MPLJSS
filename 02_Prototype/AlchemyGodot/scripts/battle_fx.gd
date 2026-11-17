@@ -23,12 +23,16 @@ const FROST_RING := preload("res://art/fx/frost_ring.png")
 const FROST_FRAME := 128
 const FROST_COLS := 6
 const FROST_COUNT := 24
+const GENERATED_FRAME := 256
+const GENERATED_COLS := 6
+const GENERATED_COUNT := 24
 const FPS := 30.0
 const LIGHT_MATTE := preload("res://shaders/battle_light_matte.gdshader")
 
 static var additive: ShaderMaterial
 static var frost_frames: SpriteFrames
 static var frost_material: ShaderMaterial
+static var generated_frames: Dictionary = {}
 var cards: Array[Sprite2D] = []
 var age := 0.0
 var frames := 0
@@ -77,6 +81,33 @@ static func frost_ring(parent: Node2D, at: Vector2, diameter_px: float) -> Anima
 	effect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	effect.material = frost_material
 	effect.scale = Vector2.ONE * (diameter_px / FROST_FRAME)
+	effect.animation_finished.connect(effect.queue_free)
+	_fx_parent(parent).add_child(effect)
+	effect.global_position = at
+	effect.play("default")
+	return effect
+
+# 生成方向稿的运行时播放器。所有图集均为 6×4、每格 256px，播放完即释放。
+static func generated_sheet(parent: Node2D, at: Vector2, atlas: Texture2D,
+		diameter_px: float = 96.0, fps: float = 30.0) -> AnimatedSprite2D:
+	var key := atlas.resource_path
+	if not generated_frames.has(key):
+		var frames := SpriteFrames.new()
+		frames.add_animation("default")
+		frames.set_animation_loop("default", false)
+		frames.set_animation_speed("default", fps)
+		for i in GENERATED_COUNT:
+			var frame := AtlasTexture.new()
+			frame.atlas = atlas
+			frame.region = Rect2((i % GENERATED_COLS) * GENERATED_FRAME,
+				floori(i / GENERATED_COLS) * GENERATED_FRAME, GENERATED_FRAME, GENERATED_FRAME)
+			frame.filter_clip = true
+			frames.add_frame("default", frame)
+		generated_frames[key] = frames
+	var effect := AnimatedSprite2D.new()
+	effect.sprite_frames = generated_frames[key]
+	effect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	effect.scale = Vector2.ONE * (diameter_px / GENERATED_FRAME)
 	effect.animation_finished.connect(effect.queue_free)
 	_fx_parent(parent).add_child(effect)
 	effect.global_position = at
