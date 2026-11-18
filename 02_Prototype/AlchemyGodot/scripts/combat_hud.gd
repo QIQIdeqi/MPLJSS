@@ -47,7 +47,8 @@ func _process(_delta: float) -> void:
 	if is_instance_valid(field.alchemy_system):
 		update_slots()
 	$Bottom/Bag.disabled = field.ended
-	$Bottom/Alchemy.disabled = field.ended
+	# V1.1：局内不提供炼金工房，炼金按钮始终禁用（旧局内炼丹已移除）
+	$Bottom/Alchemy.disabled = true
 	minimap.queue_redraw()
 
 func update_slots() -> void:
@@ -107,8 +108,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func toggle_alchemy() -> void:
-	if panel.is_empty() and not field.ended and not field.portal_dialog.visible:
-		field.brew.toggle()
+	# V1.1：局内不提供炼金工房，此按钮已禁用，不再呼出旧局内炼丹。
+	pass
 
 func toggle_bag() -> void:
 	if panel == "bag":

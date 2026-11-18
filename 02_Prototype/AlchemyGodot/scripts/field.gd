@@ -69,6 +69,10 @@ var boss
 var boss_death: Tween
 var run_manager  # RunManager 本局素材账本 + 统一结算
 var profile_store  # ProfileStore 永久库存
+var material_drops: Array[Dictionary] = []  # 素材掉落实体 {"sprite", "material_id", "amount"}
+var material_drop_float := 0.0
+var pickup_notice := ""       # 短暂获得提示
+var pickup_notice_time := 0.0
 var effects: Node2D
 var web_layer: Node2D
 var web_shots: Array[Dictionary] = []
@@ -304,6 +308,8 @@ func _physics_process(delta: float) -> void:
 	player.locked = paused or (is_instance_valid(boss) and boss.preparation > 0.0)
 	if paused:
 		return
+	if pickup_notice_time > 0.0:
+		pickup_notice_time = maxf(0.0, pickup_notice_time - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
 	if boss:
 		hint.text = "腐化之源   ·   %s" % ("准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   橙色冲锋 / 蓝色扇形弹   ·   Q 炼金" % ceili(float(boss.entry.hp) * 100.0 / boss.MAX_HP))
@@ -374,8 +380,27 @@ func _physics_process(delta: float) -> void:
 					offer_upgrade()
 			art.queue_free()
 			pickups.remove_at(i)
+	# 素材掉落吸附拾取（V1.1 第3.2节）：玩家进入范围自动入账
+	material_drop_float += delta
+	for i in range(material_drops.size() - 1, -1, -1):
+		var drop := material_drops[i]
+		var dsprite: Sprite2D = drop.sprite
+		if not is_instance_valid(dsprite):
+			material_drops.remove_at(i)
+			continue
+		# 轻微漂浮动画
+		dsprite.position.y += sin(material_drop_float * 6.0 + i) * 0.15
+		if dsprite.position.distance_to(player.position) <= 40:
+			if run_manager:
+				run_manager.collect_material(String(drop.material_id), int(drop.amount))
+			dsprite.queue_free()
+			material_drops.remove_at(i)
 
 func update_field_hint() -> void:
+	# 获得提示优先显示（短暂）
+	if pickup_notice_time > 0.0:
+		hint.text = "获得  %s   ·   本局素材 %d" % [pickup_notice, _run_mat_total()]
+		return
 	if portal_ready:
 		var difference: Vector2 = portal_position - player.position
 		if difference.length() < 60:
@@ -384,8 +409,10 @@ func update_field_hint() -> void:
 			var direction: String = ["→", "↘", "↓", "↙", "←", "↖", "↑", "↗"][posmod(roundi(difference.angle() / (PI / 4)), 8)]
 			hint.text = "%s Boss 传送阵已开放   ·   靠近按 F" % direction
 	else:
-		var mat_total: int = run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
-		hint.text = "WASD 移动   ·   Space 闪避   ·   自动攻击   ·   素材 %d" % mat_total
+		hint.text = "WASD 移动   ·   Space 闪避   ·   自动攻击   ·   素材 %d" % _run_mat_total()
+
+func _run_mat_total() -> int:
+	return run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
 
 func enter_boss() -> void:
 	if ended or boss or not portal_ready or player.position.distance_to(portal_position) >= 60 or brew.is_open():
@@ -404,6 +431,10 @@ func enter_boss() -> void:
 	for pickup in pickups:
 		pickup.sprite.queue_free()
 	pickups.clear()
+	for drop in material_drops:
+		if is_instance_valid(drop.sprite):
+			drop.sprite.queue_free()
+	material_drops.clear()
 	for fx in effects.get_children():
 		fx.queue_free()
 	portal = null
@@ -722,7 +753,7 @@ func remove_defeated(body: Node2D) -> void:
 	defeated_art.erase(body)
 	body.queue_free()
 
-# 怪物死亡素材掉落（V1.1 第3.2节）：按掉落表生成，自动拾取入账本
+# 怪物死亡素材掉落（V1.1 第3.2节）：按掉落表生成掉落实体，玩家吸附后自动拾取入账本
 func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
 	if not run_manager:
 		return
@@ -734,12 +765,47 @@ func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
 		var amount := rng.randi_range(int(entry.min), int(entry.max))
 		if amount <= 0:
 			continue
-		# 自动拾取：直接写入本局账本（V1.1 明确自动拾取，不要求按键）
-		run_manager.collect_material(String(entry.material_id), amount)
+		spawn_material_drop(at, String(entry.material_id), amount)
+
+# 生成素材掉落实体（地面掉落物，等待玩家吸附拾取）
+func spawn_material_drop(at: Vector2, material_id: String, amount: int) -> void:
+	var color := _material_color(material_id)
+	var sprite := Sprite2D.new()
+	var tex := GradientTexture2D.new()
+	tex.gradient = _material_gradient(color)
+	tex.width = 16
+	tex.height = 16
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(0.0, 0.0)
+	sprite.texture = tex
+	sprite.scale = Vector2.ONE * 0.9
+	actors.add_child(sprite)
+	sprite.position = at + Vector2(rng.randf_range(-6.0, 6.0), rng.randf_range(-6.0, 6.0))
+	material_drops.append({"sprite": sprite, "material_id": material_id, "amount": amount})
+
+func _material_color(material_id: String) -> Color:
+	match material_id:
+		"fire_powder": return Color(1.00, 0.55, 0.20)   # 火粉 橙红
+		"dew": return Color(0.35, 0.75, 1.00)           # 露水 浅蓝
+		"magic_shard": return Color(0.65, 0.45, 1.00)   # 魔法碎片 紫
+		_: return Color(0.9, 0.9, 0.9)
+
+func _material_gradient(color: Color) -> Gradient:
+	var g := Gradient.new()
+	g.colors = PackedColorArray([Color(color.r, color.g, color.b, 0.95), Color(color.r, color.g, color.b, 0.0)])
+	g.offsets = PackedFloat32Array([0.0, 1.0])
+	return g
 
 func on_material_collected(run_id: String, material_id: String, amount: int) -> void:
-	# HUD 更新本局素材数量（可在此扩展获得提示）
-	pass
+	# HUD 获得提示（V1.1 第3.3节）：短暂显示最近获得的素材
+	var name := MATERIALS.name_of(material_id)
+	show_pickup_notice("%s ×%d" % [name, amount])
+
+# 短暂获得提示（覆盖 hint 约 1.2 秒）
+func show_pickup_notice(text: String) -> void:
+	pickup_notice = text
+	pickup_notice_time = 1.2
 
 # 统一素材结算（V1.1 第4章）：所有返回入口调用
 func settle_run() -> void:
@@ -779,6 +845,11 @@ func finish(victory: bool) -> void:
 		boss.queue_redraw()
 	# 统一素材结算：本局已拾取素材全部带出（V1.1 第4章）
 	settle_run()
+	# 未拾取的地面素材掉落不带出（V1.1 第4.1节），清理
+	for drop in material_drops:
+		if is_instance_valid(drop.sprite):
+			drop.sprite.queue_free()
+	material_drops.clear()
 	save.set_value("village", "coins", int(save.get_value("village", "coins", 0)) + coins)
 	var saved := persist()
 	var mat_total: int = run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0

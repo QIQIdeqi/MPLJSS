@@ -32,10 +32,10 @@ func build_ui() -> void:
 	var init_btn := _make_button("基础炼金（初始能力）", "永久可用 · 不消耗 · 技能按基础机制运行", ABILITIES.ABILITY_INITIAL, true)
 	list.add_child(init_btn)
 	buttons.append(init_btn)
-	# 六种炼金能力（有库存可选）
+	# 六种炼金能力（有库存可选，明确提示本次入场消耗 1 份）
 	for ab in ABILITIES.ABILITIES:
 		var qty: int = profile.ability_count(ab.id) if profile else 0
-		var btn := _make_button("%s  ×%d" % [ab.name, qty], ab.desc, ab.id, qty > 0)
+		var btn := _make_button("%s  ×%d" % [ab.name, qty], "%s\n本次入场消耗 1 份" % ab.desc, ab.id, qty > 0)
 		list.add_child(btn)
 		buttons.append(btn)
 
@@ -50,6 +50,10 @@ func _make_button(title: String, desc: String, ability_id: StringName, enabled: 
 	return btn
 
 func _choose(ability_id: StringName) -> void:
+	# 代码层兜底校验：自制能力库存为 0 时不可选（UI 按钮已 disabled，这里双保险）
+	if ability_id != ABILITIES.ABILITY_INITIAL:
+		if not profile or profile.ability_count(String(ability_id)) <= 0:
+			return
 	visible = false
 	selected.emit(ability_id)
 
