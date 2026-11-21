@@ -10,11 +10,19 @@ const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd
 const SAVE_SECTION_MATERIAL := "material_inventory"
 const SAVE_SECTION_ABILITY := "ability_inventory"
 const SAVE_SECTION_SETTLED := "settled_runs"
+const SAVE_SECTION_RECIPES := "recipe_state"
+
+# 配方发现状态（讨论版第7、11章）
+const RECIPE_STATE_UNKNOWN := "unknown"   # 未尝试
+const RECIPE_STATE_FAILED := "failed"     # 失败（组合已尝试但未命中）
+const RECIPE_STATE_FOUND := "found"       # 已发现（成功制作过）
 
 var save: ConfigFile
 var material_inventory: Dictionary = {}   # material_id -> int（永久素材库存）
 var ability_inventory: Dictionary = {}    # ability_id -> int（炼金能力库存）
 var settled_runs: Array = []              # 已结算的 run_id（幂等防重复）
+var recipe_states: Dictionary = {}        # recipe_id -> 状态（unknown/failed/found）
+var current_tier := 2                     # 当前阶段投入种类上限（前2/中3/后4）
 
 
 func setup(p_save: ConfigFile) -> void:
@@ -25,11 +33,14 @@ func load_profile() -> void:
 	material_inventory.clear()
 	ability_inventory.clear()
 	settled_runs.clear()
+	recipe_states.clear()
 	for id in MATERIALS.ids():
 		material_inventory[id] = int(save.get_value(SAVE_SECTION_MATERIAL, String(id), 0))
 	for id in ABILITIES.ids():
 		ability_inventory[id] = int(save.get_value(SAVE_SECTION_ABILITY, String(id), 0))
 	settled_runs = save.get_value(SAVE_SECTION_SETTLED, "ids", [])
+	recipe_states = save.get_value(SAVE_SECTION_RECIPES, "states", {})
+	current_tier = int(save.get_value(SAVE_SECTION_RECIPES, "tier", 2))
 
 func save_profile() -> void:
 	for id in material_inventory:
@@ -37,6 +48,8 @@ func save_profile() -> void:
 	for id in ability_inventory:
 		save.set_value(SAVE_SECTION_ABILITY, String(id), int(ability_inventory[id]))
 	save.set_value(SAVE_SECTION_SETTLED, "ids", settled_runs)
+	save.set_value(SAVE_SECTION_RECIPES, "states", recipe_states)
+	save.set_value(SAVE_SECTION_RECIPES, "tier", current_tier)
 
 # ---- 素材库存 ----
 func material_count(material_id: String) -> int:
@@ -51,6 +64,25 @@ func has_materials(inputs: Dictionary) -> bool:
 # ---- 能力库存 ----
 func ability_count(ability_id: String) -> int:
 	return int(ability_inventory.get(ability_id, 0))
+
+# ---- 配方发现状态（讨论版第7章）----
+func recipe_state(recipe_id: String) -> String:
+	return String(recipe_states.get(recipe_id, RECIPE_STATE_UNKNOWN))
+
+func mark_recipe_found(recipe_id: String) -> void:
+	recipe_states[recipe_id] = RECIPE_STATE_FOUND
+
+func mark_recipe_failed(recipe_id: String) -> void:
+	# 已发现的配方不会被覆盖为失败
+	if recipe_state(recipe_id) != RECIPE_STATE_FOUND:
+		recipe_states[recipe_id] = RECIPE_STATE_FAILED
+
+# 阶段投入上限（讨论版第7章）：前2/中3/后4
+func tier_limit() -> int:
+	return current_tier
+
+func set_tier(tier: int) -> void:
+	current_tier = clampi(tier, 2, 4)
 
 # ---- 结算幂等 ----
 func has_settled(run_id: String) -> bool:

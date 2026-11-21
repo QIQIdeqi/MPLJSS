@@ -1,62 +1,76 @@
 class_name AlchemyService
 extends RefCounted
-# 局外炼金服务（V1.1 第5.5、8.2节 AlchemyService）
-# 负责炼金事务：校验配方、扣除素材、生成能力库存。UI 不得直接改库存。
+# 局外炼金服务（讨论版第5、7、12章 AlchemyService）
+# 隐藏配方实验：玩家提交材料组合，系统匹配预设配方，命中固定获得能力。
+# 成功：扣料 + 生成能力 + 标记配方发现；失败：不扣料（全返还），标记失败状态。
+# UI 不得直接改库存。
 
-signal alchemy_crafted(recipe_id: String, ability_id: String, new_count: int)
+signal experiment_result(result: Dictionary)
 
 const RECIPES := preload("res://data/materials/recipe_data.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
 
 var profile: ProfileStore
-var crafting := false  # 按钮锁，防止快速连点重复发奖
+var processing := false  # 状态锁，防止快速连点重复扣料/产出
 
 
 func setup(p_profile: ProfileStore) -> void:
 	profile = p_profile
 
-# 炼制一份能力（V1.1 第8.6节 craft_recipe）
-func craft_recipe(ability_id: String) -> bool:
-	if crafting:
-		return false
-	var recipe := RECIPES.by_ability(ability_id)
+# 实验：提交无序材料组合，返回结果字典。
+# 返回 {"success": bool, "ability_id": String, "recipe_id": String, "error": String}
+func experiment(materials: Array) -> Dictionary:
+	if processing:
+		return {"success": false, "ability_id": "", "recipe_id": "", "error": "正在炼制中"}
+	# 去重（每种材料最多 1 份，禁止重复种类）
+	var uniq: Array = []
+	var seen := {}
+	for m in materials:
+		var mid := String(m)
+		if seen.has(mid):
+			return {"success": false, "ability_id": "", "recipe_id": "", "error": "同种材料不能重复投入"}
+		seen[mid] = true
+		uniq.append(mid)
+	# 最低投入种类数（暂定 2 种）
+	if uniq.size() < 2:
+		return {"success": false, "ability_id": "", "recipe_id": "", "error": "至少投入 2 种不同材料"}
+	# 阶段投入上限
+	if uniq.size() > profile.tier_limit():
+		return {"success": false, "ability_id": "", "recipe_id": "", "error": "超过当前阶段投入种类上限"}
+	# 库存校验（每种投入材料至少 1 份）
+	for mid in uniq:
+		if profile.material_count(mid) < 1:
+			return {"success": false, "ability_id": "", "recipe_id": "", "error": "材料不足"}
+	# 匹配配方
+	var recipe := RECIPES.match(uniq)
+	processing = true
 	if recipe.is_empty():
-		return false
-	if not bool(recipe.get("is_unlocked", false)):
-		return false
-	var inputs: Dictionary = recipe.get("inputs", {})
-	if inputs.is_empty():
-		return false
-	if ability_id == ABILITIES.ABILITY_INITIAL:
-		return false
-	crafting = true
-	var committed := profile.commit_craft_transaction(inputs, ability_id, 1)
-	if committed:
+		# 失败：不扣料（全返还），标记失败状态
+		profile.mark_recipe_failed(RECIPES.combo_key(uniq))
 		profile.save_profile()
-		alchemy_crafted.emit(String(recipe.get("recipe_id", "")), ability_id, profile.ability_count(ability_id))
-	crafting = false
-	return committed
+		processing = false
+		return {"success": false, "ability_id": "", "recipe_id": "", "error": "实验失败，未产出能力"}
+	# 成功：扣料（每种 1 份）+ 生成能力 + 标记发现
+	var ability_id := String(recipe.ability_id)
+	var inputs := {}
+	for mid in uniq:
+		inputs[mid] = 1
+	var committed := profile.commit_craft_transaction(inputs, ability_id, 1)
+	if not committed:
+		processing = false
+		return {"success": false, "ability_id": "", "recipe_id": "", "error": "炼制事务失败"}
+	profile.mark_recipe_found(String(recipe.recipe_id))
+	profile.save_profile()
+	processing = false
+	var result := {"success": true, "ability_id": ability_id, "recipe_id": String(recipe.recipe_id), "error": ""}
+	experiment_result.emit(result)
+	return result
 
-# 查询某配方所需材料（供 UI 显示）
-func recipe_inputs(ability_id: String) -> Dictionary:
-	var recipe := RECIPES.by_ability(ability_id)
-	return recipe.get("inputs", {}) if not recipe.is_empty() else {}
+# 配方是否已发现（供图鉴）
+func is_recipe_found(recipe_id: String) -> bool:
+	return profile.recipe_state(recipe_id) == ProfileStore.RECIPE_STATE_FOUND
 
-# 某配方当前缺料数量（material_id -> 缺少数量）
-func missing_materials(ability_id: String) -> Dictionary:
-	var missing := {}
-	var inputs := recipe_inputs(ability_id)
-	for id in inputs:
-		var need := int(inputs[id])
-		var have := profile.material_count(id)
-		if have < need:
-			missing[id] = need - have
-	return missing
-
-func can_craft(ability_id: String) -> bool:
-	var recipe := RECIPES.by_ability(ability_id)
-	if recipe.is_empty():
-		return false
-	if not bool(recipe.get("is_unlocked", false)):
-		return false
-	return profile.has_materials(recipe.get("inputs", {}))
+# 查询能力名称（供反馈展示）
+func ability_name(ability_id: String) -> String:
+	var ab := ABILITIES.by_id(ability_id)
+	return ab.get("name", ability_id) if not ab.is_empty() else ability_id

@@ -22,10 +22,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -360.0
-offset_top = -320.0
-offset_right = 360.0
-offset_bottom = 320.0
+offset_left = -400.0
+offset_top = -360.0
+offset_right = 400.0
+offset_bottom = 360.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -36,27 +36,56 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 12
+horizontal_scroll_mode = 0
 
-[node name="Title" type="Label" parent="Panel/Margin/VBox"]
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Margin/Scroll/VBox"]
 layout_mode = 2
 text = "炼金工房"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 24
 
-[node name="Materials" type="Label" parent="Panel/Margin/VBox"]
+[node name="Info" type="Label" parent="Panel/Margin/Scroll/VBox"]
 layout_mode = 2
-text = "永久素材库存："
+text = ""
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.8, 0.75, 0.65, 1)
 
-[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox"]
+[node name="MaterialsLabel" type="Label" parent="Panel/Margin/Scroll/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
+text = "选择材料投入："
+theme_override_font_sizes/font_size = 14
 
-[node name="List" type="VBoxContainer" parent="Panel/Margin/VBox/Scroll"]
+[node name="Materials" type="VBoxContainer" parent="Panel/Margin/Scroll/VBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="SlotLabel" type="Label" parent="Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = "投入材料（0 / 2）"
+theme_override_font_sizes/font_size = 14
+
+[node name="Slots" type="HBoxContainer" parent="Panel/Margin/Scroll/VBox"]
+layout_mode = 2
 theme_override_constants/separation = 8
+
+[node name="ExperimentBtn" type="Button" parent="Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "提交实验"
+
+[node name="Feedback" type="Label" parent="Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(1.0, 0.85, 0.4, 1)
+
+[node name="Codex" type="VBoxContainer" parent="Panel/Margin/Scroll/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 2

@@ -7,23 +7,29 @@ extends RefCounted
 
 # 普通怪物掉落：基础素材，稳定低量
 const COMMON_DROPS := [
-	{"material_id": "fire_powder", "chance": 0.5, "min": 1, "max": 1},
+	{"material_id": "fire_powder",  "chance": 0.5, "min": 1, "max": 1},
 	{"material_id": "dew",          "chance": 0.5, "min": 1, "max": 1},
 	{"material_id": "magic_shard",  "chance": 0.2, "min": 1, "max": 1},
+	{"material_id": "wind_crystal", "chance": 0.3, "min": 1, "max": 1},
+	{"material_id": "earth_core",   "chance": 0.3, "min": 1, "max": 1},
 ]
 
 # 精英怪物掉落：更高概率、更多数量（高于普通怪的额外素材收益）
 const ELITE_DROPS := [
-	{"material_id": "fire_powder", "chance": 1.0, "min": 1, "max": 2},
+	{"material_id": "fire_powder",  "chance": 1.0, "min": 1, "max": 2},
 	{"material_id": "dew",          "chance": 1.0, "min": 1, "max": 2},
 	{"material_id": "magic_shard",  "chance": 0.6, "min": 1, "max": 2},
+	{"material_id": "wind_crystal", "chance": 0.7, "min": 1, "max": 2},
+	{"material_id": "earth_core",   "chance": 0.7, "min": 1, "max": 2},
 ]
 
 # BOSS 掉落：固定、可预期的素材收益
 const BOSS_DROPS := [
-	{"material_id": "fire_powder", "chance": 1.0, "min": 3, "max": 4},
+	{"material_id": "fire_powder",  "chance": 1.0, "min": 3, "max": 4},
 	{"material_id": "dew",          "chance": 1.0, "min": 3, "max": 4},
 	{"material_id": "magic_shard",  "chance": 1.0, "min": 2, "max": 3},
+	{"material_id": "wind_crystal", "chance": 1.0, "min": 2, "max": 3},
+	{"material_id": "earth_core",   "chance": 1.0, "min": 2, "max": 3},
 ]
 
 # 按敌人类型取掉落表

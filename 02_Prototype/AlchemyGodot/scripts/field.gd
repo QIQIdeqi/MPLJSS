@@ -789,6 +789,8 @@ func _material_color(material_id: String) -> Color:
 		"fire_powder": return Color(1.00, 0.55, 0.20)   # 火粉 橙红
 		"dew": return Color(0.35, 0.75, 1.00)           # 露水 浅蓝
 		"magic_shard": return Color(0.65, 0.45, 1.00)   # 魔法碎片 紫
+		"wind_crystal": return Color(0.45, 0.90, 0.60)  # 风晶 翠绿
+		"earth_core": return Color(0.70, 0.55, 0.35)    # 土髓 土棕
 		_: return Color(0.9, 0.9, 0.9)
 
 func _material_gradient(color: Color) -> Gradient:
