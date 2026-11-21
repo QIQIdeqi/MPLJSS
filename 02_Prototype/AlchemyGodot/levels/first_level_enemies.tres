@@ -77,8 +77,8 @@ wave_weights = PackedFloat32Array(0, 0, 0, 0, 0, 11)
 [resource]
 script = ExtResource("table")
 level_name = "第一关 · 格雷弗德外围"
-opening_count = 8
+opening_count = 16
 start_seconds = PackedFloat32Array(0, 30, 60, 95, 135, 170)
-spawn_intervals = PackedFloat32Array(2.3, 1.95, 1.6, 1.37, 1.15, 0.94)
-alive_caps = PackedInt32Array(12, 17, 22, 27, 32, 38)
+spawn_intervals = PackedFloat32Array(0.77, 0.65, 0.53, 0.46, 0.38, 0.31)
+alive_caps = PackedInt32Array(24, 34, 44, 48, 48, 48)
 rows = Array[ExtResource("row")]([SubResource("enemy_slime"), SubResource("enemy_skeleton"), SubResource("enemy_wolf"), SubResource("enemy_bat"), SubResource("enemy_spider"), SubResource("enemy_mushroom"), SubResource("enemy_water_spirit")])

@@ -8,7 +8,7 @@ const GARDENS := preload("res://scripts/hd_village_gardens.gd")
 
 const LILITA := preload("res://scripts/lilita.gd")
 
-@export var walker_height := 0.76
+@export var walker_height := 0.798
 # 是否显示身高参考标尺（一根半透明立柱，高度 = walker_height，跟随角色，用于对比）。
 @export var show_height_guide := false
 
