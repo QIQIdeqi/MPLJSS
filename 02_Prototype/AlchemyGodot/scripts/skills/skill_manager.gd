@@ -1,314 +1,267 @@
 class_name SkillManager
 extends RefCounted
-# 技能管理器（策划案第9章）
-# 管理本局技能实例、冷却、触发攻击。接口对齐旧 brew.gd 的 cast_equipped，方便替换。
 
+# V2 的逻辑层：投射物、区域、召唤物和固定连锁都在这里保有真实寿命，
+# 不在施放帧直接结算全部伤害。field 只负责敌人、伤害反馈与视觉桥接。
 const SKILLS := preload("res://data/skills/skill_data.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
 
-const WORLD_SCALE := 0.2  # 数据单位 → 世界像素（与旧 brew.gd 一致）
-
-var field  # field.gd 实例（供特效、联动回调）
+var field
 var ability_id: StringName = ABILITIES.ABILITY_INITIAL
-var runtimes: Array = []       # Array[SkillRuntime]
-var max_skill_slots := 6       # 技能槽位（配置化，策划案第7.5节）
-var rng := RandomNumberGenerator.new()
-
-# 递归保护用（本局）
-var attack_queue: Array = []
-
-func _init() -> void:
-	rng.randomize()
+var runtimes: Array = []
+var max_skill_slots := 6
+var active: Array[Dictionary] = []
+var chain_cooldowns: Dictionary = {}
+var ability_efficiency := 1.0
 
 func setup(p_ability_id: StringName, p_field) -> void:
 	ability_id = p_ability_id
 	field = p_field
 
 func add_skill(skill_id: StringName) -> bool:
-	if runtimes.size() >= max_skill_slots:
+	if runtimes.size() >= max_skill_slots or has_skill(skill_id):
 		return false
-	for rt in runtimes:
-		if rt.skill_id == skill_id:
-			return false
-	var rt := SkillRuntime.new()
-	rt.setup(skill_id, ability_id, [])
-	runtimes.append(rt)
+	var runtime := SkillRuntime.new()
+	runtime.setup(skill_id, ability_id, [])
+	if runtime.base.is_empty():
+		return false
+	runtimes.append(runtime)
 	return true
 
 func has_skill(skill_id: StringName) -> bool:
-	for rt in runtimes:
-		if rt.skill_id == skill_id:
+	for runtime in runtimes:
+		if runtime.skill_id == skill_id:
 			return true
 	return false
 
+func runtime_for(skill_id: StringName) -> SkillRuntime:
+	for runtime in runtimes:
+		if runtime.skill_id == skill_id:
+			return runtime
+	return null
+
 func clear() -> void:
 	runtimes.clear()
-	attack_queue.clear()
+	active.clear()
+	chain_cooldowns.clear()
+	ability_efficiency = 1.0
 
-# 主循环：tick 冷却并触发可释放的技能。
-# apply_hit: Callable(entry, damage, slow_seconds, slow_factor, color) —— 命中回调，对接 field.gd
 func cast_equipped(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
-	for rt in runtimes:
-		rt.tick(delta)
-		if not rt.ready():
+	for chain_id in chain_cooldowns.keys():
+		chain_cooldowns[chain_id] = maxf(0.0, float(chain_cooldowns[chain_id]) - delta)
+	for runtime in runtimes:
+		runtime.tick(delta)
+		if not runtime.ready():
 			continue
-		var target := nearest_enemy(player_pos, float(rt.config.get("range", 0.0)) * WORLD_SCALE, enemies)
+		var target := densest_enemy(player_pos, runtime.range_px(), enemies) if runtime.behavior() == SKILLS.BEHAVIOR_BOTTLE else nearest_enemy(player_pos, runtime.range_px(), enemies)
 		if target.is_empty():
-			continue
-		rt.reset_cooldown()
-		cast(rt, player_pos, target, enemies, apply_hit)
+			continue # 无有效目标不进入冷却
+		runtime.reset_cooldown()
+		_cast(runtime, player_pos, target, enemies, apply_hit)
+	_update_active(delta, player_pos, enemies, apply_hit)
 
-# 触发单个技能的基出攻击，并返回生成的信息（供视觉层使用）
-func cast(rt: SkillRuntime, player_pos: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable) -> Dictionary:
-	var ctx := AttackContext.new()
-	ctx.source_skill_id = rt.skill_id
-	ctx.source_ability_id = ability_id
-	ctx.chain_id = AttackContext.new_chain_id()
-	var behavior: StringName = rt.behavior()
-	var info := {"skill": rt.skill_id, "behavior": behavior, "pos": player_pos,
-		"target": target.body.position, "color": rt.config.get("color", Color.WHITE),
-		"element": rt.element(), "ctx": ctx}
-	# 在伤害结算前发出施法视觉，避免脆弱敌人死亡后没有机会播放特效。
-	_notify_skill_fx(rt, player_pos, target)
+func _cast(runtime: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable) -> void:
+	_emit_fx(runtime, "cast", from, target.body.position)
+	var behavior := runtime.behavior()
 	match behavior:
-		SKILLS.BEHAVIOR_PROJECTILE:
-			cast_projectile(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_BLAST:
-			cast_blast(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_LINE:
-			cast_line(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_INSTANT:
-			cast_instant(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_BOOMERANG:
-			cast_line(rt, player_pos, target, enemies, apply_hit, ctx)  # 往返按直线命中近似
-		SKILLS.BEHAVIOR_ORBIT:
-			cast_orbit(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_ZONE:
-			cast_zone(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_AOE:
-			cast_aoe(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_BEAM:
-			cast_beam(rt, player_pos, target, enemies, apply_hit, ctx)
-		SKILLS.BEHAVIOR_SPIKE:
-			cast_spike(rt, player_pos, target, enemies, apply_hit, ctx)
-		_:
-			cast_projectile(rt, player_pos, target, enemies, apply_hit, ctx)
-	# 元素联动检测（区域类技能）
-	_check_synergy(rt, player_pos, target, enemies, apply_hit, ctx)
-	return info
+		SKILLS.BEHAVIOR_SUMMON:
+			active.append({"kind":"summon", "runtime":runtime, "pos":from, "left":float(runtime.value("life", 6.0)), "attack_left":0.15, "combo":false})
+		SKILLS.BEHAVIOR_CRYSTAL:
+			var direction := from.direction_to(target.body.position)
+			for index in int(runtime.value("count", 5)):
+				active.append({"kind":"delayed_hit", "runtime":runtime, "left":float(runtime.value("step_delay", .06)) * index, "pos":from + direction * (58.0 + index * 46.0), "radius":42.0, "ratio":1.0})
+		SKILLS.BEHAVIOR_NEEDLE:
+			_spawn_needles(runtime, from, target, false)
+		SKILLS.BEHAVIOR_POOL, SKILLS.BEHAVIOR_MIST:
+			_spawn_projectile(runtime, from, target, "zone_on_hit")
+		SKILLS.BEHAVIOR_PULL:
+			_spawn_projectile(runtime, from, target, "pull_on_hit")
+		SKILLS.BEHAVIOR_BOTTLE:
+			_spawn_projectile(runtime, from, target, "blast_on_hit")
+		SKILLS.BEHAVIOR_BOUNCE:
+			_spawn_projectile(runtime, from, target, "bounce_on_hit")
+		SKILLS.BEHAVIOR_BLADE:
+			_spawn_projectile(runtime, from, target, "pierce_on_hit")
+		SKILLS.BEHAVIOR_GEL:
+			_spawn_projectile(runtime, from, target, "gel_on_hit")
+	# 以落点/首命中为载体的连锁在对应事件结算；魔偶与魂针则在生成根源时触发。
+	if runtime.skill_id != &"sk_gravity_stone" and runtime.skill_id != &"sk_mist_flask" and runtime.skill_id != &"sk_obsidian_blade":
+		_try_chain(runtime, from, target, enemies, apply_hit)
 
-# 通知 field 层渲染技能特效（经 alchemy_system 转发）
-func _notify_skill_fx(rt: SkillRuntime, from: Vector2, target: Dictionary) -> void:
-	if field == null or not field.has_method("play_skill_fx"):
-		return
-	var fx_info := {
-		"skill_id": rt.skill_id,
-		"behavior": rt.behavior(),
-		"from": from,
-		"target": target.body.position,
-		"color": rt.config.get("color", Color.WHITE),
-		"radius": float(rt.config.get("radius", 0.0)) * WORLD_SCALE,
-		"speed": float(rt.config.get("speed", 620.0)),
-		"element": rt.element(),
-	}
-	field.play_skill_fx(fx_info)
+func _spawn_projectile(runtime: SkillRuntime, from: Vector2, target: Dictionary, impact: String, combo := false, ratio := 1.0) -> void:
+	active.append({"kind":"projectile", "runtime":runtime, "pos":from, "target":target, "impact":impact, "combo":combo, "ratio":ratio, "speed":float(runtime.config.get("speed", 420.0)), "left":maxf(.35, runtime.range_px() / maxf(1.0, float(runtime.config.get("speed", 420.0))))})
 
-# ---- 十种基础行为（命中逻辑）----
+func _spawn_needles(runtime: SkillRuntime, from: Vector2, target: Dictionary, combo: bool, ratio := 1.0) -> void:
+	var amount := 3 if combo else int(runtime.value("count", 3))
+	for index in amount:
+		var launch_delay := .06 + .12 * index if combo else float(runtime.value("interval", .12)) * index
+		active.append({"kind":"delayed_projectile", "runtime":runtime, "left":launch_delay, "pos":from, "target":target, "impact":"needle_on_hit", "combo":combo, "ratio":ratio})
 
-func _hit(rt: SkillRuntime, entry: Dictionary, apply_hit: Callable, ctx: AttackContext, ratio := 1.0) -> void:
-	var dmg: float = rt.damage() * ratio
-	var slow: float = rt.config.get("slow", 0.0)
-	var factor: float = rt.config.get("factor", 1.0)
-	var color: Color = rt.config.get("color", Color.WHITE)
-	apply_hit.call(entry, dmg, slow, factor, color)
-	ctx.mark_hit(entry)
+func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
+	for index in range(active.size() - 1, -1, -1):
+		var state := active[index]
+		var finished := false
+		match String(state.kind):
+			"delayed_projectile":
+				state.left = float(state.left) - delta
+				if state.left <= 0.0:
+					_spawn_projectile(state.runtime, state.pos, state.target, "needle_on_hit", bool(state.combo), float(state.get("ratio", 1.0)))
+					finished = true
+			"delayed_hit":
+				state.left = float(state.left) - delta
+				if state.left <= 0.0:
+					_emit_fx(state.runtime, "impact", state.pos, state.pos)
+					_hit_area(state.runtime, state.pos, float(state.radius), enemies, apply_hit, float(state.ratio))
+					finished = true
+			"projectile":
+				state.left = float(state.left) - delta
+				var target: Dictionary = state.target
+				if _living(target):
+					state.pos = (state.pos as Vector2).move_toward(target.body.position, float(state.speed) * delta)
+					if (state.pos as Vector2).distance_to(target.body.position) <= 18.0:
+						_resolve_projectile(state, enemies, apply_hit)
+						finished = true
+				elif state.left <= 0.0:
+					finished = true
+			"zone":
+				state.left = float(state.left) - delta
+				state.tick_left = float(state.tick_left) - delta
+				if state.tick_left <= 0.0:
+					state.tick_left += .5
+					_emit_fx(state.runtime, "tick", state.pos, state.pos)
+					_hit_area(state.runtime, state.pos, float(state.radius), enemies, apply_hit, float(state.ratio), float(state.slow), float(state.slow_duration))
+				if state.left <= 0.0:
+					finished = true
+			"pull":
+				state.left = float(state.left) - delta
+				for entry in enemies:
+					if _living(entry) and entry.body.position.distance_to(state.pos) <= float(state.radius):
+						entry.body.position = entry.body.position.lerp(state.pos, minf(.12, delta * .55))
+				if state.left <= 0.0:
+					finished = true
+			"summon":
+				state.left = float(state.left) - delta
+				state.attack_left = float(state.attack_left) - delta
+				var foe := nearest_enemy(state.pos, 520.0, enemies)
+				if not foe.is_empty():
+					state.pos = (state.pos as Vector2).move_toward(foe.body.position, float(state.runtime.value("speed_units", 4.5)) * SKILLS.UNIT * delta)
+					if state.attack_left <= 0.0 and (state.pos as Vector2).distance_to(foe.body.position) <= 44.0:
+						# 爆裂魔偶沿用魔偶的追击与拳击，但伤害必须乘固定连锁强度。
+						_hit(state.runtime, foe, apply_hit, float(state.get("mult", 1.0)))
+						_emit_fx(state.runtime, "impact", state.pos, foe.body.position)
+						state.attack_left = float(state.runtime.value("interval", .9))
+				if state.left <= 0.0:
+					if bool(state.combo):
+						_hit_area(state.runtime, state.pos, 78.0, enemies, apply_hit, 1.25 * float(state.get("mult", 1.0)))
+					finished = true
+		if finished:
+			active.remove_at(index)
+		else:
+			active[index] = state
 
-func cast_projectile(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 投射型：命中单一目标。弹射/穿透/分裂/回响由改造层处理。
-	_hit(rt, target, apply_hit, ctx)
-	_apply_effect(rt, target.body.position, target, enemies, apply_hit, ctx)
+func _resolve_projectile(state: Dictionary, enemies: Array, apply_hit: Callable) -> void:
+	var runtime: SkillRuntime = state.runtime
+	var point: Vector2 = state.target.body.position if _living(state.target) else state.pos
+	_emit_fx(runtime, "impact", state.pos, point)
+	match String(state.impact):
+		"blast_on_hit": _hit_area(runtime, point, runtime.radius_px(), enemies, apply_hit)
+		"bounce_on_hit":
+			var used: Array = []
+			var current: Dictionary = state.target
+			for _turn in int(runtime.value("targets", 3)):
+				if current.is_empty(): break
+				_hit(runtime, current, apply_hit)
+				used.append(current.body)
+				current = nearest_enemy(current.body.position, float(runtime.value("bounce_units", 3.2)) * SKILLS.UNIT, enemies, used)
+		"pull_on_hit":
+			_hit_area(runtime, point, runtime.radius_px() * .62, enemies, apply_hit)
+			active.append({"kind":"pull", "runtime":runtime, "pos":point, "left":float(runtime.value("duration", 2.4)), "radius":runtime.radius_px()})
+		"zone_on_hit":
+			active.append({"kind":"zone", "runtime":runtime, "pos":point, "left":float(runtime.value("duration", 3.0)), "tick_left":.5, "radius":runtime.radius_px(), "ratio":1.0, "slow":float(runtime.value("slow", 0.0)), "slow_duration":2.0})
+		"pierce_on_hit":
+			var used: Array = []
+			var current: Dictionary = state.target
+			for _turn in int(runtime.value("targets", 3)):
+				if current.is_empty(): break
+				_hit(runtime, current, apply_hit)
+				used.append(current.body)
+				current = nearest_enemy(current.body.position, runtime.range_px(), enemies, used)
+		"gel_on_hit":
+			_hit(runtime, state.target, apply_hit, 1.0, float(runtime.value("slow", .3)), float(runtime.value("slow_duration", 2.0)))
+		"needle_on_hit": _hit(runtime, state.target, apply_hit, float(state.get("ratio", 1.0)))
+	if not bool(state.get("combo", false)):
+		_apply_ability(runtime, point, enemies, apply_hit)
+	if runtime.skill_id == &"sk_gravity_stone" or runtime.skill_id == &"sk_mist_flask" or runtime.skill_id == &"sk_obsidian_blade":
+		_try_chain(runtime, state.pos, state.target, enemies, apply_hit)
 
-func cast_blast(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 爆裂型：命中点爆炸，范围内敌人都受伤
-	var center: Vector2 = target.body.position
-	var radius: float = float(rt.config.get("radius", 0.0)) * WORLD_SCALE
+func _hit(runtime: SkillRuntime, entry: Dictionary, apply_hit: Callable, ratio := 1.0, slow := 0.0, slow_duration := 0.0) -> void:
+	if not _living(entry): return
+	apply_hit.call(entry, runtime.damage() * ratio, slow_duration, maxf(0.0, 1.0 - slow), runtime.base.color)
+
+func _hit_area(runtime: SkillRuntime, at: Vector2, radius: float, enemies: Array, apply_hit: Callable, ratio := 1.0, slow := 0.0, slow_duration := 0.0) -> void:
 	for entry in enemies:
-		if _living(entry) and entry.body.position.distance_to(center) <= radius:
-			_hit(rt, entry, apply_hit, ctx)
-	_apply_effect(rt, center, target, enemies, apply_hit, ctx)
+		if _living(entry) and entry.body.position.distance_to(at) <= radius:
+			_hit(runtime, entry, apply_hit, ratio, slow, slow_duration)
 
-func cast_line(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 直线型：命中路径上的敌人（近似：朝向目标方向的窄条）
-	var dir: Vector2 = from.direction_to(target.body.position)
-	var reach: float = float(rt.config.get("range", 0.0)) * WORLD_SCALE
-	for entry in enemies:
-		if not _living(entry):
-			continue
-		var rel: Vector2 = entry.body.position - from
-		if rel.dot(dir) < 0.0 or rel.dot(dir) > reach:
-			continue
-		var lateral := absf(rel.cross(dir))
-		if lateral <= 26.0:
-			_hit(rt, entry, apply_hit, ctx)
-	_apply_effect(rt, target.body.position, target, enemies, apply_hit, ctx)
-
-func cast_instant(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 瞬间打击型：落雷，命中目标及小范围
-	var center: Vector2 = target.body.position
-	var radius: float = float(rt.config.get("radius", 46.0)) * WORLD_SCALE
-	for entry in enemies:
-		if _living(entry) and entry.body.position.distance_to(center) <= radius:
-			_hit(rt, entry, apply_hit, ctx)
-	_apply_effect(rt, center, target, enemies, apply_hit, ctx)
-
-func cast_orbit(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 环绕型：围绕玩家，命中范围内敌人
-	var radius: float = float(rt.config.get("radius", 66.0)) * WORLD_SCALE
-	for entry in enemies:
-		if _living(entry) and entry.body.position.distance_to(from) <= radius:
-			_hit(rt, entry, apply_hit, ctx)
-	_apply_effect(rt, from, target, enemies, apply_hit, ctx)
-
-func cast_zone(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 区域持续型：毒雾，生成区域（本帧结算一次，持续伤害由区域对象处理）
-	var center: Vector2 = target.body.position
-	var radius: float = float(rt.config.get("radius", 90.0)) * WORLD_SCALE
-	for entry in enemies:
-		if _living(entry) and entry.body.position.distance_to(center) <= radius:
-			_hit(rt, entry, apply_hit, ctx)
-	# 登记元素区域（供联动检测）
-	_register_region(rt, center, radius)
-	_apply_effect(rt, center, target, enemies, apply_hit, ctx)
-
-func cast_aoe(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 指定区域打击型：落石，命中敌群区域
-	var center: Vector2 = target.body.position
-	var radius: float = float(rt.config.get("radius", 80.0)) * WORLD_SCALE
-	for entry in enemies:
-		if _living(entry) and entry.body.position.distance_to(center) <= radius:
-			_hit(rt, entry, apply_hit, ctx)
-	_apply_effect(rt, center, target, enemies, apply_hit, ctx)
-
-func cast_beam(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 射线型：沿射线命中路径目标（近似直线命中）
-	cast_line(rt, from, target, enemies, apply_hit, ctx)
-
-func cast_spike(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	# 地面突刺型：在敌人位置生成地刺，命中目标及小范围
-	cast_instant(rt, from, target, enemies, apply_hit, ctx)
-
-# 区域类技能登记元素区域（毒雾/旋风等持续区域）
-func _register_region(rt: SkillRuntime, center: Vector2, radius: float) -> void:
-	var el: StringName = rt.element()
-	if el == SKILLS.ELEMENT_NONE:
-		return
-	if field != null and field.has_method("register_region"):
-		field.register_region(rt.skill_id, el, center, radius, float(rt.config.get("duration", 1.0)))
-
-# ---- 炼金能力改造（策划案第5章，递归保护）----
-
-func _apply_effect(rt: SkillRuntime, at: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	var effect: StringName = rt.effect_type()
-	if effect == &"":
-		return
-	match effect:
-		ABILITIES.EFFECT_BURST:
-			_effect_burst(rt, at, target, enemies, apply_hit, ctx)
+func _apply_ability(runtime: SkillRuntime, at: Vector2, enemies: Array, apply_hit: Callable) -> void:
+	var ability := ABILITIES.by_id(ability_id)
+	if ability.is_empty(): return
+	match String(ability.effect_type):
+		ABILITIES.EFFECT_BURST: _hit_area(runtime, at, 54.0, enemies, apply_hit, .30 * ability_efficiency)
 		ABILITIES.EFFECT_BOUNCE:
-			_effect_bounce(rt, at, target, enemies, apply_hit, ctx)
-		ABILITIES.EFFECT_PIERCE:
-			_effect_pierce(rt, at, target, enemies, apply_hit, ctx)
-		ABILITIES.EFFECT_SPLIT:
-			_effect_split(rt, at, target, enemies, apply_hit, ctx)
-		ABILITIES.EFFECT_ECHO:
-			_effect_echo(rt, at, target, enemies, apply_hit, ctx)
-		# homing 在投射飞行层体现，命中层不额外处理
+			var next := nearest_enemy(at, 150.0, enemies)
+			if not next.is_empty(): _hit(runtime, next, apply_hit, .65 * ability_efficiency)
+		ABILITIES.EFFECT_SPLIT: _hit_area(runtime, at, 72.0, enemies, apply_hit, .35 * ability_efficiency)
+		ABILITIES.EFFECT_ECHO: active.append({"kind":"delayed_hit", "runtime":runtime, "left":.35, "pos":at, "radius":48.0, "ratio":.55 * ability_efficiency})
 
-func _effect_burst(rt: SkillRuntime, at: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	if ctx.trigger_count(ABILITIES.EFFECT_BURST) >= int(rt.param("trigger_count", 3)):
-		return
-	ctx.mark_trigger(ABILITIES.EFFECT_BURST)
-	var radius: float = float(rt.param("radius", 70.0)) * WORLD_SCALE
-	var ratio: float = float(rt.param("damage_ratio", 0.5))
-	for entry in enemies:
-		if _living(entry) and entry.body.position.distance_to(at) <= radius and not ctx.has_hit(entry):
-			_hit(rt, entry, apply_hit, ctx, ratio)
+func _try_chain(runtime: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable) -> void:
+	for chain in SKILLS.CHAINS:
+		if StringName(chain.carrier) != runtime.skill_id or float(chain_cooldowns.get(chain.id, 0.0)) > 0.0: continue
+		var first: SkillRuntime = runtime_for(StringName(chain.parents[0]))
+		var second: SkillRuntime = runtime_for(StringName(chain.parents[1]))
+		if first == null or second == null: continue
+		chain_cooldowns[chain.id] = float(chain.cooldown)
+		var q: float = 1.0 + .18 * float(min(first.level, second.level) - 1)
+		var proxy: SkillRuntime = runtime
+		_emit_fx(proxy, String(chain.id), from, target.body.position, chain.color)
+		match String(chain.id):
+			"link_blast_homunculus": active.append({"kind":"summon", "runtime":proxy, "pos":from, "left":6.0, "attack_left":.15, "combo":true, "mult":q})
+			"link_mithril_orbit": active.append({"kind":"zone", "runtime":proxy, "pos":target.body.position, "left":2.6, "tick_left":.5, "radius":132.0, "ratio":.48 * q, "slow":0.0, "slow_duration":0.0})
+			"link_corrosive_mist": active.append({"kind":"zone", "runtime":proxy, "pos":target.body.position, "left":4.0, "tick_left":.5, "radius":148.0, "ratio":.42 * q, "slow":.25, "slow_duration":1.5})
+			"link_crystal_shatter_blade": active.append({"kind":"delayed_hit", "runtime":proxy, "left":.10, "pos":target.body.position, "radius":108.0, "ratio":.85 * q})
+			"link_soulbound_needle":
+				# 连锁针群不走职业炼金改造，仍获得父技能等级决定的固定倍率。
+				_spawn_needles(proxy, from, target, true, q)
 
-func _effect_bounce(rt: SkillRuntime, at: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	if ctx.trigger_count(ABILITIES.EFFECT_BOUNCE) >= int(rt.param("count", 2)):
-		return
-	ctx.mark_trigger(ABILITIES.EFFECT_BOUNCE)
-	var search: float = float(rt.param("search_range", 180.0)) * WORLD_SCALE
-	var decay: float = float(rt.param("decay", 0.8))
-	var next := nearest_enemy(at, search, enemies, ctx.already_hit_targets)
-	if next.is_empty():
-		return
-	_hit(rt, next, apply_hit, ctx, decay)
-	# 递归弹射（受 count 上限保护）
-	_effect_bounce(rt, next.body.position, next, enemies, apply_hit, ctx)
-
-func _effect_pierce(rt: SkillRuntime, at: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	if ctx.trigger_count(ABILITIES.EFFECT_PIERCE) >= int(rt.param("count", 3)):
-		return
-	ctx.mark_trigger(ABILITIES.EFFECT_PIERCE)
-	# 穿透：命中路径上未命中的下一个目标（近似：最近未命中敌人）
-	var decay: float = float(rt.param("decay", 0.9))
-	var next := nearest_enemy(at, float(rt.config.get("range", 0.0)) * WORLD_SCALE, enemies, ctx.already_hit_targets)
-	if next.is_empty():
-		return
-	_hit(rt, next, apply_hit, ctx, decay)
-	_effect_pierce(rt, next.body.position, next, enemies, apply_hit, ctx)
-
-func _effect_split(rt: SkillRuntime, at: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	if not ctx.can_split() or not ctx.can_spawn_child():
-		return
-	if ctx.trigger_count(ABILITIES.EFFECT_SPLIT) >= 1:
-		return
-	ctx.mark_trigger(ABILITIES.EFFECT_SPLIT)
-	var count: int = int(rt.param("count", 3))
-	var ratio: float = float(rt.param("damage_ratio", 0.45))
-	for i in count:
-		var child := ctx.child()
-		var nearest := nearest_enemy(at, float(rt.config.get("range", 0.0)) * WORLD_SCALE, enemies, child.already_hit_targets)
-		if nearest.is_empty():
-			continue
-		_hit(rt, nearest, apply_hit, child, ratio)
-
-func _effect_echo(rt: SkillRuntime, at: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	if not ctx.can_echo():
-		return
-	ctx.mark_trigger("echo")
-	# 回响：延迟复现（由 field 层用 timer 调度，这里标记并预结算一次低伤害）
-	var ratio: float = float(rt.param("damage_ratio", 0.6))
-	# 简化：立即结算一次较低伤害作为"回响"，延迟表现由视觉层补足
-	for entry in enemies:
-		if _living(entry) and entry.body.position.distance_to(at) <= float(rt.config.get("radius", 60.0)) * WORLD_SCALE and not ctx.has_hit(entry):
-			_hit(rt, entry, apply_hit, ctx, ratio)
-
-# ---- 元素联动检测（策划案第6章）----
-
-func _check_synergy(rt: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array, apply_hit: Callable, ctx: AttackContext) -> void:
-	if field == null or not field.has_method("on_synergy_trigger"):
-		return
-	var el: StringName = rt.element()
-	if el == SKILLS.ELEMENT_NONE:
-		return
-	# 由 field 层维护活跃元素区域，检测本技能元素与区域元素的配对
-	field.on_synergy_trigger(rt.skill_id, el, target.body.position, rt.config.get("radius", 0.0) * WORLD_SCALE, ctx)
-
-# ---- 工具 ----
+func _emit_fx(runtime: SkillRuntime, event_name: String, from: Vector2, target: Vector2, override_color := Color.TRANSPARENT) -> void:
+	if field == null or not field.has_method("play_skill_fx"): return
+	field.play_skill_fx({"skill_id":runtime.skill_id, "event":event_name, "from":from, "target":target, "color":override_color if override_color != Color.TRANSPARENT else runtime.base.color, "radius":runtime.radius_px(), "speed":float(runtime.config.get("speed", 420.0))})
 
 func _living(entry: Dictionary) -> bool:
 	return entry.get("hp", 0.0) > 0.0 and is_instance_valid(entry.get("body")) and not entry.body.is_queued_for_deletion()
 
 func nearest_enemy(at: Vector2, reach: float, enemies: Array, excluded: Array = []) -> Dictionary:
 	var closest := {}
-	var nearest := reach * reach
+	var best := reach * reach
 	for entry in enemies:
-		if not _living(entry) or excluded.has(entry):
-			continue
-		var d: float = at.distance_squared_to(entry.body.position)
-		if d < nearest:
-			nearest = d
+		if not _living(entry) or excluded.has(entry.body): continue
+		var distance := at.distance_squared_to(entry.body.position)
+		if distance < best:
+			best = distance
 			closest = entry
 	return closest
+
+func densest_enemy(at: Vector2, reach: float, enemies: Array) -> Dictionary:
+	var best := {}
+	var best_score := -INF
+	for candidate in enemies:
+		if not _living(candidate) or candidate.body.position.distance_to(at) > reach: continue
+		var score := 0.0
+		for other in enemies:
+			if _living(other) and other.body.position.distance_to(candidate.body.position) <= 96.0:
+				score += 1.0
+		score -= candidate.body.position.distance_to(at) / maxf(reach, 1.0) * .15
+		if score > best_score:
+			best_score = score
+			best = candidate
+	return best

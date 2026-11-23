@@ -342,22 +342,21 @@ func _physics_process(delta: float) -> void:
 			body.advance(delta, player.global_position, hurt, fire_web, slow)
 			if ended:
 				return
-	# 新技能系统接管战斗时不再运行旧自动普攻；否则旧普攻的更远射程会
-	# 先杀死敌人，使 SkillManager 没有施放目标，也不会产生技能特效。
-	if not is_instance_valid(alchemy_system):
-		until_attack -= delta
-		if until_attack <= 0:
-			var nearest: Dictionary = {}
-			var reach := 148.0
-			for entry in enemies:
-				var dist: float = player.position.distance_to(entry.body.position)
-				if dist < reach:
-					reach = dist
-					nearest = entry
-			if not nearest.is_empty():
-				until_attack = 0.47
-				attack_feedback(nearest.body.position)
-				damage_enemy(nearest, 1.0 + float((level - 1) / 3))
+	# V2：魔法弹恢复为独立普通攻击；它不占技能槽，也不进入十技能/升级池。
+	until_attack -= delta
+	if until_attack <= 0:
+		var nearest: Dictionary = {}
+		var reach := 148.0
+		for entry in enemies:
+			var dist: float = player.position.distance_to(entry.body.position)
+			if dist < reach:
+				reach = dist
+				nearest = entry
+		if not nearest.is_empty():
+			until_attack = 0.47
+			play_skill_fx({"skill_id":"magic_bolt", "from":player.position, "target":nearest.body.position,
+				"color":Color(0.65, 0.30, 1.00), "radius":0.0, "speed":620.0})
+			damage_enemy(nearest, 1.0 + float((level - 1) / 3))
 	if ended or boss_death:
 		return
 	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
@@ -503,6 +502,7 @@ func on_synergy_effect(syn: Dictionary, at: Vector2) -> void:
 # info: {"skill_id", "behavior", "from", "target", "color", "radius", "speed", "element"}
 func play_skill_fx(info: Dictionary) -> void:
 	var skill_id: String = String(info.get("skill_id", ""))
+	var event_name: String = String(info.get("event", "cast"))
 	var behavior: String = String(info.get("behavior", ""))
 	var from: Vector2 = info.get("from", Vector2.ZERO)
 	var target: Vector2 = info.get("target", Vector2.ZERO)
@@ -514,6 +514,50 @@ func play_skill_fx(info: Dictionary) -> void:
 	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
 		hd_view.world_view.show_skill_fx(info)
 		return
+	# 非 HD 回退层也保留 V2 的独立视觉语义，避免测试/低配模式只出现通用白点。
+	match skill_id:
+		"sk_blast_flask":
+			if event_name == "cast":
+				SKILL_FX.projectile(effects, from, target, color, speed)
+			else:
+				SKILL_FX.explosion(effects, target, color, maxf(radius, 64.0))
+			return
+		"sk_clay_homunculus":
+			if event_name == "cast":
+				SKILL_FX.earth_spike(effects, from, color)
+			elif event_name == "impact":
+				SKILL_FX.explosion(effects, target, color, 22.0)
+			return
+		"sk_mithril_drop":
+			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
+			return
+		"sk_gravity_stone":
+			if event_name == "impact": SKILL_FX.aoe(effects, target, color, maxf(radius, 84.0))
+			return
+		"sk_corrosive_flask":
+			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
+			elif event_name == "impact": SKILL_FX.zone(effects, target, color, maxf(radius, 60.0))
+			return
+		"sk_mist_flask":
+			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
+			elif event_name == "impact": SKILL_FX.zone(effects, target, color, maxf(radius, 90.0))
+			return
+		"sk_crystal_growth":
+			SKILL_FX.ice_spike(effects, from, target, color)
+			return
+		"sk_obsidian_blade":
+			if event_name == "cast": SKILL_FX.wind_blade(effects, from, target, color)
+			return
+		"sk_spirit_gel":
+			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
+			elif event_name == "impact": SKILL_FX.explosion(effects, target, color, 36.0)
+			return
+		"sk_soul_needle":
+			if event_name == "cast":
+				SKILL_FX.line(effects, from, target, color)
+			elif event_name == "impact":
+				SKILL_FX.explosion(effects, target, color, 16.0)
+			return
 	match skill_id:
 		"magic_bolt":
 			SKILL_FX.magic_bolt(effects, from, target, color, speed)

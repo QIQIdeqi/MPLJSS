@@ -10,7 +10,7 @@ const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd
 
 # 可视化可调参数（@export，挂在本节点 Inspector 可直接调）
 @export var max_skill_slots := 6                    # 技能槽位（策划案7.5）
-@export var starting_skills: Array[String] = ["magic_bolt"]  # 开局送的技能（StringName 无法 @export）
+@export var starting_skills: Array[String] = []  # V2：魔法弹为独立普攻，十技能从升级池获得。
 @export var ability_id: String = ABILITIES.ABILITY_INITIAL    # 本局能力
 @export var debug_verbose := false                  # 调试日志
 

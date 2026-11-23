@@ -5,7 +5,6 @@ extends RefCounted
 
 const SKILLS := preload("res://data/skills/skill_data.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
-const SYNERGIES := preload("res://data/synergies/synergy_data.gd")
 
 var field
 var skill_manager  # SkillManager 实例
@@ -15,13 +14,13 @@ var rng := RandomNumberGenerator.new()
 # 候选类别
 const CAT_NEW_SKILL := "new_skill"
 const CAT_SKILL_UPGRADE := "skill_upgrade"
-const CAT_ABILITY_UPGRADE := "ability_upgrade"
-const CAT_SYNERGY_UPGRADE := "synergy_upgrade"
+const CAT_ALCHEMY_EFFICIENCY := "alchemy_efficiency"
 
 # 每技能等级上限
 const MAX_SKILL_LEVEL := 5
 
 var owned_levels: Dictionary = {}  # skill_id → level
+var efficiency_level := 0
 
 
 func setup(p_field, p_skill_manager, p_ability_id: StringName) -> void:
@@ -32,6 +31,7 @@ func setup(p_field, p_skill_manager, p_ability_id: StringName) -> void:
 
 func clear() -> void:
 	owned_levels.clear()
+	efficiency_level = 0
 
 func mark_owned(skill_id: StringName) -> void:
 	if not owned_levels.has(skill_id):
@@ -82,22 +82,11 @@ func _build_pool() -> Array:
 			pool.append({"type": CAT_SKILL_UPGRADE, "skill_id": rt.skill_id, "weight": 1.0,
 				"label": "强化「%s」 Lv.%d→%d" % [rt.base.name, lv, lv + 1],
 				"desc": "伤害 +12%，冷却 −4%"})
-	# 3. 炼金改造强化：当前携带非初始能力
-	if ability_id != ABILITIES.ABILITY_INITIAL:
-		var ab := ABILITIES.by_id(ability_id)
-		if not ab.is_empty():
-			pool.append({"type": CAT_ABILITY_UPGRADE, "ability_id": ability_id, "weight": 0.8,
-				"label": "强化「%s」" % ab.name, "desc": ab.desc})
-	# 4. 元素联动强化：已拥有联动所需元素技能
-	var owned_elements: Array = []
-	for rt in skill_manager.runtimes:
-		var el: StringName = rt.element()
-		if el != SKILLS.ELEMENT_NONE and not owned_elements.has(el):
-			owned_elements.append(el)
-	for syn in SYNERGIES.SYNERGIES:
-		if owned_elements.has(syn.element_a) and owned_elements.has(syn.element_b):
-			pool.append({"type": CAT_SYNERGY_UPGRADE, "synergy_id": syn.id, "weight": 0.7,
-				"label": "联动「%s」强化" % syn.name, "desc": "范围 +20%，伤害 +15%"})
+	# 3. V2：携带炼金能力时出现两次炼金效能，只强化普通十技能，不影响连锁和普攻。
+	if ability_id != ABILITIES.ABILITY_INITIAL and efficiency_level < 2:
+		pool.append({"type": CAT_ALCHEMY_EFFICIENCY, "weight": 0.8,
+			"label": "炼金效能 %s" % ("I" if efficiency_level == 0 else "II"),
+			"desc": "普通技能的炼金改造效果 +10%"})
 	return pool
 
 func apply(pick: Dictionary) -> void:
@@ -110,20 +99,12 @@ func apply(pick: Dictionary) -> void:
 			for rt in skill_manager.runtimes:
 				if rt.skill_id == pick.skill_id:
 					rt.level = int(owned_levels[pick.skill_id])
-					# 伤害/冷却成长
-					rt.config["damage"] = float(rt.base.damage) * (1.0 + 0.12 * (rt.level - 1))
-					rt.config["cooldown"] = float(rt.base.cooldown) * maxf(0.6, 1.0 - 0.04 * (rt.level - 1))
-		CAT_ABILITY_UPGRADE:
-			# 能力强化：提高能力参数（占位，后续细化）
-			if skill_manager.has_method("upgrade_ability"):
-				skill_manager.upgrade_ability()
-		CAT_SYNERGY_UPGRADE:
-			# 联动强化（占位，后续细化）
-			pass
+		CAT_ALCHEMY_EFFICIENCY:
+			efficiency_level += 1
+			skill_manager.ability_efficiency = 1.0 + 0.10 * efficiency_level
 
 func _skill_desc(s: Dictionary) -> String:
-	var el_name: String = _element_name(s.element)
-	return "%s · %s元素 · 冷却 %.1fs" % [_behavior_name(s.behavior), el_name, s.cooldown]
+	return "%s · 冷却 %.1fs" % [_behavior_name(s.behavior), float(s.cooldowns[0])]
 
 func _element_name(el: StringName) -> String:
 	match el:
@@ -136,6 +117,16 @@ func _element_name(el: StringName) -> String:
 
 func _behavior_name(b: StringName) -> String:
 	match b:
+		SKILLS.BEHAVIOR_BOTTLE: return "预判投瓶"
+		SKILLS.BEHAVIOR_SUMMON: return "召唤追击"
+		SKILLS.BEHAVIOR_BOUNCE: return "弹射命中"
+		SKILLS.BEHAVIOR_PULL: return "落点牵引"
+		SKILLS.BEHAVIOR_POOL: return "腐蚀区域"
+		SKILLS.BEHAVIOR_MIST: return "减速迷雾"
+		SKILLS.BEHAVIOR_CRYSTAL: return "地面晶簇"
+		SKILLS.BEHAVIOR_BLADE: return "穿透飞刃"
+		SKILLS.BEHAVIOR_GEL: return "追踪附着"
+		SKILLS.BEHAVIOR_NEEDLE: return "高速针群"
 		SKILLS.BEHAVIOR_PROJECTILE: return "投射"
 		SKILLS.BEHAVIOR_BLAST: return "爆裂"
 		SKILLS.BEHAVIOR_LINE: return "直线"
