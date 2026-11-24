@@ -7,6 +7,8 @@ const COIN_SHADER := preload("res://shaders/hd_battle_coin.gdshader")
 const PORTAL_LIGHT := preload("res://shaders/hd_battle_portal_light.gdshader")
 const BOUNDARY_SHADER := preload("res://shaders/hd_battle_boundary.gdshader")
 const GLOW := preload("res://scenes/fx/glow.tres")
+const ZONE_SHADER := preload("res://shaders/hd_skill_zone.gdshader")
+const MONSTER_FLASH_SHADER := preload("res://shaders/monster_hit_flash_3d.gdshader")
 const FIRE_SHEET := preload("res://art/vfx/generated/fire_projectile_24f_concept.png")
 const ICE_SHEET := preload("res://art/vfx/generated/ice_ring_24f_concept.png")
 const EARTH_SHEET := preload("res://art/vfx/generated/earth_strike_24f_concept.png")
@@ -47,6 +49,9 @@ var battle_focus := Vector3.ZERO
 var view_angle := ViewAngle.MID
 var boundary: MeshInstance3D
 var boundary_bounds := Rect2()
+var tracked_projectiles: Array[Dictionary] = []
+var tracked_zones: Array[Dictionary] = []
+var damage_numbers: Array[Label3D] = []
 
 static func world_at(point: Vector2) -> Vector3:
 	return Vector3(point.x, 0.0, point.y) * UNITS_PER_PIXEL
@@ -119,10 +124,18 @@ func boundary_corners(rect: Rect2) -> PackedVector2Array:
 	return PackedVector2Array([rect.position, Vector2(rect.end.x, rect.position.y),
 		rect.end, Vector2(rect.position.x, rect.end.y)])
 
-func rebuild() -> void:
+func clear_skill_fx() -> void:
+	if not is_instance_valid(attack_effects):
+		return
 	for effect in attack_effects.get_children():
 		effect.queue_free()
 	raised_hits.clear()
+	tracked_projectiles.clear()
+	tracked_zones.clear()
+	damage_numbers.clear()
+
+func rebuild() -> void:
+	clear_skill_fx()
 	for prop in field.props:
 		prop.visibility_layer = SOURCE_HIDDEN_LAYER
 	landscape.rebuild(field.tiles, field.props, field.MAP)
@@ -167,6 +180,8 @@ func update_view(delta: float) -> void:
 	atmosphere.ambient_light_energy = maxf(0.34, atmosphere.ambient_light_energy)
 	sun.light_energy = maxf(0.19, sun.light_energy)
 	update_actor_cards()
+	var advancing: bool = not field.ended and not field.brew.blocks_world() and not field.portal_dialog.visible
+	_update_tracked_fx(delta if advancing else 0.0)
 
 func update_actor_cards() -> void:
 	var live: Dictionary[int, bool] = {}
@@ -223,6 +238,17 @@ func update_enemy_card(source: Sprite2D, at: Vector2, live: Dictionary[int, bool
 	var card := update_card(source, at, live)
 	if card:
 		card.alpha_cut = SpriteBase3D.ALPHA_CUT_OPAQUE_PREPASS if source.modulate.a < 0.999 else SpriteBase3D.ALPHA_CUT_DISCARD
+		if source.modulate.r > 1.5:
+			var flash_material: ShaderMaterial = card.get_meta("hit_flash_material") if card.has_meta("hit_flash_material") else null
+			if not flash_material:
+				flash_material = ShaderMaterial.new()
+				flash_material.shader = MONSTER_FLASH_SHADER
+				card.set_meta("hit_flash_material", flash_material)
+			flash_material.set_shader_parameter("sprite_texture", source.texture)
+			flash_material.set_shader_parameter("opacity", source.modulate.a)
+			card.material_override = flash_material
+		elif card.material_override is ShaderMaterial and card.material_override.shader == MONSTER_FLASH_SHADER:
+			card.material_override = null
 
 func update_effect_cards(effect: Node2D, live: Dictionary[int, bool], height: float) -> void:
 	for i in effect.cards.size():
@@ -268,6 +294,16 @@ func show_skill_fx(info: Dictionary) -> void:
 	var target: Vector2 = info.get("target", from)
 	var tint: Color = info.get("color", Color.WHITE)
 	var radius := maxf(float(info.get("radius", 0.0)), 18.0)
+	var state: Dictionary = info.get("state", {})
+	if event_name == "cast" and state.get("kind", "") == "projectile":
+		_track_projectile(state, tint)
+		return
+	if event_name == "impact" and state.get("kind", "") == "zone":
+		_track_zone(state, tint)
+	if event_name == "impact" and skill_id == "sk_soul_needle" and bool(state.get("combo", false)):
+		var mark := _skill_sheet_24_128(target, V2_LINK_SOULBOUND_NEEDLE_SHEET, 108.0, 24.0)
+		mark.frame = 4
+		return
 	# 五种固定连锁拥有自己的组合节奏，绝不复用基础技能的整段表现。
 	match event_name:
 		"link_blast_homunculus":
@@ -283,16 +319,7 @@ func show_skill_fx(info: Dictionary) -> void:
 			_skill_sheet_24_128(target, V2_LINK_CRYSTAL_SHATTER_BLADE_SHEET, 142.0, 24.0)
 			return
 		"link_soulbound_needle":
-			# 图集前四帧是一枚凝胶针；三路并列起势后只保留中心的命中印记。
-			_skill_sheet_24_128(target, V2_LINK_SOULBOUND_NEEDLE_SHEET, 108.0, 24.0)
-			var upper_needle := _skill_sheet_24_128(target + Vector2(0.0, -14.0), V2_LINK_SOULBOUND_NEEDLE_SHEET, 108.0, 24.0)
-			var lower_needle := _skill_sheet_24_128(target + Vector2(0.0, 14.0), V2_LINK_SOULBOUND_NEEDLE_SHEET, 108.0, 24.0)
-			var upper_tween := upper_needle.create_tween()
-			upper_tween.tween_interval(4.0 / 24.0)
-			upper_tween.tween_callback(upper_needle.queue_free)
-			var lower_tween := lower_needle.create_tween()
-			lower_tween.tween_interval(4.0 / 24.0)
-			lower_tween.tween_callback(lower_needle.queue_free)
+			# Its three real projectiles launch on schedule; the dedicated mark plays on impact.
 			return
 	match skill_id:
 		"sk_blast_flask":
@@ -334,8 +361,8 @@ func show_skill_fx(info: Dictionary) -> void:
 			elif event_name == "impact": _skill_sheet_24_128(target, V2_SOUL_NEEDLE_SHEET, 76.0)
 			return
 		"magic_bolt":
-			_skill_travel(from, target, tint, 0.30, 15, 0.50)
-			_skill_burst(target, tint, 14, 0.42)
+			# The shared projectile owns flight; successful damage owns the hit flash.
+			return
 		"fireball":
 			_skill_sheet(from.lerp(target, 0.58), FIRE_SHEET, maxf(104.0, radius * 2.0))
 			_skill_travel(from, target, tint, 0.36, 24, 0.80)
@@ -367,7 +394,124 @@ func show_skill_fx(info: Dictionary) -> void:
 			_skill_sheet(target, EARTH_SPIKE_SHEET, 112.0)
 			_skill_strike(target, tint, 20, 0.66)
 		_:
-			_skill_travel(from, target, tint, 0.24, 14, 0.48)
+			if event_name == "cast":
+				_skill_travel(from, target, tint, 0.24, 14, 0.48)
+
+func _track_projectile(state: Dictionary, tint: Color) -> void:
+	var node := Node3D.new()
+	node.name = "SkillProjectile"
+	attack_effects.add_child(node)
+	node.position = world_at(state.pos) + Vector3.UP * 0.34
+	var core := Sprite3D.new()
+	core.texture = GLOW
+	core.pixel_size = 18.0 * UNITS_PER_PIXEL / GLOW.get_width()
+	core.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	core.shaded = false
+	core.no_depth_test = true
+	core.modulate = tint
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	node.add_child(core)
+	var trail := add_particles(node, _skill_fade(tint))
+	trail.amount = 10
+	trail.lifetime = 0.16
+	trail.spread = 180.0
+	trail.initial_velocity_min = 0.02
+	trail.initial_velocity_max = 0.08
+	trail.scale_amount_min = 0.36
+	trail.scale_amount_max = 0.62
+	trail.emitting = true
+	tracked_projectiles.append({"state": state, "node": node, "core": core, "particles": trail})
+
+func _track_zone(state: Dictionary, tint: Color) -> void:
+	var node := Node3D.new()
+	node.name = "PersistentSkillZone"
+	attack_effects.add_child(node)
+	node.position = world_at(state.pos) + Vector3.UP * 0.055
+	var radius := float(state.radius) * UNITS_PER_PIXEL
+	var plane := MeshInstance3D.new()
+	var mesh := PlaneMesh.new()
+	mesh.size = Vector2.ONE * radius * 2.0
+	var material := ShaderMaterial.new()
+	material.shader = ZONE_SHADER
+	material.set_shader_parameter("tint", tint)
+	material.set_shader_parameter("opacity", 0.0)
+	plane.mesh = mesh
+	plane.material_override = material
+	plane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	node.add_child(plane)
+	var fog := Gradient.new()
+	fog.colors = PackedColorArray([Color(tint, 0.0), Color(tint, 0.20), Color(tint, 0.0)])
+	fog.offsets = PackedFloat32Array([0.0, 0.3, 1.0])
+	var particles := add_particles(node, fog)
+	particles.amount = 14
+	particles.lifetime = 0.9
+	particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	particles.emission_box_extents = Vector3(radius * 0.6, 0.015, radius * 0.6)
+	particles.position.y = 0.10
+	particles.direction = Vector3.UP
+	particles.spread = 60.0
+	particles.initial_velocity_min = 0.03
+	particles.initial_velocity_max = 0.12
+	particles.scale_amount_min = 2.2
+	particles.scale_amount_max = 4.0
+	particles.emitting = true
+	tracked_zones.append({"state": state, "node": node, "material": material,
+		"particles": particles, "age": 0.0, "fade": 0.45})
+
+func _update_tracked_fx(delta: float) -> void:
+	for i in range(tracked_projectiles.size() - 1, -1, -1):
+		var entry := tracked_projectiles[i]
+		var state: Dictionary = entry.state
+		if bool(state.get("finished", false)):
+			entry.core.hide()
+			entry.particles.emitting = false
+			var clear: Tween = entry.node.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+			clear.tween_interval(0.18)
+			clear.tween_callback(entry.node.queue_free)
+			tracked_projectiles.remove_at(i)
+			continue
+		entry.node.position = world_at(state.pos) + Vector3.UP * 0.34
+		entry.particles.speed_scale = 1.0 if delta > 0.0 else 0.0
+	for i in range(tracked_zones.size() - 1, -1, -1):
+		var entry := tracked_zones[i]
+		var state: Dictionary = entry.state
+		entry.age += delta
+		entry.particles.speed_scale = 1.0 if delta > 0.0 else 0.0
+		if bool(state.get("finished", false)):
+			entry.fade -= delta
+			entry.particles.emitting = false
+			if entry.fade <= 0.0:
+				entry.node.queue_free()
+				tracked_zones.remove_at(i)
+				continue
+		entry.node.position = world_at(state.pos) + Vector3.UP * 0.055
+		entry.material.set_shader_parameter("opacity", minf(entry.age / 0.2, 1.0) * clampf(entry.fade / 0.45, 0.0, 1.0))
+
+func show_damage_feedback(at: Vector2, amount: float) -> void:
+	_skill_burst(at, Color("#e9e3c2"), 7, 0.48, 0.14)
+	for i in range(damage_numbers.size() - 1, -1, -1):
+		if not is_instance_valid(damage_numbers[i]):
+			damage_numbers.remove_at(i)
+	if damage_numbers.size() >= 24:
+		damage_numbers.pop_front().queue_free()
+	var number := Label3D.new()
+	number.name = "HitDamage"
+	number.text = "−%d" % ceili(amount)
+	number.font_size = 28
+	number.outline_size = 6
+	number.pixel_size = 0.0075
+	number.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	number.no_depth_test = true
+	number.shaded = false
+	number.modulate = Color("#f5ecd4")
+	number.position = world_at(at) + Vector3.UP * 0.85
+	number.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	attack_effects.add_child(number)
+	damage_numbers.append(number)
+	var rise := number.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_STOP)
+	rise.tween_property(number, "position:y", number.position.y + 0.3, 0.46).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	rise.parallel().tween_property(number, "modulate:a", 0.0, 0.21).set_delay(0.25)
+	rise.tween_callback(number.queue_free)
 
 func _skill_sheet(at: Vector2, atlas: Texture2D, diameter_px: float) -> void:
 	var key := atlas.resource_path

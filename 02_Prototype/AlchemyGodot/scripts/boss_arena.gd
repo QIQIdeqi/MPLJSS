@@ -11,6 +11,9 @@ const SHOT_SPEED := 160.0
 const BOUNDS := Rect2(50, 105, 1180, 550)
 const RADIUS := 22.0
 const MAX_HP := 6000.0 / 18.0
+const HIT_FLASH_SECONDS := 0.1
+const HIT_FLASH_TINT := Color(2.0, 0.18, 0.16, 1.0)
+const HIT_FLASH_SHADER := preload("res://shaders/monster_hit_flash_2d.gdshader")
 
 enum Phase { AIM_DASH, DASH, AIM_FAN, SECOND_FAN, RECOVER }
 
@@ -44,6 +47,9 @@ func setup(actors: Node2D, dash_first: bool, playable_bounds: Rect2 = BOUNDS) ->
 	shape.shape = circle
 	body.add_child(shape)
 	art = Sprite2D.new()
+	var flash_material := ShaderMaterial.new()
+	flash_material.shader = HIT_FLASH_SHADER
+	art.material = flash_material
 	art.texture = ART
 	art.scale = Vector2.ONE * art_scale
 	art.offset.y = -ART.get_height() * (208.0 / 448.0)
@@ -63,15 +69,20 @@ func show_hurt() -> void:
 	if art_motion:
 		art_motion.kill()
 	show_reaction_frame(0, 0)
+	art.modulate = HIT_FLASH_TINT
+	art.material.set_shader_parameter("flash", 1.0)
 	art_motion = create_tween()
 	art_motion.tween_method(func(progress: float) -> void:
 		show_reaction_frame(0, mini(2, floori(progress * 3.0)))
+		art.modulate = HIT_FLASH_TINT if progress * 0.24 < HIT_FLASH_SECONDS else Color.WHITE
+		art.material.set_shader_parameter("flash", 1.0 if progress * 0.24 < HIT_FLASH_SECONDS else 0.0)
 	, 0.0, 1.0, 0.24)
 	art_motion.tween_callback(restore_base_art)
 
 func play_death() -> Tween:
 	if dying:
 		return art_motion
+	var flash_on_death := art.modulate == HIT_FLASH_TINT
 	dying = true
 	shots.clear()
 	sound.stop()
@@ -82,9 +93,13 @@ func play_death() -> Tween:
 	if art_motion:
 		art_motion.kill()
 	show_reaction_frame(1, 0)
+	art.modulate = HIT_FLASH_TINT if flash_on_death else Color.WHITE
+	art.material.set_shader_parameter("flash", 1.0 if flash_on_death else 0.0)
 	art_motion = create_tween()
 	art_motion.tween_method(func(progress: float) -> void:
 		show_reaction_frame(1, mini(4, floori(progress * 5.5)))
+		art.modulate = HIT_FLASH_TINT if flash_on_death and progress * 0.76 < HIT_FLASH_SECONDS else Color.WHITE
+		art.material.set_shader_parameter("flash", 1.0 if flash_on_death and progress * 0.76 < HIT_FLASH_SECONDS else 0.0)
 		art.modulate.a = 1.0 - smoothstep(0.77, 1.0, progress)
 	, 0.0, 1.0, 0.76)
 	return art_motion
@@ -99,6 +114,8 @@ func show_reaction_frame(row: int, column: int) -> void:
 	art.frame_coords = Vector2i(column, row)
 
 func restore_base_art() -> void:
+	art.modulate = Color.WHITE
+	art.material.set_shader_parameter("flash", 0.0)
 	art.texture = ART
 	art.hframes = 1
 	art.vframes = 1

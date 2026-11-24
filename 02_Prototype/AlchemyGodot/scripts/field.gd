@@ -58,6 +58,10 @@ var coins := 0
 var level := 1
 var kills := 0
 var enemy_death_sound: AudioStreamPlayer
+var enemy_hit_sound: AudioStreamPlayer
+var hit_sound_cooldown := 0.0
+var basic_projectiles: Array[Dictionary] = []
+var fallback_skill_visuals: Array[Dictionary] = []
 var inventory := [0, 0, 0, 0, 0, 0]
 var brew
 var alchemy_system: ALCHEMY_SYSTEM
@@ -113,6 +117,10 @@ func _ready() -> void:
 		enemy_death_sound.stream = preload("res://audio/S_EnemyDeath.wav")
 		enemy_death_sound.volume_db = -16
 		add_child(enemy_death_sound)
+		enemy_hit_sound = AudioStreamPlayer.new()
+		enemy_hit_sound.stream = preload("res://audio/S_EnemyHit.wav")
+		enemy_hit_sound.volume_db = -13.0
+		add_child(enemy_hit_sound)
 		brew = BREW.instantiate()
 		$Interface.add_child(brew)
 		brew.attach(self)
@@ -308,6 +316,11 @@ func _physics_process(delta: float) -> void:
 	player.locked = paused or (is_instance_valid(boss) and boss.preparation > 0.0)
 	if paused:
 		return
+	hit_sound_cooldown = maxf(0.0, hit_sound_cooldown - delta)
+	advance_basic_projectiles(delta)
+	advance_fallback_skill_visuals(delta)
+	if ended or boss_death:
+		return
 	if pickup_notice_time > 0.0:
 		pickup_notice_time = maxf(0.0, pickup_notice_time - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
@@ -354,9 +367,7 @@ func _physics_process(delta: float) -> void:
 				nearest = entry
 		if not nearest.is_empty():
 			until_attack = 0.47
-			play_skill_fx({"skill_id":"magic_bolt", "from":player.position, "target":nearest.body.position,
-				"color":Color(0.65, 0.30, 1.00), "radius":0.0, "speed":620.0})
-			damage_enemy(nearest, 1.0 + float((level - 1) / 3))
+			launch_basic_projectile(nearest)
 	if ended or boss_death:
 		return
 	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
@@ -413,6 +424,48 @@ func update_field_hint() -> void:
 func _run_mat_total() -> int:
 	return run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
 
+func launch_basic_projectile(target: Dictionary) -> void:
+	if ended or boss_death or not enemies.has(target) or not is_instance_valid(target.get("body")):
+		return
+	var state := {"kind":"projectile", "skill_id":"magic_bolt", "pos":player.position,
+		"target":target, "left":2.0, "finished":false, "damage":1.0 + float((level - 1) / 3)}
+	basic_projectiles.append(state)
+	play_skill_fx({"skill_id":"magic_bolt", "event":"cast", "from":player.position,
+		"target":target.body.position, "color":Color(0.65, 0.30, 1.00), "speed":620.0, "state":state})
+
+func advance_basic_projectiles(delta: float) -> void:
+	for index in range(basic_projectiles.size() - 1, -1, -1):
+		var state := basic_projectiles[index]
+		var target: Dictionary = state.target
+		state.left = float(state.left) - delta
+		if ended or boss_death or state.left <= 0.0 or not enemies.has(target) or not is_instance_valid(target.get("body")) or float(target.get("hp", 0.0)) <= 0.0:
+			state.finished = true
+		else:
+			state.pos = (state.pos as Vector2).move_toward(target.body.position, 620.0 * delta)
+			if (state.pos as Vector2).distance_to(target.body.position) <= 18.0:
+				state.finished = true
+				play_skill_fx({"skill_id":"magic_bolt", "event":"impact", "from":state.pos,
+					"target":target.body.position, "color":Color(0.65, 0.30, 1.00), "state":state})
+				damage_enemy(target, float(state.damage))
+		if state.finished:
+			basic_projectiles.remove_at(index)
+
+func clear_combat_effects() -> void:
+	for state in basic_projectiles:
+		state.finished = true
+	basic_projectiles.clear()
+	if is_instance_valid(alchemy_system) and alchemy_system.skills:
+		alchemy_system.skills.clear_active()
+	for visual in fallback_skill_visuals:
+		if is_instance_valid(visual.node):
+			visual.node.queue_free()
+	fallback_skill_visuals.clear()
+	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+		hd_view.world_view.clear_skill_fx()
+
+func _exit_tree() -> void:
+	clear_combat_effects()
+
 func enter_boss() -> void:
 	if ended or boss or not portal_ready or player.position.distance_to(portal_position) >= 60 or brew.is_open():
 		return
@@ -420,6 +473,7 @@ func enter_boss() -> void:
 		hint.text = "Boss 场地生成失败，可继续探索"
 		return
 	brew.clear_projectiles()
+	clear_combat_effects()
 	clear_webs()
 	for entry in enemies:
 		entry.body.queue_free()
@@ -514,6 +568,32 @@ func play_skill_fx(info: Dictionary) -> void:
 	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
 		hd_view.world_view.show_skill_fx(info)
 		return
+	# 回退视图也追随同一逻辑状态，不再自行 tween 到施放时的旧坐标。
+	var state: Dictionary = info.get("state", {})
+	if not state.is_empty():
+		if String(state.get("kind", "")) == "projectile":
+			if event_name == "cast":
+				var ball := Sprite2D.new()
+				var glow := GradientTexture2D.new()
+				glow.gradient = _material_gradient(color)
+				glow.width = 20
+				glow.height = 20
+				glow.fill = GradientTexture2D.FILL_RADIAL
+				glow.fill_from = Vector2(.5, .5)
+				glow.fill_to = Vector2.ZERO
+				ball.texture = glow
+				effects.add_child(ball)
+				ball.position = state.pos + Vector2(0, -24)
+				fallback_skill_visuals.append({"state":state, "node":ball, "fade":0.45})
+			elif event_name == "impact":
+				FX.hit(effects, target + Vector2(0, -24), .46)
+			return
+		if String(state.get("kind", "")) == "zone":
+			if event_name == "impact":
+				var cloud := FX.poison(effects, target, radius / 90.0)
+				cloud.modulate = Color(color, .48)
+				fallback_skill_visuals.append({"state":state, "node":cloud, "fade":0.45})
+			return
 	# 非 HD 回退层也保留 V2 的独立视觉语义，避免测试/低配模式只出现通用白点。
 	match skill_id:
 		"sk_blast_flask":
@@ -616,16 +696,36 @@ func play_skill_fx(info: Dictionary) -> void:
 func persist() -> bool:
 	return OS.get_cmdline_user_args().has("--migration-test") or save.save(save_path) == OK
 
+func advance_fallback_skill_visuals(delta: float) -> void:
+	for index in range(fallback_skill_visuals.size() - 1, -1, -1):
+		var visual := fallback_skill_visuals[index]
+		var state: Dictionary = visual.state
+		var node: Node2D = visual.node
+		if not is_instance_valid(node):
+			fallback_skill_visuals.remove_at(index)
+			continue
+		if String(state.kind) == "projectile":
+			node.position = (state.pos as Vector2) + Vector2(0, -24)
+			if bool(state.finished):
+				node.queue_free()
+				fallback_skill_visuals.remove_at(index)
+		elif bool(state.finished):
+			visual.fade = maxf(0.0, float(visual.fade) - delta)
+			node.modulate.a = .48 * float(visual.fade) / .45
+			if visual.fade <= 0.0:
+				node.queue_free()
+				fallback_skill_visuals.remove_at(index)
+
 func hurt(amount: float, knock_direction := Vector2.ZERO) -> bool:
-	if ended or boss_death or hurt_cooldown > 0 or player.dodge > 0:
+	if ended or boss_death or hurt_cooldown > 0 or player.dodge > 0 or amount <= 0.0:
 		return false
 	hurt_cooldown = 0.55
 	hp = maxf(0.0, hp - amount)
+	player.show_hurt()
 	if hp <= 0:
 		player.show_death()
 		finish(false)
 	else:
-		player.show_hurt()
 		if not knock_direction.is_zero_approx():
 			player.knockback = knock_direction * 133.333
 			player.knockback_time = 0.15
@@ -754,15 +854,23 @@ func damage_brew_enemy(entry: Dictionary, damage: float, slow_seconds: float, sl
 	damage_enemy(entry, damage)
 
 func damage_enemy(entry: Dictionary, damage: float) -> void:
-	if ended or boss_death or not enemies.has(entry):
+	if ended or boss_death or not enemies.has(entry) or damage <= 0.0 or float(entry.get("hp", 0.0)) <= 0.0:
 		return
 	var body: Node2D = entry.body
+	var dealt := minf(damage, float(entry.hp))
 	entry.hp -= damage
+	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+		hd_view.world_view.show_damage_feedback(body.position, dealt)
+	else:
+		show_damage_number(body.position, dealt)
+	if entry.boss:
+		boss.show_hurt()
+	else:
+		body.show_hurt()
 	if entry.hp > 0:
-		if entry.boss:
-			boss.show_hurt()
-		else:
-			body.show_hurt()
+		if hit_sound_cooldown <= 0.0 and is_instance_valid(enemy_hit_sound):
+			enemy_hit_sound.play()
+			hit_sound_cooldown = .07
 		return
 	var at := body.position
 	enemies.erase(entry)
@@ -796,6 +904,20 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 func remove_defeated(body: Node2D) -> void:
 	defeated_art.erase(body)
 	body.queue_free()
+
+func show_damage_number(at: Vector2, damage: float) -> void:
+	var label := Label.new()
+	label.text = "−%d" % ceili(damage)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(0.91, 1.0, .77))
+	label.add_theme_color_override("font_outline_color", Color(.06, .09, .06, .85))
+	label.add_theme_constant_override("outline_size", 3)
+	label.position = at + Vector2(-12, -76)
+	effects.add_child(label)
+	var tween := label.create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 22.0, .52).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, .52)
+	tween.chain().tween_callback(label.queue_free)
 
 # 怪物死亡素材掉落（V1.1 第3.2节）：按掉落表生成掉落实体，玩家吸附后自动拾取入账本
 func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
@@ -882,6 +1004,7 @@ func finish(victory: bool) -> void:
 	if ended:
 		return
 	ended = true
+	clear_combat_effects()
 	clear_webs()
 	player.locked = true
 	if brew:
