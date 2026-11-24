@@ -31,6 +31,16 @@
 
 主流程自动检查使用模拟输入和加速 Boss 开放时间，拖放调用实际槽位回调。实际鼠标手感和完整战斗节奏由真人试玩验收。
 
+## HD-2D 技能特效
+
+当前战斗的十个 V2 基础技能和五个固定组合由 [技能管理器](scripts/skills/skill_manager.gd) 触发。飞行物、魔偶和持续区域的特效跟随对应的战斗状态。共用的渲染工具和各技能的造型在 [V2 特效脚本](scripts/v2_skill_fx.gd)，爆裂药瓶保留独立的[飞行](scripts/blast_flask_flight.gd)与[落地](scripts/blast_flask_impact.gd)脚本。
+
+从当前目录运行下列检查可依次触发 15 个效果并保存战斗截图到 `.godot/v2_hd_fx_review`。使用 `--headless` 并去掉 `--capture` 时只检查触发、命中与清理。
+
+```sh
+godot --path . --fixed-fps 60 --script res://tests/v2_hd_skill_fx_review.gd -- --migration-test --capture
+```
+
 ## 格雷弗德 HD-2D 村庄
 
 F5 从封面进入村庄，或在 Godot 打开 `scenes/village.tscn` 按 F6。局外每 60 秒循环白天、黄昏、夜晚。天气每 12 秒切换，从晴天、下雨、干雷、雷雨和下雪中按轮洗牌。T 预览下一时段，Y 预览下一种天气，V 切换低机位与俯视，F 进入右侧雾门。树、灯笼和前景民居挡住莉莉塔时会淡出，走开后恢复。项目使用 Forward+ 渲染器，以启用 3D 景深和阴影。

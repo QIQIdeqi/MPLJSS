@@ -15,21 +15,9 @@ const WIND_SHEET := preload("res://art/vfx/generated/wind_blade_24f.png")
 const CYCLONE_SHEET := preload("res://art/vfx/generated/cyclone_24f.png")
 const BEAM_SHEET := preload("res://art/vfx/generated/arcane_beam_24f.png")
 const EARTH_SPIKE_SHEET := preload("res://art/vfx/generated/earth_spike_24f.png")
-const V2_BLAST_FLASK_SHEET := preload("res://art/vfx/v2/blast_flask_impact_24f.png")
-const V2_CLAY_HOMUNCULUS_SHEET := preload("res://art/vfx/v2/clay_homunculus_summon_24f.png")
-const V2_MITHRIL_DROP_SHEET := preload("res://art/vfx/v2/mithril_drop_impact_24f.png")
-const V2_CRYSTAL_GROWTH_SHEET := preload("res://art/vfx/v2/crystal_growth_24f.png")
-const V2_GRAVITY_STONE_SHEET := preload("res://art/vfx/v2/gravity_stone_impact_24f.png")
-const V2_CORROSIVE_FLASK_SHEET := preload("res://art/vfx/v2/corrosive_flask_pool_24f.png")
-const V2_MIST_FLASK_SHEET := preload("res://art/vfx/v2/mist_flask_cloud_24f.png")
-const V2_OBSIDIAN_BLADE_SHEET := preload("res://art/vfx/v2/obsidian_blade_slash_24f.png")
-const V2_SPIRIT_GEL_SHEET := preload("res://art/vfx/v2/spirit_gel_wave_24f.png")
-const V2_SOUL_NEEDLE_SHEET := preload("res://art/vfx/v2/soul_needle_pierce_24f.png")
-const V2_LINK_BLAST_HOMUNCULUS_SHEET := preload("res://art/vfx/v2/link_blast_homunculus_24f.png")
-const V2_LINK_MITHRIL_ORBIT_SHEET := preload("res://art/vfx/v2/link_mithril_orbit_24f.png")
-const V2_LINK_CORROSIVE_MIST_SHEET := preload("res://art/vfx/v2/link_corrosive_mist_24f.png")
-const V2_LINK_CRYSTAL_SHATTER_BLADE_SHEET := preload("res://art/vfx/v2/link_crystal_shatter_blade_24f.png")
-const V2_LINK_SOULBOUND_NEEDLE_SHEET := preload("res://art/vfx/v2/link_soulbound_needle_24f.png")
+const BLAST_FLASK_IMPACT := preload("res://scripts/blast_flask_impact.gd")
+const BLAST_FLASK_FLIGHT := preload("res://scripts/blast_flask_flight.gd")
+const V2_SKILL_FX := preload("res://scripts/v2_skill_fx.gd")
 const UNITS_PER_PIXEL := 0.01
 const SOURCE_HIDDEN_LAYER := 4
 const GENERATED_FRAME := 256
@@ -268,71 +256,25 @@ func show_skill_fx(info: Dictionary) -> void:
 	var target: Vector2 = info.get("target", from)
 	var tint: Color = info.get("color", Color.WHITE)
 	var radius := maxf(float(info.get("radius", 0.0)), 18.0)
-	# 五种固定连锁拥有自己的组合节奏，绝不复用基础技能的整段表现。
-	match event_name:
-		"link_blast_homunculus":
-			_skill_sheet_24_128(target, V2_LINK_BLAST_HOMUNCULUS_SHEET, 132.0)
-			return
-		"link_mithril_orbit":
-			_skill_sheet_24_128(target, V2_LINK_MITHRIL_ORBIT_SHEET, 152.0, 10.0)
-			return
-		"link_corrosive_mist":
-			_skill_sheet_24_128(target, V2_LINK_CORROSIVE_MIST_SHEET, 168.0, 6.0)
-			return
-		"link_crystal_shatter_blade":
-			_skill_sheet_24_128(target, V2_LINK_CRYSTAL_SHATTER_BLADE_SHEET, 142.0, 24.0)
-			return
-		"link_soulbound_needle":
-			# 图集前四帧是一枚凝胶针；三路并列起势后只保留中心的命中印记。
-			_skill_sheet_24_128(target, V2_LINK_SOULBOUND_NEEDLE_SHEET, 108.0, 24.0)
-			var upper_needle := _skill_sheet_24_128(target + Vector2(0.0, -14.0), V2_LINK_SOULBOUND_NEEDLE_SHEET, 108.0, 24.0)
-			var lower_needle := _skill_sheet_24_128(target + Vector2(0.0, 14.0), V2_LINK_SOULBOUND_NEEDLE_SHEET, 108.0, 24.0)
-			var upper_tween := upper_needle.create_tween()
-			upper_tween.tween_interval(4.0 / 24.0)
-			upper_tween.tween_callback(upper_needle.queue_free)
-			var lower_tween := lower_needle.create_tween()
-			lower_tween.tween_interval(4.0 / 24.0)
-			lower_tween.tween_callback(lower_needle.queue_free)
-			return
+	if skill_id == "sk_blast_flask":
+		if event_name == "cast":
+			var state: Dictionary = info.get("state", {})
+			if not state.is_empty():
+				var bottle := BLAST_FLASK_FLIGHT.new()
+				_add_v2_effect(bottle, skill_id, event_name)
+				bottle.start(state, from, target)
+		elif event_name == "impact":
+			var impact := BLAST_FLASK_IMPACT.new()
+			impact.position = world_at(target)
+			_add_v2_effect(impact, skill_id, event_name)
+			impact.start(radius * UNITS_PER_PIXEL)
+		return
+	if skill_id.begins_with("sk_") or skill_id.begins_with("link_"):
+		var effect := V2_SKILL_FX.new()
+		_add_v2_effect(effect, skill_id, event_name)
+		effect.start(info)
+		return
 	match skill_id:
-		"sk_blast_flask":
-			if event_name == "cast": _skill_travel(from, target, tint, .34, 19, .64)
-			elif event_name == "impact": _skill_sheet_24_128(target, V2_BLAST_FLASK_SHEET, maxf(108.0, radius * 1.45))
-			return
-		"sk_clay_homunculus":
-			if event_name == "cast":
-				_skill_sheet_24_128(from, V2_CLAY_HOMUNCULUS_SHEET, 94.0)
-			return
-		"sk_mithril_drop":
-			if event_name == "cast": _skill_travel(from, target, tint, .20, 12, .40)
-			if event_name == "impact": _skill_sheet_24_128(target, V2_MITHRIL_DROP_SHEET, maxf(72.0, radius * .92))
-			return
-		"sk_gravity_stone":
-			if event_name == "cast": _skill_travel(from, target, tint, .28, 14, .58)
-			elif event_name == "impact": _skill_sheet_24_128(target, V2_GRAVITY_STONE_SHEET, maxf(116.0, radius * 1.05))
-			return
-		"sk_corrosive_flask":
-			if event_name == "cast": _skill_travel(from, target, tint, .31, 15, .48)
-			elif event_name == "impact": _skill_sheet_24_128(target, V2_CORROSIVE_FLASK_SHEET, maxf(112.0, radius * 1.10))
-			return
-		"sk_mist_flask":
-			if event_name == "cast": _skill_travel(from, target, tint, .30, 12, .43)
-			elif event_name == "impact": _skill_sheet_24_128(target, V2_MIST_FLASK_SHEET, maxf(112.0, radius * 1.22))
-			return
-		"sk_crystal_growth":
-			_skill_sheet_24_128(target, V2_CRYSTAL_GROWTH_SHEET, 116.0)
-			return
-		"sk_obsidian_blade":
-			_skill_sheet_24_128(from.lerp(target, .55), V2_OBSIDIAN_BLADE_SHEET, 88.0)
-			return
-		"sk_spirit_gel":
-			if event_name == "cast": _skill_travel(from, target, tint, .28, 16, .56)
-			elif event_name == "impact": _skill_sheet_24_128(target, V2_SPIRIT_GEL_SHEET, maxf(100.0, radius * 1.10))
-			return
-		"sk_soul_needle":
-			if event_name == "cast": _skill_travel(from, target, tint, .10, 10, .31)
-			elif event_name == "impact": _skill_sheet_24_128(target, V2_SOUL_NEEDLE_SHEET, 76.0)
-			return
 		"magic_bolt":
 			_skill_travel(from, target, tint, 0.30, 15, 0.50)
 			_skill_burst(target, tint, 14, 0.42)
@@ -396,33 +338,11 @@ func _skill_sheet(at: Vector2, atlas: Texture2D, diameter_px: float) -> void:
 	attack_effects.add_child(effect)
 	effect.play("default")
 
-func _skill_sheet_24_128(at: Vector2, atlas: Texture2D, diameter_px: float, fps := 30.0) -> AnimatedSprite3D:
-	# FrameRonin V2 特效固定导出 6×4、128 px、24 帧；与历史 256 px 图集分开缓存。
-	var key := atlas.resource_path + "#v2_128_24_%.2f" % fps
-	if not generated_frames.has(key):
-		var frames := SpriteFrames.new()
-		frames.set_animation_loop("default", false)
-		frames.set_animation_speed("default", fps)
-		for i in 24:
-			var frame := AtlasTexture.new()
-			frame.atlas = atlas
-			frame.region = Rect2((i % 6) * 128, floori(i / 6) * 128, 128, 128)
-			frame.filter_clip = true
-			frames.add_frame("default", frame)
-		generated_frames[key] = frames
-	var effect := AnimatedSprite3D.new()
-	effect.sprite_frames = generated_frames[key]
-	effect.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	effect.pixel_size = UNITS_PER_PIXEL
-	effect.scale = Vector3.ONE * (diameter_px / 128.0)
-	effect.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	effect.shaded = false
-	effect.no_depth_test = true
-	effect.position = world_at(at) + Vector3.UP * 0.33
-	effect.animation_finished.connect(effect.queue_free)
-	attack_effects.add_child(effect)
-	effect.play("default")
-	return effect
+func _add_v2_effect(effect: Node3D, skill_id: String, event_name: String) -> void:
+	effect.name = "V2_%s_%s" % [skill_id, event_name]
+	effect.set_meta("skill_id", skill_id)
+	effect.set_meta("event", event_name)
+	attack_effects.add_child(effect, true)
 
 func _skill_travel(from: Vector2, to: Vector2, tint: Color, duration: float, amount: int,
 		scale: float, delay := 0.0) -> void:

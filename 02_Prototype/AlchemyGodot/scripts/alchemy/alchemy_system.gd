@@ -32,13 +32,12 @@ func setup(p_field, p_save: ConfigFile) -> void:
 	synergies = SynergyManager.new()
 	synergies.setup(field)
 	upgrades = UpgradeManager.new()
-	upgrades.setup(field, skills, ability_id)
+	upgrades.setup(skills)
 	alchemy = AlchemyManager.new()
 	alchemy.setup(save)
 	# 开局送技能
 	for sid in starting_skills:
 		skills.add_skill(StringName(sid))
-		upgrades.mark_owned(StringName(sid))
 
 # 主循环：tick 技能、联动
 func tick(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
@@ -74,4 +73,3 @@ func apply_upgrade(pick: Dictionary) -> void:
 func clear_run() -> void:
 	skills.clear()
 	synergies.clear()
-	upgrades.clear()

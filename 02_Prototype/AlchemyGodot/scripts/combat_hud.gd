@@ -2,10 +2,12 @@ extends Control
 
 const SKILLS := preload("res://data/brew_skills.gd").ROWS
 const INGREDIENTS := preload("res://scripts/brew.gd").ICONS
+const SLOT_COOLDOWN := preload("res://scripts/skill_slot_cooldown.gd")
 
 var field
 var panel := ""
 var map_bounds: Rect2
+var slot_cooldowns: Array[SLOT_COOLDOWN] = []
 
 @onready var minimap: Control = $Right/Map
 @onready var overlay: ColorRect = $Overlay
@@ -17,6 +19,12 @@ func _ready() -> void:
 	$Bottom/Bag.pressed.connect(toggle_bag)
 	minimap.draw.connect(draw_minimap)
 	$Foot.max_value = 120
+	for i in 6:
+		var slot: TextureRect = get_node("Bottom/Slot%d" % i)
+		var cooldown := SLOT_COOLDOWN.new()
+		slot.add_child(cooldown)
+		cooldown.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		slot_cooldowns.append(cooldown)
 
 func attach(world: Node2D, bounds: Rect2) -> void:
 	field = world
@@ -53,18 +61,15 @@ func _process(_delta: float) -> void:
 
 func update_slots() -> void:
 	var runtimes: Array = field.alchemy_system.skills.runtimes if is_instance_valid(field.alchemy_system) else []
-	for i in range(6):
-		var icon: TextureRect = get_node("Bottom/Icon%d" % i)
+	for i in slot_cooldowns.size():
 		var rank: Label = get_node("Bottom/Level%d" % i)
 		var slot: TextureRect = get_node("Bottom/Slot%d" % i)
-		if i < runtimes.size():
-			var rt = runtimes[i]
-			icon.texture = null
-			icon.modulate = rt.base.get("color", Color.WHITE)
+		var rt: SkillRuntime = runtimes[i] if i < runtimes.size() else null
+		slot_cooldowns[i].show_runtime(rt)
+		if rt != null:
 			rank.text = "Lv.%d" % rt.level
 			slot.tooltip_text = rt.base.get("name", "")
 		else:
-			icon.texture = null
 			rank.text = ""
 			slot.tooltip_text = ""
 
@@ -133,7 +138,8 @@ func open_panel(kind: String) -> void:
 		add_action("返回开始界面", return_to_menu)
 	else:
 		title.text = "已装备技能"
-		var runtimes: Array = field.alchemy_system.skills.runtimes if is_instance_valid(field.alchemy_system) else []
+		var skills: SkillManager = field.alchemy_system.skills if is_instance_valid(field.alchemy_system) else null
+		var runtimes: Array = skills.runtimes if skills != null else []
 		if runtimes.is_empty():
 			var empty := Label.new()
 			empty.text = "升级获得新技能"
@@ -145,6 +151,17 @@ func open_panel(kind: String) -> void:
 			actions.add_child(empty)
 		for rt in runtimes:
 			add_action("%s  Lv.%d  ·  %s" % [rt.base.get("name", ""), rt.level, _element_name(rt.element())], Callable())
+		if skills != null:
+			var chain_names := PackedStringArray()
+			for chain in skills.unlocked_chains():
+				chain_names.append(chain.name)
+			if not chain_names.is_empty():
+				var note := Label.new()
+				note.text = "已激活组合 · 不占槽\n%s" % "、".join(chain_names)
+				note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				note.add_theme_color_override("font_color", Color("#ddc5a5"))
+				actions.add_child(note)
 		add_action("返回战斗", close_panel)
 
 func _element_name(el: StringName) -> String:

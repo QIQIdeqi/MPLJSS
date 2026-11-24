@@ -514,50 +514,25 @@ func play_skill_fx(info: Dictionary) -> void:
 	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
 		hd_view.world_view.show_skill_fx(info)
 		return
-	# 非 HD 回退层也保留 V2 的独立视觉语义，避免测试/低配模式只出现通用白点。
-	match skill_id:
-		"sk_blast_flask":
-			if event_name == "cast":
-				SKILL_FX.projectile(effects, from, target, color, speed)
-			else:
-				SKILL_FX.explosion(effects, target, color, maxf(radius, 64.0))
-			return
-		"sk_clay_homunculus":
-			if event_name == "cast":
-				SKILL_FX.earth_spike(effects, from, color)
-			elif event_name == "impact":
-				SKILL_FX.explosion(effects, target, color, 22.0)
-			return
-		"sk_mithril_drop":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			return
-		"sk_gravity_stone":
-			if event_name == "impact": SKILL_FX.aoe(effects, target, color, maxf(radius, 84.0))
-			return
-		"sk_corrosive_flask":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			elif event_name == "impact": SKILL_FX.zone(effects, target, color, maxf(radius, 60.0))
-			return
-		"sk_mist_flask":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			elif event_name == "impact": SKILL_FX.zone(effects, target, color, maxf(radius, 90.0))
-			return
-		"sk_crystal_growth":
-			SKILL_FX.ice_spike(effects, from, target, color)
-			return
-		"sk_obsidian_blade":
-			if event_name == "cast": SKILL_FX.wind_blade(effects, from, target, color)
-			return
-		"sk_spirit_gel":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			elif event_name == "impact": SKILL_FX.explosion(effects, target, color, 36.0)
-			return
-		"sk_soul_needle":
-			if event_name == "cast":
+	if skill_id.begins_with("sk_") or skill_id.begins_with("link_"):
+		match event_name:
+			"cast", "flight":
+				if skill_id in ["sk_soul_needle", "link_soulbound_needle"]:
+					SKILL_FX.line(effects, from, target, color)
+				else:
+					SKILL_FX.projectile(effects, from, target, color, speed)
+			"summon_start":
+				SKILL_FX.earth_spike(effects, target, color)
+			"zone_start":
+				SKILL_FX.zone(effects, target, color, radius)
+			"hop":
 				SKILL_FX.line(effects, from, target, color)
-			elif event_name == "impact":
-				SKILL_FX.explosion(effects, target, color, 16.0)
-			return
+			"impact", "summon_strike", "summon_end":
+				if skill_id == "sk_crystal_growth":
+					SKILL_FX.ice_spike(effects, from, target, color)
+				else:
+					SKILL_FX.explosion(effects, target, color, clampf(radius, 16.0, 84.0))
+		return
 	match skill_id:
 		"magic_bolt":
 			SKILL_FX.magic_bolt(effects, from, target, color, speed)

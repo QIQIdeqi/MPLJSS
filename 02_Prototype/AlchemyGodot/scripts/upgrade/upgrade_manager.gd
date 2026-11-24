@@ -1,41 +1,22 @@
 class_name UpgradeManager
 extends RefCounted
 # 局内升级三选一（策划案第7章）
-# 候选池生成：新技能 / 普通技能强化 / 炼金改造强化 / 元素联动强化。
+# 候选只包含基础技能的获取与强化。
 
 const SKILLS := preload("res://data/skills/skill_data.gd")
-const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
-
-var field
-var skill_manager  # SkillManager 实例
-var ability_id: StringName = ABILITIES.ABILITY_INITIAL
+var skill_manager: SkillManager
 var rng := RandomNumberGenerator.new()
 
 # 候选类别
 const CAT_NEW_SKILL := "new_skill"
 const CAT_SKILL_UPGRADE := "skill_upgrade"
-const CAT_ALCHEMY_EFFICIENCY := "alchemy_efficiency"
 
 # 每技能等级上限
 const MAX_SKILL_LEVEL := 5
 
-var owned_levels: Dictionary = {}  # skill_id → level
-var efficiency_level := 0
-
-
-func setup(p_field, p_skill_manager, p_ability_id: StringName) -> void:
-	field = p_field
-	skill_manager = p_skill_manager
-	ability_id = p_ability_id
+func setup(skills: SkillManager) -> void:
+	skill_manager = skills
 	rng.randomize()
-
-func clear() -> void:
-	owned_levels.clear()
-	efficiency_level = 0
-
-func mark_owned(skill_id: StringName) -> void:
-	if not owned_levels.has(skill_id):
-		owned_levels[skill_id] = 1
 
 # 生成三选一候选
 func roll_candidates() -> Array:
@@ -70,41 +51,36 @@ func _weighted_pick(pool: Array, used: Array) -> int:
 
 func _build_pool() -> Array:
 	var pool: Array = []
-	# 1. 新技能：尚未拥有且未达槽位上限
-	for s in SKILLS.ROWS:
-		if not skill_manager.has_skill(s.id) and skill_manager.runtimes.size() < skill_manager.max_skill_slots:
-			pool.append({"type": CAT_NEW_SKILL, "skill_id": s.id, "weight": 1.0,
-				"label": "获得技能「%s」" % s.name, "desc": _skill_desc(s)})
-	# 2. 普通技能强化：已拥有且未达等级上限
+	if skill_manager.runtimes.size() < skill_manager.max_skill_slots:
+		for s: Dictionary in SKILLS.ROWS:
+			if not skill_manager.has_skill(StringName(s.id)):
+				pool.append({"type": CAT_NEW_SKILL, "skill_id": s.id, "weight": 1.0,
+					"label": "获得技能「%s」" % s.name, "desc": _new_skill_desc(s)})
 	for rt in skill_manager.runtimes:
-		var lv := int(owned_levels.get(rt.skill_id, 1))
+		var lv := rt.level
 		if lv < MAX_SKILL_LEVEL:
 			pool.append({"type": CAT_SKILL_UPGRADE, "skill_id": rt.skill_id, "weight": 1.0,
 				"label": "强化「%s」 Lv.%d→%d" % [rt.base.name, lv, lv + 1],
 				"desc": "伤害 +12%，冷却 −4%"})
-	# 3. V2：携带炼金能力时出现两次炼金效能，只强化普通十技能，不影响连锁和普攻。
-	if ability_id != ABILITIES.ABILITY_INITIAL and efficiency_level < 2:
-		pool.append({"type": CAT_ALCHEMY_EFFICIENCY, "weight": 0.8,
-			"label": "炼金效能 %s" % ("I" if efficiency_level == 0 else "II"),
-			"desc": "普通技能的炼金改造效果 +10%"})
 	return pool
 
 func apply(pick: Dictionary) -> void:
+	var skill_id := StringName(pick.get("skill_id", ""))
 	match pick.get("type", ""):
 		CAT_NEW_SKILL:
-			skill_manager.add_skill(pick.skill_id)
-			mark_owned(pick.skill_id)
+			skill_manager.add_skill(skill_id)
 		CAT_SKILL_UPGRADE:
-			owned_levels[pick.skill_id] = int(owned_levels.get(pick.skill_id, 1)) + 1
-			for rt in skill_manager.runtimes:
-				if rt.skill_id == pick.skill_id:
-					rt.level = int(owned_levels[pick.skill_id])
-		CAT_ALCHEMY_EFFICIENCY:
-			efficiency_level += 1
-			skill_manager.ability_efficiency = 1.0 + 0.10 * efficiency_level
+			var runtime := skill_manager.runtime_for(skill_id)
+			if runtime != null and runtime.level < MAX_SKILL_LEVEL:
+				runtime.level += 1
 
-func _skill_desc(s: Dictionary) -> String:
-	return "%s · 冷却 %.1fs" % [_behavior_name(s.behavior), float(s.cooldowns[0])]
+func _new_skill_desc(skill: Dictionary) -> String:
+	var description := "%s · 冷却 %.1fs" % [_behavior_name(skill.behavior), float(skill.cooldowns[0])]
+	for chain: Dictionary in SKILLS.CHAINS:
+		var pair_index: int = chain.parents.find(skill.id)
+		if pair_index >= 0 and skill_manager.has_skill(StringName(chain.parents[1 - pair_index])):
+			return description + "\n自动解锁组合「%s」" % chain.name
+	return description
 
 func _element_name(el: StringName) -> String:
 	match el:

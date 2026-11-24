@@ -7,6 +7,7 @@ var skill_id: StringName
 var base: Dictionary = {}
 var config: Dictionary = {}
 var cooldown_left := 0.0
+var cooldown_total := 0.0
 var level := 1
 
 func setup(p_skill_id: StringName, _ability_id: StringName = &"", _upgrades: Array = []) -> void:
@@ -41,7 +42,8 @@ func ready() -> bool:
 	return cooldown_left <= 0.0
 
 func reset_cooldown() -> void:
-	cooldown_left = cooldown()
+	cooldown_total = cooldown()
+	cooldown_left = cooldown_total
 
 func behavior() -> StringName:
 	return StringName(config.get("behavior", SKILLS.BEHAVIOR_BOTTLE))
