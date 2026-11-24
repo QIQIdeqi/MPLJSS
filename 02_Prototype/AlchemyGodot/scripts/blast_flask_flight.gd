@@ -19,7 +19,7 @@ func start(state: Dictionary, from: Vector2, target: Vector2) -> void:
 	_process(0.0)
 
 func _process(_delta: float) -> void:
-	if projectile.get("visual_finished", false):
+	if projectile.get("finished", false):
 		queue_free()
 		return
 	var at: Vector2 = projectile.pos

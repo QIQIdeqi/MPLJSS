@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="LevelCatalog" load_steps=11 format=3]
+[ext_resource type="Script" path="res://scripts/levels/level_catalog.gd" id="catalog"]
+[ext_resource type="Script" path="res://scripts/levels/level_entry.gd" id="entry"]
+[ext_resource type="Resource" path="res://levels/normal.tres" id="normal"]
+[ext_resource type="Resource" path="res://levels/boss.tres" id="boss"]
+[ext_resource type="Resource" path="res://levels/first_level_enemies.tres" id="waves"]
+[ext_resource type="Resource" path="res://levels/greyford_01_boss_enemies.tres" id="boss_waves"]
+[ext_resource type="Texture2D" path="res://art/ui/preparation/greyford_01_preview.png" id="preview"]
+[sub_resource type="Resource" id="Village"]
+script = ExtResource("entry")
+level_id = &"village_greyford"
+display_name = "格雷弗德村庄"
+kind = 0
+scene_path = "res://scenes/levels/village_greyford.tscn"
+sort_order = 0
+description = "局外准备与炼金工坊。"
+spawn_position = Vector2(643, 384)
+[sub_resource type="Resource" id="Normal"]
+script = ExtResource("entry")
+level_id = &"greyford_01"
+display_name = "第一关 · 村庄外围"
+kind = 1
+scene_path = "res://scenes/levels/greyford_01.tscn"
+selectable = true
+sort_order = 10
+description = "村庄外围的草地战场。每次出战随机生成地块与物件，数量和密度沿用关卡配置；存活 5 分钟后可自愿挑战 Boss。"
+preview = ExtResource("preview")
+boss_level_id = &"greyford_01_boss"
+layout = ExtResource("normal")
+enemy_config = ExtResource("waves")
+spawn_position = Vector2(640, 430)
+[sub_resource type="Resource" id="Boss"]
+script = ExtResource("entry")
+level_id = &"greyford_01_boss"
+display_name = "第一关 · Boss 场"
+kind = 2
+scene_path = "res://scenes/levels/greyford_01_boss.tscn"
+sort_order = 11
+description = "沿用本局角色、材料和能力，自愿进入的首关 Boss 场。"
+layout = ExtResource("boss")
+enemy_config = ExtResource("boss_waves")
+spawn_position = Vector2(640, 450)
+[resource]
+script = ExtResource("catalog")
+entries = Array[ExtResource("entry")]([SubResource("Village"), SubResource("Normal"), SubResource("Boss")])

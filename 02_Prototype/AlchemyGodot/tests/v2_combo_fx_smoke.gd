@@ -30,9 +30,37 @@ func _initialize() -> void:
 	assert(manager.active.size() == 3, "Soulbound combo should schedule exactly three needles")
 	for index in 3:
 		assert(is_equal_approx(float(manager.active[index].left), .06 + .12 * index), "Soulbound launch timing mismatch")
+	_check_soulbound_flight(world)
 	await _check_blast_flask(world)
 	print("v2_combo_fx_smoke: combo effects and blast flask launch, landing and cleanup passed")
 	quit()
+
+func _check_soulbound_flight(world: Node3D) -> void:
+	var effects := BattleFx.new()
+	effects.world = world
+	var manager := SKILL_MANAGER.new()
+	manager.setup(&"initial", effects)
+	var runtime := SkillRuntime.new()
+	runtime.setup(&"sk_soul_needle")
+	var target := Node2D.new()
+	root.add_child(target)
+	target.position = Vector2(420, 0)
+	var enemy := {"body":target, "hp":1000.0}
+	var hits: Array[float] = []
+	var apply_hit := func(_entry, amount, _slow, _factor, _color): hits.append(amount)
+	manager._spawn_needles(runtime, enemy, true)
+	for step in 31:
+		manager._update_active(.01, Vector2.ZERO, [enemy], apply_hit)
+	assert(effects.events.size() == 3 and hits.is_empty(),
+		"Three combo needles must launch before damage occurs")
+	for event in effects.events:
+		assert(event.skill_id == "link_soulbound_needle" and event.event == "flight")
+	for step in 100:
+		manager._update_active(.01, Vector2.ZERO, [enemy], apply_hit)
+	assert(manager.active.is_empty() and hits.size() == 3 and effects.events.size() == 4,
+		"Each needle deals one hit and the volley creates one impact mark")
+	assert(effects.events.back().event == "impact")
+	target.queue_free()
 
 func _check_blast_flask(world: Node3D) -> void:
 	var effects := BattleFx.new()

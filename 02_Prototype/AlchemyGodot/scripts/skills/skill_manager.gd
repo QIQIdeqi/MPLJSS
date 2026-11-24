@@ -47,11 +47,13 @@ func unlocked_chains() -> Array[Dictionary]:
 
 func clear() -> void:
 	runtimes.clear()
-	for state in active:
-		if state.has("visual_finished"):
-			state.visual_finished = true
-	active.clear()
+	clear_active()
 	chain_cooldowns.clear()
+
+func clear_active() -> void:
+	for state in active:
+		state.finished = true
+	active.clear()
 
 func cast_equipped(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
 	for chain_id in chain_cooldowns.keys():
@@ -107,7 +109,7 @@ func _launch_blast_flask(runtime: SkillRuntime, from: Vector2, landing: Vector2)
 		"pos": from,
 		"landing": landing,
 		"speed": maxf(1.0, float(runtime.config.get("speed", 310.0))),
-		"visual_finished": false,
+		"finished": false,
 	}
 	runtime.reset_cooldown()
 	active.append(state)
@@ -122,7 +124,7 @@ func _spawn_projectile(runtime: SkillRuntime, from: Vector2, target: Dictionary,
 	var state := {"kind":"projectile", "runtime":runtime, "pos":from, "origin":from,
 		"target":target, "direction":from.direction_to(point), "impact":impact, "combo":combo,
 		"ratio":ratio, "speed":speed, "left":maxf(.35, runtime.range_px() / speed + .25),
-		"visual_finished":false}
+		"finished":false}
 	if impact in ["zone_on_hit", "pull_on_hit", "blast_on_hit"]:
 		# 药剂和引力石在出手时锁定地面，目标消失不会中断落地。
 		state.landing = point
@@ -219,9 +221,11 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 						_emit_state_fx(state, "summon_end", state.pos, state.pos)
 						_hit_area(state.runtime, state.pos, 78.0, enemies, apply_hit, 1.25 * float(state.get("mult", 1.0)))
 					finished = true
+		if state.get("finished", false):
+			# 战斗回调可能结束整个场景并清空状态。
+			return
 		if finished:
-			if state.has("visual_finished"):
-				state.visual_finished = true
+			state.finished = true
 			active.remove_at(index)
 		else:
 			active[index] = state
@@ -253,6 +257,8 @@ func _resolve_projectile(state: Dictionary, point: Vector2, enemies: Array, appl
 		"gel_on_hit":
 			_hit(runtime, state.target, apply_hit, 1.0, float(runtime.value("slow", .3)), float(runtime.value("slow_duration", 2.0)))
 		"needle_on_hit": _hit(runtime, state.target, apply_hit, float(state.get("ratio", 1.0)))
+	if state.finished:
+		return
 	if not bool(state.get("combo", false)):
 		_apply_ability(runtime, point, enemies, apply_hit)
 	if runtime.skill_id == &"sk_gravity_stone" or runtime.skill_id == &"sk_mist_flask" or runtime.skill_id == &"sk_obsidian_blade":
@@ -324,7 +330,7 @@ func _try_chain(runtime: SkillRuntime, from: Vector2, point: Vector2, target: Di
 				_spawn_needles(runtime, target, true, q)
 
 func _add_effect_state(state: Dictionary, event_name: String) -> void:
-	state.visual_finished = false
+	state.finished = false
 	active.append(state)
 	_emit_state_fx(state, event_name, state.pos, state.pos)
 

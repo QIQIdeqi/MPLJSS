@@ -193,4 +193,4 @@ func close_panel() -> void:
 
 func return_to_menu() -> void:
 	close_panel()
-	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+	field.leave_run(true)

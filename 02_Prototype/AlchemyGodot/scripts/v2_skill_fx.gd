@@ -11,6 +11,7 @@ const GOLEM := preload("res://art/vfx/v2/link_blast_homunculus_24f.png")
 const GEL_NEEDLE := preload("res://art/vfx/v2/link_soulbound_needle_24f.png")
 const WORLD_SCALE := 0.01
 const FLOOR_Y := 0.055
+const ZONE_FADE_DURATION := 0.45
 
 enum Ground { RIPPLE, POOL, VORTEX, ORBIT, MIST, ACID }
 
@@ -24,6 +25,7 @@ var state: Dictionary = {}
 var skill_id := ""
 var event_name := ""
 var age := 0.0
+var zone_fade_left := ZONE_FADE_DURATION
 var lifetime := 0.0
 var world_radius := 0.6
 var launch_point := Vector2.ZERO
@@ -86,9 +88,17 @@ func start(info: Dictionary) -> void:
 
 func _process(delta: float) -> void:
 	age += delta
-	if (lifetime >= 0.0 and age >= lifetime) or (lifetime < 0.0 and bool(state.get("visual_finished", false))):
+	if lifetime >= 0.0 and age >= lifetime:
 		queue_free()
 		return
+	if lifetime < 0.0 and state.get("finished", false):
+		if event_name != "zone_start":
+			queue_free()
+			return
+		zone_fade_left = maxf(0.0, zone_fade_left - delta)
+		if is_zero_approx(zone_fade_left):
+			queue_free()
+			return
 	match event_name:
 		"flight":
 			_move_flight()
@@ -189,8 +199,7 @@ func _make_zone() -> void:
 func _update_zone() -> void:
 	if not floor_mat:
 		return
-	var remaining := float(state.get("left", 1.0))
-	var fade := smoothstep(0.0, 0.22, age) * clampf(remaining / 0.40, 0.0, 1.0)
+	var fade := smoothstep(0.0, 0.22, age) * (zone_fade_left / ZONE_FADE_DURATION)
 	floor_mat.set_shader_parameter("age", age)
 	floor_mat.set_shader_parameter("strength", fade * 0.79)
 	for i in vapors.size():

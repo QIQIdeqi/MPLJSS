@@ -6,6 +6,7 @@ const SHEET := preload("res://art/lilita_motion/sprite_sheet.png")
 const FRAME_SIZE := 256
 const FEET_OFFSET := 107   # 脚底在帧内 y=235，相对帧中心 128 的偏移 = 235 - 128 = 107
 const BATTLE_BOUNDS := preload("res://levels/preset.gd").DEFAULT_PLAYABLE_BOUNDS
+const HURT_SOUND := preload("res://audio/S_PlayerHurt.wav")
 
 # 行索引（从上到下）
 const ROW_IDLE := 0
@@ -32,6 +33,8 @@ var locked := false
 var movement_bounds := BATTLE_BOUNDS
 var knockback := Vector2.ZERO
 var knockback_time := 0.0
+var hurt_sound: AudioStreamPlayer
+var _hurt_base_modulate := Color.WHITE
 @onready var art: Sprite2D = $Art
 
 func _ready() -> void:
@@ -39,15 +42,23 @@ func _ready() -> void:
 	art.region_enabled = true
 	art.region_filter_clip_enabled = true
 	art.position.y = -FEET_OFFSET * art.scale.y
+	hurt_sound = AudioStreamPlayer.new()
+	hurt_sound.name = "HurtSound"
+	hurt_sound.stream = HURT_SOUND
+	hurt_sound.volume_db = -10.0
+	add_child(hurt_sound)
 	update_pose(Pose.IDLE, 0.0)
 
 func _physics_process(delta: float) -> void:
+	if hurt_time > 0.0:
+		hurt_time = maxf(0.0, hurt_time - delta)
+		if hurt_time <= 0.0:
+			art.modulate = _hurt_base_modulate
 	if dead:
 		update_pose(Pose.DEAD, delta)
 		return
 	if locked:
 		return
-	hurt_time = maxf(0.0, hurt_time - delta)
 	var move := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	cooldown = maxf(0, cooldown - delta)
 	dodge = maxf(0, dodge - delta)
@@ -69,18 +80,24 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	if clamp_to_battle_bounds:
 		position = position.clamp(movement_bounds.position, movement_bounds.end)
-	if hurt_time > 0.0:
-		update_pose(Pose.HURT, delta)
-	elif dodge > 0.0:
+	if dodge > 0.0:
 		update_pose(Pose.DODGE, delta)
 	else:
 		update_pose(Pose.WALK if get_real_velocity().length_squared() > 1 else Pose.IDLE, delta)
 
 func show_hurt() -> void:
-	hurt_time = 0.4
-	update_pose(Pose.HURT, 0.0)
+	if dead:
+		return
+	if hurt_time <= 0.0:
+		_hurt_base_modulate = art.modulate
+	hurt_time = 0.1
+	art.modulate = _hurt_base_modulate * Color(1.0, 0.38, 0.34, 1.0)
+	hurt_sound.play()
 
 func show_death() -> void:
+	if hurt_time > 0.0:
+		art.modulate = _hurt_base_modulate
+		hurt_time = 0.0
 	dead = true
 	update_pose(Pose.DEAD, 0.0)
 

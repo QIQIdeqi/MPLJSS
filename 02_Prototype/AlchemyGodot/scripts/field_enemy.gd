@@ -17,6 +17,9 @@ const SLIME_RADIUS := 28.0
 const DAMAGE := 9.0
 const ART_SCALE := 0.86
 const HURT_SECONDS := 0.18
+const HIT_FLASH_SECONDS := 0.1
+const HIT_FLASH_TINT := Color(2.0, 0.18, 0.16, 1.0)
+const HIT_FLASH_SHADER := preload("res://shaders/monster_hit_flash_2d.gdshader")
 const REACTIONS := [
 	preload("res://art/enemies/reactions/skeleton.png"),
 	preload("res://art/enemies/reactions/bat.png"),
@@ -63,6 +66,9 @@ func setup(enemy_kind: int, bounds: Rect2, atlas: Texture2D) -> void:
 	feet.shape = radius
 	add_child(feet)
 	art = Sprite2D.new()
+	var flash_material := ShaderMaterial.new()
+	flash_material.shader = HIT_FLASH_SHADER
+	art.material = flash_material
 	art.name = "Art"
 	art.texture = atlas
 	art.hframes = 4
@@ -159,6 +165,8 @@ func show_hurt() -> void:
 func play_death() -> Tween:
 	if dying:
 		return death_tween
+	var flash_on_death := hurt_left > HURT_SECONDS - HIT_FLASH_SECONDS
+	hurt_left = 0.0
 	dying = true
 	velocity = Vector2.ZERO
 	collision_layer = 0
@@ -167,11 +175,14 @@ func play_death() -> Tween:
 	var start_y := art.position.y
 	reaction_facing = facing
 	show_reaction_frame(1, 0)
-	art.modulate = Color.WHITE
+	art.modulate = HIT_FLASH_TINT if flash_on_death else Color.WHITE
+	art.material.set_shader_parameter("flash", 1.0 if flash_on_death else 0.0)
 	death_tween = create_tween()
 	death_tween.tween_method(func(progress: float) -> void:
 		show_reaction_frame(1, 0 if progress < 0.42 else 1)
 		art.position.y = lerpf(start_y, 0.0, smoothstep(0.0, 0.55, progress))
+		art.modulate = HIT_FLASH_TINT if flash_on_death and progress * DEATH_SECONDS[kind] < HIT_FLASH_SECONDS else Color.WHITE
+		art.material.set_shader_parameter("flash", 1.0 if flash_on_death and progress * DEATH_SECONDS[kind] < HIT_FLASH_SECONDS else 0.0)
 		art.modulate.a = 1.0 - smoothstep(0.66, 1.0, progress)
 	, 0.0, 1.0, DEATH_SECONDS[kind])
 	return death_tween
@@ -202,6 +213,9 @@ func update_art() -> void:
 	elif kind == Kind.SLIME and state == State.STRIKE:
 		art.position.y = -sin(PI * clampf(remaining / STRIKES[kind], 0.0, 1.0)) * 20.0
 	art.modulate = Color(1.19, 1.08, 0.89) if state == State.WINDUP else Color.WHITE
+	art.material.set_shader_parameter("flash", 1.0 if hurt_left > HURT_SECONDS - HIT_FLASH_SECONDS else 0.0)
+	if hurt_left > HURT_SECONDS - HIT_FLASH_SECONDS:
+		art.modulate = HIT_FLASH_TINT
 	if hurt_left > 0.0:
 		show_reaction_frame(0, 0 if hurt_left > HURT_SECONDS * 0.5 else 1)
 		return

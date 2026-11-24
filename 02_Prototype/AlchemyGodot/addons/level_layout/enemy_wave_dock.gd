@@ -2,7 +2,6 @@
 extends VBoxContainer
 
 const WaveTable = preload("res://levels/enemy_wave_table.gd")
-const TABLE_PATH := "res://levels/first_level_enemies.tres"
 
 var table: WaveTable
 var level_name: LineEdit
@@ -10,6 +9,13 @@ var opening_count: SpinBox
 var grid: GridContainer
 var status: Label
 var save_button: Button
+var selected_level_id := ""
+
+func set_table(value: Resource, level_id := "") -> void:
+	table = value as WaveTable
+	selected_level_id = level_id
+	if is_node_ready():
+		_refresh()
 
 func _ready() -> void:
 	name = "EnemyWaveDock"
@@ -40,8 +46,6 @@ func _ready() -> void:
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(status)
 
-	if ResourceLoader.exists(TABLE_PATH):
-		table = ResourceLoader.load(TABLE_PATH) as WaveTable
 	_refresh()
 
 func _refresh() -> void:
@@ -49,11 +53,13 @@ func _refresh() -> void:
 		grid.remove_child(child)
 		child.queue_free()
 	if table == null:
-		status.text = "无法读取怪物表 " + TABLE_PATH
+		status.text = "请在“关卡总表”或“Alchemy 关卡”选中有怪物表的战斗关卡。"
 		save_button.disabled = true
 		level_name.editable = false
 		opening_count.editable = false
 		return
+	level_name.editable = true
+	opening_count.editable = true
 	level_name.text = table.level_name
 	opening_count.set_value_no_signal(table.opening_count)
 	var wave_count := table.start_seconds.size()
@@ -179,7 +185,7 @@ func _inspect() -> void:
 func _update_status() -> void:
 	var problem := table.validation_error()
 	save_button.disabled = not problem.is_empty()
-	status.text = problem if save_button.disabled else "悬停权重可查看出场概率。保存后，下次进入首关时使用新配置。"
+	status.text = problem if save_button.disabled else "关卡 %s · 悬停权重查看出场概率。保存后，下次进入本关使用新配置。" % selected_level_id
 	for wave in table.start_seconds.size():
 		var total := 0.0
 		for row in table.rows:
@@ -194,8 +200,8 @@ func _save() -> void:
 	_update_status()
 	if save_button.disabled:
 		return
-	var error := ResourceSaver.save(table, TABLE_PATH)
+	var error := ResourceSaver.save(table)
 	if error == OK:
-		status.text = "已保存 " + TABLE_PATH
+		status.text = "已保存 " + table.resource_path
 	else:
 		status.text = "保存失败（%d）" % error
