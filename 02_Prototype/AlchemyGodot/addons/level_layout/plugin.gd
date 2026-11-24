@@ -4,11 +4,15 @@ extends EditorPlugin
 const Generator = preload("res://scripts/level_layout.gd")
 const Preview = preload("res://addons/level_layout/map_preview.gd")
 const EnemyWaveDock = preload("res://addons/level_layout/enemy_wave_dock.gd")
+const CatalogDock = preload("res://addons/level_layout/catalog_dock.gd")
 const Preset = preload("res://levels/preset.gd")
-const PRESET_PATHS := ["res://levels/normal.tres", "res://levels/boss.tres"]
 
 var dock: VBoxContainer
 var enemy_dock: EnemyWaveDock
+var catalog_dock: CatalogDock
+var stages: OptionButton
+var stage_entries: Array[Resource] = []
+var current_entry: Resource
 var preview: Preview
 var settings: Preset
 var seed_input: SpinBox
@@ -21,9 +25,7 @@ func _enter_tree() -> void:
 	dock = VBoxContainer.new()
 	var tools := HBoxContainer.new()
 	dock.add_child(tools)
-	var stages := OptionButton.new()
-	stages.add_item("普通战斗")
-	stages.add_item("Boss 场地")
+	stages = OptionButton.new()
 	stages.item_selected.connect(_select_stage)
 	tools.add_child(stages)
 	seed_input = SpinBox.new()
@@ -34,7 +36,9 @@ func _enter_tree() -> void:
 	_button(tools, "按 Seed 生成", _reroll.bind(0))
 	_button(tools, "重摇地面", _reroll.bind(1))
 	_button(tools, "重摇物件", _reroll.bind(2))
-	_button(tools, "编辑配置", func() -> void: EditorInterface.edit_resource(settings))
+	_button(tools, "编辑配置", func() -> void:
+		if settings:
+			EditorInterface.edit_resource(settings))
 	_button(tools, "保存配置", _save_preset)
 
 	var area := HBoxContainer.new()
@@ -63,11 +67,19 @@ func _enter_tree() -> void:
 	add_control_to_bottom_panel(dock, "Alchemy 关卡")
 	enemy_dock = EnemyWaveDock.new()
 	add_control_to_bottom_panel(enemy_dock, "怪物波次")
-	_select_stage(0)
+	catalog_dock = CatalogDock.new()
+	catalog_dock.level_selected.connect(_catalog_selected)
+	catalog_dock.editor_requested.connect(_open_level_settings)
+	add_control_to_bottom_panel(catalog_dock, "关卡总表")
+	_refresh_stages()
+	if not stage_entries.is_empty():
+		_select_stage(0)
 
 func _exit_tree() -> void:
 	if settings:
 		settings.changed.disconnect(_on_preset_changed)
+	remove_control_from_bottom_panel(catalog_dock)
+	catalog_dock.queue_free()
 	remove_control_from_bottom_panel(enemy_dock)
 	enemy_dock.queue_free()
 	remove_control_from_bottom_panel(dock)
@@ -94,18 +106,74 @@ func _size_input(row: HBoxContainer, title: String, minimum: int, maximum: int) 
 	return spin
 
 func _select_stage(index: int) -> void:
+	if index < 0 or index >= stage_entries.size():
+		return
+	var entry: Resource = stage_entries[index]
+	catalog_dock.select_level(entry.level_id)
+
+func _refresh_stages() -> void:
+	stages.clear()
+	stage_entries.clear()
+	var catalog: Resource = catalog_dock.catalog
+	if catalog == null:
+		return
+	for entry: Resource in catalog.entries:
+		if entry != null and entry.kind != 0 and entry.layout is Preset:
+			stage_entries.append(entry)
+			stages.add_item(entry.display_name)
+			stages.set_item_tooltip(stages.item_count - 1, String(entry.level_id))
+
+func _catalog_selected(entry: Resource) -> void:
+	_refresh_stages()
+	if entry == null or entry.kind == 0 or not entry.layout is Preset:
+		if settings:
+			settings.changed.disconnect(_on_preset_changed)
+		settings = null
+		current_entry = entry
+		preview.preset = null
+		preview.layout = {}
+		preview.queue_redraw()
+		width_input.editable = false
+		height_input.editable = false
+		stages.select(-1)
+		enemy_dock.set_table(null)
+		status.text = "村庄使用独立手工场景。请在“关卡总表”点击“打开场景”；随机预览仅用于战斗关卡。"
+		return
+	var index := stage_entries.find(entry)
+	if index >= 0:
+		stages.select(index)
+	_apply_entry(entry)
+
+func _open_level_settings(entry: Resource, section: StringName) -> void:
+	_catalog_selected(entry)
+	if entry == null or entry.kind == 0:
+		return
+	if section == &"layout" and settings:
+		EditorInterface.edit_resource(settings)
+		make_bottom_panel_item_visible(dock)
+	elif section == &"waves" and entry.enemy_config:
+		EditorInterface.edit_resource(entry.enemy_config)
+		make_bottom_panel_item_visible(enemy_dock)
+
+func _apply_entry(entry: Resource) -> void:
 	if settings:
 		settings.changed.disconnect(_on_preset_changed)
-	settings = load(PRESET_PATHS[index])
+	current_entry = entry
+	settings = entry.layout as Preset
+	width_input.editable = true
+	height_input.editable = true
 	preview.layout = {}
 	preview.preset = settings
-	preview.spawn = Vector2(640, 450) if settings.boss else Vector2(640, 430)
+	preview.spawn = entry.spawn_position
+	enemy_dock.set_table(entry.enemy_config, String(entry.level_id))
 	_sync_size_inputs()
 	settings.changed.connect(_on_preset_changed)
 	seed_input.value = settings.preview_seed
 	_reroll(0)
 
 func _update_playable_size(_value: float) -> void:
+	if settings == null:
+		return
 	settings.playable_size = Vector2i(int(width_input.value), int(height_input.value))
 
 func _sync_size_inputs() -> void:
@@ -119,6 +187,8 @@ func _on_preset_changed() -> void:
 	_refresh()
 
 func _reroll(layer: int) -> void:
+	if settings == null:
+		return
 	var old_ground := settings.ground_seed_offset
 	var old_prop := settings.prop_seed_offset
 	var old_seed := settings.preview_seed
@@ -135,6 +205,8 @@ func _reroll(layer: int) -> void:
 	seed_input.set_value_no_signal(settings.preview_seed)
 
 func _refresh() -> bool:
+	if settings == null:
+		return false
 	var selected := brushes.get_selected_id()
 	brushes.clear()
 	brushes.add_item("物件 · 留空", settings.palette.size())
@@ -155,6 +227,8 @@ func _refresh() -> bool:
 	return true
 
 func _paint_cell(cell: int, unlock: bool) -> void:
+	if settings == null:
+		return
 	var selected := brushes.get_selected_id()
 	if selected < 0:
 		return

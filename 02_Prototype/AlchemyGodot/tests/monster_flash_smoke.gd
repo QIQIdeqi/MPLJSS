@@ -197,6 +197,10 @@ func test_damage_entry() -> void:
 	battle.portal_ready = true
 	battle.portal_position = battle.player.position
 	battle.enter_boss()
+	# Boss 现在使用独立完整场景，继续检查切换后的真实伤害入口。
+	battle = current_scene
+	battle.set_physics_process(false)
+	battle.player.set_physics_process(false)
 	if check_boss(battle):
 		battle.boss.entry.hp = 10.0
 		battle.damage_enemy(battle.boss.entry, 1.0)

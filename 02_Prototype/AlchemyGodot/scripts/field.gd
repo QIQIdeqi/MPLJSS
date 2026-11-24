@@ -34,6 +34,10 @@ const CAMERA_ZOOM := 1.45
 @export var field_seed: int = 0
 @export_range(0, 600) var portal_open_seconds := 300.0
 @export var save_path := "user://progress.cfg"
+@export var level_id: StringName = &""
+@export var layout_preset: LEVEL_PRESET
+@export var spawn_position := SPAWN
+@export var stage_is_boss := false
 @onready var actors: Node2D = $Actors
 @onready var player = $Actors/Lilita
 @onready var status: Label = get_node_or_null("Interface/Status")
@@ -91,10 +95,35 @@ var ended := false
 var first_brew := false
 var opening_supply_eligible := false
 var save := ConfigFile.new()
+var level_catalog: Resource
+var stage_active := true
+var startup_error := ""
+var startup_complete := false
+var incoming_run: Dictionary = {}
+var entry_busy := false
+var run_rewards_saved := false
+
+func profile_path() -> String:
+	return "" if OS.get_cmdline_user_args().has("--migration-test") else save_path
 
 func _ready() -> void:
 	if not OS.get_cmdline_user_args().has("--migration-test"):
-		save.load(save_path)
+		var load_error := ProfileStore.load_save(save, save_path)
+		if load_error != OK and load_error != ERR_FILE_NOT_FOUND:
+			startup_error = "存档读取失败，请保留存档并检查文件。"
+	level_catalog = load("res://levels/catalog.tres")
+	if level_id == &"":
+		level_id = &"greyford_01" if combat else &"village_greyford"
+	var definition = level_catalog.find_level(level_id) if level_catalog else null
+	if definition:
+		layout_preset = definition.layout
+		enemy_config = definition.enemy_config
+		spawn_position = definition.spawn_position
+		stage_is_boss = definition.kind == 2
+	if has_node("EntrySpawn"):
+		$EntrySpawn.position = spawn_position
+	player.position = spawn_position
+	$Interface.visible = stage_active
 	camera = Camera2D.new()
 	camera.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
 	add_child(camera)
@@ -107,8 +136,9 @@ func _ready() -> void:
 			rng.randomize()
 		else:
 			rng.seed = field_seed
-		if not generate_field(false, rng.seed):
-			finish(false)
+		if not generate_field(stage_is_boss, rng.seed):
+			startup_error = "关卡随机布局无法生成，请调整物件数量或密度。"
+			stage_active = false
 			return
 		web_layer = Node2D.new()
 		actors.add_child(web_layer)
@@ -130,29 +160,29 @@ func _ready() -> void:
 		alchemy_system = ALCHEMY_SYSTEM.new()
 		alchemy_system.name = "AlchemySystem"
 		add_child(alchemy_system)
-		alchemy_system.ability_id = RunConfig.selected_ability
+		alchemy_system.ability_id = String(incoming_run.get("ability", RunConfig.selected_ability))
 		alchemy_system.setup(self, save)
 		alchemy_system.upgrade_offered.connect(on_upgrade_offered)
 		# 本局素材账本 + 永久库存（V1.1 资源闭环）
 		profile_store = ProfileStore.new()
-		profile_store.setup(save)
+		profile_store.setup(save, profile_path())
 		run_manager = RunManager.new()
 		run_manager.setup(profile_store)
-		run_manager.start_run("run_%d" % Time.get_ticks_msec())
+		run_manager.start_run(String(incoming_run.get("run_id", RunConfig.new_run_id())))
 		run_manager.material_collected.connect(on_material_collected)
-		# 入场消耗（初始能力不消耗）
-		consume_entry_ability()
 		upgrade_ui = UPGRADE_UI.instantiate()
 		add_child(upgrade_ui)
 		upgrade_ui.setup(self)
 		upgrade_ui.chosen.connect(apply_upgrade)
 		first_brew = not bool(save.get_value("tutorial", "brew_introduced", false))
 		opening_supply_eligible = not first_brew
-		if first_brew:
+		if first_brew and incoming_run.is_empty():
 			for i in 3:
 				inventory[i] = 1
 			save.set_value("tutorial", "brew_introduced", true)
-			persist()
+			# 入口准备时不写盘；成功确认的库存事务会一并保存教学标记。
+			if stage_active:
+				persist()
 		portal_dialog = ConfirmationDialog.new()
 		portal_dialog.title = "Boss 挑战"
 		portal_dialog.dialog_text = "进入雾界草甸挑战腐化之源？\n保留当前生命、材料和丹药，挑战结束后结算。"
@@ -161,18 +191,18 @@ func _ready() -> void:
 		portal_dialog.exclusive = true
 		portal_dialog.confirmed.connect(enter_boss)
 		$Interface.add_child(portal_dialog)
-		if enemy_config:
+		if not incoming_run.is_empty():
+			restore_run(incoming_run)
+		if stage_is_boss:
+			start_boss_actor()
+		elif enemy_config:
 			var count := mini(enemy_config.opening_count, enemy_config.alive_cap(0))
 			var phase := rng.randf()
 			for i in count:
 				add_enemy(enemy_config.pick_row(0, (i + phase) / count))
 			until_spawn = enemy_config.interval(0)
-		if DisplayServer.get_name() != "headless":
-			hd_view = HD_BATTLE.new()
-			add_child(hd_view)
-			hd_view.attach(self)
-			queue_redraw()
-		play_music(preload("res://audio/Music_Field.wav"))
+		if stage_active:
+			activate_stage()
 	else:
 		if DisplayServer.get_name() != "headless":
 			var view := HD_VILLAGE.new()
@@ -180,25 +210,105 @@ func _ready() -> void:
 			view.attach(self)
 		# 村庄：初始化永久库存 + 炼金服务 + 入场选择 + 炼金工房
 		profile_store = ProfileStore.new()
-		profile_store.setup(save)
+		profile_store.setup(save, profile_path())
 		village_alchemy = ALCHEMY_MANAGER.new()
 		village_alchemy.setup(save)
+		var last_level := StringName(save.get_value("entry", "level_id", "greyford_01"))
+		if level_catalog and level_catalog.find_level(last_level):
+			RunConfig.selected_level_id = last_level
 		entry_select_ui = ENTRY_SELECT.instantiate()
 		add_child(entry_select_ui)
-		entry_select_ui.setup(self, profile_store)
-		entry_select_ui.selected.connect(on_entry_selected)
+		entry_select_ui.setup(self, profile_store, level_catalog)
+		entry_select_ui.confirmed.connect(on_entry_confirmed)
+		entry_select_ui.cancelled.connect(RunConfig.cancel_entry)
 		var alchemy_service := AlchemyService.new()
 		alchemy_service.setup(profile_store)
 		workbench_ui = WORKBENCH.instantiate()
 		add_child(workbench_ui)
 		workbench_ui.setup(self, alchemy_service, profile_store)
 		play_music(preload("res://audio/Music_Village.wav"))
+	startup_complete = startup_error.is_empty()
 
-func on_entry_selected(ability_id: StringName) -> void:
-	if ability_id == &"":
-		return  # 取消入场
-	RunConfig.set_ability(ability_id)
-	get_tree().change_scene_to_file("res://scenes/battle.tscn")
+func prepare_stage(id: StringName, handoff: Dictionary = {}) -> Node2D:
+	var definition = level_catalog.find_level(id) if level_catalog else null
+	if not definition or not definition.enabled or definition.kind == 0 or not ResourceLoader.exists(definition.scene_path):
+		return null
+	var packed := load(definition.scene_path) as PackedScene
+	if not packed:
+		return null
+	var next = packed.instantiate()
+	if not next.get_script() or not next.has_method("activate_stage") or not next.has_node("Actors/Lilita") or not next.has_node("Interface/CombatHUD") or not next.has_node("Music"):
+		next.free()
+		return null
+	next.level_id = id
+	next.save_path = save_path
+	next.stage_active = false
+	next.incoming_run = handoff.duplicate(true)
+	next.field_seed = int(handoff.get("stage_seed", 0))
+	next.process_mode = Node.PROCESS_MODE_DISABLED
+	get_tree().root.add_child(next)
+	if not next.startup_complete or next.profile_store == null or not next.startup_error.is_empty():
+		next.queue_free()
+		return null
+	return next
+
+func on_entry_confirmed(id: StringName, ability_id: StringName) -> void:
+	if entry_busy:
+		return
+	var definition = level_catalog.find_level(id) if level_catalog else null
+	if not definition or not definition.enabled or not definition.selectable or definition.kind != 1:
+		entry_select_ui.show_error("这个关卡当前不能从村庄出发。")
+		return
+	if not startup_error.is_empty():
+		entry_select_ui.show_error(startup_error)
+		return
+	if not level_catalog.validation_errors().is_empty():
+		entry_select_ui.show_error("关卡总表存在配置错误，请先在编辑器里校验并修正。")
+		return
+	entry_busy = true
+	entry_select_ui.set_busy(true)
+	RunConfig.begin_entry(id, ability_id)
+	var next = prepare_stage(id)
+	if next == null:
+		entry_select_ui.show_error("关卡加载或布局生成失败，未扣库存。请检查关卡配置。")
+	elif not next.profile_store.commit_entry_ability(String(ability_id), String(id), RunConfig.entry_id):
+		next.queue_free()
+		entry_select_ui.show_error("库存不足或保存失败，未扣库存，请重新选择。")
+	else:
+		RunConfig.confirm_entry()
+		publish_stage(next)
+		return
+	RunConfig.cancel_entry()
+	entry_busy = false
+	entry_select_ui.set_busy(false)
+
+func publish_stage(next: Node2D) -> void:
+	var tree := get_tree()
+	# 旧 HD 视图先退出，恢复画布遮罩；新视图随后接管，避免场景叠加。
+	tree.root.remove_child(self)
+	tree.current_scene = next
+	next.activate_stage()
+	queue_free()
+
+func activate_stage() -> void:
+	stage_active = true
+	process_mode = Node.PROCESS_MODE_INHERIT
+	$Interface.show()
+	if combat:
+		if DisplayServer.get_name() != "headless" and not is_instance_valid(hd_view):
+			hd_view = HD_BATTLE.new()
+			add_child(hd_view)
+			hd_view.attach(self)
+			if not incoming_run.get("outdoor", {}).is_empty():
+				for key in incoming_run.outdoor:
+					if key == "weather_state":
+						for weather_key in incoming_run.outdoor.weather_state:
+							hd_view.world_view.weather.set(weather_key, incoming_run.outdoor.weather_state[weather_key])
+					else:
+						hd_view.world_view.set(key, incoming_run.outdoor[key])
+		queue_redraw()
+		play_music(preload("res://audio/Music_Boss.wav") if stage_is_boss else preload("res://audio/Music_Field.wav"))
+		player.locked = stage_is_boss
 
 func play_music(stream: AudioStreamWAV) -> void:
 	var loop := stream.duplicate() as AudioStreamWAV
@@ -208,13 +318,15 @@ func play_music(stream: AudioStreamWAV) -> void:
 	music.play()
 
 func generate_field(boss_stage: bool, layout_seed: int) -> bool:
-	var preset: LEVEL_PRESET = BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT
-	var layout: Dictionary = LEVEL_LAYOUT.build(preset, layout_seed, MAP, BOSS_SPAWN if boss_stage else SPAWN)
+	var preset: LEVEL_PRESET = layout_preset if layout_preset else (BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT)
+	var layout: Dictionary = LEVEL_LAYOUT.build(preset, layout_seed, MAP, spawn_position)
 	if not layout.error.is_empty():
-		push_error(layout.error)
+		push_warning(layout.error)
 		return false
 	player.movement_bounds = preset.playable_bounds()
 	portal_position = preset.portal_position()
+	if has_node("BossPortal"):
+		$BossPortal.position = portal_position
 	for prop in props:
 		prop.queue_free()
 	for block in blocks:
@@ -261,17 +373,17 @@ func make_sprite(texture: Texture2D, at: Vector2, size: Vector2, foot_fraction :
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		if not combat and player.position.distance_to(GATE) < 92:
-			if is_instance_valid(entry_select_ui) and not entry_select_ui.visible:
+			if is_instance_valid(entry_select_ui) and not entry_select_ui.visible and not workbench_ui.visible:
 				entry_select_ui.open()
 			get_viewport().set_input_as_handled()
 		elif ended:
-			get_tree().change_scene_to_file("res://scenes/village.tscn")
+			leave_run(false)
 		elif portal_ready and player.position.distance_to(portal_position) < 60 and not brew.is_open():
 			portal_dialog.popup_centered()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("alchemy"):
 		# 村庄：按 Q 呼出炼金工房（制作能力）
-		if not combat and is_instance_valid(workbench_ui) and not workbench_ui.visible:
+		if not combat and startup_error.is_empty() and is_instance_valid(workbench_ui) and not workbench_ui.visible and not entry_select_ui.visible:
 			workbench_ui.open()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("ui_cancel") and not combat:
@@ -304,10 +416,13 @@ func update_camera(delta: float) -> void:
 	camera.position = camera.position.lerp(desired, weight).clamp(MAP.position + half_view, MAP.end - half_view)
 
 func _physics_process(delta: float) -> void:
+	if not stage_active:
+		return
 	update_camera(delta)
 	if not combat:
+		player.locked = entry_busy or entry_select_ui.visible or workbench_ui.visible
 		status.text = "格雷弗德村庄   ·   金币 %d" % int(save.get_value("village", "coins", 0))
-		hint.text = "F  选择能力入场" if player.position.distance_to(GATE) < 92 else "WASD 移动   ·   Q 炼金工房   ·   前往右侧雾门   ·   Esc 返回开始界面"
+		hint.text = "F  出战准备 · 选择关卡与能力" if player.position.distance_to(GATE) < 92 else "WASD 移动   ·   Q 炼金工房   ·   前往右侧雾门   ·   Esc 返回开始界面"
 		return
 	if ended or boss_death:
 		player.locked = true
@@ -325,7 +440,7 @@ func _physics_process(delta: float) -> void:
 		pickup_notice_time = maxf(0.0, pickup_notice_time - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
 	if boss:
-		hint.text = "腐化之源   ·   %s" % ("准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   橙色冲锋 / 蓝色扇形弹   ·   Q 炼金" % ceili(float(boss.entry.hp) * 100.0 / boss.MAX_HP))
+		hint.text = "腐化之源   ·   %s" % ("准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   橙色冲锋 / 蓝色扇形弹   ·   Space 闪避" % ceili(float(boss.entry.hp) * 100.0 / boss.MAX_HP))
 		boss.advance(delta, player, hurt, burst)
 		if ended or boss.preparation > 0:
 			return
@@ -469,38 +584,84 @@ func _exit_tree() -> void:
 func enter_boss() -> void:
 	if ended or boss or not portal_ready or player.position.distance_to(portal_position) >= 60 or brew.is_open():
 		return
-	if not generate_field(true, int(rng.randi()) + 1):
-		hint.text = "Boss 场地生成失败，可继续探索"
+	var definition = level_catalog.find_level(level_id) if level_catalog else null
+	var target_id: StringName = definition.boss_level_id if definition else &""
+	var target = level_catalog.find_level(target_id) if level_catalog else null
+	if target == null or target.kind != 2:
+		hint.text = "尚未配置 Boss 场景，可继续探索"
 		return
-	brew.clear_projectiles()
-	clear_combat_effects()
-	clear_webs()
-	for entry in enemies:
-		entry.body.queue_free()
-	enemies.clear()
-	for body in defeated_art:
-		body.queue_free()
-	defeated_art.clear()
-	for pickup in pickups:
-		pickup.sprite.queue_free()
-	pickups.clear()
-	for drop in material_drops:
-		if is_instance_valid(drop.sprite):
-			drop.sprite.queue_free()
-	material_drops.clear()
-	for fx in effects.get_children():
-		fx.queue_free()
-	portal = null
-	portal_ready = false
-	player.position = BOSS_SPAWN
-	player.dodge = 0.0
+	portal_dialog.hide()
+	var state := capture_run()
+	# 场地种子只由开局种子和稳定关卡 ID 派生，不受击杀/掉落随机数影响。
+	state.stage_seed = int((str(rng.seed) + ":" + String(target_id)).hash()) + 1
+	var next = prepare_stage(target_id, state)
+	if next == null:
+		hint.text = "Boss 场景或布局加载失败，可继续探索；本局状态未改变"
+		return
+	RunConfig.set_handoff(state)
+	publish_stage(next)
+	RunConfig.take_handoff()
+
+func start_boss_actor() -> void:
 	player.locked = true
 	boss = BOSS.instantiate()
 	add_child(boss)
 	boss.setup(actors, rng.randf() < 0.5, player.movement_bounds)
 	enemies.append(boss.entry)
 	update_camera(0.0)
-	play_music(preload("res://audio/Music_Boss.wav"))
+
+func capture_run() -> Dictionary:
+	var state := {"run_id": run_manager.run_id, "ability": alchemy_system.ability_id,
+		"stage_seed": rng.seed, "rng_seed": rng.seed, "rng_state": rng.state, "run_rewards_saved": run_rewards_saved,
+		"materials": run_manager.ledger.materials.duplicate(true),
+		"settlement_status": run_manager.ledger.settlement_status, "skills": [],
+		"owned_levels": alchemy_system.upgrades.owned_levels.duplicate(true),
+		"efficiency_level": alchemy_system.upgrades.efficiency_level,
+		"ability_efficiency": alchemy_system.skills.ability_efficiency,
+		"chain_cooldowns": alchemy_system.skills.chain_cooldowns.duplicate(true),
+		"synergy_cooldowns": alchemy_system.synergies.cooldowns.duplicate(true),
+		"upgrade_rng_seed": alchemy_system.upgrades.rng.seed,
+		"upgrade_rng_state": alchemy_system.upgrades.rng.state,
+		"player_cooldown": player.cooldown, "legacy_brew": {}, "outdoor": {}}
+	for key in ["hp", "xp", "level", "coins", "kills", "run_time", "until_attack", "hurt_cooldown", "inventory", "first_brew", "opening_supply_eligible"]:
+		state[key] = get(key).duplicate(true) if get(key) is Array else get(key)
+	for runtime in alchemy_system.skills.runtimes:
+		state.skills.append({"id":runtime.skill_id,"level":runtime.level,"cooldown":runtime.cooldown_left,"config":runtime.config.duplicate(true)})
+	for key in ["pills", "equipped", "bag", "cooldowns"]:
+		state.legacy_brew[key] = brew.get(key).duplicate(true)
+	if is_instance_valid(hd_view):
+		for key in ["view_angle", "cycle_time", "clock", "camera_offset"]:
+			state.outdoor[key] = hd_view.world_view.get(key)
+		state.outdoor.weather_state = {}
+		for key in ["current", "elapsed", "cloud_cover", "snow_cover", "upcoming", "flash_timer"]:
+			var value = hd_view.world_view.weather.get(key)
+			state.outdoor.weather_state[key] = value.duplicate() if value is Array else value
+	return state
+
+func restore_run(state: Dictionary) -> void:
+	for key in ["hp", "xp", "level", "coins", "kills", "run_time", "until_attack", "hurt_cooldown", "inventory", "first_brew", "opening_supply_eligible", "run_rewards_saved"]:
+		if state.has(key):
+			set(key, state[key])
+	rng.seed = int(state.get("rng_seed", rng.seed))
+	rng.state = int(state.get("rng_state", rng.state))
+	run_manager.ledger.materials = state.materials.duplicate(true)
+	run_manager.ledger.settlement_status = state.settlement_status
+	for item in state.skills:
+		if alchemy_system.skills.add_skill(item.id):
+			var runtime: SkillRuntime = alchemy_system.skills.runtime_for(item.id)
+			runtime.level = int(item.level)
+			runtime.cooldown_left = float(item.cooldown)
+			runtime.config = item.config.duplicate(true)
+	alchemy_system.skills.ability_efficiency = state.ability_efficiency
+	alchemy_system.skills.chain_cooldowns = state.chain_cooldowns.duplicate(true)
+	alchemy_system.synergies.cooldowns = state.synergy_cooldowns.duplicate(true)
+	alchemy_system.upgrades.owned_levels = state.owned_levels.duplicate(true)
+	alchemy_system.upgrades.efficiency_level = state.efficiency_level
+	alchemy_system.upgrades.rng.seed = int(state.upgrade_rng_seed)
+	alchemy_system.upgrades.rng.state = int(state.upgrade_rng_state)
+	player.cooldown = state.player_cooldown
+	for key in state.legacy_brew:
+		brew.set(key, state.legacy_brew[key].duplicate(true))
 
 func on_brew_settled(accepted: bool, result: Dictionary) -> void:
 	if not accepted:
@@ -525,17 +686,6 @@ func offer_upgrade() -> void:
 func apply_upgrade(pick: Dictionary) -> void:
 	if alchemy_system:
 		alchemy_system.apply_upgrade(pick)
-
-# 入场消耗能力（V1.1 第6.3节：成功启动本局才扣，初始能力不扣）
-func consume_entry_ability() -> void:
-	if not alchemy_system or not profile_store:
-		return
-	var id: StringName = alchemy_system.ability_id
-	if id == preload("res://data/alchemy_abilities/alchemy_ability_data.gd").ABILITY_INITIAL:
-		return
-	# 成功进入本局（_ready 已执行）才扣除一份，失败加载不会走到这里
-	if profile_store.consume_ability(String(id)):
-		profile_store.save_profile()
 
 func on_upgrade_offered(candidates: Array) -> void:
 	pass
@@ -694,7 +844,7 @@ func play_skill_fx(info: Dictionary) -> void:
 			SKILL_FX.projectile(effects, from, target, color, speed)
 
 func persist() -> bool:
-	return OS.get_cmdline_user_args().has("--migration-test") or save.save(save_path) == OK
+	return ProfileStore.write_save(save, profile_path()) == OK
 
 func advance_fallback_skill_visuals(delta: float) -> void:
 	for index in range(fallback_skill_visuals.size() - 1, -1, -1):
@@ -976,9 +1126,39 @@ func show_pickup_notice(text: String) -> void:
 	pickup_notice_time = 1.2
 
 # 统一素材结算（V1.1 第4章）：所有返回入口调用
-func settle_run() -> void:
-	if run_manager:
-		run_manager.settle_run_materials("exit")
+func settle_run() -> bool:
+	if run_rewards_saved:
+		return true
+	if not run_manager:
+		return false
+	var before: Dictionary = profile_store.snapshot()
+	save.set_value("village", "coins", int(save.get_value("village", "coins", 0)) + coins)
+	if not run_manager.settle_run_materials("exit"):
+		profile_store.restore(before)
+		return false
+	run_rewards_saved = true
+	return true
+
+func leave_run(to_menu := false) -> void:
+	if not ended:
+		finish(false)
+	if not settle_run():
+		hint.text = "保存失败，仍保留本局，请重试返回。"
+		return
+	RunConfig.reset()
+	var village = level_catalog.find_level(&"village_greyford") if level_catalog else null
+	var village_path: String = village.scene_path if village else "res://scenes/levels/village_greyford.tscn"
+	var packed := load("res://scenes/menu.tscn" if to_menu else village_path) as PackedScene
+	if packed == null:
+		hint.text = "返回场景加载失败，本局已保存，请检查关卡总表。"
+		return
+	var next = packed.instantiate()
+	next.save_path = save_path
+	var tree := get_tree()
+	tree.root.remove_child(self)
+	tree.root.add_child(next)
+	tree.current_scene = next
+	queue_free()
 
 func add_pickup(at: Vector2, kind: int) -> void:
 	var sprite := make_sprite(DROPS[kind], at, Vector2(21, 21))
@@ -1013,13 +1193,11 @@ func finish(victory: bool) -> void:
 		boss.shots.clear()
 		boss.queue_redraw()
 	# 统一素材结算：本局已拾取素材全部带出（V1.1 第4章）
-	settle_run()
+	var saved := settle_run()
 	# 未拾取的地面素材掉落不带出（V1.1 第4.1节），清理
 	for drop in material_drops:
 		if is_instance_valid(drop.sprite):
 			drop.sprite.queue_free()
 	material_drops.clear()
-	save.set_value("village", "coins", int(save.get_value("village", "coins", 0)) + coins)
-	var saved := persist()
 	var mat_total: int = run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
 	hint.text = "%s   ·   %s   ·   素材 +%d   ·   F 返回村庄" % ["腐化之源已击败" if victory else "试炼结束", "已结算 %d 金币" % coins if saved else "保存失败", mat_total]

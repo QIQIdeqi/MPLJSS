@@ -23,10 +23,13 @@ var ability_inventory: Dictionary = {}    # ability_id -> int（炼金能力库�
 var settled_runs: Array = []              # 已结算的 run_id（幂等防重复）
 var recipe_states: Dictionary = {}        # recipe_id -> 状态（unknown/failed/found）
 var current_tier := 2                     # 当前阶段投入种类上限（前2/中3/后4）
+var save_path := ""
+var last_error: Error = OK
 
 
-func setup(p_save: ConfigFile) -> void:
+func setup(p_save: ConfigFile, p_save_path: String = "") -> void:
 	save = p_save
+	save_path = p_save_path
 	load_profile()
 
 func load_profile() -> void:
@@ -38,11 +41,11 @@ func load_profile() -> void:
 		material_inventory[id] = int(save.get_value(SAVE_SECTION_MATERIAL, String(id), 0))
 	for id in ABILITIES.ids():
 		ability_inventory[id] = int(save.get_value(SAVE_SECTION_ABILITY, String(id), 0))
-	settled_runs = save.get_value(SAVE_SECTION_SETTLED, "ids", [])
-	recipe_states = save.get_value(SAVE_SECTION_RECIPES, "states", {})
+	settled_runs = save.get_value(SAVE_SECTION_SETTLED, "ids", []).duplicate()
+	recipe_states = save.get_value(SAVE_SECTION_RECIPES, "states", {}).duplicate(true)
 	current_tier = int(save.get_value(SAVE_SECTION_RECIPES, "tier", 2))
 
-func save_profile() -> void:
+func save_profile() -> bool:
 	for id in material_inventory:
 		save.set_value(SAVE_SECTION_MATERIAL, String(id), int(material_inventory[id]))
 	for id in ability_inventory:
@@ -50,6 +53,83 @@ func save_profile() -> void:
 	save.set_value(SAVE_SECTION_SETTLED, "ids", settled_runs)
 	save.set_value(SAVE_SECTION_RECIPES, "states", recipe_states)
 	save.set_value(SAVE_SECTION_RECIPES, "tier", current_tier)
+	last_error = write_save(save, save_path)
+	return last_error == OK
+
+# 空路径用于内存测试；实际游戏统一经此写盘，避免切场景丢失工房产出。
+static func write_save(data: ConfigFile, path: String) -> Error:
+	if path.is_empty():
+		return OK
+	data.set_value("profile", "schema_version", 1)
+	var temporary := path + ".tmp"
+	var err := data.save(temporary)
+	if err != OK:
+		return err
+	if FileAccess.file_exists(path):
+		err = DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(path + ".bak"))
+		if err != OK:
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(temporary))
+			return err
+	err = DirAccess.rename_absolute(ProjectSettings.globalize_path(temporary), ProjectSettings.globalize_path(path))
+	if err != OK:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(temporary))
+	return err
+
+static func load_save(data: ConfigFile, path: String) -> Error:
+	var err := data.load(path)
+	if err == OK:
+		return OK if int(data.get_value("profile", "schema_version", 0)) <= 1 else ERR_FILE_UNRECOGNIZED
+	# 文件缺失但备份仍在时同样可恢复；不会把坏文件当作新档覆盖。
+	var backup := ConfigFile.new()
+	if backup.load(path + ".bak") == OK:
+		if int(backup.get_value("profile", "schema_version", 0)) > 1:
+			return ERR_FILE_UNRECOGNIZED
+		var recovered := DirAccess.copy_absolute(ProjectSettings.globalize_path(path + ".bak"), ProjectSettings.globalize_path(path))
+		if recovered != OK:
+			return recovered
+		data.clear()
+		return data.parse(backup.encode_to_text())
+	return err
+
+func snapshot() -> Dictionary:
+	return {
+		"config": save.encode_to_text(),
+		"materials": material_inventory.duplicate(true),
+		"abilities": ability_inventory.duplicate(true),
+		"settled": settled_runs.duplicate(),
+		"recipes": recipe_states.duplicate(true),
+		"tier": current_tier,
+	}
+
+func restore(state: Dictionary) -> void:
+	save.clear()
+	save.parse(String(state.config))
+	material_inventory = state.materials.duplicate(true)
+	ability_inventory = state.abilities.duplicate(true)
+	settled_runs = state.settled.duplicate()
+	recipe_states = state.recipes.duplicate(true)
+	current_tier = int(state.tier)
+
+# 调用方先验证并初始化目标场景，再提交。相同入场号重试不重复扣库存。
+func commit_entry_ability(ability_id: String, level_id: String, entry_id: String) -> bool:
+	if level_id.is_empty() or entry_id.is_empty() or (ability_id != ABILITIES.ABILITY_INITIAL and ABILITIES.by_id(ability_id).is_empty()):
+		last_error = ERR_INVALID_PARAMETER
+		return false
+	if String(save.get_value("entry", "last_id", "")) == entry_id:
+		var same := String(save.get_value("entry", "ability_id", "")) == ability_id and String(save.get_value("entry", "level_id", "")) == level_id
+		last_error = OK if same else ERR_INVALID_PARAMETER
+		return same
+	var before := snapshot()
+	if not consume_ability(ability_id):
+		last_error = ERR_UNAVAILABLE
+		return false
+	save.set_value("entry", "last_id", entry_id)
+	save.set_value("entry", "ability_id", ability_id)
+	save.set_value("entry", "level_id", level_id)
+	if save_profile():
+		return true
+	restore(before)
+	return false
 
 # ---- 素材库存 ----
 func material_count(material_id: String) -> int:

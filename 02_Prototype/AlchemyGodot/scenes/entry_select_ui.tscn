@@ -1,9 +1,76 @@
-[gd_scene load_steps=2 format=3]
-
+[gd_scene format=3]
 [ext_resource type="Script" path="res://scripts/alchemy/entry_select_ui.gd" id="1"]
+[ext_resource type="Texture2D" path="res://art/ui/alchemy_figma/panel_ornate_9.png" id="Frame"]
+[ext_resource type="Texture2D" path="res://art/ui/combat/panel_grain.png" id="Grain"]
+[ext_resource type="Texture2D" path="res://art/ui/alchemy_figma/button_default.png" id="normal"]
+[ext_resource type="Texture2D" path="res://art/ui/alchemy_figma/button_hover.png" id="hover"]
+[ext_resource type="Texture2D" path="res://art/ui/alchemy_figma/button_pressed.png" id="pressed"]
+[ext_resource type="Texture2D" path="res://art/ui/alchemy_figma/button_disabled.png" id="disabled"]
+[ext_resource type="Texture2D" path="res://art/ui/alchemy_figma/button_focus.png" id="focus"]
+[sub_resource type="StyleBoxTexture" id="normal"]
+texture = ExtResource("normal")
+texture_margin_left = 29.0
+texture_margin_right = 29.0
+texture_margin_top = 7.0
+texture_margin_bottom = 7.0
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 7.0
+content_margin_bottom = 7.0
+[sub_resource type="StyleBoxTexture" id="hover"]
+texture = ExtResource("hover")
+texture_margin_left = 29.0
+texture_margin_right = 29.0
+texture_margin_top = 7.0
+texture_margin_bottom = 7.0
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 7.0
+content_margin_bottom = 7.0
+[sub_resource type="StyleBoxTexture" id="pressed"]
+texture = ExtResource("pressed")
+texture_margin_left = 29.0
+texture_margin_right = 29.0
+texture_margin_top = 7.0
+texture_margin_bottom = 7.0
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 7.0
+content_margin_bottom = 7.0
+[sub_resource type="StyleBoxTexture" id="disabled"]
+texture = ExtResource("disabled")
+texture_margin_left = 29.0
+texture_margin_right = 29.0
+texture_margin_top = 7.0
+texture_margin_bottom = 7.0
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 7.0
+content_margin_bottom = 7.0
+[sub_resource type="StyleBoxTexture" id="focus"]
+texture = ExtResource("focus")
+texture_margin_left = 29.0
+texture_margin_right = 29.0
+texture_margin_top = 7.0
+texture_margin_bottom = 7.0
+content_margin_left = 18.0
+content_margin_right = 18.0
+content_margin_top = 7.0
+content_margin_bottom = 7.0
+[sub_resource type="Theme" id="theme"]
+default_font_size = 16
+Button/colors/font_color = Color(0.96, 0.87, 0.7, 1)
+Button/colors/font_hover_color = Color(1, 0.93, 0.78, 1)
+Label/colors/font_color = Color(0.88, 0.8, 0.66, 1)
+Button/styles/normal = SubResource("normal")
+Button/styles/hover = SubResource("hover")
+Button/styles/pressed = SubResource("pressed")
+Button/styles/disabled = SubResource("disabled")
+Button/styles/focus = SubResource("focus")
 
 [node name="EntrySelectUI" type="CanvasLayer"]
 process_mode = 3
+layer = 20
 visible = false
 script = ExtResource("1")
 
@@ -11,53 +78,292 @@ script = ExtResource("1")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0, 0, 0, 0.65)
+color = Color(0.025, 0.025, 0.025, 0.72)
 
-[node name="Panel" type="PanelContainer" parent="."]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -360.0
-offset_top = -300.0
-offset_right = 360.0
-offset_bottom = 300.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Panel" type="Control" parent="."]
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 1230.0
+offset_bottom = 670.0
+theme = SubResource("theme")
+
+[node name="Background" type="ColorRect" parent="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+mouse_filter = 2
+color = Color(0.14, 0.105, 0.085, 1)
+
+[node name="Grain" type="TextureRect" parent="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+mouse_filter = 2
+texture = ExtResource("Grain")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Frame" type="NinePatchRect" parent="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("Frame")
+patch_margin_left = 40
+patch_margin_right = 40
+patch_margin_top = 37
+patch_margin_bottom = 37
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+draw_center = false
 
 [node name="Margin" type="MarginContainer" parent="Panel"]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_top = 27
+theme_override_constants/margin_bottom = 27
 
-[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+[node name="Content" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/Content"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Panel/Margin/VBox"]
+[node name="Titles" type="VBoxContainer" parent="Panel/Margin/Content/Header"]
 layout_mode = 2
-text = "选择本局炼金能力"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 24
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
 
-[node name="Subtitle" type="Label" parent="Panel/Margin/VBox"]
+[node name="Title" type="Label" parent="Panel/Margin/Content/Header/Titles"]
 layout_mode = 2
-text = "炼金能力会改造你的普通技能 · 进入关卡时消耗一份"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.8, 0.75, 0.65, 1)
+text = "出 战 准 备"
+theme_override_font_sizes/font_size = 31
+theme_override_colors/font_color = Color(0.97, 0.89, 0.69, 1)
 
-[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox"]
+[node name="Subtitle" type="Label" parent="Panel/Margin/Content/Header/Titles"]
+layout_mode = 2
+text = "选好目的地与本局能力，再从雾门出发。"
+theme_override_font_sizes/font_size = 14
+
+[node name="Close" type="Button" parent="Panel/Margin/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(42, 40)
+size_flags_vertical = 4
+text = "×"
+tooltip_text = "取消出战准备，返回村庄（Esc）"
+
+[node name="HeaderLine" type="HSeparator" parent="Panel/Margin/Content"]
+layout_mode = 2
+modulate = Color(0.65, 0.5, 0.31, 0.65)
+
+[node name="Columns" type="HBoxContainer" parent="Panel/Margin/Content"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 22
 
-[node name="List" type="VBoxContainer" parent="Panel/Margin/VBox/Scroll"]
+[node name="Destination" type="VBoxContainer" parent="Panel/Margin/Content/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Heading" type="Label" parent="Panel/Margin/Content/Columns/Destination"]
+layout_mode = 2
+text = "① 选择目的地"
+theme_override_font_sizes/font_size = 22
+
+[node name="Row" type="HBoxContainer" parent="Panel/Margin/Content/Columns/Destination"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="LevelScroll" type="ScrollContainer" parent="Panel/Margin/Content/Columns/Destination/Row"]
+layout_mode = 2
+custom_minimum_size = Vector2(154, 0)
+horizontal_scroll_mode = 0
+
+[node name="LevelList" type="VBoxContainer" parent="Panel/Margin/Content/Columns/Destination/Row/LevelScroll"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
+
+[node name="Details" type="VBoxContainer" parent="Panel/Margin/Content/Columns/Destination/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="LevelPreview" type="TextureRect" parent="Panel/Margin/Content/Columns/Destination/Row/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 155)
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="DestinationTitle" type="Label" parent="Panel/Margin/Content/Columns/Destination/Row/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "第一关 · 格雷弗德外围"
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.98, 0.9, 0.71, 1)
+
+[node name="DescriptionScroll" type="ScrollContainer" parent="Panel/Margin/Content/Columns/Destination/Row/Details"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DescriptionContent" type="VBoxContainer" parent="Panel/Margin/Content/Columns/Destination/Row/Details/DescriptionScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="DestinationDescription" type="Label" parent="Panel/Margin/Content/Columns/Destination/Row/Details/DescriptionScroll/DescriptionContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "随机场地 · 地块和物件每局重新生成"
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="BossRule" type="Label" parent="Panel/Margin/Content/Columns/Destination/Row/Details/DescriptionScroll/DescriptionContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "自由挑战 · 5 分钟后可自愿进入 Boss 场"
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="ChooseHint" type="Label" parent="Panel/Margin/Content/Columns/Destination/Row/Details/DescriptionScroll/DescriptionContent"]
+layout_mode = 2
+text = "点击左侧关卡更新预览。\n切换目的地会保留能力选择。"
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="Divider" type="VSeparator" parent="Panel/Margin/Content/Columns"]
+layout_mode = 2
+modulate = Color(0.65, 0.5, 0.31, 0.65)
+
+[node name="Abilities" type="VBoxContainer" parent="Panel/Margin/Content/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Heading" type="Label" parent="Panel/Margin/Content/Columns/Abilities"]
+layout_mode = 2
+text = "② 本局炼金能力 · 携带 1 项"
+theme_override_font_sizes/font_size = 22
+
+[node name="AbilityScroll" type="ScrollContainer" parent="Panel/Margin/Content/Columns/Abilities"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="AbilityContent" type="VBoxContainer" parent="Panel/Margin/Content/Columns/Abilities/AbilityScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="InitialAbility" type="VBoxContainer" parent="Panel/Margin/Content/Columns/Abilities/AbilityScroll/AbilityContent"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AbilityGrid" type="GridContainer" parent="Panel/Margin/Content/Columns/Abilities/AbilityScroll/AbilityContent"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 9
+theme_override_constants/v_separation = 9
+
+[node name="AbilityHint" type="Label" parent="Panel/Margin/Content/Columns/Abilities"]
+layout_mode = 2
+text = "基础炼金永久可用，其他能力需要先在工房制作。"
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="Feedback" type="Label" parent="Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "切换关卡和能力不会消耗库存，确认出发后才会消耗。"
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+
+[node name="FooterLine" type="HSeparator" parent="Panel/Margin/Content"]
+layout_mode = 2
+modulate = Color(0.65, 0.5, 0.31, 0.65)
+
+[node name="Footer" type="HBoxContainer" parent="Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="DestinationInfo" type="VBoxContainer" parent="Panel/Margin/Content/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Panel/Margin/Content/Footer/DestinationInfo"]
+layout_mode = 2
+text = "目的地"
+theme_override_font_sizes/font_size = 12
+
+[node name="DestinationSummary" type="Label" parent="Panel/Margin/Content/Footer/DestinationInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "未选择目的地"
+theme_override_font_sizes/font_size = 16
+text_overrun_behavior = 3
+
+[node name="AbilityInfo" type="VBoxContainer" parent="Panel/Margin/Content/Footer"]
+layout_mode = 2
+custom_minimum_size = Vector2(110, 0)
+
+[node name="Label" type="Label" parent="Panel/Margin/Content/Footer/AbilityInfo"]
+layout_mode = 2
+text = "携带能力"
+theme_override_font_sizes/font_size = 12
+
+[node name="AbilitySummary" type="Label" parent="Panel/Margin/Content/Footer/AbilityInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "基础炼金"
+theme_override_font_sizes/font_size = 16
+text_overrun_behavior = 3
+
+[node name="CostInfo" type="VBoxContainer" parent="Panel/Margin/Content/Footer"]
+layout_mode = 2
+custom_minimum_size = Vector2(210, 0)
+
+[node name="Label" type="Label" parent="Panel/Margin/Content/Footer/CostInfo"]
+layout_mode = 2
+text = "本次消耗"
+theme_override_font_sizes/font_size = 12
+
+[node name="CostSummary" type="Label" parent="Panel/Margin/Content/Footer/CostInfo"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "不消耗"
+theme_override_font_sizes/font_size = 16
+text_overrun_behavior = 3
+
+[node name="Cancel" type="Button" parent="Panel/Margin/Content/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(140, 46)
+text = "Esc 返回村庄"
+
+[node name="Confirm" type="Button" parent="Panel/Margin/Content/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(158, 46)
+text = "确认出发  ›"

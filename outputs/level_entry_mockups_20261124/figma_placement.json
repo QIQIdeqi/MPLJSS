@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-24",
+  "file_key": "UeDgaPrERWr5luHISsO1xr",
+  "page_id": "2062:108",
+  "page_name": "视觉设计",
+  "items": [
+    {"source": "出战准备_多关卡.png", "node_id": "2114:1486", "x": 0, "y": 4450},
+    {"source": "关卡总表编辑器.png", "node_id": "2114:1487", "x": 1680, "y": 4450}
+  ],
+  "verification": "两张上传图均经Figma重新截图读取并目视确认，非空白。原型页未修改。"
+}
