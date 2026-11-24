@@ -25,6 +25,8 @@ func duplicate_battle_configs(source: Entry, is_boss: bool, title: String) -> Di
 		return {}
 	var layout := source.layout.duplicate(true)
 	layout.boss = is_boss
+	if is_boss:
+		layout.infinite = false
 	layout.locked_ground = {}
 	layout.locked_props = {}
 	var waves := source.enemy_config.duplicate(true)

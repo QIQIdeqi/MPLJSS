@@ -71,6 +71,17 @@ static func build(preset: Preset, seed_value: int, bounds: Rect2, spawn: Vector2
 			if id < 0 or ground_counts[id] >= maxima[id]:
 				id = _weighted(grounds, preset, ground_counts, maxima, ground_rng)
 				patches[patch] = id
+			# The second ground brush is the authored route surface; keep the same world-space path across seams.
+			if preset.infinite and not preset.boss and grounds.size() > 1:
+				var route_id := grounds[1]
+				if preset.route_texture:
+					for ground_id in grounds:
+						if preset.palette[ground_id].texture == preset.route_texture:
+							route_id = ground_id
+							break
+				var at := _corner(cell, grid, size, bounds.position) + size * 0.5
+				if route_distance(preset, at) < maxf(48.0, preset.protected_half_width) and ground_counts[route_id] < maxima[route_id] and preset.palette[route_id].weight > 0:
+					id = route_id
 			if id < 0:
 				return _failed("地面素材总上限或权重不足，无法连续铺满地图")
 			ground_cells[cell] = id
@@ -170,14 +181,20 @@ static func _fits(item: Dictionary, preset: Preset, bounds: Rect2, spawn: Vector
 	var corridor := maxf(preset.protected_half_width, 20.0)
 	if not bounds.grow(-24.0).has_point(at):
 		return false
-	var playable := preset.playable_bounds(bounds)
+	var playable := bounds.grow(-16.0) if preset.infinite and not preset.boss else preset.playable_bounds(bounds)
 	if not Rect2(playable.position + half, playable.size - half * 2.0).has_point(at):
 		return false
-	if absf(at.x - spawn.x) < corridor + half.x or absf(at.y - spawn.y) < corridor + half.y:
+	if preset.infinite and not preset.boss:
+		if route_distance(preset, at) < maxf(58.0, corridor) + half.length():
+			return false
+		var safe_center := bounds.get_center()
+		if at.distance_to(safe_center) < 112.0 + half.length():
+			return false
+	elif absf(at.x - spawn.x) < corridor + half.x or absf(at.y - spawn.y) < corridor + half.y:
 		return false
 	if at.distance_to(spawn) < 105.0 + half.length():
 		return false
-	if not preset.boss:
+	if not preset.boss and not preset.infinite:
 		var portal := preset.portal_position(bounds)
 		var path := Geometry2D.get_closest_point_to_segment(at, spawn, portal)
 		if at.distance_to(portal) < 82.0 + half.length() or at.distance_to(path) < corridor + half.length():
@@ -194,6 +211,19 @@ static func _fits(item: Dictionary, preset: Preset, bounds: Rect2, spawn: Vector
 		if occupied.intersects(Rect2(other.position - other.collision * 0.5, other.collision).grow(padding)):
 			return false
 	return true
+
+static func route_distance(preset: Preset, at: Vector2) -> float:
+	var extent := Vector2(preset.chunk_size)
+	var theme := String(preset.theme_id)
+	if theme.begins_with("manor") or theme.begins_with("capital"):
+		var block := extent * 0.5
+		return minf(absf(at.x - roundf(at.x / block.x) * block.x), absf(at.y - roundf(at.y / block.y) * block.y))
+	if theme.begins_with("pilgrimage"):
+		return absf(at.x - (floorf(at.x / extent.x) + 0.5) * extent.x - sin(at.y / 850.0) * 130.0)
+	var bend := 110.0 if theme.begins_with("trade") else 65.0
+	var road_y := (floorf(at.y / extent.y) + 0.5) * extent.y + sin(at.x / 650.0) * bend
+	var road_x := (floorf(at.x / extent.x) + 0.5) * extent.x
+	return minf(absf(at.y - road_y), absf(at.x - road_x))
 
 static func _failed(message: String) -> Dictionary:
 	return {"tiles": [], "props": [], "error": message}

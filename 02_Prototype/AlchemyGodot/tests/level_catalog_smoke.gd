@@ -24,8 +24,8 @@ func _run() -> void:
 		quit(1)
 		return
 	check(catalog.validation_errors().is_empty(), "现行总表校验通过：%s" % catalog.validation_errors())
-	check(catalog.entries.size() == 3, "只登记村庄、首关、Boss 三个实际关卡")
-	check(catalog.selectable_levels().size() == 1, "仅首关可从村庄选择")
+	check(catalog.entries.size() == 11, "登记村庄、五个普通场和五个独立 Boss 场")
+	check(catalog.selectable_levels().size() == 5, "五关均可从村庄选择")
 	check(catalog.selectable_levels()[0].level_id == &"greyford_01", "首关稳定 ID")
 	check(catalog.find_level(&"does_not_exist") == null, "未知 ID 不回退成其他关卡")
 	for entry in catalog.entries:
@@ -71,13 +71,14 @@ func _run() -> void:
 	extra.level_id = &"test_only_second"
 	extra.sort_order = source.sort_order - 1
 	bad.entries.append(extra)
-	check(bad.selectable_levels().size() == 2, "表内新增普通关自动进入选择列表")
+	check(bad.selectable_levels().size() == 6, "表内新增普通关自动进入选择列表")
 	check(bad.selectable_levels()[0].level_id == &"test_only_second", "多关卡按排序值排列")
 	extra.enabled = false
-	check(bad.selectable_levels().size() == 1, "停用关卡不显示")
+	check(bad.selectable_levels().size() == 5, "停用关卡不显示")
 	var a := catalog.duplicate_battle_configs(source, false, "配置 A")
 	var b := catalog.duplicate_battle_configs(source, true, "配置 B")
 	check(a.layout != source.layout and b.layout != a.layout, "新建关卡的随机配置互相独立")
+	check(not b.layout.infinite, "从普通场复制 Boss 时保持有限竞技场")
 	check(a.waves != source.enemy_config and b.waves != a.waves, "新建关卡的怪物表互相独立")
 	check(a.layout.palette[0] != source.layout.palette[0], "地块数量密度素材条目独立复制")
 	check(a.waves.rows[0] != source.enemy_config.rows[0], "怪物权重行独立复制")

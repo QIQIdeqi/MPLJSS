@@ -15,6 +15,16 @@ const MAX_PLAYABLE_SIZE := Vector2i(1280, 720)
 @export var protected_half_width := 32.0
 @export var boss := false
 @export var palette: Array[Brush] = []
+@export_group("地图展开")
+## Counts and densities are evaluated independently in each standard chunk.
+@export var infinite := false:
+	set(value):
+		if infinite != value:
+			infinite = value
+			emit_changed()
+@export var theme_id: StringName = &"greyford"
+@export var route_texture: Texture2D
+@export var chunk_size := Vector2i(1280, 720)
 @export_group("战斗边界（像素）")
 @export var playable_size := Vector2i(DEFAULT_PLAYABLE_BOUNDS.size):
 	set(value):

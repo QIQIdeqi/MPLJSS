@@ -52,6 +52,12 @@ var reaction_facing := 0
 var hurt_left := 0.0
 var dying := false
 var death_tween: Tween
+var damage_multiplier := 1.0
+var speed_multiplier := 1.0
+
+func configure_difficulty(damage: float, speed: float) -> void:
+	damage_multiplier = clampf(damage, 0.1, 1.8)
+	speed_multiplier = clampf(speed, 0.5, 1.2)
 
 func setup(enemy_kind: int, bounds: Rect2, atlas: Texture2D) -> void:
 	travel_bounds = bounds.grow(-14.0)
@@ -97,7 +103,7 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 				remaining = WINDUPS[kind]
 				velocity = Vector2.ZERO
 			else:
-				velocity = target_direction * SPEEDS[kind] * slow
+				velocity = target_direction * SPEEDS[kind] * slow * speed_multiplier
 				move_and_slide()
 				motion_time += delta
 		State.WINDUP:
@@ -109,13 +115,13 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 				match kind:
 					Kind.SKELETON:
 						if distance <= SWING_RADIUS and aim.dot(target_direction) >= cos(SWING_HALF_ANGLE) and clear_path(player_pos):
-							hurt.call(DAMAGE, aim)
+							hurt.call(DAMAGE * damage_multiplier, aim)
 					Kind.SPIDER:
-						fire_web.call(global_position, aim)
+						emit_web(fire_web, global_position)
 					Kind.MUSHROOM:
-						fire_web.call(locked_target, aim, kind)
+						emit_web(fire_web, locked_target)
 					Kind.WATER_SPIRIT:
-						fire_web.call(global_position, aim, kind)
+						emit_web(fire_web, global_position)
 		State.STRIKE:
 			if DASH_SPEEDS[kind] > 0.0:
 				var start := global_position
@@ -129,12 +135,12 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 						remaining = 0.0
 				if kind == Kind.SLIME:
 					if remaining <= 0.0 and global_position.distance_squared_to(player_pos) <= SLIME_RADIUS * SLIME_RADIUS and clear_path(player_pos):
-						hurt.call(DAMAGE, aim)
+						hurt.call(DAMAGE * damage_multiplier, aim)
 				elif not tagged:
 					var nearest := Geometry2D.get_closest_point_to_segment(player_pos, start, global_position)
 					if nearest.distance_squared_to(player_pos) <= 24.0 * 24.0 and (kind == Kind.BAT or clear_path(player_pos)):
 						tagged = true
-						hurt.call(DAMAGE, aim)
+						hurt.call(DAMAGE * damage_multiplier, aim)
 			if remaining <= 0.0:
 				state = State.RECOVER
 				remaining = RECOVERY[kind]
@@ -144,6 +150,13 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 				state = State.CHASE
 	update_art()
 	queue_redraw()
+
+func emit_web(receiver: Callable, at: Vector2) -> void:
+	# Existing animation checks and detached monster previews use the original 3-argument callback.
+	if receiver.get_argument_count() >= 4:
+		receiver.call(at, aim, kind, damage_multiplier)
+	else:
+		receiver.call(at, aim, kind)
 
 func clear_path(goal: Vector2) -> bool:
 	if global_position.is_equal_approx(goal):

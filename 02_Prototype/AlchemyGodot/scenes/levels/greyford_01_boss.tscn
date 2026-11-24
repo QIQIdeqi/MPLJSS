@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3]
 [ext_resource type="PackedScene" path="res://scenes/battle.tscn" id="base"]
-[ext_resource type="Resource" path="res://levels/boss.tres" id="layout"]
+[ext_resource type="Resource" path="res://levels/greyford_01_boss_layout.tres" id="layout"]
 [ext_resource type="Resource" path="res://levels/greyford_01_boss_enemies.tres" id="waves"]
 [node name="Greyford01Boss" instance=ExtResource("base")]
 level_id = &"greyford_01_boss"

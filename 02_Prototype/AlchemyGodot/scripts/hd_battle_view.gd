@@ -7,6 +7,7 @@ var world_view: WORLD
 var source_viewport: Viewport
 var previous_canvas_mask: int
 var field: Node2D
+var effects_capture: SubViewport
 
 func attach(source: Node2D) -> void:
 	field = source
@@ -16,9 +17,12 @@ func attach(source: Node2D) -> void:
 	# Share the physics canvas with a capture viewport, but keep the HUD on the game window.
 	field.visibility_layer = GAMEPLAY_CANVAS_LAYER
 	source_viewport.canvas_cull_mask &= ~(GAMEPLAY_CANVAS_LAYER | WORLD.SOURCE_HIDDEN_LAYER)
-	tag_world_tree(field.get_node("Actors"))
+	# Boss warning nodes already exist before the HD view attaches after a scene transition.
+	for child in field.get_children():
+		if child is Node2D:
+			tag_world_tree(child)
 	get_tree().node_added.connect(tag_added_world_item)
-	var effects_capture := SubViewport.new()
+	effects_capture = SubViewport.new()
 	effects_capture.size = Vector2i(field.MAP.size)
 	effects_capture.disable_3d = true
 	effects_capture.transparent_bg = true
@@ -64,6 +68,8 @@ func screen_at(point: Vector2) -> Vector2:
 
 func _process(delta: float) -> void:
 	if is_instance_valid(world_view):
+		if field.is_infinite_field():
+			effects_capture.canvas_transform = Transform2D(0.0, field.MAP.size * 0.5 - field.player.position)
 		world_view.update_view(delta)
 
 func _unhandled_key_input(event: InputEvent) -> void:

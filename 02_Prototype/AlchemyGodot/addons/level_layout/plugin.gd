@@ -18,6 +18,7 @@ var settings: Preset
 var seed_input: SpinBox
 var width_input: SpinBox
 var height_input: SpinBox
+var infinite_toggle: CheckButton
 var brushes: OptionButton
 var status: Label
 
@@ -43,6 +44,12 @@ func _enter_tree() -> void:
 
 	var area := HBoxContainer.new()
 	dock.add_child(area)
+	infinite_toggle = CheckButton.new()
+	infinite_toggle.text = "无限地图"
+	infinite_toggle.name = "InfiniteMap"
+	infinite_toggle.tooltip_text = "普通关按标准区块连续展开；数量和密度按每块计算。Boss 保持独立有限竞技场。"
+	infinite_toggle.toggled.connect(_update_infinite)
+	area.add_child(infinite_toggle)
 	width_input = _size_input(area, "区域宽度", Preset.MIN_PLAYABLE_SIZE.x, Preset.MAX_PLAYABLE_SIZE.x)
 	height_input = _size_input(area, "区域高度", Preset.MIN_PLAYABLE_SIZE.y, Preset.MAX_PLAYABLE_SIZE.y)
 	width_input.name = "PlayableWidth"
@@ -135,6 +142,7 @@ func _catalog_selected(entry: Resource) -> void:
 		preview.queue_redraw()
 		width_input.editable = false
 		height_input.editable = false
+		infinite_toggle.disabled = true
 		stages.select(-1)
 		enemy_dock.set_table(null)
 		status.text = "村庄使用独立手工场景。请在“关卡总表”点击“打开场景”；随机预览仅用于战斗关卡。"
@@ -172,15 +180,27 @@ func _apply_entry(entry: Resource) -> void:
 	_reroll(0)
 
 func _update_playable_size(_value: float) -> void:
-	if settings == null:
+	if settings == null or settings.infinite:
 		return
 	settings.playable_size = Vector2i(int(width_input.value), int(height_input.value))
 
+func _update_infinite(enabled: bool) -> void:
+	if settings == null or settings.boss:
+		return
+	settings.infinite = enabled
+
 func _sync_size_inputs() -> void:
-	if int(width_input.value) != settings.playable_size.x:
-		width_input.set_value_no_signal(settings.playable_size.x)
-	if int(height_input.value) != settings.playable_size.y:
-		height_input.set_value_no_signal(settings.playable_size.y)
+	infinite_toggle.disabled = settings.boss
+	infinite_toggle.set_pressed_no_signal(settings.infinite and not settings.boss)
+	var extent := settings.chunk_size if settings.infinite and not settings.boss else settings.playable_size
+	width_input.editable = not settings.infinite or settings.boss
+	height_input.editable = not settings.infinite or settings.boss
+	width_input.tooltip_text = "无限地图的标准区块宽度；在配置资源 Chunk Size 调整。次数和密度都按每个标准区块计算。" if settings.infinite else "有限战斗区域宽度，红线实时更新。"
+	height_input.tooltip_text = "无限地图的标准区块高度；这里不表示地图总高度。" if settings.infinite else "有限战斗区域高度，红线实时更新。"
+	if int(width_input.value) != extent.x:
+		width_input.set_value_no_signal(extent.x)
+	if int(height_input.value) != extent.y:
+		height_input.set_value_no_signal(extent.y)
 
 func _on_preset_changed() -> void:
 	_sync_size_inputs()
@@ -224,6 +244,8 @@ func _refresh() -> bool:
 	preview.layout = result
 	preview.queue_redraw()
 	status.text = "Seed %d · 地面 %d 格 · 物件 %d 个" % [settings.preview_seed, result.tiles.size(), result.props.size()]
+	if settings.infinite and not settings.boss:
+		status.text += " · 无限地图：这里只预览 1 块 %d×%d px，次数/密度按每块计算" % [settings.chunk_size.x, settings.chunk_size.y]
 	return true
 
 func _paint_cell(cell: int, unlock: bool) -> void:

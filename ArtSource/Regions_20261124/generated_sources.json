@@ -1,0 +1,92 @@
+[
+  {
+    "id": "greyford_01",
+    "name": "ground",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-b2a992f8-2dcd-4a6c-864a-cc4446a66c0a.png",
+    "prompt": "Use case: stylized-concept. Create a single 1:1 square seamless game ground texture, no perspective objects. Painterly pixel-art HD2D RPG, warm green meadow with fine short grass, subtle worn ochre soil flecks, muted medium contrast so enemies read clearly. Top-down flat texture, continuous and tileable on all four edges, uniform details and no center focal area, no shadows, no border, no text. Production game texture for Greyford outskirts. No scenery, characters or sky."
+  },
+  {
+    "id": "greyford_01",
+    "name": "prop_a",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-a10ad1dd-336c-4cfe-bcbf-3227bea0efb9.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a small neatly stacked bundle of warm golden hay, two bound rectangular hay bales with a few loose stalks at their base; countryside harvest clutter, readable low silhouette. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, warm muted natural palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible and centered with generous transparent margin, feet all at same bottom grounding line. Soft neutral light from upper left, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "greyford_01",
+    "name": "prop_b",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-45342308-1e8d-4db1-94d8-549650c3d286.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a weathered rustic wooden direction sign on one sturdy post, two short arrow-shaped planks pointing opposite ways, a tiny bunch of green climbing leaves at base; absolutely no lettering. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, warm muted natural palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible and centered with generous transparent margin, feet all at same bottom grounding line. Soft neutral light from upper left, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "trade_road_02",
+    "name": "ground",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-f149b7fc-6242-4f73-8b7d-b7308b426deb.png",
+    "prompt": "Use case: stylized-concept. Asset: 1:1 square production game ground tile. single seamless game ground texture: weathered pale ochre old trade-road dirt, wagon-worn compacted soil, fine grit and scattered tiny gravel, desaturated yellow-brown, no large cracks or focal objects. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixel details, flat top-down surface, medium small uniform texture scale. Must tile seamlessly on all four edges. Fill full frame. No perspective scene, no border, no sky, no words, no characters, no cast shadows."
+  },
+  {
+    "id": "trade_road_02",
+    "name": "prop_a",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-aec50dcc-ae59-49e0-910c-33839bf663b5.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a short freestanding broken old village stone wall section with exposed earth-brown masonry, a few loose stones at the two ends and subtle dry grass; waist-high ruined roadside obstacle, no house. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, warm muted natural palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible and centered with generous transparent margin, feet all at same bottom grounding line. Soft neutral light from upper left, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "trade_road_02",
+    "name": "prop_b",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-863125c1-420f-4459-90b1-83a1a841ad13.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a small damaged wooden two-wheeled handcart, one tilted spoke wheel, weathered grey-brown planks, an empty tilted cargo bed; coherent standing grounded feet, no goods spilling over a large ground patch. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, warm muted natural palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible and centered with generous transparent margin, feet all at same bottom grounding line. Soft neutral light from upper left, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "manor_03",
+    "name": "ground",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-5f16b5d1-c4fd-4370-8e94-dc347fe6f7e2.png",
+    "prompt": "Use case: stylized-concept. Asset: 1:1 square production game ground tile. single seamless game ground texture: aged blue-grey noble courtyard paving, small irregular rectangular stone setts with thin muted moss joints, elegant but weathered, low contrast, no ornaments or focal objects. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixel details, flat top-down surface, medium small uniform texture scale. Must tile seamlessly on all four edges. Fill full frame. No perspective scene, no border, no sky, no words, no characters, no cast shadows."
+  },
+  {
+    "id": "manor_03",
+    "name": "prop_a",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-ac2bb852-bb75-4648-8208-07207af57890.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a single neat low rectangular trimmed boxwood hedge, rounded green leaf clusters on top, narrow visible roots and tiny stone edging at its base; small elegant noble garden obstacle, no fence. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, warm muted natural palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible and centered with generous transparent margin, feet all at same bottom grounding line. Soft neutral light from upper left, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "manor_03",
+    "name": "prop_b",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-3edc46d6-b288-41d5-a8dd-673653bbda00.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: an elegant small weathered grey stone garden planter on a short square pedestal, bowl-shaped carved rim holding restrained dusty lavender flowers and green leaves; noble courtyard object, not a statue. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, muted medium-contrast palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible centered with generous transparent margin, feet aligned at bottom grounding line. Soft neutral illumination, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "pilgrimage_04",
+    "name": "ground",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-673386cf-d951-4791-ba2e-a04d3c00144b.png",
+    "prompt": "Use case: stylized-concept. Asset: 1:1 square production game ground tile. single seamless game ground texture: cold grey mountain pilgrimage path, flat worn limestone gravel embedded in dusty blue-grey soil, very subtle moss, modest desaturated texture, no focal stones. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixel details, flat top-down surface, medium small uniform texture scale. Must tile seamlessly on all four edges. Fill full frame. No perspective scene, no border, no sky, no words, no characters, no cast shadows."
+  },
+  {
+    "id": "pilgrimage_04",
+    "name": "prop_a",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-ed9c7ab6-b4f8-40d0-adbd-67434f644e6e.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: an old upright pilgrimage waystone, narrow roughly hewn cool grey standing stone on a squat foot, simple faint turquoise carved abstract rune, moss only near base; no letters or real religious symbol. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, muted medium-contrast palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible centered with generous transparent margin, feet aligned at bottom grounding line. Soft neutral illumination, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "pilgrimage_04",
+    "name": "prop_b",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-137569ad-0624-49c9-846e-3ef75b97ab93.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a small roadside stone lantern shrine, squat grey square stone pedestal with a warm amber glowing hollow niche under a simple pitched stone cap, a few mossy edges; no real religious imagery. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, muted medium-contrast palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible centered with generous transparent margin, feet aligned at bottom grounding line. Soft neutral illumination, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "capital_05",
+    "name": "ground",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-302b0e5a-5df8-4ee3-afb9-998a9c4e46af.png",
+    "prompt": "Use case: stylized-concept. Asset: 1:1 square production game ground tile. single seamless game ground texture: soot-dark blue charcoal cobblestone lower-city paving, uneven small old stone setts, subtle grime and cool grey highlights, no focal cracks, no objects. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixel details, flat top-down surface, medium small uniform texture scale. Must tile seamlessly on all four edges. Fill full frame. No perspective scene, no border, no sky, no words, no characters, no cast shadows."
+  },
+  {
+    "id": "capital_05",
+    "name": "prop_a",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-b495a226-2c47-41ef-93ba-84fc5e5cbd31.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a tall slender old wrought iron street lantern on one dark iron post, single hanging enclosed lantern with muted warm amber glow, sturdy small square foot; worn fantasy lower-city civic fixture. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, muted medium-contrast palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible centered with generous transparent margin, feet aligned at bottom grounding line. Soft neutral illumination, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  },
+  {
+    "id": "capital_05",
+    "name": "prop_b",
+    "source": "C:\\Users\\60550\\.codex\\generated_images\\01a20dfa-5e6d-7bc1-94ec-662da736d319\\exec-d3d472d4-3980-407c-9804-09f086ff2ab9.png",
+    "prompt": "Use case: stylized-concept. Create one isolated production 2D game object sprite: a short freestanding lower-city ruined red-brown brick wall corner, cracked brick courses with a few loose bricks at base and dark worn stone footing, low enough to see over; no building facade. Painterly pixel-art HD2D fantasy RPG, crisp clustered pixels, muted medium-contrast palette, thin dark contour and rich small pixel details. Fixed three-quarter slightly top-down view, camera about 40 degrees above ground. Entire object fully visible centered with generous transparent margin, feet aligned at bottom grounding line. Soft neutral illumination, NO cast shadow, NO flat floor rectangle, NO scenery, NO text, NO character. Real transparent background. Square canvas."
+  }
+]

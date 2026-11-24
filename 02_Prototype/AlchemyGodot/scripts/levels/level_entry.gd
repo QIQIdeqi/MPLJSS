@@ -18,6 +18,9 @@ enum Kind { VILLAGE, NORMAL, BOSS }
 @export var layout: Resource
 @export var enemy_config: Resource
 @export var spawn_position := Vector2(640, 430)
+@export_group("Boss 玩法")
+@export_enum("冲锋与扇射", "织网与落网", "孢子分区", "俯冲与转向", "冲锋与分区落击") var boss_style := 0
+@export var boss_name := "腐化之源"
 
 func validation_error() -> String:
 	if String(level_id).strip_edges().is_empty():
@@ -30,11 +33,15 @@ func validation_error() -> String:
 		return "%s 缺少有效的场景文件" % level_id
 	if selectable and kind != Kind.NORMAL:
 		return "%s：只有普通战斗可从村庄出战，Boss 保留局内自愿挑战" % level_id
+	if kind == Kind.BOSS and (boss_style < 0 or boss_style > 4 or boss_name.strip_edges().is_empty()):
+		return "%s 缺少有效的 Boss 名称或玩法" % level_id
 	if kind != Kind.VILLAGE:
 		if layout == null or not layout.has_method("playable_bounds"):
 			return "%s 缺少地块与物件随机配置" % level_id
 		if bool(layout.get("boss")) != (kind == Kind.BOSS):
 			return "%s 的随机配置类型与关卡类型不一致" % level_id
+		if kind == Kind.BOSS and bool(layout.get("infinite")):
+			return "%s：Boss 使用独立有限竞技场，请关闭无限地图" % level_id
 		if not layout.playable_bounds().has_point(spawn_position):
 			return "%s 的出生点不在可行走区域内" % level_id
 		if enemy_config == null or not enemy_config.has_method("validation_error"):

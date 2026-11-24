@@ -6,3 +6,7 @@ extends Resource
 @export var display_name := ""
 @export var atlas: Texture2D
 @export var wave_weights: PackedFloat32Array
+@export_group("战斗数值（测试默认）")
+@export_range(0.1, 500.0, 0.1) var base_hp := 3.0
+@export_range(0.1, 3.0, 0.05) var damage_multiplier := 1.0
+@export_range(0.5, 1.2, 0.01) var speed_multiplier := 1.0

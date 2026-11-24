@@ -36,6 +36,7 @@ var battle_focus := Vector3.ZERO
 var view_angle := ViewAngle.MID
 var boundary: MeshInstance3D
 var boundary_bounds := Rect2()
+var ground_effect_overlay: MeshInstance3D
 var tracked_projectiles: Array[Dictionary] = []
 var damage_numbers: Array[Label3D] = []
 
@@ -70,6 +71,7 @@ func setup(source: Node2D, canvas_texture: Texture2D) -> void:
 	overlay.position = world_at(field.MAP.get_center()) + Vector3.UP * 0.035
 	overlay.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(overlay)
+	ground_effect_overlay = overlay
 	update_view(0.0)
 
 func update_boundary(bounds: Rect2) -> void:
@@ -120,11 +122,17 @@ func clear_skill_fx() -> void:
 	damage_numbers.clear()
 
 func rebuild() -> void:
-	clear_skill_fx()
+	if not field.is_infinite_field():
+		clear_skill_fx()
 	for prop in field.props:
 		prop.visibility_layer = SOURCE_HIDDEN_LAYER
-	landscape.rebuild(field.tiles, field.props, field.MAP)
-	update_boundary(field.player.movement_bounds)
+	if field.is_infinite_field():
+		landscape.sync_chunks(field.infinite_layout.active_chunks, field.props_by_chunk())
+		if boundary:
+			boundary.hide()
+	else:
+		landscape.rebuild(field.tiles, field.props, field.MAP)
+		update_boundary(field.player.movement_bounds)
 
 func screen_at(point: Vector2) -> Vector2:
 	return camera.unproject_position(world_at(point))
@@ -134,6 +142,8 @@ func cycle_view_angle() -> void:
 
 func update_view(delta: float) -> void:
 	var player_at := world_at(field.player.position)
+	if field.is_infinite_field() and ground_effect_overlay:
+		ground_effect_overlay.position = player_at + Vector3.UP * 0.035
 	var player_focus := player_at + Vector3.UP * 0.39
 	var boss_focus := player_focus
 	var goal := player_focus

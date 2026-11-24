@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>冒牌炼金术士 · 五关玩法预览</title>
+<style>
+:root{color-scheme:dark;--gold:#d7b77a;--muted:#acaa94;--accent:#a8bc77;--line:#756445;--ink:#e8e4d4}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body{background:radial-gradient(ellipse at 30% 10%,#33372c 0,#171d19 52%,#101512 100%);color:var(--ink);font:14px/1.45 "Microsoft YaHei","PingFang SC",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #f3d592;outline-offset:3px}button:disabled{cursor:default;opacity:.48}
+.app{height:100dvh;min-height:580px;min-width:1060px;display:grid;grid-template-rows:54px 78px minmax(0,1fr) 150px 22px;gap:12px;padding:16px 22px}
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;gap:12px;align-items:center}.crest{width:46px;height:46px;border:1px solid #bfa268;border-radius:50%;display:grid;place-items:center;color:#e5c88d;background:linear-gradient(140deg,#484333,#171c18);box-shadow:inset 0 0 0 4px #22291f}
+.brand h1{font-family:Georgia,"Microsoft YaHei",serif;margin:0;font-weight:500;font-size:24px;letter-spacing:2px}.eyebrow{font-size:10px;letter-spacing:3px;color:#a0a991;margin-bottom:2px}.mast-meta{display:flex;gap:12px;align-items:center}.pill{padding:5px 10px;font-size:12px;border:1px solid #7d6b44;color:#d4bc8a;border-radius:4px;background:#252b2180}.muted{color:var(--muted)}.small{font-size:12px}.seed-wrap{display:flex;align-items:center;gap:8px;color:#adae99}
+input[type=number]{background:#111b16;border:1px solid #6f6c4b;border-radius:4px;width:94px;padding:7px 8px;color:#f0dfb8;font-family:Consolas,monospace}
+.soft-btn{border:1px solid #74674a;background:linear-gradient(#343b2d,#232a22);border-radius:5px;padding:7px 12px;font-size:13px;white-space:nowrap}.soft-btn:hover:not(:disabled){background:#424b35;border-color:#c8ae78}.gold-btn{background:linear-gradient(#bc9859,#806132);color:#171b13;border:1px solid #e6c786;font-weight:600}.gold-btn:hover:not(:disabled){background:linear-gradient(#dfbd7c,#9e7d47)}
+.levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.level-card{position:relative;display:flex;text-align:left;align-items:center;gap:11px;padding:9px 13px;border:1px solid #686149;border-radius:7px;background:linear-gradient(120deg,#252d24,#1c241e);overflow:hidden;min-width:0}
+.level-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--card-accent),transparent 82%);opacity:.08;pointer-events:none}.level-card.active{border-color:#d5b578;box-shadow:inset 0 0 0 1px #b3945660,0 0 14px #ac96600e;background:linear-gradient(120deg,#39422d,#242b20)}
+.level-card:hover{border-color:#b6a477}.level-number{font-family:Georgia,serif;font-size:25px;color:#d4ba85;min-width:29px}.level-card img{width:45px;height:46px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 3px #0006)}.level-copy{min-width:0}.level-card strong{display:block;font-size:15px;font-weight:500;color:#e5e2cf}.level-card small{display:block;color:#9fa68e;font-size:11px;margin-top:3px;white-space:nowrap}.active-dot{position:absolute;right:8px;top:7px;color:#dec38b;font-size:10px}.level-card:not(.active) .active-dot{display:none}
+.middle{display:grid;grid-template-columns:minmax(0,1fr) 324px;gap:14px;min-height:0}
+.ornate{border:1px solid #927b50;border-radius:9px;box-shadow:inset 0 0 0 3px #151d17,inset 0 0 0 4px #67593855,0 7px 24px #0004;background:#1b241e;position:relative}
+.ornate:after{content:"";position:absolute;inset:0;pointer-events:none;border:12px solid transparent;border-image-source:var(--panel-art);border-image-slice:28;border-image-repeat:stretch;z-index:3;opacity:.85}
+.detail-panel:before,.timeline:before{content:"";position:absolute;inset:4px;background-image:var(--grain-art);background-size:140px;opacity:.24;pointer-events:none}
+.detail-scroll,.timeline>div{position:relative;z-index:1}.timeline>div{min-height:0}.level-card .boss-mini{color:#bfa77d;font-size:10px;margin-top:2px}
+.stage-panel{display:grid;grid-template-rows:44px minmax(0,1fr);overflow:hidden}
+.stage-header{display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid #77654280;background:linear-gradient(90deg,#303729,#20291f);gap:12px}.stage-title{font-size:14px;color:#decda6;white-space:nowrap}.stage-title em{font-style:normal;color:#a4b291;font-size:11px;margin-left:9px}
+.toggles{display:flex;gap:12px;align-items:center;font-size:12px;color:#c3c5ad;white-space:nowrap}.toggles label{display:flex;align-items:center;gap:4px;cursor:pointer}input[type=checkbox]{accent-color:#cfb277}
+.map-wrap{position:relative;min-height:0;overflow:hidden;border-radius:0 0 8px 8px;background:#44543a}
+#world{width:100%;height:100%;display:block;outline:none}.map-vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 60px 15px #07100966}
+.map-top{position:absolute;top:14px;left:16px;display:flex;gap:7px;align-items:center;pointer-events:none}.map-tag{background:#122018df;border:1px solid #97a07166;padding:5px 9px;border-radius:4px;font-size:12px;color:#e6e5c9;backdrop-filter:blur(6px)}
+.map-top .live{color:#cfdbb4}.map-top .live:before{content:"";display:inline-block;width:6px;height:6px;background:#bfd98c;border-radius:50%;margin-right:7px;box-shadow:0 0 7px #afd37d88}
+.map-bottom{position:absolute;left:16px;bottom:14px;display:flex;gap:10px;align-items:end;pointer-events:none}
+.field-stats{background:#112018eb;border:1px solid #8e9b6a77;border-radius:6px;padding:9px 13px;min-width:224px;box-shadow:0 3px 14px #0003}.field-stats strong{display:block;font-size:13px;font-weight:500;color:#efe5bf}.field-stats small{display:block;color:#aab99a;font-size:11px;margin-top:3px}
+.navigation{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;align-items:end;gap:7px}.navigation .soft-btn{box-shadow:0 4px 14px #07120866}
+.portal-note{max-width:250px;background:#122018df;border:1px solid #a29b6870;border-radius:4px;padding:5px 8px;color:#e6d99c;font-size:11px}
+.dpad{position:absolute;right:14px;bottom:14px;display:grid;grid-template-columns:29px 29px 29px;grid-template-rows:29px 29px;gap:3px}.dpad button{border:1px solid #b0ad7970;border-radius:4px;background:#14241bdc;color:#dddfba;line-height:1;padding:0;font-size:16px;touch-action:none}.dpad button:hover,.dpad button.held{background:#586e40}.dpad .up{grid-column:2}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}
+.key-hint{color:#d8dec3;background:#142218ca;padding:5px 8px;border-radius:4px;font-size:11px;max-width:240px}.key{border:1px solid #b0b48a88;border-radius:3px;padding:0 3px;font:10px Consolas,monospace;color:#eee4bb}
+.detail-panel{min-height:0;overflow:hidden;background:linear-gradient(150deg,#32372b,#1e271f 58%,#17221b)}.detail-scroll{height:100%;overflow-y:auto;padding:19px 20px;scrollbar-width:thin;scrollbar-color:#887951 #20281f}
+.chapter-label{color:#cbb47e;letter-spacing:2px;font-size:10px}.detail-panel h2{font:500 24px/1.25 Georgia,"Microsoft YaHei",serif;margin:6px 0 6px;color:#eee6cc}.region-desc{font-size:12px;color:#b0baa2;margin:0 0 15px}.section-line{display:flex;align-items:center;gap:8px;margin:12px 0 7px;color:#ceb984;font-size:11px;letter-spacing:1px}.section-line:after{content:"";height:1px;background:#85754755;flex:1}.detail-panel p{margin:0;font-size:13px;line-height:1.65;color:#d1d5bc}
+.enemy-strip{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.enemy-chip{display:flex;align-items:center;background:#121d17a3;border:1px solid #72795155;border-radius:5px;padding:4px 6px;font-size:11px;color:#d8d8bd}.enemy-chip img{height:28px;width:28px;object-fit:contain;image-rendering:pixelated;margin-right:4px}
+.event-card{border:1px solid #7d875656;background:#18271c;padding:9px 11px;border-radius:5px;margin-top:7px}.event-card strong{display:block;color:#c5d197;font-weight:500;font-size:12px;margin-bottom:3px}.event-card p{font-size:11px;color:#afbca1}.event-label{font-size:10px;color:#9eb17f;margin-left:6px;font-weight:400}
+.boss-card{display:flex;gap:11px;align-items:center;background:linear-gradient(120deg,#3d3027aa,#1b211c);border:1px solid #9e7d505c;border-radius:6px;padding:10px 9px;margin-top:9px}.boss-card img{height:68px;width:63px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 6px #0008)}.boss-name{font-size:15px;color:#e5cf9b;display:block}.boss-badge{font-size:9px;color:#b9a88a;display:block;margin:2px 0 5px}.boss-moves{font-size:10px;color:#c8c8ad;line-height:1.7}.boss-rule{font-size:10px;color:#b5bda4;margin-top:7px}
+.timeline{display:grid;grid-template-columns:238px minmax(0,1fr) 252px;align-items:stretch;gap:18px;padding:13px 17px;background:linear-gradient(100deg,#292f25,#1a241d)}
+.phase-summary{display:flex;flex-direction:column;justify-content:center}.phase-eyebrow{font-size:10px;color:#a7af96;letter-spacing:2px}.time-big{font:32px/1 Georgia,serif;letter-spacing:2px;color:#ead9a5;margin:4px 0 8px;display:flex;align-items:baseline;gap:10px}.time-big span{font:12px "Microsoft YaHei",sans-serif;letter-spacing:0;color:#c2c59f}
+.playback{display:flex;align-items:center;gap:7px}.playback .soft-btn{padding:5px 9px;min-width:58px;font-size:12px}.playback select{background:#1c291f;border:1px solid #776d4a;color:#d7d8bd;border-radius:4px;font-size:12px;padding:5px 4px}.playback small{font-size:10px;color:#99a78d}
+.curve-area{display:grid;grid-template-rows:17px minmax(0,1fr) 16px;min-width:0;min-height:0}.curve-labels{display:flex;justify-content:space-between;font-size:10px;color:#a9b28e}.curve-labels b{font-weight:500;color:#d2c89d}.curve-main{position:relative;min-height:0;overflow:hidden}#curve{position:absolute;inset:0;width:100%;height:100%;display:block}#time{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0;touch-action:pan-x}.tick-row{display:flex;justify-content:space-between;color:#89997f;font:10px Consolas,monospace}
+.phase-detail{border-left:1px solid #8a7b4a50;padding-left:16px;display:flex;flex-direction:column;justify-content:center}.phase-detail strong{color:#d9c38b;font-size:14px;font-weight:500}.phase-detail p{font-size:11px;color:#adb59d;margin:6px 0 7px;line-height:1.6}.phase-stats{font-size:10px;color:#7f9c76}.footer{display:flex;justify-content:space-between;color:#80917c;font-size:10px;letter-spacing:.3px}.footer .legend{display:flex;gap:15px}.legend i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;background:#d5b76d}.legend i.rest{background:#90b47d}.legend i.peak{background:#d3936c}
+#toast{position:fixed;bottom:35px;left:50%;transform:translateX(-50%);background:#17291df5;border:1px solid #c6ad70;padding:10px 20px;border-radius:6px;box-shadow:0 4px 25px #0007;color:#e2d7ad;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}#toast.show{opacity:1}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#223127;color:#d1bd8a;font-size:16px;z-index:2}
+@media(max-width:1400px){.app{padding:10px 14px;gap:9px;grid-template-rows:48px 68px minmax(0,1fr) 128px 18px}.brand h1{font-size:21px}.brand .eyebrow{font-size:9px}.crest{width:39px;height:39px}.mast-meta{gap:8px}.level-card{padding:7px 9px;gap:6px}.level-card img{width:36px;height:40px}.level-card strong{font-size:13px}.level-card small{font-size:10px}.level-number{font-size:21px;min-width:25px}.middle{grid-template-columns:minmax(0,1fr) 290px;gap:10px}.stage-header{padding:0 10px;gap:5px}.stage-title em{display:none}.toggles{gap:8px;font-size:11px}.detail-scroll{padding:13px 15px}.detail-panel h2{font-size:21px}.region-desc{margin-bottom:10px}.section-line{margin-top:9px}.detail-panel p{font-size:12px}.boss-card{padding:7px}.boss-card img{height:52px;width:49px}.timeline{grid-template-columns:205px minmax(0,1fr) 218px;gap:13px;padding:10px 13px}.time-big{font-size:28px}.phase-detail{padding-left:12px}.field-stats{padding:7px 9px;min-width:210px}.key-hint{max-width:190px;font-size:10px}.map-bottom{gap:7px;left:10px;bottom:10px}.map-top{left:10px;top:10px}.navigation{right:10px;top:10px}.mast-meta>span.small{display:none}}
+@media(max-height:760px){.region-desc{font-size:11px;line-height:1.5}.detail-scroll{padding-top:11px;padding-bottom:11px}.detail-panel h2{font-size:20px}.section-line{margin:8px 0 4px}.enemy-strip{margin:5px 0}.enemy-chip img{height:23px;width:23px}.event-card{padding:6px 9px}.event-card p{font-size:10px}.boss-card{padding:6px 8px;margin-top:6px}.boss-card img{height:46px}.boss-rule{font-size:9px;margin-top:4px}.map-tag{font-size:11px}.key-hint{display:none}.phase-detail p{font-size:10px}}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+ <header class="masthead">
+  <div class="brand"><div class="crest" aria-hidden="true"><svg width="25" height="28" viewBox="0 0 26 28" fill="none"><path d="M9 2h8M10 2v8L3 23c-1 2 0 3 3 3h14c3 0 4-1 3-3l-7-13V2M7 18h13M10 21h1M16 23h1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="m5 12 2 1m14-5 2-1" stroke="currentColor"/></svg></div><div><div class="eyebrow">冒牌炼金术士 · THE ALCHEMIST'S JOURNEY</div><h1>五关玩法预览</h1></div></div>
+  <div class="mast-meta"><span class="small muted">无限探索 · 起伏成长 · 自由挑战</span><span class="pill">玩法方案预览</span><label class="seed-wrap small">种子 <input id="seed" type="number" min="0" max="2147483647" value="77" aria-label="地图随机种子"></label><button class="soft-btn" id="reroll">↻ 换一局</button></div>
+ </header>
+ <nav class="levels" id="levels" aria-label="五个关卡"></nav>
+ <div class="middle">
+  <section class="stage-panel ornate" aria-label="无限地图交互演示">
+   <div class="stage-header"><span class="stage-title" id="stage-title">格雷弗德外围 <em>聚怪 · 绕行 · 回收</em></span><div class="toggles"><label><input id="show-chunks" type="checkbox">区块线</label><label><input id="show-routes" type="checkbox">主通路</label><label><input id="show-safe" type="checkbox">保护区</label><button class="soft-btn" id="home">回到起点</button></div></div>
+   <div class="map-wrap" id="map-wrap"><canvas id="world" tabindex="0" aria-label="WASD或方向键移动莉莉塔，探索无限地图"></canvas><div class="map-vignette"></div><div class="loading" id="loading">正在铺开这段旅程…</div>
+    <div class="map-top"><span class="map-tag live" id="mode-tag">普通场 · 无限延展</span><span class="map-tag" id="region-tag">草地与疏林</span></div>
+    <div class="navigation"><button id="boss-enter" class="soft-btn gold-btn" disabled>5:00 后可挑战 Boss</button><span id="portal-note" class="portal-note" hidden></span></div>
+    <div class="map-bottom"><div class="field-stats"><strong id="chunk-stat">当前区块 (0, 0) · 橡树 — 棵</strong><small id="chunk-unit">每块 6–10 棵 · 1280×720 px</small><small id="stream-stat">附近区域随移动展开，回访保持原样</small></div><div class="key-hint"><span class="key">W A S D</span> / 方向键移动<br>往远处走，看看新区域</div></div>
+    <div class="dpad" aria-label="点击方向移动"><button class="up" data-dir="up" aria-label="向上移动">↑</button><button class="left" data-dir="left" aria-label="向左移动">←</button><button class="down" data-dir="down" aria-label="向下移动">↓</button><button class="right" data-dir="right" aria-label="向右移动">→</button></div>
+   </div>
+  </section>
+  <aside class="detail-panel ornate"><div class="detail-scroll">
+   <div class="chapter-label" id="chapter-label">CHAPTER 01 / 05</div><h2 id="region-name">格雷弗德外围</h2><p class="region-desc" id="region-desc"></p>
+   <div class="section-line">这一关，要做什么判断</div><p id="decision"></p>
+   <div class="section-line">优先注意</div><p id="priority"></p><div class="section-line">当前阶段怪物组合</div><div class="enemy-strip" id="enemies"></div>
+   <div class="event-card"><strong><span id="event-name"></span><span class="event-label">可选事件</span></strong><p id="event-desc"></p></div>
+   <div class="section-line">Boss · 检验本关的走位</div><p id="boss-test"></p>
+   <div class="boss-card"><img id="boss-art" alt=""><div><strong class="boss-name" id="boss-name"></strong><span class="boss-badge" id="boss-badge"></span><div class="boss-moves" id="boss-moves"></div></div></div>
+   <div class="boss-rule">5分钟后自主挑战 · 可选事件不设门槛<br>普通场无限延展，Boss使用有限竞技场</div>
+  </div></aside>
+ </div>
+ <section class="timeline ornate" aria-label="战斗节奏时间轴">
+  <div class="phase-summary"><span class="phase-eyebrow">拖动时间，预览压力变化</span><div class="time-big"><b id="clock" style="font-weight:400">01:35</b><span id="phase-name">组合压力</span></div><div class="playback"><button id="play" class="soft-btn" aria-pressed="false">▶ 播放</button><select id="speed" aria-label="时间播放速度"><option value="1">1×</option><option value="10" selected>10×</option><option value="30">30×</option></select><small>至 06:30</small></div></div>
+  <div class="curve-area"><div class="curve-labels"><span>压力低 → 高</span><b>5:00 开放 Boss · 之后仍可继续成长</b></div><div class="curve-main"><canvas id="curve"></canvas><input id="time" type="range" min="0" max="390" step="1" value="95" aria-label="战斗时间（秒）"></div><div class="tick-row"><span>0:00</span><span>1:00</span><span>2:00</span><span>3:00</span><span>4:00</span><span>5:00</span><span>6:30</span></div></div>
+  <div class="phase-detail"><strong id="beat-title"></strong><p id="beat-note"></p><span class="phase-stats" id="beat-stats"></span></div>
+ </section>
+ <footer class="footer"><span>地图、怪群与危险预警为方案示意；新增关卡与首领美术尚非实机成品。</span><span class="legend"><span><i class="rest"></i>回收 / 喘息</span><span><i></i>逐步加压</span><span><i class="peak"></i>高峰</span></span></footer>
+</main>
+<div id="toast" role="status"></div>
+<script>window.ASSET_DATA=__ASSETS_JSON__;</script>
+<script>__CONTENT_JS__</script>
+<script>__WORLD_JS__</script>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var names={slime:'史莱姆',skeleton:'骷髅',wolf:'灰狼',bat:'蝙蝠',spider:'黑斑蛛',mushroom:'赤斑菇',water:'流水灵'};
+var levels=window.PREVIEW_LEVELS, phases=window.PREVIEW_PHASES, assets={}, world, selected=0, time=95, playing=false, speed=10, keys={}, keyButtons={}, toastTimer, readyResolve;
+window.previewReady=new Promise(function(resolve){readyResolve=resolve;});
+function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){$('toast').classList.remove('show');},2600);}
+function clock(t){var n=Math.floor(t);return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
+function phaseAt(t){return phases.find(function(p){return t>=p.start&&t<p.end;})||phases[phases.length-1];}
+function setTime(value){time=Math.max(0,Math.min(390,Number(value)||0));world.setTime(time);$('time').value=Math.round(time);updateTimeline();updateMapInfo();}
+function setPlaying(value){playing=value;$('play').textContent=playing?'Ⅱ 暂停':'▶ 播放';$('play').setAttribute('aria-pressed',String(playing));}
+function setLevel(index){
+ selected=Number(index);var level=levels[selected];world.setLevel(selected);setPlaying(false);time=0;world.setTime(0);
+ document.documentElement.style.setProperty('--accent',level.accent);
+ document.querySelectorAll('.level-card').forEach(function(button,i){button.classList.toggle('active',i===selected);button.setAttribute('aria-pressed',String(i===selected));});
+ $('stage-title').textContent=level.name+'  ·  '+level.tagline;
+ $('region-tag').textContent=level.subtitle;$('chapter-label').textContent='CHAPTER '+String(selected+1).padStart(2,'0')+' / 05';
+ $('region-name').textContent=level.name;$('region-desc').textContent=level.description;
+ $('decision').textContent=level.decision;$('priority').textContent=level.priority;
+ $('event-name').textContent=level.event.title;$('event-desc').textContent=level.event.description;
+ $('boss-test').textContent=level.boss.test;$('boss-name').textContent=level.boss.name;$('boss-badge').textContent=level.boss.label;
+ $('boss-art').src=assets[level.bossKind].src;$('boss-art').alt=level.boss.name+'类型示意';
+ $('boss-moves').replaceChildren();level.boss.moves.forEach(function(move){var line=document.createElement('div');line.textContent='◇ '+move;$('boss-moves').append(line);});
+ setTime(0);
+}
+function updateMapInfo(){
+ if(!world)return;var s=world.getState(),boss=s.mode==='boss';
+ var kinds=boss?[levels[selected].bossKind]:s.enemyTypes,key=kinds.join(',');
+ if($('enemies').dataset.kinds!==key){$('enemies').dataset.kinds=key;$('enemies').replaceChildren();kinds.forEach(function(kind){var chip=document.createElement('span');chip.className='enemy-chip';var img=new Image();img.src=assets[kind].src;img.alt='';chip.append(img,document.createTextNode(boss?levels[selected].boss.name:names[kind]));$('enemies').append(chip);});}
+ $('mode-tag').textContent=boss?'Boss 场 · 有限竞技场':'普通场 · 无限延展';
+ $('chunk-stat').textContent=boss?'独立 Boss 场 · 保留躲招空间':'当前区块 ('+s.chunk.x+', '+s.chunk.y+') · 橡树 '+s.trees+' 棵';
+ $('chunk-unit').textContent=boss?'有限边界 · 先看预警，再寻找输出窗口':'每块 6–10 棵 · 1280×720 px';
+ $('stream-stat').textContent=boss?'招式与危险范围仅作走位示意':'附近 '+s.activeChunks+' 个区块 · 远离退出显示，回访保持原样';
+ $('boss-enter').disabled=!s.portalReady&&!boss;
+ $('boss-enter').textContent=boss?'↶ 重置普通场预览':s.portalReady?'◇ 自主挑战 Boss':'5:00 后可挑战 Boss';
+ $('portal-note').hidden=!s.portalReady||boss;
+ if(s.portalReady&&!boss){var p=s.portal;var d=p?Math.round(Math.hypot(p.x-s.player.x,p.y-s.player.y)):0;$('portal-note').textContent='传送门已开放 · '+d+' px · 可继续探索';}
+}
+function updateTimeline(){
+ var p=phaseAt(time);$('clock').textContent=clock(time);$('phase-name').textContent=p.name;
+ $('beat-title').textContent=p.name;$('beat-note').textContent=selected>0&&p.start===0?'先认识'+names[levels[selected].primary[0]]+'的威胁，低压观察本关路线，再逐步加入组合。':p.note;
+ $('beat-stats').textContent='示意刷新 '+p.interval.toFixed(2)+' 秒 / 只　·　存活上限 '+p.cap;
+ drawCurve();
+}
+function drawCurve(){
+ var canvas=$('curve'),r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+ if(r.width<1||r.height<1)return;
+ if(canvas.width!==Math.round(r.width*dpr)||canvas.height!==Math.round(r.height*dpr)){canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);}
+ var c=canvas.getContext('2d'),w=r.width,h=r.height,x=function(t){return t/390*w;},y=function(v){return h-8-v*(h-19);};
+ c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+ [0,.5,1].forEach(function(v){c.beginPath();c.strokeStyle='#9ca66b19';c.moveTo(0,y(v));c.lineTo(w,y(v));c.stroke();});
+ phases.forEach(function(p){c.fillStyle=p.type==='rest'?'#a2bf6c1d':p.type==='peak'?'#d4996b18':'#c7b76f12';c.fillRect(x(p.start),2,x(p.end-p.start),h-5);});
+ c.beginPath();phases.forEach(function(p,i){if(i===0)c.moveTo(x(p.start),y(p.intensity));else c.lineTo(x(p.start),y(p.intensity));c.lineTo(x(p.end),y(p.intensity));});
+ c.lineTo(w,h);c.lineTo(0,h);c.closePath();var grad=c.createLinearGradient(0,0,0,h);grad.addColorStop(0,'#cfb6683b');grad.addColorStop(1,'#cfb66802');c.fillStyle=grad;c.fill();
+ c.beginPath();phases.forEach(function(p,i){if(i===0)c.moveTo(x(p.start),y(p.intensity));else c.lineTo(x(p.start),y(p.intensity));c.lineTo(x(p.end),y(p.intensity));});c.strokeStyle='#cfbd7e';c.lineWidth=2;c.stroke();
+ c.setLineDash([3,4]);c.beginPath();c.strokeStyle='#e6d3a49a';c.moveTo(x(300),0);c.lineTo(x(300),h);c.stroke();c.setLineDash([]);
+ var marker=x(time);c.beginPath();c.strokeStyle='#edf0c8';c.lineWidth=1;c.moveTo(marker,0);c.lineTo(marker,h);c.stroke();
+ c.beginPath();c.fillStyle='#f6e5b8';c.arc(marker,y(phaseAt(time).intensity),4,0,Math.PI*2);c.fill();
+}
+function overlays(){world.setOverlays({chunks:$('show-chunks').checked,routes:$('show-routes').checked,safe:$('show-safe').checked});}
+function resetHome(){world.moveTo(0,0);updateMapInfo();toast('已回到起点；本局种子和地图布局保持不变。');}
+function changeSeed(value){value=Math.max(0,Math.min(2147483647,Math.floor(Number(value)||0)));$('seed').value=value;world.setSeed(value);setTime(0);setPlaying(false);toast('新一局 · 种子 '+value+'。输入相同种子可复现布局。');}
+function inputAxis(){var x=(keys.ArrowRight||keys.d||keyButtons.right?1:0)-(keys.ArrowLeft||keys.a||keyButtons.left?1:0),y=(keys.ArrowDown||keys.s||keyButtons.down?1:0)-(keys.ArrowUp||keys.w||keyButtons.up?1:0);return{x:x,y:y};}
+var load=Object.entries(window.ASSET_DATA).map(function(item){return new Promise(function(resolve,reject){var image=new Image();image.onload=function(){assets[item[0]]=image;resolve();};image.onerror=function(){reject(new Error('素材未能载入：'+item[0]));};image.src=item[1];});});
+Promise.all(load).then(function(){
+ document.documentElement.style.setProperty('--panel-art','url("'+assets.panel.src+'")');
+ document.documentElement.style.setProperty('--grain-art','url("'+assets.grain.src+'")');
+ levels.forEach(function(level,index){var button=document.createElement('button');button.className='level-card';button.style.setProperty('--card-accent',level.accent);button.dataset.level=index;button.setAttribute('aria-pressed',String(index===0));var n=document.createElement('span');n.className='level-number';n.textContent=String(index+1).padStart(2,'0');var image=new Image();image.src=assets[level.primary[0]].src;image.alt='';var copy=document.createElement('span');copy.className='level-copy';var strong=document.createElement('strong');strong.textContent=level.name;var sub=document.createElement('small');sub.textContent=level.tagline;var boss=document.createElement('small');boss.className='boss-mini';boss.textContent='Boss · '+level.boss.name;copy.append(strong,sub,boss);var dot=document.createElement('span');dot.className='active-dot';dot.textContent='◆';button.append(n,image,copy,dot);button.onclick=function(){setLevel(index);};$('levels').append(button);});
+ world=new window.WorldPreview($('world'),assets,levels,updateMapInfo);setLevel(0);setTime(95);
+ $('loading').hidden=true;$('loading').style.display='none';
+ $('play').onclick=function(){if(world.getState().mode==='boss'){toast('Boss预览展示独立场地；重置后可继续浏览普通场时间轴。');return;}if(time>=390)setTime(0);setPlaying(!playing);};
+ $('speed').onchange=function(){speed=Number(this.value);};$('time').oninput=function(){setPlaying(false);setTime(this.value);};
+ ['show-chunks','show-routes','show-safe'].forEach(function(id){$(id).onchange=overlays;});
+ if(new URLSearchParams(location.search).has('overview')){$('show-chunks').checked=true;$('show-routes').checked=true;}
+ overlays();
+ $('seed').onchange=function(){changeSeed(this.value);};$('seed').onkeydown=function(e){if(e.key==='Enter'){changeSeed(this.value);this.blur();}};
+ $('reroll').onclick=function(){var n=new Uint32Array(1);crypto.getRandomValues(n);var next=n[0]%1000000;if(next===world.getState().seed)next=(next+1)%1000000;changeSeed(next);};
+ $('home').onclick=resetHome;
+ $('boss-enter').onclick=function(){if(world.getState().mode==='boss'){world.resetView();setTime(0);toast('普通场预览已重置。');}else if(world.enterBoss()){setPlaying(false);updateMapInfo();toast('独立 Boss 场 · 观察预警与躲避空间。');}};
+ window.addEventListener('keydown',function(e){if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;var key=e.key.length===1?e.key.toLowerCase():e.key;if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key)){e.preventDefault();keys[key]=true;}});
+ window.addEventListener('keyup',function(e){var key=e.key.length===1?e.key.toLowerCase():e.key;delete keys[key];});
+ window.addEventListener('blur',function(){keys={};keyButtons={};});
+ document.querySelectorAll('.dpad button').forEach(function(button){button.onpointerdown=function(e){e.preventDefault();button.setPointerCapture(e.pointerId);keyButtons[button.dataset.dir]=true;button.classList.add('held');};button.onpointerup=button.onpointercancel=function(){delete keyButtons[button.dataset.dir];button.classList.remove('held');};});
+ window.addEventListener('resize',function(){drawCurve();world.render();});
+ window.previewApi={
+  setLevel:setLevel,setTime:setTime,setSeed:changeSeed,setPlaying:setPlaying,
+  moveTo:function(x,y){world.moveTo(x,y);world.render();updateMapInfo();},
+  step:function(dt,x,y){world.update(dt,{x:x||0,y:y||0});world.render();updateMapInfo();},
+  getChunk:function(x,y){return JSON.parse(JSON.stringify(world.getChunk(x,y)));},
+  getState:function(){return Object.assign({},world.getState(),{selectedLevel:selected,levelId:levels[selected].id,playing:playing,speed:speed,phase:phaseAt(time).name,actualGameWrites:0});},
+  render:function(){world.render();drawCurve();updateMapInfo();},
+  enterBoss:function(){var ok=world.enterBoss();updateMapInfo();return ok;}
+ };
+ var last=performance.now(),lastInfo=0;
+ function frame(now){var dt=Math.min(.05,(now-last)/1000);last=now;if(playing&&world.getState().mode!=='boss'){setTime(time+dt*speed);if(time>=390)setPlaying(false);}world.update(dt,inputAxis());world.render();if(now-lastInfo>150){updateMapInfo();lastInfo=now;}requestAnimationFrame(frame);}
+ requestAnimationFrame(frame);$('app').dataset.ready='true';readyResolve(true);
+}).catch(function(error){$('loading').textContent='预览加载失败：'+error.message;console.error(error);readyResolve(false);});
+})();
+</script>
+</body></html>

@@ -1,0 +1,730 @@
+[
+  {
+    "viewport": [
+      1258,
+      622
+    ],
+    "checks": [
+      {
+        "passed": true,
+        "detail": "All inline images and renderer loaded"
+      },
+      {
+        "passed": true,
+        "detail": "Five region cards are visible"
+      },
+      {
+        "passed": true,
+        "detail": "Level 1 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 1 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 1"
+      },
+      {
+        "passed": true,
+        "detail": "Level 2 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 2 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 2"
+      },
+      {
+        "passed": true,
+        "detail": "Level 3 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 3 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 3"
+      },
+      {
+        "passed": true,
+        "detail": "Level 4 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 4 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 4"
+      },
+      {
+        "passed": true,
+        "detail": "Level 5 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 5 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 5"
+      },
+      {
+        "passed": true,
+        "detail": "Second region uses approved spider Boss"
+      },
+      {
+        "passed": true,
+        "detail": "Fourth region uses approved aerial Boss"
+      },
+      {
+        "passed": true,
+        "detail": "Level 1 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 2 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 3 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 4 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 5 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Moving beyond old map creates distant positive chunks"
+      },
+      {
+        "passed": true,
+        "detail": "Distant chunks unload instead of accumulating"
+      },
+      {
+        "passed": true,
+        "detail": "Negative coordinates work without a world edge"
+      },
+      {
+        "passed": true,
+        "detail": "Returning to an old chunk preserves its layout"
+      },
+      {
+        "passed": true,
+        "detail": "Different seed changes terrain and props"
+      },
+      {
+        "passed": true,
+        "detail": "Re-entering the same seed reproduces the chunk"
+      },
+      {
+        "passed": true,
+        "detail": "Tree count stays within 6–10 for all five regions and signed coordinates"
+      },
+      {
+        "passed": true,
+        "detail": "Time exposes current pacing stage"
+      },
+      {
+        "passed": true,
+        "detail": "All twelve beats, including post-300 loop, are reachable"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 1"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 2"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 3"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 4"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 5"
+      },
+      {
+        "passed": true,
+        "detail": "Boss cannot be entered before 300 seconds"
+      },
+      {
+        "passed": true,
+        "detail": "Boss gate opens exactly at 300 seconds"
+      },
+      {
+        "passed": true,
+        "detail": "Gate stays in place when player keeps exploring"
+      },
+      {
+        "passed": true,
+        "detail": "Boss button enters independent arena without an event prerequisite"
+      },
+      {
+        "passed": true,
+        "detail": "First Boss shows both charge and fan warning patterns"
+      },
+      {
+        "passed": true,
+        "detail": "Boss arena has finite bounds"
+      },
+      {
+        "passed": true,
+        "detail": "Reset returns to ordinary preview"
+      },
+      {
+        "passed": true,
+        "detail": "Overlay switch works: show-chunks"
+      },
+      {
+        "passed": true,
+        "detail": "Overlay switch works: show-routes"
+      },
+      {
+        "passed": true,
+        "detail": "Overlay switch works: show-safe"
+      },
+      {
+        "passed": true,
+        "detail": "Dragging timeline updates renderer time"
+      },
+      {
+        "passed": true,
+        "detail": "Movement steps update player position"
+      },
+      {
+        "passed": true,
+        "detail": "Return to start preserves the run"
+      },
+      {
+        "passed": true,
+        "detail": "New-run button changes seed and resets timeline"
+      },
+      {
+        "passed": true,
+        "detail": "Playback speed selection works"
+      },
+      {
+        "passed": true,
+        "detail": "Playback advances time"
+      },
+      {
+        "passed": true,
+        "detail": "Pause stops playback"
+      },
+      {
+        "passed": true,
+        "detail": "WASD keyboard events move Lilita"
+      },
+      {
+        "passed": true,
+        "detail": "Preview does not write game data"
+      },
+      {
+        "passed": true,
+        "detail": "All visible image assets are decoded"
+      },
+      {
+        "passed": true,
+        "detail": "Preview uses no network assets"
+      },
+      {
+        "passed": true,
+        "detail": "Whole artboard fits viewport"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .masthead"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .levels"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .middle"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .timeline"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .footer"
+      },
+      {
+        "passed": true,
+        "detail": "Pressure graph stays inside its panel"
+      },
+      {
+        "passed": true,
+        "detail": "Details have no horizontal clipping"
+      },
+      {
+        "passed": true,
+        "detail": "All region names and Boss lines fit their cards"
+      },
+      {
+        "passed": true,
+        "detail": "Seed input remains visible at this viewport"
+      },
+      {
+        "passed": true,
+        "detail": "No browser errors"
+      }
+    ],
+    "failures": [],
+    "errors": [],
+    "rects": {
+      "page": {
+        "x": 0,
+        "y": 0,
+        "w": 1258,
+        "h": 622,
+        "right": 1258,
+        "bottom": 622
+      },
+      "curve": {
+        "x": 246,
+        "y": 485,
+        "w": 753,
+        "h": 73,
+        "right": 999,
+        "bottom": 558
+      },
+      "timeline": {
+        "x": 14,
+        "y": 457,
+        "w": 1230,
+        "h": 128,
+        "right": 1244,
+        "bottom": 585
+      },
+      "details": {
+        "x": 955,
+        "y": 145,
+        "w": 288,
+        "h": 302,
+        "right": 1243,
+        "bottom": 447
+      }
+    },
+    "state": {
+      "level": 0,
+      "seed": 77,
+      "mode": "field",
+      "time": 95,
+      "player": {
+        "x": 0,
+        "y": 0
+      },
+      "chunk": {
+        "x": 0,
+        "y": 0
+      },
+      "activeChunks": 25,
+      "trees": 8,
+      "treeRange": [
+        6,
+        10
+      ],
+      "portalReady": false,
+      "portal": null,
+      "loaded": 977,
+      "unloaded": 76,
+      "phaseType": "pressure",
+      "enemyTypes": [
+        "slime",
+        "skeleton",
+        "wolf",
+        "bat"
+      ],
+      "visibleEnemyCount": 13,
+      "bossMove": null,
+      "worldWrites": 0,
+      "selectedLevel": 0,
+      "levelId": "greyford_01",
+      "playing": false,
+      "speed": 30,
+      "phase": "第一次换线",
+      "actualGameWrites": 0
+    }
+  },
+  {
+    "viewport": [
+      1898,
+      982
+    ],
+    "checks": [
+      {
+        "passed": true,
+        "detail": "All inline images and renderer loaded"
+      },
+      {
+        "passed": true,
+        "detail": "Five region cards are visible"
+      },
+      {
+        "passed": true,
+        "detail": "Level 1 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 1 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 1"
+      },
+      {
+        "passed": true,
+        "detail": "Level 2 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 2 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 2"
+      },
+      {
+        "passed": true,
+        "detail": "Level 3 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 3 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 3"
+      },
+      {
+        "passed": true,
+        "detail": "Level 4 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 4 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 4"
+      },
+      {
+        "passed": true,
+        "detail": "Level 5 changes map and region text"
+      },
+      {
+        "passed": true,
+        "detail": "Level 5 changes its Boss brief"
+      },
+      {
+        "passed": true,
+        "detail": "One active card for level 5"
+      },
+      {
+        "passed": true,
+        "detail": "Second region uses approved spider Boss"
+      },
+      {
+        "passed": true,
+        "detail": "Fourth region uses approved aerial Boss"
+      },
+      {
+        "passed": true,
+        "detail": "Level 1 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 2 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 3 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 4 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Level 5 staggers threats and synchronizes the current enemy list"
+      },
+      {
+        "passed": true,
+        "detail": "Moving beyond old map creates distant positive chunks"
+      },
+      {
+        "passed": true,
+        "detail": "Distant chunks unload instead of accumulating"
+      },
+      {
+        "passed": true,
+        "detail": "Negative coordinates work without a world edge"
+      },
+      {
+        "passed": true,
+        "detail": "Returning to an old chunk preserves its layout"
+      },
+      {
+        "passed": true,
+        "detail": "Different seed changes terrain and props"
+      },
+      {
+        "passed": true,
+        "detail": "Re-entering the same seed reproduces the chunk"
+      },
+      {
+        "passed": true,
+        "detail": "Tree count stays within 6–10 for all five regions and signed coordinates"
+      },
+      {
+        "passed": true,
+        "detail": "Time exposes current pacing stage"
+      },
+      {
+        "passed": true,
+        "detail": "All twelve beats, including post-300 loop, are reachable"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 1"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 2"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 3"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 4"
+      },
+      {
+        "passed": true,
+        "detail": "Post-gate breather reduces displayed threats in level 5"
+      },
+      {
+        "passed": true,
+        "detail": "Boss cannot be entered before 300 seconds"
+      },
+      {
+        "passed": true,
+        "detail": "Boss gate opens exactly at 300 seconds"
+      },
+      {
+        "passed": true,
+        "detail": "Gate stays in place when player keeps exploring"
+      },
+      {
+        "passed": true,
+        "detail": "Boss button enters independent arena without an event prerequisite"
+      },
+      {
+        "passed": true,
+        "detail": "First Boss shows both charge and fan warning patterns"
+      },
+      {
+        "passed": true,
+        "detail": "Boss arena has finite bounds"
+      },
+      {
+        "passed": true,
+        "detail": "Reset returns to ordinary preview"
+      },
+      {
+        "passed": true,
+        "detail": "Overlay switch works: show-chunks"
+      },
+      {
+        "passed": true,
+        "detail": "Overlay switch works: show-routes"
+      },
+      {
+        "passed": true,
+        "detail": "Overlay switch works: show-safe"
+      },
+      {
+        "passed": true,
+        "detail": "Dragging timeline updates renderer time"
+      },
+      {
+        "passed": true,
+        "detail": "Movement steps update player position"
+      },
+      {
+        "passed": true,
+        "detail": "Return to start preserves the run"
+      },
+      {
+        "passed": true,
+        "detail": "New-run button changes seed and resets timeline"
+      },
+      {
+        "passed": true,
+        "detail": "Playback speed selection works"
+      },
+      {
+        "passed": true,
+        "detail": "Playback advances time"
+      },
+      {
+        "passed": true,
+        "detail": "Pause stops playback"
+      },
+      {
+        "passed": true,
+        "detail": "WASD keyboard events move Lilita"
+      },
+      {
+        "passed": true,
+        "detail": "Preview does not write game data"
+      },
+      {
+        "passed": true,
+        "detail": "All visible image assets are decoded"
+      },
+      {
+        "passed": true,
+        "detail": "Preview uses no network assets"
+      },
+      {
+        "passed": true,
+        "detail": "Whole artboard fits viewport"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .masthead"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .levels"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .middle"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .timeline"
+      },
+      {
+        "passed": true,
+        "detail": "Section stays on screen: .footer"
+      },
+      {
+        "passed": true,
+        "detail": "Pressure graph stays inside its panel"
+      },
+      {
+        "passed": true,
+        "detail": "Details have no horizontal clipping"
+      },
+      {
+        "passed": true,
+        "detail": "All region names and Boss lines fit their cards"
+      },
+      {
+        "passed": true,
+        "detail": "Seed input remains visible at this viewport"
+      },
+      {
+        "passed": true,
+        "detail": "No browser errors"
+      }
+    ],
+    "failures": [],
+    "errors": [],
+    "rects": {
+      "page": {
+        "x": 0,
+        "y": 0,
+        "w": 1898,
+        "h": 982,
+        "right": 1898,
+        "bottom": 982
+      },
+      "curve": {
+        "x": 296,
+        "y": 813,
+        "w": 1292,
+        "h": 89,
+        "right": 1588,
+        "bottom": 902
+      },
+      "timeline": {
+        "x": 22,
+        "y": 782,
+        "w": 1854,
+        "h": 150,
+        "right": 1876,
+        "bottom": 932
+      },
+      "details": {
+        "x": 1553,
+        "y": 173,
+        "w": 322,
+        "h": 596,
+        "right": 1875,
+        "bottom": 769
+      }
+    },
+    "state": {
+      "level": 0,
+      "seed": 77,
+      "mode": "field",
+      "time": 95,
+      "player": {
+        "x": 0,
+        "y": 0
+      },
+      "chunk": {
+        "x": 0,
+        "y": 0
+      },
+      "activeChunks": 25,
+      "trees": 8,
+      "treeRange": [
+        6,
+        10
+      ],
+      "portalReady": false,
+      "portal": null,
+      "loaded": 977,
+      "unloaded": 76,
+      "phaseType": "pressure",
+      "enemyTypes": [
+        "slime",
+        "skeleton",
+        "wolf",
+        "bat"
+      ],
+      "visibleEnemyCount": 13,
+      "bossMove": null,
+      "worldWrites": 0,
+      "selectedLevel": 0,
+      "levelId": "greyford_01",
+      "playing": false,
+      "speed": 30,
+      "phase": "第一次换线",
+      "actualGameWrites": 0
+    }
+  }
+]

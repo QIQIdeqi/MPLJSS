@@ -19,8 +19,19 @@ var snow_materials: Array[ShaderMaterial] = []
 var foreground_cards: Dictionary[Sprite3D, Image] = {}
 var backdrop_mesh: ArrayMesh
 var backdrop_bounds := Rect2()
+var chunk_nodes: Dictionary = {}
+var terrain_sets: Dictionary = {}
+var streaming := false
 
 func rebuild(tiles: Array, props: Array, bounds: Rect2) -> void:
+	streaming = false
+	chunk_nodes.clear()
+	terrain_sets.clear()
+	_reset_generated()
+	_build_ground(tiles, bounds)
+	_build_props(props)
+
+func _reset_generated() -> void:
 	if is_instance_valid(generated):
 		remove_child(generated)
 		generated.queue_free()
@@ -29,8 +40,43 @@ func rebuild(tiles: Array, props: Array, bounds: Rect2) -> void:
 	generated = Node3D.new()
 	generated.name = "GeneratedBattleLandscape"
 	add_child(generated)
-	_build_ground(tiles, bounds)
-	_build_props(props)
+
+func sync_chunks(chunks: Dictionary, props_by_chunk: Dictionary) -> void:
+	if not streaming:
+		streaming = true
+		chunk_nodes.clear()
+		terrain_sets.clear()
+		_reset_generated()
+	for coord: Vector2i in chunk_nodes.keys():
+		if chunks.has(coord):
+			continue
+		var previous: Node3D = chunk_nodes[coord]
+		for card: Sprite3D in foreground_cards.keys():
+			if not is_instance_valid(card) or previous.is_ancestor_of(card):
+				foreground_cards.erase(card)
+		for material in previous.get_meta("snow_materials", []):
+			snow_materials.erase(material)
+		generated.remove_child(previous)
+		previous.queue_free()
+		chunk_nodes.erase(coord)
+	var all_tiles: Array = []
+	for layout: Dictionary in chunks.values():
+		all_tiles.append_array(layout.tiles)
+	for coord: Vector2i in chunks:
+		var layout: Dictionary = chunks[coord]
+		if not chunk_nodes.has(coord):
+			var chunk := Node3D.new()
+			chunk.name = "Chunk_%d_%d" % [coord.x, coord.y]
+			generated.add_child(chunk)
+			chunk_nodes[coord] = chunk
+			var before := snow_materials.size()
+			_build_ground(layout.tiles, layout.bounds, true, chunk, all_tiles)
+			_build_props(props_by_chunk.get(coord, []), chunk)
+			chunk.set_meta("snow_materials", snow_materials.slice(before))
+		else:
+			# The one-cell lookup border includes adjacent chunks, so blended surfaces meet at seams.
+			var ground: MeshInstance3D = chunk_nodes[coord].get_node("BattleGround")
+			_set_ground_surface(ground.material_override, layout.tiles, layout.bounds, all_tiles, true)
 
 func set_snow_cover(amount: float) -> void:
 	amount = clampf(amount, 0.0, 1.0)
@@ -40,47 +86,70 @@ func set_snow_cover(amount: float) -> void:
 	for material in snow_materials:
 		material.set_shader_parameter("snow_cover", snow_cover)
 
-func _build_ground(tiles: Array, bounds: Rect2) -> void:
-	var tile_size: Vector2 = tiles[0].rect.size if not tiles.is_empty() else bounds.size
-	var grid := Vector2i((bounds.size / tile_size).round())
-	var lookup := Image.create_empty(grid.x, grid.y, false, Image.FORMAT_RF)
-	var layer_ids: Dictionary[Texture2D, int] = {GRASS: 0}
-	var images: Array[Image] = [_ground_image(GRASS)]
-	for tile in tiles:
-		var texture: Texture2D = tile.texture
-		if not layer_ids.has(texture):
-			layer_ids[texture] = images.size()
-			images.append(_ground_image(texture))
-		var tile_rect: Rect2 = tile.rect
-		var cell := Vector2i(((tile_rect.position - bounds.position) / tile_size).round())
-		lookup.set_pixelv(cell, Color(float(layer_ids[texture]), 0.0, 0.0))
-
-	var terrain := Texture2DArray.new()
-	if terrain.create_from_images(images) != OK:
-		push_error("Could not build the battle ground texture array")
-		lookup.fill(Color.BLACK)
-		images.resize(1)
-		terrain.create_from_images(images)
-
+func _build_ground(tiles: Array, bounds: Rect2, streamed := false, parent: Node3D = null, neighbors: Array = []) -> void:
 	var material := ShaderMaterial.new()
 	material.shader = GROUND_SHADER
-	material.set_shader_parameter("terrain_layers", terrain)
-	material.set_shader_parameter("tile_lookup", ImageTexture.create_from_image(lookup))
-	material.set_shader_parameter("map_origin", bounds.position / PIXELS_PER_UNIT)
-	material.set_shader_parameter("cell_size", tile_size / PIXELS_PER_UNIT)
+	_set_ground_surface(material, tiles, bounds, neighbors, streamed)
 	_track_snow(material)
-
 	var field := Rect2(bounds.position / PIXELS_PER_UNIT, bounds.size / PIXELS_PER_UNIT)
-	if backdrop_mesh == null or backdrop_bounds != field:
-		backdrop_mesh = _mountain_mesh(field)
-		backdrop_bounds = field
 	var ground := MeshInstance3D.new()
 	ground.name = "BattleGround"
-	ground.mesh = backdrop_mesh
+	if streamed:
+		var plane := PlaneMesh.new()
+		plane.size = field.size
+		ground.mesh = plane
+		ground.position = Vector3(field.get_center().x, 0, field.get_center().y)
+	else:
+		if backdrop_mesh == null or backdrop_bounds != field:
+			backdrop_mesh = _mountain_mesh(field)
+			backdrop_bounds = field
+		ground.mesh = backdrop_mesh
 	ground.material_override = material
 	ground.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	generated.add_child(ground)
-	_build_backdrop_props(field)
+	(parent if parent else generated).add_child(ground)
+	if not streamed:
+		_build_backdrop_props(field)
+
+func _set_ground_surface(material: ShaderMaterial, tiles: Array, bounds: Rect2, neighbors: Array, streamed: bool) -> void:
+	var tile_size: Vector2 = tiles[0].rect.size if not tiles.is_empty() else bounds.size
+	var grid := Vector2i((bounds.size / tile_size).round())
+	var padding := Vector2i.ONE if streamed else Vector2i.ZERO
+	var lookup_size := grid + padding * 2
+	var lookup := Image.create_empty(lookup_size.x, lookup_size.y, false, Image.FORMAT_RF)
+	var textures: Array[Texture2D] = [GRASS]
+	var source := neighbors if streamed and not neighbors.is_empty() else tiles
+	for tile: Dictionary in source:
+		var texture: Texture2D = tile.texture
+		if not textures.has(texture):
+			textures.append(texture)
+	# Keep the texture array independent of dictionary insertion / chunk visitation order.
+	textures.sort_custom(func(a: Texture2D, b: Texture2D) -> bool:
+		return a != b and (a == GRASS or (b != GRASS and a.resource_path < b.resource_path)))
+	var layer_ids: Dictionary[Texture2D, int] = {}
+	for i in textures.size():
+		layer_ids[textures[i]] = i
+	for tile: Dictionary in source:
+		var texture: Texture2D = tile.texture
+		var tile_rect: Rect2 = tile.rect
+		var cell := Vector2i(((tile_rect.position - bounds.position) / tile_size).round()) + padding
+		if cell.x >= 0 and cell.y >= 0 and cell.x < lookup_size.x and cell.y < lookup_size.y:
+			lookup.set_pixelv(cell, Color(float(layer_ids[texture]), 0.0, 0.0))
+	var signature := ""
+	for texture in textures:
+		signature += str(texture.get_instance_id()) + ":"
+	if not terrain_sets.has(signature):
+		var images: Array[Image] = []
+		for texture in textures:
+			images.append(_ground_image(texture))
+		var terrain := Texture2DArray.new()
+		if terrain.create_from_images(images) != OK:
+			push_error("Could not build the battle ground texture array")
+			return
+		terrain_sets[signature] = terrain
+	material.set_shader_parameter("terrain_layers", terrain_sets[signature])
+	material.set_shader_parameter("tile_lookup", ImageTexture.create_from_image(lookup))
+	material.set_shader_parameter("map_origin", (bounds.position - Vector2(padding) * tile_size) / PIXELS_PER_UNIT)
+	material.set_shader_parameter("cell_size", tile_size / PIXELS_PER_UNIT)
 
 func _mountain_mesh(field: Rect2) -> ArrayMesh:
 	var area := field.grow(BACKDROP_EXTENT)
@@ -168,7 +237,7 @@ func _ground_image(texture: Texture2D) -> Image:
 	image.generate_mipmaps()
 	return image
 
-func _build_props(props: Array) -> void:
+func _build_props(props: Array, parent: Node3D = null) -> void:
 	var foot_offsets: Dictionary[Texture2D, float] = {}
 	var foliage_materials: Dictionary[Texture2D, ShaderMaterial] = {}
 	var occlusion_masks: Dictionary[Texture2D, Image] = {}
@@ -190,14 +259,14 @@ func _build_props(props: Array) -> void:
 		card.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 		card.alpha_scissor_threshold = 0.46
 		card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		if texture == OAK or texture == BUSH:
+		if texture != null:
 			if not foliage_materials.has(texture):
 				var material := VILLAGE_BUILDING.snow_material(texture, 0)
 				_track_snow(material)
 				foliage_materials[texture] = material
 			card.material_override = foliage_materials[texture]
-		generated.add_child(card, true)
-		if texture == OAK or texture == FENCE or texture == CRATES:
+		(parent if parent else generated).add_child(card, true)
+		if texture != BUSH:
 			if not occlusion_masks.has(texture):
 				var mask := texture.get_image()
 				if mask.is_compressed():

@@ -1,0 +1,750 @@
+{
+  "count": 23,
+  "total_png_bytes": 1368553,
+  "data_uri_json_bytes": 1825542,
+  "operations": "Existing project asset export only: atlas cell extraction, transparent crop, centered foot anchor, downsample where needed. No new artwork or source modifications.",
+  "assets": [
+    {
+      "key": "grass",
+      "source": "02_Prototype/AlchemyGodot/art/grass.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": null,
+      "output_size": [
+        256,
+        256
+      ],
+      "bytes": 125191,
+      "sha256": "23ba49c20167347a14e40d84bec7023e918402cb5123050e373fe458df3fb9ce",
+      "alpha_range": [
+        255,
+        255
+      ],
+      "foot_anchor": null
+    },
+    {
+      "key": "dirt",
+      "source": "02_Prototype/AlchemyGodot/art/dirt.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": null,
+      "output_size": [
+        256,
+        256
+      ],
+      "bytes": 91658,
+      "sha256": "558e2c8463a3d0216df224441b4163c7c2494ef55130f19a09a770b293edffac",
+      "alpha_range": [
+        255,
+        255
+      ],
+      "foot_anchor": null
+    },
+    {
+      "key": "stone",
+      "source": "02_Prototype/AlchemyGodot/art/cobblestone.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": null,
+      "output_size": [
+        256,
+        256
+      ],
+      "bytes": 129423,
+      "sha256": "1ef4c487049a575031192f39f71ad408bed9868959c2627e0d9333818f1b1c01",
+      "alpha_range": [
+        255,
+        255
+      ],
+      "foot_anchor": null
+    },
+    {
+      "key": "oak",
+      "source": "02_Prototype/AlchemyGodot/art/oak.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        2,
+        59,
+        511,
+        487
+      ],
+      "output_size": [
+        256,
+        215
+      ],
+      "bytes": 101923,
+      "sha256": "79ed410ee3859e2042f72d1985e1463492e36797edbea5a9842a9555ccbcd2b1",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "bush",
+      "source": "02_Prototype/AlchemyGodot/art/bush.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        2,
+        60,
+        511,
+        487
+      ],
+      "output_size": [
+        256,
+        215
+      ],
+      "bytes": 101464,
+      "sha256": "0e49b5d267f450485149d39371dc898f3e54e5ff95c6dbbed67fce0d914aef1b",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "fence",
+      "source": "02_Prototype/AlchemyGodot/art/fence.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        3,
+        96,
+        512,
+        487
+      ],
+      "output_size": [
+        256,
+        196
+      ],
+      "bytes": 62523,
+      "sha256": "abac0c489b82030e44c7d3e32fdc11372056511ec65681dfa920f8097f9566ca",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "crates",
+      "source": "02_Prototype/AlchemyGodot/art/crates.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        13,
+        34,
+        500,
+        487
+      ],
+      "output_size": [
+        256,
+        238
+      ],
+      "bytes": 97990,
+      "sha256": "12d9b1fabb06e51461939ff77711537bcaee034199085a27dcf629a814641881",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "player",
+      "source": "02_Prototype/AlchemyGodot/art/lilita_motion/sprite_sheet.png",
+      "source_size": [
+        1792,
+        1280
+      ],
+      "source_region": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "alpha_crop": [
+        47,
+        37,
+        204,
+        234
+      ],
+      "output_size": [
+        170,
+        205
+      ],
+      "bytes": 61381,
+      "sha256": "aec21b245620de10a5381ab8672f08994644c83bd3d370ceadc5b434baa8f6e6",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "skeleton",
+      "source": "02_Prototype/AlchemyGodot/art/enemies/skeleton.png",
+      "source_size": [
+        384,
+        384
+      ],
+      "source_region": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "alpha_crop": [
+        26,
+        21,
+        69,
+        82
+      ],
+      "output_size": [
+        52,
+        69
+      ],
+      "bytes": 6414,
+      "sha256": "8d1321375434172763d239ae7bd0c3a14b109558ad600d3e1a0943f4c79a336d",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "bat",
+      "source": "02_Prototype/AlchemyGodot/art/enemies/bat.png",
+      "source_size": [
+        384,
+        384
+      ],
+      "source_region": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "alpha_crop": [
+        15,
+        35,
+        80,
+        82
+      ],
+      "output_size": [
+        74,
+        55
+      ],
+      "bytes": 6251,
+      "sha256": "7269ac9edc88f825a84a0479d6c83ba9676c26c03fdc9998d9c0cfbd9d4076e1",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "spider",
+      "source": "02_Prototype/AlchemyGodot/art/enemies/spider.png",
+      "source_size": [
+        384,
+        384
+      ],
+      "source_region": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "alpha_crop": [
+        19,
+        38,
+        78,
+        82
+      ],
+      "output_size": [
+        68,
+        52
+      ],
+      "bytes": 5297,
+      "sha256": "a168a9d7f5b526db4596046f0eb72a1872c50959a55e916de89b01638eb3426c",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "wolf",
+      "source": "02_Prototype/AlchemyGodot/art/enemies/wolf.png",
+      "source_size": [
+        384,
+        384
+      ],
+      "source_region": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "alpha_crop": [
+        28,
+        27,
+        68,
+        82
+      ],
+      "output_size": [
+        48,
+        63
+      ],
+      "bytes": 6056,
+      "sha256": "cf95f0b8ccd2b1c42330524b883f3c5d91b7cb474ed33d412b1fc8ae26cda40f",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "slime",
+      "source": "02_Prototype/AlchemyGodot/art/enemies/slime.png",
+      "source_size": [
+        384,
+        384
+      ],
+      "source_region": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "alpha_crop": [
+        26,
+        46,
+        70,
+        82
+      ],
+      "output_size": [
+        52,
+        44
+      ],
+      "bytes": 3754,
+      "sha256": "fc66ed705ba6d4a2732f75a40cb7e3a904524372043f5d69b4a726375597bdf4",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "mushroom",
+      "source": "02_Prototype/AlchemyGodot/art/enemies/mushroom.png",
+      "source_size": [
+        384,
+        384
+      ],
+      "source_region": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "alpha_crop": [
+        22,
+        28,
+        73,
+        82
+      ],
+      "output_size": [
+        60,
+        62
+      ],
+      "bytes": 6249,
+      "sha256": "7dec59e1760f6d3140567b48877bfe9af773bd92f4d27f6be985dbdbcc1d273e",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "water",
+      "source": "02_Prototype/AlchemyGodot/art/enemies/water_spirit.png",
+      "source_size": [
+        384,
+        384
+      ],
+      "source_region": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "alpha_crop": [
+        26,
+        21,
+        71,
+        82
+      ],
+      "output_size": [
+        54,
+        69
+      ],
+      "bytes": 5677,
+      "sha256": "2964c9258c5644dac23f54acdb87e63ba1f8d6d2952fd16bb065e7e88191be7f",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "boss",
+      "source": "02_Prototype/AlchemyGodot/art/boss_corruption.png",
+      "source_size": [
+        384,
+        448
+      ],
+      "source_region": [
+        0,
+        0,
+        384,
+        448
+      ],
+      "alpha_crop": [
+        33,
+        24,
+        352,
+        432
+      ],
+      "output_size": [
+        202,
+        256
+      ],
+      "bytes": 99316,
+      "sha256": "a3b734d2096f49bba4b2db1dad66689bd3da6e1a808ef45f298f1a81f518a332",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "grain",
+      "source": "02_Prototype/AlchemyGodot/art/ui/combat/panel_grain.png",
+      "source_size": [
+        64,
+        64
+      ],
+      "source_region": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "alpha_crop": null,
+      "output_size": [
+        64,
+        64
+      ],
+      "bytes": 4959,
+      "sha256": "bcc351e391b33fbde99eecd7d5d99361817993f748f32eea270b959add1d9c54",
+      "alpha_range": [
+        255,
+        255
+      ],
+      "foot_anchor": null
+    },
+    {
+      "key": "panel",
+      "source": "02_Prototype/AlchemyGodot/art/ui/alchemy_figma/panel_ornate_9.png",
+      "source_size": [
+        266,
+        117
+      ],
+      "source_region": [
+        0,
+        0,
+        266,
+        117
+      ],
+      "alpha_crop": null,
+      "output_size": [
+        266,
+        117
+      ],
+      "bytes": 53894,
+      "sha256": "9ec16ea2501c69cc1dd82cf014065906c7df06bd449203fcd3ac612388dbf89e",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": null
+    },
+    {
+      "key": "house",
+      "source": "02_Prototype/AlchemyGodot/art/village_hd/House.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        12,
+        34,
+        502,
+        487
+      ],
+      "output_size": [
+        256,
+        236
+      ],
+      "bytes": 124510,
+      "sha256": "5548ea3feb737ebd4041fec236facb4745caab985f9d0d4d5e7ceb623f905e6d",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "warehouse",
+      "source": "02_Prototype/AlchemyGodot/art/village_hd/Warehouse.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        2,
+        51,
+        511,
+        487
+      ],
+      "output_size": [
+        256,
+        219
+      ],
+      "bytes": 103671,
+      "sha256": "2a4b673f92ff7e6dbd4be0f9bbe6e44897a1fefe609feb21e6350d3fe7e230d0",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "cart",
+      "source": "02_Prototype/AlchemyGodot/art/village_hd/Cart.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        2,
+        115,
+        511,
+        487
+      ],
+      "output_size": [
+        256,
+        188
+      ],
+      "bytes": 73367,
+      "sha256": "7b8da8e802d67b353c45f6a4917e6ef27fc8cb07a758391727225d82f7eb69db",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "lantern",
+      "source": "02_Prototype/AlchemyGodot/art/village_hd/Lantern.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        178,
+        67,
+        363,
+        466
+      ],
+      "output_size": [
+        140,
+        256
+      ],
+      "bytes": 42956,
+      "sha256": "594c94057860dadfb892f8c56c894f97b57f255d0517a7a949c35f63f57bb71d",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    },
+    {
+      "key": "stonewall",
+      "source": "02_Prototype/AlchemyGodot/art/village_hd/StoneWall.png",
+      "source_size": [
+        512,
+        512
+      ],
+      "source_region": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "alpha_crop": [
+        43,
+        143,
+        467,
+        409
+      ],
+      "output_size": [
+        256,
+        162
+      ],
+      "bytes": 54629,
+      "sha256": "821dede0fe5ca38dec22865c7ffbdf9e3fcbcc327ddbdd837dbb54a91fe358f1",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "foot_anchor": [
+        0.5,
+        1.0
+      ]
+    }
+  ]
+}

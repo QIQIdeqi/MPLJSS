@@ -3,7 +3,7 @@ extends SceneTree
 ## Run only in a separate CLI editor process; never through the user's open editor.
 
 const PluginScript = preload("res://addons/level_layout/plugin.gd")
-const OUTPUT := "res://Evidence/LevelCatalogShortcuts_20261124/editor_verification.json"
+const OUTPUT := "res://Evidence/FiveRegions_20261124/editor_verification.json"
 var checks := 0
 var failures: Array[String] = []
 var context := {}
@@ -102,7 +102,7 @@ func _run() -> void:
 		check(plugin.preview.preset == entry.layout and plugin.preview.spawn == entry.spawn_position, "预览使用当前关卡的范围和出生点")
 		check(plugin.enemy_dock.table == entry.enemy_config and plugin.enemy_dock.selected_level_id == String(id), "怪物编辑器跟随当前关卡")
 		check(int(plugin.enemy_dock.opening_count.value) == entry.enemy_config.opening_count, "怪物表显示选中关卡的开局数量")
-		check(plugin.width_input.editable and plugin.height_input.editable, "战斗关卡的宽高可以编辑")
+		check(plugin.width_input.editable == not entry.layout.infinite and plugin.height_input.editable == not entry.layout.infinite, "有限场可调宽高，无限场显示标准区块")
 		check(catalog_ui.fields.layout.edited_resource == entry.layout, "资源选择器同步选中关卡")
 		var expected_index: int = plugin.stage_entries.find(entry)
 		check(plugin.stages.selected == expected_index, "Alchemy 关卡下拉选项同步总表")
@@ -183,6 +183,7 @@ func _run() -> void:
 	check(catalog_ui.boss_picker.disabled and catalog_ui.boss_button.disabled, "村庄禁用 Boss 关联操作")
 	var clone: Resource = catalog.find_level(&"greyford_01").duplicate(true)
 	clone.layout = catalog.find_level(&"greyford_01").layout.duplicate(true)
+	clone.layout.infinite = false
 	clone.enemy_config = catalog.find_level(&"greyford_01").enemy_config.duplicate(true)
 	plugin._apply_entry(clone)
 	var before: Rect2 = clone.layout.playable_bounds()

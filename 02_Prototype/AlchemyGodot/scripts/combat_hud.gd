@@ -8,6 +8,7 @@ var field
 var panel := ""
 var map_bounds: Rect2
 var slot_cooldowns: Array[SLOT_COOLDOWN] = []
+var phase_caption: Label
 
 @onready var minimap: Control = $Right/Map
 @onready var overlay: ColorRect = $Overlay
@@ -15,6 +16,18 @@ var slot_cooldowns: Array[SLOT_COOLDOWN] = []
 @onready var actions: VBoxContainer = $Overlay/Frame/Content/Scroll/Actions
 
 func _ready() -> void:
+	phase_caption = Label.new()
+	phase_caption.name = "PacingPhase"
+	phase_caption.position = Vector2(-230, 46)
+	phase_caption.size = Vector2(664, 32)
+	phase_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	phase_caption.add_theme_font_size_override("font_size", 14)
+	phase_caption.add_theme_color_override("font_color", Color("#f0dca9"))
+	phase_caption.add_theme_color_override("font_shadow_color", Color("#10140f"))
+	phase_caption.add_theme_constant_override("shadow_offset_x", 1)
+	phase_caption.add_theme_constant_override("shadow_offset_y", 1)
+	phase_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$Top.add_child(phase_caption)
 	$Bottom/Alchemy.pressed.connect(toggle_alchemy)
 	$Bottom/Bag.pressed.connect(toggle_bag)
 	minimap.draw.connect(draw_minimap)
@@ -34,6 +47,8 @@ func _process(_delta: float) -> void:
 	if not is_instance_valid(field):
 		return
 	$Top/Time.text = "%02d:%02d" % [floori(field.run_time / 60.0), int(field.run_time) % 60]
+	var definition = field.level_catalog.find_level(field.level_id)
+	phase_caption.text = "%s · %s" % [definition.display_name if definition else "战斗", field.enemy_config.phase_name(field.run_time) if not field.stage_is_boss else "独立 Boss 战"]
 	$Right/Kills.text = str(field.kills)
 	$Right/Coins.text = str(field.coins)
 	$Bottom/Level.text = "Lv.%d" % field.level
@@ -41,6 +56,7 @@ func _process(_delta: float) -> void:
 	$Bottom/XP.value = field.xp
 	$Bottom/XPText.text = "%d / %d" % [field.xp, field.level * 6]
 	var brewing: bool = is_instance_valid(field.brew) and field.brew.blocks_world()
+	phase_caption.visible = not field.stage_is_boss and not brewing
 	$Bottom.visible = not brewing
 	$Notice.visible = not brewing
 	$Notice/Text.text = field.hint.text
@@ -50,7 +66,8 @@ func _process(_delta: float) -> void:
 	$Foot.value = field.hp
 	$Boss.visible = is_instance_valid(field.boss) and not field.ended
 	if $Boss.visible:
-		$Boss/Health.max_value = field.boss.MAX_HP
+		$Boss/Name.text = field.boss.display_name
+		$Boss/Health.max_value = field.boss.max_hp
 		$Boss/Health.value = field.boss.entry.hp
 	if is_instance_valid(field.alchemy_system):
 		update_slots()
@@ -79,9 +96,14 @@ func map_point(at: Vector2) -> Vector2:
 func draw_minimap() -> void:
 	if not is_instance_valid(field):
 		return
+	if field.is_infinite_field():
+		map_bounds = Rect2(field.player.position - Vector2(640, 360), Vector2(1280, 720))
 	minimap.draw_rect(Rect2(Vector2.ZERO, minimap.size), Color("#292820"))
 	for tile in field.tiles:
 		var bounds: Rect2 = tile.rect
+		if not bounds.intersects(map_bounds):
+			continue
+		bounds = bounds.intersection(map_bounds)
 		var path: String = tile.texture.resource_path
 		var tone := Color("#4e5538")
 		if path.ends_with("/dirt.png"):
@@ -90,12 +112,13 @@ func draw_minimap() -> void:
 			tone = Color("#6c695a")
 		minimap.draw_rect(Rect2(map_point(bounds.position), bounds.size / map_bounds.size * minimap.size), tone)
 	for prop in field.props:
-		minimap.draw_circle(map_point(prop.position), 1.8, Color("#242d20"))
+		if map_bounds.has_point(prop.position):
+			minimap.draw_circle(map_point(prop.position), 1.8, Color("#242d20"))
 	for enemy in field.enemies:
-		if is_instance_valid(enemy.body):
+		if is_instance_valid(enemy.body) and map_bounds.has_point(enemy.body.position):
 			minimap.draw_circle(map_point(enemy.body.position), 4.0 if enemy.boss else 2.4, Color("#e26d61"))
 	if is_instance_valid(field.portal):
-		minimap.draw_circle(map_point(field.portal.position), 4.0, Color("#8ce7ed"))
+		minimap.draw_circle(map_point(field.portal.position).clamp(Vector2(5,5), minimap.size-Vector2(5,5)), 4.0, Color("#8ce7ed"))
 	var at := map_point(field.player.position)
 	minimap.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -6), at + Vector2(5, 5), at + Vector2(0, 2), at + Vector2(-5, 5)]), Color("#ffe3a1"))
 

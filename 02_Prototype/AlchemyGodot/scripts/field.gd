@@ -12,6 +12,8 @@ const FX := preload("res://scripts/battle_fx.gd")
 const SKILL_FX := preload("res://scripts/skill_fx.gd")
 const LEVEL_LAYOUT := preload("res://scripts/level_layout.gd")
 const LEVEL_PRESET := preload("res://levels/preset.gd")
+const INFINITE_LAYOUT := preload("res://scripts/infinite_field_layout.gd")
+const FIELD_EVENTS := preload("res://scripts/field_event_runtime.gd")
 const ALCHEMY_SYSTEM := preload("res://scripts/alchemy/alchemy_system.gd")
 const ALCHEMY_MANAGER := preload("res://scripts/alchemy/alchemy_manager.gd")
 const UPGRADE_UI := preload("res://scenes/upgrade_ui.tscn")
@@ -102,6 +104,98 @@ var startup_complete := false
 var incoming_run: Dictionary = {}
 var entry_busy := false
 var run_rewards_saved := false
+var infinite_layout
+var field_events: FIELD_EVENTS
+var chunk_nodes: Dictionary = {}
+var dormant_drops: Dictionary = {}
+var last_stream_chunk := Vector2i(2147483647, 2147483647)
+
+func is_infinite_field() -> bool:
+	return combat and not stage_is_boss and layout_preset != null and layout_preset.infinite
+
+func chunk_at(at: Vector2) -> Vector2i:
+	var size := Vector2(layout_preset.chunk_size)
+	return Vector2i(floori(at.x / size.x), floori(at.y / size.y))
+
+func active_map_bounds() -> Rect2:
+	return player.movement_bounds if is_infinite_field() else MAP
+
+func stream_field(force := false) -> bool:
+	if not is_infinite_field() or infinite_layout == null:
+		return true
+	var coordinate := chunk_at(player.position)
+	if not force and coordinate == last_stream_chunk:
+		return true
+	var change: Dictionary = infinite_layout.update(player.position)
+	if not String(change.error).is_empty():
+		push_warning(change.error)
+		return false
+	last_stream_chunk = coordinate
+	for coord: Vector2i in change.removed:
+		store_chunk_drops(coord)
+		if not chunk_nodes.has(coord):
+			continue
+		for node in chunk_nodes[coord].props + chunk_nodes[coord].blocks:
+			node.get_parent().remove_child(node)
+			node.queue_free()
+		chunk_nodes.erase(coord)
+	for coord: Vector2i in change.added:
+		var nodes := {"props": [], "blocks": []}
+		for item in change.added[coord].props:
+			nodes.props.append(make_sprite(item.texture, item.position, item.size, item.foot_fraction))
+			if item.collision != Vector2.ZERO:
+				add_block(item.position, item.collision)
+				nodes.blocks.append(blocks.back())
+		chunk_nodes[coord] = nodes
+		restore_chunk_drops(coord)
+	tiles.clear()
+	props.clear()
+	blocks.clear()
+	for coord in change.chunks:
+		tiles.append_array(change.chunks[coord].tiles)
+		props.append_array(chunk_nodes[coord].props)
+		blocks.append_array(chunk_nodes[coord].blocks)
+	player.movement_bounds = change.bounds
+	for entry in enemies:
+		if not entry.boss:
+			entry.body.travel_bounds = change.bounds.grow(-14.0)
+	if is_instance_valid(hd_view):
+		hd_view.rebuild()
+	if field_events:
+		field_events.sync()
+	queue_redraw()
+	return true
+
+func store_chunk_drops(coord: Vector2i) -> void:
+	var stored: Array = dormant_drops.get(coord, [])
+	for i in range(pickups.size() - 1, -1, -1):
+		var drop := pickups[i]
+		if chunk_at(drop.sprite.position) == coord:
+			stored.append({"position": drop.sprite.position, "kind": drop.kind})
+			drop.sprite.queue_free()
+			pickups.remove_at(i)
+	for i in range(material_drops.size() - 1, -1, -1):
+		var drop := material_drops[i]
+		if chunk_at(drop.sprite.position) == coord:
+			stored.append({"position": drop.sprite.position, "material_id": drop.material_id, "amount": drop.amount})
+			drop.sprite.queue_free()
+			material_drops.remove_at(i)
+	if not stored.is_empty():
+		dormant_drops[coord] = stored
+
+func restore_chunk_drops(coord: Vector2i) -> void:
+	for drop in dormant_drops.get(coord, []):
+		if drop.has("kind"):
+			add_pickup(drop.position, drop.kind)
+		else:
+			spawn_material_drop(drop.position, drop.material_id, drop.amount, false)
+	dormant_drops.erase(coord)
+
+func props_by_chunk() -> Dictionary:
+	var result := {}
+	for coord in chunk_nodes:
+		result[coord] = chunk_nodes[coord].props
+	return result
 
 func profile_path() -> String:
 	return "" if OS.get_cmdline_user_args().has("--migration-test") else save_path
@@ -227,6 +321,9 @@ func _ready() -> void:
 		add_child(workbench_ui)
 		workbench_ui.setup(self, alchemy_service, profile_store)
 		play_music(preload("res://audio/Music_Village.wav"))
+	if is_infinite_field():
+		field_events = FIELD_EVENTS.new()
+		field_events.setup(self)
 	startup_complete = startup_error.is_empty()
 
 func prepare_stage(id: StringName, handoff: Dictionary = {}) -> Node2D:
@@ -319,6 +416,12 @@ func play_music(stream: AudioStreamWAV) -> void:
 
 func generate_field(boss_stage: bool, layout_seed: int) -> bool:
 	var preset: LEVEL_PRESET = layout_preset if layout_preset else (BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT)
+	if is_infinite_field():
+		infinite_layout = INFINITE_LAYOUT.new()
+		infinite_layout.setup(preset, layout_seed, level_id, spawn_position)
+		player.clamp_to_battle_bounds = false
+		return stream_field(true)
+	player.clamp_to_battle_bounds = true
 	var layout: Dictionary = LEVEL_LAYOUT.build(preset, layout_seed, MAP, spawn_position)
 	if not layout.error.is_empty():
 		push_warning(layout.error)
@@ -359,7 +462,8 @@ func _draw() -> void:
 	if combat and not is_instance_valid(hd_view):
 		for tile in tiles:
 			draw_texture_rect(tile.texture, tile.rect, false)
-		draw_rect(player.movement_bounds, Color(1.0, 0.55, 0.58, 0.60), false, 2.0, true)
+		if not is_infinite_field():
+			draw_rect(player.movement_bounds, Color(1.0, 0.55, 0.58, 0.60), false, 2.0, true)
 
 func make_sprite(texture: Texture2D, at: Vector2, size: Vector2, foot_fraction := 0.38) -> Sprite2D:
 	var sprite := Sprite2D.new()
@@ -379,6 +483,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif ended:
 			leave_run(false)
 		elif portal_ready and player.position.distance_to(portal_position) < 60 and not brew.is_open():
+			var definition = level_catalog.find_level(level_id)
+			var target = level_catalog.find_level(definition.boss_level_id) if definition else null
+			portal_dialog.dialog_text = "挑战%s？\n保留当前生命、已拾材料和能力；地面未拾物品离场清除。" % (target.boss_name if target else "Boss")
 			portal_dialog.popup_centered()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("alchemy"):
@@ -413,7 +520,9 @@ func update_camera(delta: float) -> void:
 	var motion := target - camera.position
 	var deadzone := 0.0 if delta <= 0 else 6.0
 	var desired := camera.position + motion.sign() * (motion.abs() - Vector2.ONE * deadzone).max(Vector2.ZERO)
-	camera.position = camera.position.lerp(desired, weight).clamp(MAP.position + half_view, MAP.end - half_view)
+	camera.position = camera.position.lerp(desired, weight)
+	if not is_infinite_field():
+		camera.position = camera.position.clamp(MAP.position + half_view, MAP.end - half_view)
 
 func _physics_process(delta: float) -> void:
 	if not stage_active:
@@ -431,6 +540,15 @@ func _physics_process(delta: float) -> void:
 	player.locked = paused or (is_instance_valid(boss) and boss.preparation > 0.0)
 	if paused:
 		return
+	if is_infinite_field():
+		stream_field()
+		if field_events:
+			field_events.tick()
+		for i in range(enemies.size() - 1, -1, -1):
+			var entry := enemies[i]
+			if player.position.distance_to(entry.body.position) > 1800.0:
+				entry.body.queue_free()
+				enemies.remove_at(i)
 	hit_sound_cooldown = maxf(0.0, hit_sound_cooldown - delta)
 	advance_basic_projectiles(delta)
 	advance_fallback_skill_visuals(delta)
@@ -440,7 +558,7 @@ func _physics_process(delta: float) -> void:
 		pickup_notice_time = maxf(0.0, pickup_notice_time - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
 	if boss:
-		hint.text = "腐化之源   ·   %s" % ("准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   橙色冲锋 / 蓝色扇形弹   ·   Space 闪避" % ceili(float(boss.entry.hp) * 100.0 / boss.MAX_HP))
+		hint.text = "%s   ·   %s" % [boss.display_name, "准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   先读地面预警，再横向移动   ·   Space 闪避" % ceili(float(boss.entry.hp) * 100.0 / boss.max_hp)]
 		boss.advance(delta, player, hurt, burst)
 		if ended or boss.preparation > 0:
 			return
@@ -448,6 +566,8 @@ func _physics_process(delta: float) -> void:
 		run_time += delta
 		if not portal_ready and run_time >= portal_open_seconds:
 			portal_ready = true
+			if is_infinite_field():
+				portal_position = (Vector2(chunk_at(player.position)) + Vector2(0.5, 0.5)) * Vector2(layout_preset.chunk_size)
 			portal = FX.portal(effects, portal_position)
 		update_field_hint()
 		if enemy_config:
@@ -524,7 +644,7 @@ func _physics_process(delta: float) -> void:
 func update_field_hint() -> void:
 	# 获得提示优先显示（短暂）
 	if pickup_notice_time > 0.0:
-		hint.text = "获得  %s   ·   本局素材 %d" % [pickup_notice, _run_mat_total()]
+		hint.text = pickup_notice if pickup_notice.begins_with("发现") else "获得  %s   ·   本局素材 %d" % [pickup_notice, _run_mat_total()]
 		return
 	if portal_ready:
 		var difference: Vector2 = portal_position - player.position
@@ -606,7 +726,8 @@ func start_boss_actor() -> void:
 	player.locked = true
 	boss = BOSS.instantiate()
 	add_child(boss)
-	boss.setup(actors, rng.randf() < 0.5, player.movement_bounds)
+	var definition = level_catalog.find_level(level_id) if level_catalog else null
+	boss.setup(actors, rng.randf() < 0.5, player.movement_bounds, definition.boss_style if definition else 0, definition.boss_name if definition else "腐化之源")
 	enemies.append(boss.entry)
 	update_camera(0.0)
 
@@ -864,18 +985,33 @@ func add_enemy(row: ENEMY_ROW) -> void:
 	var area: Rect2 = player.movement_bounds
 	var at := Vector2(rng.randf_range(area.position.x + 14.0, area.end.x - 14.0),
 		area.position.y + 5.0 if player.position.y > area.get_center().y else area.end.y - 5.0)
+	if is_infinite_field():
+		for attempt in 24:
+			at = player.position + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(640.0, 820.0)
+			var blocked := false
+			for block in blocks:
+				var shape := block.get_child(0).shape as RectangleShape2D
+				if Rect2(block.position - shape.size * 0.5, shape.size).grow(18.0).has_point(at):
+					blocked = true
+					break
+			if not blocked:
+				break
+			if attempt == 23:
+				return
 	var body := FIELD_ENEMY.new()
 	body.setup(row.kind, area, row.atlas)
+	var stats: Dictionary = enemy_config.stats_for(row, run_time)
+	body.configure_difficulty(stats.damage_multiplier, stats.speed_multiplier)
 	actors.add_child(body)
 	body.position = at
-	enemies.append({"body": body, "hp": 2.0, "boss": false})
+	enemies.append({"body": body, "hp": stats.hp, "max_hp": stats.hp, "boss": false})
 
-func fire_web(at: Vector2, direction: Vector2, kind: int = FIELD_ENEMY.Kind.SPIDER) -> void:
+func fire_web(at: Vector2, direction: Vector2, kind: int = FIELD_ENEMY.Kind.SPIDER, damage_multiplier := 1.0) -> void:
 	if kind == FIELD_ENEMY.Kind.MUSHROOM:
-		spore_patches.append({"position": at, "remaining": 2.8, "next_hit": 0.32})
+		spore_patches.append({"position": at, "remaining": 2.8, "next_hit": 0.32, "damage_multiplier": damage_multiplier})
 	else:
 		var water := kind == FIELD_ENEMY.Kind.WATER_SPIRIT
-		web_shots.append({"position": at, "direction": direction, "remaining": 1.0 if water else 1.15, "water": water})
+		web_shots.append({"position": at, "direction": direction, "remaining": 1.0 if water else 1.15, "water": water, "damage_multiplier": damage_multiplier})
 	web_layer.queue_redraw()
 
 func advance_webs(delta: float) -> void:
@@ -900,12 +1036,12 @@ func advance_webs(delta: float) -> void:
 		if hit_player and not obstacle.is_empty():
 			hit_player = (player_at - at).dot(shot.direction) < at.distance_to(end)
 		shot.remaining -= delta
-		if hit_player or not obstacle.is_empty() or shot.remaining <= 0.0 or not MAP.has_point(to_local(goal)):
+		if hit_player or not obstacle.is_empty() or shot.remaining <= 0.0 or not active_map_bounds().has_point(to_local(goal)):
 			web_shots.remove_at(i)
 		else:
 			shot.position = goal
 		if hit_player:
-			hurt(FIELD_ENEMY.DAMAGE)
+			hurt(FIELD_ENEMY.DAMAGE * float(shot.get("damage_multiplier", 1.0)))
 			if ended:
 				return
 	web_layer.queue_redraw()
@@ -920,7 +1056,7 @@ func advance_spores(delta: float) -> void:
 		patch.next_hit -= delta
 		if patch.next_hit <= 0.0 and player.global_position.distance_squared_to(patch.position) <= FIELD_ENEMY.SPORE_RADIUS ** 2:
 			patch.next_hit = 0.68
-			hurt(FIELD_ENEMY.DAMAGE)
+			hurt(FIELD_ENEMY.DAMAGE * float(patch.get("damage_multiplier", 1.0)))
 			if ended:
 				return
 
@@ -1001,7 +1137,7 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 	if entry.boss:
 		defeated_art[body] = boss.art
 		player.locked = true
-		hint.text = "腐化之源正在崩解"
+		hint.text = "%s正在崩解" % boss.display_name
 		boss_death = boss.play_death()
 		boss_death.finished.connect(func() -> void:
 			remove_defeated(body)
@@ -1055,7 +1191,7 @@ func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
 		spawn_material_drop(at, String(entry.material_id), amount)
 
 # 生成素材掉落实体（地面掉落物，等待玩家吸附拾取）
-func spawn_material_drop(at: Vector2, material_id: String, amount: int) -> void:
+func spawn_material_drop(at: Vector2, material_id: String, amount: int, scatter := true) -> void:
 	var color := _material_color(material_id)
 	var sprite := Sprite2D.new()
 	var tex := GradientTexture2D.new()
@@ -1068,7 +1204,7 @@ func spawn_material_drop(at: Vector2, material_id: String, amount: int) -> void:
 	sprite.texture = tex
 	sprite.scale = Vector2.ONE * 0.9
 	actors.add_child(sprite)
-	sprite.position = at + Vector2(rng.randf_range(-6.0, 6.0), rng.randf_range(-6.0, 6.0))
+	sprite.position = at + (Vector2(rng.randf_range(-6.0, 6.0), rng.randf_range(-6.0, 6.0)) if scatter else Vector2.ZERO)
 	material_drops.append({"sprite": sprite, "material_id": material_id, "amount": amount})
 
 func _material_color(material_id: String) -> Color:
