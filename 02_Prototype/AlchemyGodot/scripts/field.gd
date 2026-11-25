@@ -825,7 +825,7 @@ func on_synergy_effect(syn: Dictionary, at: Vector2) -> void:
 	SKILL_FX.explosion(effects, at, color, radius * 2.0)
 
 # 技能释放视觉表现（由 SkillManager 通过 alchemy_system 回调触发）
-# info: {"skill_id", "behavior", "from", "target", "color", "radius", "speed", "element"}
+# info: {"skill_id", "event", "from", "target", "color", "radius", "speed", "split_side", "state"}
 func play_skill_fx(info: Dictionary) -> void:
 	var skill_id: String = String(info.get("skill_id", ""))
 	var event_name: String = String(info.get("event", "cast"))
@@ -840,6 +840,18 @@ func play_skill_fx(info: Dictionary) -> void:
 	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
 		hd_view.world_view.show_skill_fx(info)
 		return
+	var split_side := int(info.get("split_side", 0))
+	if event_name == "split_cast":
+		var sideways := from.direction_to(target).orthogonal()
+		if sideways.is_zero_approx():
+			sideways = Vector2.DOWN
+		var center := from + Vector2(0, -24)
+		SKILL_FX.explosion(effects, center - sideways * 14.0, Color("#78ebcf"), 12.0)
+		SKILL_FX.explosion(effects, center + sideways * 14.0, Color("#d198ff"), 12.0)
+		return
+	if split_side != 0:
+		var accent := Color("#78ebcf") if split_side < 0 else Color("#d198ff")
+		color = color.lerp(accent, 0.44)
 	# 回退视图与 3D 共用逻辑状态，在真实发射、落地和区域开始时各播一次。
 	var state: Dictionary = info.get("state", {})
 	var state_kind := String(state.get("kind", ""))
@@ -859,7 +871,10 @@ func play_skill_fx(info: Dictionary) -> void:
 			fallback_skill_visuals.append({"state":state, "node":ball, "fade":0.0})
 			return
 		if event_name == "impact" and state_kind == "projectile":
-			FX.hit(effects, target + Vector2(0, -24), .46)
+			if split_side == 0:
+				FX.hit(effects, target + Vector2(0, -24), .46)
+			else:
+				SKILL_FX.explosion(effects, target + Vector2(0, -24), color, 16.0)
 			return
 	if event_name == "zone_start" and state_kind in ["zone", "pull"]:
 		var cloud := FX.poison(effects, target, radius / 90.0)

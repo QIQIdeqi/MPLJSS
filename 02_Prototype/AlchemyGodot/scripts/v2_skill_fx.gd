@@ -2,6 +2,7 @@ extends Node3D
 
 const GROUND_SHADER := preload("res://shaders/v2_skill_ground.gdshader")
 const SKILL_LIGHT := preload("res://scripts/v2_skill_light.gd")
+const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
 const VIAL := preload("res://scenes/fx/brew_result_vial.png")
 const DUST := preload("res://art/vfx/v2/clay_homunculus_summon_24f.png")
 const MIST := preload("res://art/vfx/v2/mist_flask_cloud_24f.png")
@@ -44,6 +45,7 @@ static var clay_texture: ImageTexture
 var state: Dictionary = {}
 var skill_id := ""
 var event_name := ""
+var split_side := 0
 var age := 0.0
 var zone_fade_left := ZONE_FADE_DURATION
 var lifetime := 0.0
@@ -65,6 +67,9 @@ func start(info: Dictionary) -> void:
 	launch_point = info.get("from", Vector2.ZERO)
 	var target: Vector2 = info.get("target", launch_point)
 	state = info.get("state", info.get("projectile", {}))
+	split_side = int(info.get("split_side", state.get("split_side", 0)))
+	if split_side != 0:
+		set_meta("split_side", split_side)
 	heading = state.get("direction", launch_point.direction_to(target))
 	if heading.is_zero_approx():
 		heading = Vector2.RIGHT
@@ -104,6 +109,28 @@ func start(info: Dictionary) -> void:
 			_hop(target, launch_point)
 	if is_zero_approx(lifetime):
 		queue_free()
+	elif split_side != 0:
+		_add_split_accent()
+
+func _add_split_accent() -> void:
+	match event_name:
+		"flight":
+			var accent := SPLIT_ALCHEMY_FX.new()
+			body.add_child(accent)
+			var trailing := skill_id != "sk_corrosive_flask" and skill_id != "sk_mist_flask"
+			accent.start_follow(split_side, false, trailing)
+		"summon_start":
+			var accent := SPLIT_ALCHEMY_FX.new()
+			add_child(accent)
+			accent.start_follow(split_side, true)
+		"impact", "zone_start":
+			var accent := SPLIT_ALCHEMY_FX.new()
+			add_child(accent)
+			var camera := _world_camera()
+			if camera:
+				accent.position = camera.global_basis.z.slide(Vector3.UP).normalized() * 0.14
+			var height := 0.20 if event_name == "zone_start" else 0.37
+			accent.start_mark(split_side, heading, height, 0.42)
 
 func _process(delta: float) -> void:
 	age += delta
@@ -356,6 +383,8 @@ func _make_library_zone(texture: Texture2D, extent: float, flat: bool, foot := 0
 	var frame_width := float(texture.get_width()) / ATLAS_COLUMNS
 	library_card = _library_sprite(texture, self, world_radius * extent / frame_width)
 	library_card.position.y = FLOOR_Y + 0.008
+	if split_side != 0:
+		library_card.modulate = Color.WHITE.lerp(SPLIT_ALCHEMY_FX.branch_color(split_side), 0.24)
 	# A tilted camera projects sprite pixels down toward the terrain. Keep the source
 	# baseline above the ground so the fog retains its soft lower edge at every pitch.
 	zone_card_foot = foot + 4.0 if not flat else 0.0
@@ -387,6 +416,8 @@ func _hop(target: Vector2, from: Vector2) -> void:
 	lifetime = 0.18
 	var metallic := skill_id == "sk_mithril_drop"
 	var tint := Color("#c9e6f4") if metallic else Color("#9969b0")
+	if split_side != 0:
+		tint = tint.lerp(SPLIT_ALCHEMY_FX.branch_color(split_side), 0.57)
 	var previous := _world_at(from - target) + Vector3.UP * 0.27
 	var end := Vector3.UP * 0.27
 	var sideways := Vector3.UP.cross(previous.direction_to(end))
@@ -408,7 +439,10 @@ func _ground(radius: float, kind: Ground, tint: Color, accent: Color) -> void:
 	floor_mat.shader = GROUND_SHADER
 	floor_mat.set_shader_parameter("pattern", kind)
 	floor_mat.set_shader_parameter("tint", tint)
-	floor_mat.set_shader_parameter("accent", accent)
+	var edge := accent
+	if split_side != 0:
+		edge = edge.lerp(SPLIT_ALCHEMY_FX.branch_color(split_side), 0.52)
+	floor_mat.set_shader_parameter("accent", edge)
 	var quad := QuadMesh.new()
 	quad.size = Vector2.ONE * radius * 2.0
 	var disc := MeshInstance3D.new()

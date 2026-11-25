@@ -97,16 +97,17 @@ func _remove_material(index: int) -> void:
 func _submit_experiment() -> void:
 	if not service:
 		return
+	var recipe := RECIPES.match(selected_materials)
+	var first := not recipe.is_empty() and not service.is_recipe_found(String(recipe.recipe_id))
 	var result: Dictionary = service.experiment(selected_materials)
+	selected_materials.clear()
+	build_ui()
 	var feedback: Label = $Panel/Margin/Scroll/VBox/Feedback
 	if result.success:
 		var ab_name: String = service.ability_name(String(result.ability_id))
-		var first: bool = not service.is_recipe_found(String(result.recipe_id))
 		feedback.text = "实验成功！获得炼金能力「%s」%s" % [ab_name, "（新配方已发现！）" if first else ""]
 	else:
 		feedback.text = "实验失败：%s" % String(result.error)
-	selected_materials.clear()
-	build_ui()
 
 # 图鉴：已发现的配方显示产出能力，未发现隐藏
 func _refresh_codex() -> void:

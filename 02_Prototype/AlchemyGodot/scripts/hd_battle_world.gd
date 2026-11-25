@@ -19,6 +19,7 @@ const EARTH_SPIKE_SHEET := preload("res://art/vfx/generated/earth_spike_24f.png"
 const BLAST_FLASK_IMPACT := preload("res://scripts/blast_flask_impact.gd")
 const BLAST_FLASK_FLIGHT := preload("res://scripts/blast_flask_flight.gd")
 const V2_SKILL_FX := preload("res://scripts/v2_skill_fx.gd")
+const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
 const UNITS_PER_PIXEL := 0.01
 const SOURCE_HIDDEN_LAYER := 4
 const GENERATED_FRAME := 256
@@ -290,18 +291,38 @@ func show_skill_fx(info: Dictionary) -> void:
 	var target: Vector2 = info.get("target", from)
 	var tint: Color = info.get("color", Color.WHITE)
 	var radius := maxf(float(info.get("radius", 0.0)), 18.0)
+	var state: Dictionary = info.get("state", {})
+	var split_side := int(info.get("split_side", state.get("split_side", 0)))
+	if event_name == "split_cast":
+		var fork := SPLIT_ALCHEMY_FX.new()
+		fork.position = world_at(from)
+		_add_v2_effect(fork, skill_id, event_name)
+		fork.start_cast(from.direction_to(target))
+		return
 	if skill_id == "sk_blast_flask":
 		if event_name == "cast":
-			var state: Dictionary = info.get("state", {})
 			if not state.is_empty():
 				var bottle := BLAST_FLASK_FLIGHT.new()
 				_add_v2_effect(bottle, skill_id, event_name)
 				bottle.start(state, from, target)
+				if split_side != 0:
+					var accent := SPLIT_ALCHEMY_FX.new()
+					bottle.set_meta("split_side", split_side)
+					bottle.add_child(accent)
+					accent.start_follow(split_side, false, false)
 		elif event_name == "impact":
 			var impact := BLAST_FLASK_IMPACT.new()
 			impact.position = world_at(target)
 			_add_v2_effect(impact, skill_id, event_name)
 			impact.start(radius * UNITS_PER_PIXEL)
+			if split_side != 0:
+				var accent := SPLIT_ALCHEMY_FX.new()
+				var direction: Vector2 = state.get("direction", from.direction_to(target))
+				impact.set_meta("split_side", split_side)
+				impact.add_child(accent)
+				if is_instance_valid(camera) and camera.is_inside_tree():
+					accent.position = camera.global_basis.z.slide(Vector3.UP).normalized() * 0.14
+				accent.start_mark(split_side, direction, 0.35, 0.38)
 		return
 	if skill_id.begins_with("sk_") or skill_id.begins_with("link_"):
 		var effect := V2_SKILL_FX.new()
@@ -311,7 +332,6 @@ func show_skill_fx(info: Dictionary) -> void:
 	match skill_id:
 		"magic_bolt":
 			# Flight follows the basic projectile. Damage playback owns the hit.
-			var state: Dictionary = info.get("state", {})
 			if event_name == "cast" and state.get("kind", "") == "projectile":
 				_track_projectile(state, tint)
 			return

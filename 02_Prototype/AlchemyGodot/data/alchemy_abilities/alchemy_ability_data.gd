@@ -12,6 +12,9 @@ const ABILITY_SPLIT := "split"        # 分裂炼金
 const ABILITY_HOMING := "homing"      # 追踪炼金
 const ABILITY_ECHO := "echo"          # 回响炼金
 
+const SPLIT_DAMAGE_RATIO := 0.60
+const SPLIT_AREA_RATIO := 0.80
+
 # 改造效果类型（effect_type）
 const EFFECT_BURST := "burst"         # 范围爆发
 const EFFECT_BOUNCE := "bounce"       # 弹射转移
@@ -46,10 +49,9 @@ const ABILITIES := [
 	},
 	{
 		"id": ABILITY_SPLIT, "name": "分裂炼金",
-		"desc": "攻击在命中或结束后生成多个子攻击",
+		"desc": "基础技能每次释放分成两份，各造成 60% 伤害。优先攻击不同目标，范围效果略小。",
 		"effect_type": EFFECT_SPLIT,
-		"deep_skills": ["sk_blast_flask", "sk_corrosive_flask", "sk_mist_flask", "sk_crystal_growth", "sk_spirit_gel"],
-		"param_keys": {"count": 3, "damage_ratio": 0.45, "spread": 0.7, "depth": 1},
+		"param_keys": {"count": 2, "damage_ratio": SPLIT_DAMAGE_RATIO, "area_ratio": SPLIT_AREA_RATIO},
 	},
 	{
 		"id": ABILITY_HOMING, "name": "追踪炼金",

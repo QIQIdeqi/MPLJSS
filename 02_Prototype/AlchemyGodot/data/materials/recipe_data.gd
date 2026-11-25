@@ -22,8 +22,8 @@ const RECIPES := [
 	 "inputs": ["earth_core", "magic_shard"]},
 	{"recipe_id": "recipe_homing", "ability_id": ABILITIES.ABILITY_HOMING, "tier": TIER_MID,
 	 "inputs": ["wind_crystal", "magic_shard", "dew"]},
-	{"recipe_id": "recipe_split",  "ability_id": ABILITIES.ABILITY_SPLIT,  "tier": TIER_MID,
-	 "inputs": ["fire_powder", "earth_core", "magic_shard"]},
+	{"recipe_id": "recipe_split",  "ability_id": ABILITIES.ABILITY_SPLIT,  "tier": TIER_EARLY,
+	 "inputs": ["fire_powder", "earth_core"], "legacy_inputs": ["fire_powder", "earth_core", "magic_shard"]},
 	{"recipe_id": "recipe_echo",   "ability_id": ABILITIES.ABILITY_ECHO,   "tier": TIER_LATE,
 	 "inputs": ["fire_powder", "dew", "wind_crystal", "earth_core"]},
 ]
@@ -43,7 +43,7 @@ static func combo_key(materials: Array) -> String:
 static func match(materials: Array) -> Dictionary:
 	var key := combo_key(materials)
 	for r in RECIPES:
-		if combo_key(r.inputs) == key:
+		if combo_key(r.inputs) == key or (r.has("legacy_inputs") and combo_key(r.legacy_inputs) == key):
 			return r
 	return {}
 
