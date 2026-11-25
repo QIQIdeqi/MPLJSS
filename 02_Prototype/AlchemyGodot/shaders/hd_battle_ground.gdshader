@@ -48,7 +48,7 @@ void fragment() {
 	// Interpolate between four generated cell centers, with bends confined to their shared edges.
 	vec2 tile = grid - 0.5 + bend;
 	ivec2 from = ivec2(floor(tile));
-	vec2 blend = smoothstep(vec2(0.23), vec2(0.77), fract(tile));
+	vec2 blend = smoothstep(vec2(0.12), vec2(0.88), fract(tile));
 	int a = terrain_at(from);
 	int b = terrain_at(from + ivec2(1, 0));
 	int c = terrain_at(from + ivec2(0, 1));

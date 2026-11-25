@@ -26,3 +26,13 @@ Git LFS 用于仓库中的部分共享素材和试玩包。
 - [1.2 场景](00_Doc/协作策划/1.2场景.md) · [1.4 关卡](00_Doc/协作策划/1.4关卡.md) · [1.5 系统](00_Doc/协作策划/1.5系统.md) · [1.6 数值](00_Doc/协作策划/1.6数值.md)
 - [制作人工作台](04_工具与协作/AgentTeam/工作台.md) · [团队执行说明](04_工具与协作/AgentTeam/执行说明.md) · [官网源码说明](04_Web/README.md)
 - [Unreal 工程与 11 月 9 日试玩包历史快照](https://github.com/QIQIdeqi/MPLJSS/tree/fa5c91c74fc1336bb89296af87611b0b8f41ea17)保留在切换前的提交。
+
+## 五关无限地图与美术需求
+
+普通战斗按种子无限区块展开，五个目的地各有关联的独立Boss场，300秒后可自由挑战。关卡总表、数量/密度和怪物波次仍可在Godot编辑器调整。
+
+- [五关场景美术需求Excel](outputs/five_regions_art_20261124/五关_场景美术需求案.xlsx)：每关一页，5页、40条需求、40张参考图，全部尺寸使用px。
+- [素材联系表](outputs/five_regions_art_20261124/素材联系表.png) · [关卡制作与工具说明](02_Prototype/AlchemyGodot/Docs/关卡总表与出战准备.md)。
+- [关卡方案](00_Doc/协作策划/1.4关卡.md) · [离线玩法预览HTML](outputs/infinite_level_preview_20261124/五关玩法预览.html)。
+
+以上对应源工程；Windows试玩包请按包内版本说明区分。

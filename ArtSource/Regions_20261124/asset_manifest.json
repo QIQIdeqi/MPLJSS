@@ -1,0 +1,257 @@
+[
+  {
+    "id": "greyford_01",
+    "name": "ground",
+    "path": "02_Prototype/AlchemyGodot/art/regions/greyford_01/ground.png",
+    "source": "ArtSource/Regions_20261124/greyford_01_ground_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": null,
+    "alpha": false,
+    "sha256": "9bc67a56a25e1ca82bbc7c97a27a519a8c550786a464e3077efa2def939de60e"
+  },
+  {
+    "id": "greyford_01",
+    "name": "prop_a",
+    "path": "02_Prototype/AlchemyGodot/art/regions/greyford_01/prop_a.png",
+    "source": "ArtSource/Regions_20261124/greyford_01_prop_a_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "568ebc2ec825a0d5e290a23f40a7bf09138f1502908b8d6e62ec5fd174b53651"
+  },
+  {
+    "id": "greyford_01",
+    "name": "prop_b",
+    "path": "02_Prototype/AlchemyGodot/art/regions/greyford_01/prop_b.png",
+    "source": "ArtSource/Regions_20261124/greyford_01_prop_b_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "f8bc97a9ed87595d3cb6ea733660a0479c3560998e969c967f537b0301a98cc1"
+  },
+  {
+    "id": "trade_road_02",
+    "name": "ground",
+    "path": "02_Prototype/AlchemyGodot/art/regions/trade_road_02/ground.png",
+    "source": "ArtSource/Regions_20261124/trade_road_02_ground_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": null,
+    "alpha": false,
+    "sha256": "8445cb0bf24501d9ba80ab3237010c9c4c384f7da25ade74ea904242957d6974"
+  },
+  {
+    "id": "trade_road_02",
+    "name": "prop_a",
+    "path": "02_Prototype/AlchemyGodot/art/regions/trade_road_02/prop_a.png",
+    "source": "ArtSource/Regions_20261124/trade_road_02_prop_a_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "1f88dceadc25ccf263dfd413dc203a59998285f7ea5e628e875c49056f502f42"
+  },
+  {
+    "id": "trade_road_02",
+    "name": "prop_b",
+    "path": "02_Prototype/AlchemyGodot/art/regions/trade_road_02/prop_b.png",
+    "source": "ArtSource/Regions_20261124/trade_road_02_prop_b_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "8f7aee4be170af41b68f10d1a75e475b53af0f56b3a8e2b85badb7660b6fb9ed"
+  },
+  {
+    "id": "manor_03",
+    "name": "ground",
+    "path": "02_Prototype/AlchemyGodot/art/regions/manor_03/ground.png",
+    "source": "ArtSource/Regions_20261124/manor_03_ground_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": null,
+    "alpha": false,
+    "sha256": "e41edf7d72a13d6079d37c401511cdf756ec310ea55e81bf356ecfe71c3d8244"
+  },
+  {
+    "id": "manor_03",
+    "name": "prop_a",
+    "path": "02_Prototype/AlchemyGodot/art/regions/manor_03/prop_a.png",
+    "source": "ArtSource/Regions_20261124/manor_03_prop_a_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "cb6de6ff122d39e014ec8aee52da5ce371b8ddf6ed1262fc36bbd7547f801bea"
+  },
+  {
+    "id": "manor_03",
+    "name": "prop_b",
+    "path": "02_Prototype/AlchemyGodot/art/regions/manor_03/prop_b.png",
+    "source": "ArtSource/Regions_20261124/manor_03_prop_b_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "0b9cdd2637fa91be2aadf3bd189a3b3f5bee66385212eb9d877310a2311d73be"
+  },
+  {
+    "id": "pilgrimage_04",
+    "name": "ground",
+    "path": "02_Prototype/AlchemyGodot/art/regions/pilgrimage_04/ground.png",
+    "source": "ArtSource/Regions_20261124/pilgrimage_04_ground_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": null,
+    "alpha": false,
+    "sha256": "ade17db4a44dd2efe5178d526b0b6c1d54390e0e3661ced103a73e99f00de20b"
+  },
+  {
+    "id": "pilgrimage_04",
+    "name": "prop_a",
+    "path": "02_Prototype/AlchemyGodot/art/regions/pilgrimage_04/prop_a.png",
+    "source": "ArtSource/Regions_20261124/pilgrimage_04_prop_a_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "0fec2427de50ca03da1e9287b6e606cdb762735bd301c86dea63b462f5ee8157"
+  },
+  {
+    "id": "pilgrimage_04",
+    "name": "prop_b",
+    "path": "02_Prototype/AlchemyGodot/art/regions/pilgrimage_04/prop_b.png",
+    "source": "ArtSource/Regions_20261124/pilgrimage_04_prop_b_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "bc05855e16f4a2016fbec04f69075648fe04b9064a2d1a62fd5104afd1d5c2e9"
+  },
+  {
+    "id": "capital_05",
+    "name": "ground",
+    "path": "02_Prototype/AlchemyGodot/art/regions/capital_05/ground.png",
+    "source": "ArtSource/Regions_20261124/capital_05_ground_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": null,
+    "alpha": false,
+    "sha256": "813fcbd29fdce8e89828cbdce15357d6f030ae54445f09331bc0f10e4ee45a73"
+  },
+  {
+    "id": "capital_05",
+    "name": "prop_a",
+    "path": "02_Prototype/AlchemyGodot/art/regions/capital_05/prop_a.png",
+    "source": "ArtSource/Regions_20261124/capital_05_prop_a_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "918b4ddd23debfb3a5814572c0eeaf01c6adee87efaf73c7ae8321c4836925a7"
+  },
+  {
+    "id": "capital_05",
+    "name": "prop_b",
+    "path": "02_Prototype/AlchemyGodot/art/regions/capital_05/prop_b.png",
+    "source": "ArtSource/Regions_20261124/capital_05_prop_b_raw.png",
+    "source_size": [
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "foot_y_px": 232,
+    "alpha": true,
+    "sha256": "02d42d99136825bcdbc6c28495f927107d2facd82aa875625f9fb4e492b8e245"
+  }
+]

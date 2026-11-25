@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3]
+[ext_resource type="PackedScene" path="res://scenes/battle.tscn" id="base"]
+[ext_resource type="Resource" path="res://levels/pilgrimage_04_layout.tres" id="layout"]
+[ext_resource type="Resource" path="res://levels/pilgrimage_04_enemies.tres" id="waves"]
+[node name="Pilgrimage04" instance=ExtResource("base")]
+level_id = &"pilgrimage_04"
+layout_preset = ExtResource("layout")
+enemy_config = ExtResource("waves")
+spawn_position = Vector2(640, 430)
+
+[node name="EntrySpawn" type="Marker2D" parent="." index="3"]
+position = Vector2(640, 430)
+[node name="BossPortal" type="Marker2D" parent="." index="4"]
+position = Vector2(1120, 330)

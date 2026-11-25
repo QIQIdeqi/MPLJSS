@@ -13,5 +13,42 @@ func _init() -> void:
 	for chain in SKILLS.CHAINS:
 		assert(ids.has(chain.parents[0]) and ids.has(chain.parents[1]), "%s 的父技能不存在" % chain.id)
 		assert(float(chain.cooldown) > 0.0, "%s 缺少独立冷却" % chain.id)
+	_check_upgrade_pool()
 	print("V2_SKILL_DATA_SMOKE_PASS")
 	quit()
+
+func _check_upgrade_pool() -> void:
+	var skills := SkillManager.new()
+	skills.setup(&"burst", null)
+	var upgrades := UpgradeManager.new()
+	upgrades.setup(skills)
+	var pool := upgrades._build_pool()
+	assert(pool.size() == 10, "开局候选应恰好有十项，携带炼金能力也一样")
+	for pick: Dictionary in pool:
+		assert(pick.type == UpgradeManager.CAT_NEW_SKILL and SKILLS.ids().has(pick.skill_id))
+	assert(upgrades.roll_candidates().size() == 3)
+
+	for chain: Dictionary in SKILLS.CHAINS:
+		skills.clear()
+		skills.max_skill_slots = 2
+		upgrades.apply({"type":"new_skill", "skill_id":chain.parents[0]})
+		assert(skills.unlocked_chains().is_empty())
+		var partner_cards: Array = upgrades._build_pool().filter(
+			func(pick: Dictionary) -> bool: return pick.skill_id == chain.parents[1])
+		assert(partner_cards.size() == 1 and String(partner_cards[0].desc).contains(chain.name))
+		upgrades.apply(partner_cards[0])
+		assert(skills.runtimes.size() == 2 and skills.runtime_for(StringName(chain.id)) == null)
+		assert(skills.unlocked_chains().size() == 1 and skills.unlocked_chains()[0].id == chain.id)
+		assert(not skills.add_skill(StringName(chain.id)))
+		for pick: Dictionary in upgrades._build_pool():
+			assert(pick.type == UpgradeManager.CAT_SKILL_UPGRADE and chain.parents.has(String(pick.skill_id)))
+
+		var parent := skills.runtime_for(StringName(chain.parents[0]))
+		for i in 6:
+			upgrades.apply({"type":"skill_upgrade", "skill_id":chain.parents[0]})
+		assert(parent.level == 5 and skills.unlocked_chains().size() == 1)
+	skills.clear()
+	assert(skills.unlocked_chains().is_empty())
+	skills.max_skill_slots = 6
+	upgrades.apply({"type":"new_skill", "skill_id":SKILLS.CHAINS[0].id})
+	assert(skills.runtimes.is_empty(), "有空槽也不能从奖励直接获得组合技能")

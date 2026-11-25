@@ -4,7 +4,7 @@ extends Resource
 @export var display_name := ""
 @export var texture: Texture2D
 @export var ground := false
-@export_range(0, 100) var weight := 1.0
+@export_range(0, 1000) var weight := 1.0
 ## X is the minimum and Y the maximum. Each -1 endpoint is unrestricted.
 @export var count_range := Vector2i(-1, -1)
 ## Fraction of all map cells. This intersects Count Range.

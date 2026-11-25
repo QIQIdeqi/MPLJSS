@@ -12,6 +12,8 @@ const FX := preload("res://scripts/battle_fx.gd")
 const SKILL_FX := preload("res://scripts/skill_fx.gd")
 const LEVEL_LAYOUT := preload("res://scripts/level_layout.gd")
 const LEVEL_PRESET := preload("res://levels/preset.gd")
+const INFINITE_LAYOUT := preload("res://scripts/infinite_field_layout.gd")
+const FIELD_EVENTS := preload("res://scripts/field_event_runtime.gd")
 const ALCHEMY_SYSTEM := preload("res://scripts/alchemy/alchemy_system.gd")
 const ALCHEMY_MANAGER := preload("res://scripts/alchemy/alchemy_manager.gd")
 const UPGRADE_UI := preload("res://scenes/upgrade_ui.tscn")
@@ -34,6 +36,10 @@ const CAMERA_ZOOM := 1.45
 @export var field_seed: int = 0
 @export_range(0, 600) var portal_open_seconds := 300.0
 @export var save_path := "user://progress.cfg"
+@export var level_id: StringName = &""
+@export var layout_preset: LEVEL_PRESET
+@export var spawn_position := SPAWN
+@export var stage_is_boss := false
 @onready var actors: Node2D = $Actors
 @onready var player = $Actors/Lilita
 @onready var status: Label = get_node_or_null("Interface/Status")
@@ -58,6 +64,10 @@ var coins := 0
 var level := 1
 var kills := 0
 var enemy_death_sound: AudioStreamPlayer
+var enemy_hit_sound: AudioStreamPlayer
+var hit_sound_cooldown := 0.0
+var basic_projectiles: Array[Dictionary] = []
+var fallback_skill_visuals: Array[Dictionary] = []
 var inventory := [0, 0, 0, 0, 0, 0]
 var brew
 var alchemy_system: ALCHEMY_SYSTEM
@@ -87,10 +97,127 @@ var ended := false
 var first_brew := false
 var opening_supply_eligible := false
 var save := ConfigFile.new()
+var level_catalog: Resource
+var stage_active := true
+var startup_error := ""
+var startup_complete := false
+var incoming_run: Dictionary = {}
+var entry_busy := false
+var run_rewards_saved := false
+var infinite_layout
+var field_events: FIELD_EVENTS
+var chunk_nodes: Dictionary = {}
+var dormant_drops: Dictionary = {}
+var last_stream_chunk := Vector2i(2147483647, 2147483647)
+
+func is_infinite_field() -> bool:
+	return combat and not stage_is_boss and layout_preset != null and layout_preset.infinite
+
+func chunk_at(at: Vector2) -> Vector2i:
+	var size := Vector2(layout_preset.chunk_size)
+	return Vector2i(floori(at.x / size.x), floori(at.y / size.y))
+
+func active_map_bounds() -> Rect2:
+	return player.movement_bounds if is_infinite_field() else MAP
+
+func stream_field(force := false) -> bool:
+	if not is_infinite_field() or infinite_layout == null:
+		return true
+	var coordinate := chunk_at(player.position)
+	if not force and coordinate == last_stream_chunk:
+		return true
+	var change: Dictionary = infinite_layout.update(player.position)
+	if not String(change.error).is_empty():
+		push_warning(change.error)
+		return false
+	last_stream_chunk = coordinate
+	for coord: Vector2i in change.removed:
+		store_chunk_drops(coord)
+		if not chunk_nodes.has(coord):
+			continue
+		for node in chunk_nodes[coord].props + chunk_nodes[coord].blocks:
+			node.get_parent().remove_child(node)
+			node.queue_free()
+		chunk_nodes.erase(coord)
+	for coord: Vector2i in change.added:
+		var nodes := {"props": [], "blocks": []}
+		for item in change.added[coord].props:
+			nodes.props.append(make_sprite(item.texture, item.position, item.size, item.foot_fraction))
+			if item.collision != Vector2.ZERO:
+				add_block(item.position, item.collision)
+				nodes.blocks.append(blocks.back())
+		chunk_nodes[coord] = nodes
+		restore_chunk_drops(coord)
+	tiles.clear()
+	props.clear()
+	blocks.clear()
+	for coord in change.chunks:
+		tiles.append_array(change.chunks[coord].tiles)
+		props.append_array(chunk_nodes[coord].props)
+		blocks.append_array(chunk_nodes[coord].blocks)
+	player.movement_bounds = change.bounds
+	for entry in enemies:
+		if not entry.boss:
+			entry.body.travel_bounds = change.bounds.grow(-14.0)
+	if is_instance_valid(hd_view):
+		hd_view.rebuild()
+	if field_events:
+		field_events.sync()
+	queue_redraw()
+	return true
+
+func store_chunk_drops(coord: Vector2i) -> void:
+	var stored: Array = dormant_drops.get(coord, [])
+	for i in range(pickups.size() - 1, -1, -1):
+		var drop := pickups[i]
+		if chunk_at(drop.sprite.position) == coord:
+			stored.append({"position": drop.sprite.position, "kind": drop.kind})
+			drop.sprite.queue_free()
+			pickups.remove_at(i)
+	for i in range(material_drops.size() - 1, -1, -1):
+		var drop := material_drops[i]
+		if chunk_at(drop.sprite.position) == coord:
+			stored.append({"position": drop.sprite.position, "material_id": drop.material_id, "amount": drop.amount})
+			drop.sprite.queue_free()
+			material_drops.remove_at(i)
+	if not stored.is_empty():
+		dormant_drops[coord] = stored
+
+func restore_chunk_drops(coord: Vector2i) -> void:
+	for drop in dormant_drops.get(coord, []):
+		if drop.has("kind"):
+			add_pickup(drop.position, drop.kind)
+		else:
+			spawn_material_drop(drop.position, drop.material_id, drop.amount, false)
+	dormant_drops.erase(coord)
+
+func props_by_chunk() -> Dictionary:
+	var result := {}
+	for coord in chunk_nodes:
+		result[coord] = chunk_nodes[coord].props
+	return result
+
+func profile_path() -> String:
+	return "" if OS.get_cmdline_user_args().has("--migration-test") else save_path
 
 func _ready() -> void:
 	if not OS.get_cmdline_user_args().has("--migration-test"):
-		save.load(save_path)
+		var load_error := ProfileStore.load_save(save, save_path)
+		if load_error != OK and load_error != ERR_FILE_NOT_FOUND:
+			startup_error = "存档读取失败，请保留存档并检查文件。"
+	level_catalog = load("res://levels/catalog.tres")
+	if level_id == &"":
+		level_id = &"greyford_01" if combat else &"village_greyford"
+	var definition = level_catalog.find_level(level_id) if level_catalog else null
+	if definition:
+		layout_preset = definition.layout
+		enemy_config = definition.enemy_config
+		spawn_position = definition.spawn_position
+		stage_is_boss = definition.kind == 2
+	if has_node("EntrySpawn"):
+		$EntrySpawn.position = spawn_position
+	player.position = spawn_position
+	$Interface.visible = stage_active
 	camera = Camera2D.new()
 	camera.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
 	add_child(camera)
@@ -103,8 +230,9 @@ func _ready() -> void:
 			rng.randomize()
 		else:
 			rng.seed = field_seed
-		if not generate_field(false, rng.seed):
-			finish(false)
+		if not generate_field(stage_is_boss, rng.seed):
+			startup_error = "关卡随机布局无法生成，请调整物件数量或密度。"
+			stage_active = false
 			return
 		web_layer = Node2D.new()
 		actors.add_child(web_layer)
@@ -113,6 +241,10 @@ func _ready() -> void:
 		enemy_death_sound.stream = preload("res://audio/S_EnemyDeath.wav")
 		enemy_death_sound.volume_db = -16
 		add_child(enemy_death_sound)
+		enemy_hit_sound = AudioStreamPlayer.new()
+		enemy_hit_sound.stream = preload("res://audio/S_EnemyHit.wav")
+		enemy_hit_sound.volume_db = -13.0
+		add_child(enemy_hit_sound)
 		brew = BREW.instantiate()
 		$Interface.add_child(brew)
 		brew.attach(self)
@@ -122,29 +254,29 @@ func _ready() -> void:
 		alchemy_system = ALCHEMY_SYSTEM.new()
 		alchemy_system.name = "AlchemySystem"
 		add_child(alchemy_system)
-		alchemy_system.ability_id = RunConfig.selected_ability
+		alchemy_system.ability_id = String(incoming_run.get("ability", RunConfig.selected_ability))
 		alchemy_system.setup(self, save)
 		alchemy_system.upgrade_offered.connect(on_upgrade_offered)
 		# 本局素材账本 + 永久库存（V1.1 资源闭环）
 		profile_store = ProfileStore.new()
-		profile_store.setup(save)
+		profile_store.setup(save, profile_path())
 		run_manager = RunManager.new()
 		run_manager.setup(profile_store)
-		run_manager.start_run("run_%d" % Time.get_ticks_msec())
+		run_manager.start_run(String(incoming_run.get("run_id", RunConfig.new_run_id())))
 		run_manager.material_collected.connect(on_material_collected)
-		# 入场消耗（初始能力不消耗）
-		consume_entry_ability()
 		upgrade_ui = UPGRADE_UI.instantiate()
 		add_child(upgrade_ui)
 		upgrade_ui.setup(self)
 		upgrade_ui.chosen.connect(apply_upgrade)
 		first_brew = not bool(save.get_value("tutorial", "brew_introduced", false))
 		opening_supply_eligible = not first_brew
-		if first_brew:
+		if first_brew and incoming_run.is_empty():
 			for i in 3:
 				inventory[i] = 1
 			save.set_value("tutorial", "brew_introduced", true)
-			persist()
+			# 入口准备时不写盘；成功确认的库存事务会一并保存教学标记。
+			if stage_active:
+				persist()
 		portal_dialog = ConfirmationDialog.new()
 		portal_dialog.title = "Boss 挑战"
 		portal_dialog.dialog_text = "进入雾界草甸挑战腐化之源？\n保留当前生命、材料和丹药，挑战结束后结算。"
@@ -153,18 +285,18 @@ func _ready() -> void:
 		portal_dialog.exclusive = true
 		portal_dialog.confirmed.connect(enter_boss)
 		$Interface.add_child(portal_dialog)
-		if enemy_config:
+		if not incoming_run.is_empty():
+			restore_run(incoming_run)
+		if stage_is_boss:
+			start_boss_actor()
+		elif enemy_config:
 			var count := mini(enemy_config.opening_count, enemy_config.alive_cap(0))
 			var phase := rng.randf()
 			for i in count:
 				add_enemy(enemy_config.pick_row(0, (i + phase) / count))
 			until_spawn = enemy_config.interval(0)
-		if DisplayServer.get_name() != "headless":
-			hd_view = HD_BATTLE.new()
-			add_child(hd_view)
-			hd_view.attach(self)
-			queue_redraw()
-		play_music(preload("res://audio/Music_Field.wav"))
+		if stage_active:
+			activate_stage()
 	else:
 		if DisplayServer.get_name() != "headless":
 			var view := HD_VILLAGE.new()
@@ -172,25 +304,108 @@ func _ready() -> void:
 			view.attach(self)
 		# 村庄：初始化永久库存 + 炼金服务 + 入场选择 + 炼金工房
 		profile_store = ProfileStore.new()
-		profile_store.setup(save)
+		profile_store.setup(save, profile_path())
 		village_alchemy = ALCHEMY_MANAGER.new()
 		village_alchemy.setup(save)
+		var last_level := StringName(save.get_value("entry", "level_id", "greyford_01"))
+		if level_catalog and level_catalog.find_level(last_level):
+			RunConfig.selected_level_id = last_level
 		entry_select_ui = ENTRY_SELECT.instantiate()
 		add_child(entry_select_ui)
-		entry_select_ui.setup(self, profile_store)
-		entry_select_ui.selected.connect(on_entry_selected)
+		entry_select_ui.setup(self, profile_store, level_catalog)
+		entry_select_ui.confirmed.connect(on_entry_confirmed)
+		entry_select_ui.cancelled.connect(RunConfig.cancel_entry)
 		var alchemy_service := AlchemyService.new()
 		alchemy_service.setup(profile_store)
 		workbench_ui = WORKBENCH.instantiate()
 		add_child(workbench_ui)
 		workbench_ui.setup(self, alchemy_service, profile_store)
 		play_music(preload("res://audio/Music_Village.wav"))
+	if is_infinite_field():
+		field_events = FIELD_EVENTS.new()
+		field_events.setup(self)
+	startup_complete = startup_error.is_empty()
 
-func on_entry_selected(ability_id: StringName) -> void:
-	if ability_id == &"":
-		return  # 取消入场
-	RunConfig.set_ability(ability_id)
-	get_tree().change_scene_to_file("res://scenes/battle.tscn")
+func prepare_stage(id: StringName, handoff: Dictionary = {}) -> Node2D:
+	var definition = level_catalog.find_level(id) if level_catalog else null
+	if not definition or not definition.enabled or definition.kind == 0 or not ResourceLoader.exists(definition.scene_path):
+		return null
+	var packed := load(definition.scene_path) as PackedScene
+	if not packed:
+		return null
+	var next = packed.instantiate()
+	if not next.get_script() or not next.has_method("activate_stage") or not next.has_node("Actors/Lilita") or not next.has_node("Interface/CombatHUD") or not next.has_node("Music"):
+		next.free()
+		return null
+	next.level_id = id
+	next.save_path = save_path
+	next.stage_active = false
+	next.incoming_run = handoff.duplicate(true)
+	next.field_seed = int(handoff.get("stage_seed", 0))
+	next.process_mode = Node.PROCESS_MODE_DISABLED
+	get_tree().root.add_child(next)
+	if not next.startup_complete or next.profile_store == null or not next.startup_error.is_empty():
+		next.queue_free()
+		return null
+	return next
+
+func on_entry_confirmed(id: StringName, ability_id: StringName) -> void:
+	if entry_busy:
+		return
+	var definition = level_catalog.find_level(id) if level_catalog else null
+	if not definition or not definition.enabled or not definition.selectable or definition.kind != 1:
+		entry_select_ui.show_error("这个关卡当前不能从村庄出发。")
+		return
+	if not startup_error.is_empty():
+		entry_select_ui.show_error(startup_error)
+		return
+	if not level_catalog.validation_errors().is_empty():
+		entry_select_ui.show_error("关卡总表存在配置错误，请先在编辑器里校验并修正。")
+		return
+	entry_busy = true
+	entry_select_ui.set_busy(true)
+	RunConfig.begin_entry(id, ability_id)
+	var next = prepare_stage(id)
+	if next == null:
+		entry_select_ui.show_error("关卡加载或布局生成失败，未扣库存。请检查关卡配置。")
+	elif not next.profile_store.commit_entry_ability(String(ability_id), String(id), RunConfig.entry_id):
+		next.queue_free()
+		entry_select_ui.show_error("库存不足或保存失败，未扣库存，请重新选择。")
+	else:
+		RunConfig.confirm_entry()
+		publish_stage(next)
+		return
+	RunConfig.cancel_entry()
+	entry_busy = false
+	entry_select_ui.set_busy(false)
+
+func publish_stage(next: Node2D) -> void:
+	var tree := get_tree()
+	# 旧 HD 视图先退出，恢复画布遮罩；新视图随后接管，避免场景叠加。
+	tree.root.remove_child(self)
+	tree.current_scene = next
+	next.activate_stage()
+	queue_free()
+
+func activate_stage() -> void:
+	stage_active = true
+	process_mode = Node.PROCESS_MODE_INHERIT
+	$Interface.show()
+	if combat:
+		if DisplayServer.get_name() != "headless" and not is_instance_valid(hd_view):
+			hd_view = HD_BATTLE.new()
+			add_child(hd_view)
+			hd_view.attach(self)
+			if not incoming_run.get("outdoor", {}).is_empty():
+				for key in incoming_run.outdoor:
+					if key == "weather_state":
+						for weather_key in incoming_run.outdoor.weather_state:
+							hd_view.world_view.weather.set(weather_key, incoming_run.outdoor.weather_state[weather_key])
+					else:
+						hd_view.world_view.set(key, incoming_run.outdoor[key])
+		queue_redraw()
+		play_music(preload("res://audio/Music_Boss.wav") if stage_is_boss else preload("res://audio/Music_Field.wav"))
+		player.locked = stage_is_boss
 
 func play_music(stream: AudioStreamWAV) -> void:
 	var loop := stream.duplicate() as AudioStreamWAV
@@ -200,13 +415,21 @@ func play_music(stream: AudioStreamWAV) -> void:
 	music.play()
 
 func generate_field(boss_stage: bool, layout_seed: int) -> bool:
-	var preset: LEVEL_PRESET = BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT
-	var layout: Dictionary = LEVEL_LAYOUT.build(preset, layout_seed, MAP, BOSS_SPAWN if boss_stage else SPAWN)
+	var preset: LEVEL_PRESET = layout_preset if layout_preset else (BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT)
+	if is_infinite_field():
+		infinite_layout = INFINITE_LAYOUT.new()
+		infinite_layout.setup(preset, layout_seed, level_id, spawn_position)
+		player.clamp_to_battle_bounds = false
+		return stream_field(true)
+	player.clamp_to_battle_bounds = true
+	var layout: Dictionary = LEVEL_LAYOUT.build(preset, layout_seed, MAP, spawn_position)
 	if not layout.error.is_empty():
-		push_error(layout.error)
+		push_warning(layout.error)
 		return false
 	player.movement_bounds = preset.playable_bounds()
 	portal_position = preset.portal_position()
+	if has_node("BossPortal"):
+		$BossPortal.position = portal_position
 	for prop in props:
 		prop.queue_free()
 	for block in blocks:
@@ -239,7 +462,8 @@ func _draw() -> void:
 	if combat and not is_instance_valid(hd_view):
 		for tile in tiles:
 			draw_texture_rect(tile.texture, tile.rect, false)
-		draw_rect(player.movement_bounds, Color(1.0, 0.55, 0.58, 0.60), false, 2.0, true)
+		if not is_infinite_field():
+			draw_rect(player.movement_bounds, Color(1.0, 0.55, 0.58, 0.60), false, 2.0, true)
 
 func make_sprite(texture: Texture2D, at: Vector2, size: Vector2, foot_fraction := 0.38) -> Sprite2D:
 	var sprite := Sprite2D.new()
@@ -253,17 +477,20 @@ func make_sprite(texture: Texture2D, at: Vector2, size: Vector2, foot_fraction :
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		if not combat and player.position.distance_to(GATE) < 92:
-			if is_instance_valid(entry_select_ui) and not entry_select_ui.visible:
+			if is_instance_valid(entry_select_ui) and not entry_select_ui.visible and not workbench_ui.visible:
 				entry_select_ui.open()
 			get_viewport().set_input_as_handled()
 		elif ended:
-			get_tree().change_scene_to_file("res://scenes/village.tscn")
+			leave_run(false)
 		elif portal_ready and player.position.distance_to(portal_position) < 60 and not brew.is_open():
+			var definition = level_catalog.find_level(level_id)
+			var target = level_catalog.find_level(definition.boss_level_id) if definition else null
+			portal_dialog.dialog_text = "挑战%s？\n保留当前生命、已拾材料和能力；地面未拾物品离场清除。" % (target.boss_name if target else "Boss")
 			portal_dialog.popup_centered()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("alchemy"):
 		# 村庄：按 Q 呼出炼金工房（制作能力）
-		if not combat and is_instance_valid(workbench_ui) and not workbench_ui.visible:
+		if not combat and startup_error.is_empty() and is_instance_valid(workbench_ui) and not workbench_ui.visible and not entry_select_ui.visible:
 			workbench_ui.open()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("ui_cancel") and not combat:
@@ -293,13 +520,18 @@ func update_camera(delta: float) -> void:
 	var motion := target - camera.position
 	var deadzone := 0.0 if delta <= 0 else 6.0
 	var desired := camera.position + motion.sign() * (motion.abs() - Vector2.ONE * deadzone).max(Vector2.ZERO)
-	camera.position = camera.position.lerp(desired, weight).clamp(MAP.position + half_view, MAP.end - half_view)
+	camera.position = camera.position.lerp(desired, weight)
+	if not is_infinite_field():
+		camera.position = camera.position.clamp(MAP.position + half_view, MAP.end - half_view)
 
 func _physics_process(delta: float) -> void:
+	if not stage_active:
+		return
 	update_camera(delta)
 	if not combat:
+		player.locked = entry_busy or entry_select_ui.visible or workbench_ui.visible
 		status.text = "格雷弗德村庄   ·   金币 %d" % int(save.get_value("village", "coins", 0))
-		hint.text = "F  选择能力入场" if player.position.distance_to(GATE) < 92 else "WASD 移动   ·   Q 炼金工房   ·   前往右侧雾门   ·   Esc 返回开始界面"
+		hint.text = "F  出战准备 · 选择关卡与能力" if player.position.distance_to(GATE) < 92 else "WASD 移动   ·   Q 炼金工房   ·   前往右侧雾门   ·   Esc 返回开始界面"
 		return
 	if ended or boss_death:
 		player.locked = true
@@ -308,11 +540,25 @@ func _physics_process(delta: float) -> void:
 	player.locked = paused or (is_instance_valid(boss) and boss.preparation > 0.0)
 	if paused:
 		return
+	if is_infinite_field():
+		stream_field()
+		if field_events:
+			field_events.tick()
+		for i in range(enemies.size() - 1, -1, -1):
+			var entry := enemies[i]
+			if player.position.distance_to(entry.body.position) > 1800.0:
+				entry.body.queue_free()
+				enemies.remove_at(i)
+	hit_sound_cooldown = maxf(0.0, hit_sound_cooldown - delta)
+	advance_basic_projectiles(delta)
+	advance_fallback_skill_visuals(delta)
+	if ended or boss_death:
+		return
 	if pickup_notice_time > 0.0:
 		pickup_notice_time = maxf(0.0, pickup_notice_time - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
 	if boss:
-		hint.text = "腐化之源   ·   %s" % ("准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   橙色冲锋 / 蓝色扇形弹   ·   Q 炼金" % ceili(float(boss.entry.hp) * 100.0 / boss.MAX_HP))
+		hint.text = "%s   ·   %s" % [boss.display_name, "准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   先读地面预警，再横向移动   ·   Space 闪避" % ceili(float(boss.entry.hp) * 100.0 / boss.max_hp)]
 		boss.advance(delta, player, hurt, burst)
 		if ended or boss.preparation > 0:
 			return
@@ -320,6 +566,8 @@ func _physics_process(delta: float) -> void:
 		run_time += delta
 		if not portal_ready and run_time >= portal_open_seconds:
 			portal_ready = true
+			if is_infinite_field():
+				portal_position = (Vector2(chunk_at(player.position)) + Vector2(0.5, 0.5)) * Vector2(layout_preset.chunk_size)
 			portal = FX.portal(effects, portal_position)
 		update_field_hint()
 		if enemy_config:
@@ -354,9 +602,7 @@ func _physics_process(delta: float) -> void:
 				nearest = entry
 		if not nearest.is_empty():
 			until_attack = 0.47
-			play_skill_fx({"skill_id":"magic_bolt", "from":player.position, "target":nearest.body.position,
-				"color":Color(0.65, 0.30, 1.00), "radius":0.0, "speed":620.0})
-			damage_enemy(nearest, 1.0 + float((level - 1) / 3))
+			launch_basic_projectile(nearest)
 	if ended or boss_death:
 		return
 	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
@@ -398,7 +644,7 @@ func _physics_process(delta: float) -> void:
 func update_field_hint() -> void:
 	# 获得提示优先显示（短暂）
 	if pickup_notice_time > 0.0:
-		hint.text = "获得  %s   ·   本局素材 %d" % [pickup_notice, _run_mat_total()]
+		hint.text = pickup_notice if pickup_notice.begins_with("发现") else "获得  %s   ·   本局素材 %d" % [pickup_notice, _run_mat_total()]
 		return
 	if portal_ready:
 		var difference: Vector2 = portal_position - player.position
@@ -413,40 +659,126 @@ func update_field_hint() -> void:
 func _run_mat_total() -> int:
 	return run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
 
+func launch_basic_projectile(target: Dictionary) -> void:
+	if ended or boss_death or not enemies.has(target) or not is_instance_valid(target.get("body")):
+		return
+	var state := {"kind":"projectile", "skill_id":"magic_bolt", "pos":player.position,
+		"target":target, "left":2.0, "finished":false, "damage":1.0 + float((level - 1) / 3)}
+	basic_projectiles.append(state)
+	play_skill_fx({"skill_id":"magic_bolt", "event":"cast", "from":player.position,
+		"target":target.body.position, "color":Color(0.65, 0.30, 1.00), "speed":620.0, "state":state})
+
+func advance_basic_projectiles(delta: float) -> void:
+	for index in range(basic_projectiles.size() - 1, -1, -1):
+		var state := basic_projectiles[index]
+		var target: Dictionary = state.target
+		state.left = float(state.left) - delta
+		if ended or boss_death or state.left <= 0.0 or not enemies.has(target) or not is_instance_valid(target.get("body")) or float(target.get("hp", 0.0)) <= 0.0:
+			state.finished = true
+		else:
+			state.pos = (state.pos as Vector2).move_toward(target.body.position, 620.0 * delta)
+			if (state.pos as Vector2).distance_to(target.body.position) <= 18.0:
+				state.finished = true
+				play_skill_fx({"skill_id":"magic_bolt", "event":"impact", "from":state.pos,
+					"target":target.body.position, "color":Color(0.65, 0.30, 1.00), "state":state})
+				damage_enemy(target, float(state.damage))
+		if state.finished:
+			basic_projectiles.remove_at(index)
+
+func clear_combat_effects() -> void:
+	for state in basic_projectiles:
+		state.finished = true
+	basic_projectiles.clear()
+	if is_instance_valid(alchemy_system) and alchemy_system.skills:
+		alchemy_system.skills.clear_active()
+	for visual in fallback_skill_visuals:
+		if is_instance_valid(visual.node):
+			visual.node.queue_free()
+	fallback_skill_visuals.clear()
+	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+		hd_view.world_view.clear_skill_fx()
+
+func _exit_tree() -> void:
+	clear_combat_effects()
+
 func enter_boss() -> void:
 	if ended or boss or not portal_ready or player.position.distance_to(portal_position) >= 60 or brew.is_open():
 		return
-	if not generate_field(true, int(rng.randi()) + 1):
-		hint.text = "Boss 场地生成失败，可继续探索"
+	var definition = level_catalog.find_level(level_id) if level_catalog else null
+	var target_id: StringName = definition.boss_level_id if definition else &""
+	var target = level_catalog.find_level(target_id) if level_catalog else null
+	if target == null or target.kind != 2:
+		hint.text = "尚未配置 Boss 场景，可继续探索"
 		return
-	brew.clear_projectiles()
-	clear_webs()
-	for entry in enemies:
-		entry.body.queue_free()
-	enemies.clear()
-	for body in defeated_art:
-		body.queue_free()
-	defeated_art.clear()
-	for pickup in pickups:
-		pickup.sprite.queue_free()
-	pickups.clear()
-	for drop in material_drops:
-		if is_instance_valid(drop.sprite):
-			drop.sprite.queue_free()
-	material_drops.clear()
-	for fx in effects.get_children():
-		fx.queue_free()
-	portal = null
-	portal_ready = false
-	player.position = BOSS_SPAWN
-	player.dodge = 0.0
+	portal_dialog.hide()
+	var state := capture_run()
+	# 场地种子只由开局种子和稳定关卡 ID 派生，不受击杀/掉落随机数影响。
+	state.stage_seed = int((str(rng.seed) + ":" + String(target_id)).hash()) + 1
+	var next = prepare_stage(target_id, state)
+	if next == null:
+		hint.text = "Boss 场景或布局加载失败，可继续探索；本局状态未改变"
+		return
+	RunConfig.set_handoff(state)
+	publish_stage(next)
+	RunConfig.take_handoff()
+
+func start_boss_actor() -> void:
 	player.locked = true
 	boss = BOSS.instantiate()
 	add_child(boss)
-	boss.setup(actors, rng.randf() < 0.5, player.movement_bounds)
+	var definition = level_catalog.find_level(level_id) if level_catalog else null
+	boss.setup(actors, rng.randf() < 0.5, player.movement_bounds, definition.boss_style if definition else 0, definition.boss_name if definition else "腐化之源")
 	enemies.append(boss.entry)
 	update_camera(0.0)
-	play_music(preload("res://audio/Music_Boss.wav"))
+
+func capture_run() -> Dictionary:
+	var state := {"run_id": run_manager.run_id, "ability": alchemy_system.ability_id,
+		"stage_seed": rng.seed, "rng_seed": rng.seed, "rng_state": rng.state, "run_rewards_saved": run_rewards_saved,
+		"materials": run_manager.ledger.materials.duplicate(true),
+		"settlement_status": run_manager.ledger.settlement_status, "skills": [],
+		"chain_cooldowns": alchemy_system.skills.chain_cooldowns.duplicate(true),
+		"synergy_cooldowns": alchemy_system.synergies.cooldowns.duplicate(true),
+		"upgrade_rng_seed": alchemy_system.upgrades.rng.seed,
+		"upgrade_rng_state": alchemy_system.upgrades.rng.state,
+		"player_cooldown": player.cooldown, "legacy_brew": {}, "outdoor": {}}
+	for key in ["hp", "xp", "level", "coins", "kills", "run_time", "until_attack", "hurt_cooldown", "inventory", "first_brew", "opening_supply_eligible"]:
+		state[key] = get(key).duplicate(true) if get(key) is Array else get(key)
+	for runtime in alchemy_system.skills.runtimes:
+		state.skills.append({"id":runtime.skill_id, "level":runtime.level, "cooldown":runtime.cooldown_left,
+			"cooldown_total":runtime.cooldown_total, "config":runtime.config.duplicate(true)})
+	for key in ["pills", "equipped", "bag", "cooldowns"]:
+		state.legacy_brew[key] = brew.get(key).duplicate(true)
+	if is_instance_valid(hd_view):
+		for key in ["view_angle", "cycle_time", "clock", "camera_offset"]:
+			state.outdoor[key] = hd_view.world_view.get(key)
+		state.outdoor.weather_state = {}
+		for key in ["current", "elapsed", "cloud_cover", "snow_cover", "upcoming", "flash_timer"]:
+			var value = hd_view.world_view.weather.get(key)
+			state.outdoor.weather_state[key] = value.duplicate() if value is Array else value
+	return state
+
+func restore_run(state: Dictionary) -> void:
+	for key in ["hp", "xp", "level", "coins", "kills", "run_time", "until_attack", "hurt_cooldown", "inventory", "first_brew", "opening_supply_eligible", "run_rewards_saved"]:
+		if state.has(key):
+			set(key, state[key])
+	rng.seed = int(state.get("rng_seed", rng.seed))
+	rng.state = int(state.get("rng_state", rng.state))
+	run_manager.ledger.materials = state.materials.duplicate(true)
+	run_manager.ledger.settlement_status = state.settlement_status
+	for item in state.skills:
+		if alchemy_system.skills.add_skill(item.id):
+			var runtime: SkillRuntime = alchemy_system.skills.runtime_for(item.id)
+			runtime.level = int(item.level)
+			runtime.config = item.config.duplicate(true)
+			runtime.cooldown_left = float(item.cooldown)
+			runtime.cooldown_total = maxf(runtime.cooldown_left, float(item.get("cooldown_total", runtime.cooldown())))
+	alchemy_system.skills.chain_cooldowns = state.chain_cooldowns.duplicate(true)
+	alchemy_system.synergies.cooldowns = state.synergy_cooldowns.duplicate(true)
+	alchemy_system.upgrades.rng.seed = int(state.upgrade_rng_seed)
+	alchemy_system.upgrades.rng.state = int(state.upgrade_rng_state)
+	player.cooldown = state.player_cooldown
+	for key in state.legacy_brew:
+		brew.set(key, state.legacy_brew[key].duplicate(true))
 
 func on_brew_settled(accepted: bool, result: Dictionary) -> void:
 	if not accepted:
@@ -471,17 +803,6 @@ func offer_upgrade() -> void:
 func apply_upgrade(pick: Dictionary) -> void:
 	if alchemy_system:
 		alchemy_system.apply_upgrade(pick)
-
-# 入场消耗能力（V1.1 第6.3节：成功启动本局才扣，初始能力不扣）
-func consume_entry_ability() -> void:
-	if not alchemy_system or not profile_store:
-		return
-	var id: StringName = alchemy_system.ability_id
-	if id == preload("res://data/alchemy_abilities/alchemy_ability_data.gd").ABILITY_INITIAL:
-		return
-	# 成功进入本局（_ready 已执行）才扣除一份，失败加载不会走到这里
-	if profile_store.consume_ability(String(id)):
-		profile_store.save_profile()
 
 func on_upgrade_offered(candidates: Array) -> void:
 	pass
@@ -514,50 +835,51 @@ func play_skill_fx(info: Dictionary) -> void:
 	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
 		hd_view.world_view.show_skill_fx(info)
 		return
-	# 非 HD 回退层也保留 V2 的独立视觉语义，避免测试/低配模式只出现通用白点。
-	match skill_id:
-		"sk_blast_flask":
-			if event_name == "cast":
-				SKILL_FX.projectile(effects, from, target, color, speed)
-			else:
-				SKILL_FX.explosion(effects, target, color, maxf(radius, 64.0))
+	# 回退视图与 3D 共用逻辑状态，在真实发射、落地和区域开始时各播一次。
+	var state: Dictionary = info.get("state", {})
+	var state_kind := String(state.get("kind", ""))
+	if state_kind in ["projectile", "blast_flask"]:
+		if event_name in ["cast", "flight"]:
+			var ball := Sprite2D.new()
+			var glow := GradientTexture2D.new()
+			glow.gradient = _material_gradient(color)
+			glow.width = 20
+			glow.height = 20
+			glow.fill = GradientTexture2D.FILL_RADIAL
+			glow.fill_from = Vector2(.5, .5)
+			glow.fill_to = Vector2.ZERO
+			ball.texture = glow
+			effects.add_child(ball)
+			ball.position = (state.pos as Vector2) + Vector2(0, -24)
+			fallback_skill_visuals.append({"state":state, "node":ball, "fade":0.0})
 			return
-		"sk_clay_homunculus":
-			if event_name == "cast":
-				SKILL_FX.earth_spike(effects, from, color)
-			elif event_name == "impact":
-				SKILL_FX.explosion(effects, target, color, 22.0)
+		if event_name == "impact" and state_kind == "projectile":
+			FX.hit(effects, target + Vector2(0, -24), .46)
 			return
-		"sk_mithril_drop":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			return
-		"sk_gravity_stone":
-			if event_name == "impact": SKILL_FX.aoe(effects, target, color, maxf(radius, 84.0))
-			return
-		"sk_corrosive_flask":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			elif event_name == "impact": SKILL_FX.zone(effects, target, color, maxf(radius, 60.0))
-			return
-		"sk_mist_flask":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			elif event_name == "impact": SKILL_FX.zone(effects, target, color, maxf(radius, 90.0))
-			return
-		"sk_crystal_growth":
-			SKILL_FX.ice_spike(effects, from, target, color)
-			return
-		"sk_obsidian_blade":
-			if event_name == "cast": SKILL_FX.wind_blade(effects, from, target, color)
-			return
-		"sk_spirit_gel":
-			if event_name == "cast": SKILL_FX.projectile(effects, from, target, color, speed)
-			elif event_name == "impact": SKILL_FX.explosion(effects, target, color, 36.0)
-			return
-		"sk_soul_needle":
-			if event_name == "cast":
+	if event_name == "zone_start" and state_kind in ["zone", "pull"]:
+		var cloud := FX.poison(effects, target, radius / 90.0)
+		cloud.modulate = Color(color, .48)
+		fallback_skill_visuals.append({"state":state, "node":cloud, "fade":0.45})
+		return
+	if skill_id.begins_with("sk_") or skill_id.begins_with("link_"):
+		match event_name:
+			"cast", "flight":
+				if skill_id in ["sk_soul_needle", "link_soulbound_needle"]:
+					SKILL_FX.line(effects, from, target, color)
+				else:
+					SKILL_FX.projectile(effects, from, target, color, speed)
+			"summon_start":
+				SKILL_FX.earth_spike(effects, target, color)
+			"zone_start":
+				SKILL_FX.zone(effects, target, color, radius)
+			"hop":
 				SKILL_FX.line(effects, from, target, color)
-			elif event_name == "impact":
-				SKILL_FX.explosion(effects, target, color, 16.0)
-			return
+			"impact", "summon_strike", "summon_end":
+				if skill_id == "sk_crystal_growth":
+					SKILL_FX.ice_spike(effects, from, target, color)
+				else:
+					SKILL_FX.explosion(effects, target, color, clampf(radius, 16.0, 84.0))
+		return
 	match skill_id:
 		"magic_bolt":
 			SKILL_FX.magic_bolt(effects, from, target, color, speed)
@@ -614,18 +936,38 @@ func play_skill_fx(info: Dictionary) -> void:
 			SKILL_FX.projectile(effects, from, target, color, speed)
 
 func persist() -> bool:
-	return OS.get_cmdline_user_args().has("--migration-test") or save.save(save_path) == OK
+	return ProfileStore.write_save(save, profile_path()) == OK
+
+func advance_fallback_skill_visuals(delta: float) -> void:
+	for index in range(fallback_skill_visuals.size() - 1, -1, -1):
+		var visual := fallback_skill_visuals[index]
+		var state: Dictionary = visual.state
+		var node: Node2D = visual.node
+		if not is_instance_valid(node):
+			fallback_skill_visuals.remove_at(index)
+			continue
+		if String(state.kind) in ["projectile", "blast_flask"]:
+			node.position = (state.pos as Vector2) + Vector2(0, -24)
+			if bool(state.finished):
+				node.queue_free()
+				fallback_skill_visuals.remove_at(index)
+		elif bool(state.finished):
+			visual.fade = maxf(0.0, float(visual.fade) - delta)
+			node.modulate.a = .48 * float(visual.fade) / .45
+			if visual.fade <= 0.0:
+				node.queue_free()
+				fallback_skill_visuals.remove_at(index)
 
 func hurt(amount: float, knock_direction := Vector2.ZERO) -> bool:
-	if ended or boss_death or hurt_cooldown > 0 or player.dodge > 0:
+	if ended or boss_death or hurt_cooldown > 0 or player.dodge > 0 or amount <= 0.0:
 		return false
 	hurt_cooldown = 0.55
 	hp = maxf(0.0, hp - amount)
+	player.show_hurt()
 	if hp <= 0:
 		player.show_death()
 		finish(false)
 	else:
-		player.show_hurt()
 		if not knock_direction.is_zero_approx():
 			player.knockback = knock_direction * 133.333
 			player.knockback_time = 0.15
@@ -643,18 +985,33 @@ func add_enemy(row: ENEMY_ROW) -> void:
 	var area: Rect2 = player.movement_bounds
 	var at := Vector2(rng.randf_range(area.position.x + 14.0, area.end.x - 14.0),
 		area.position.y + 5.0 if player.position.y > area.get_center().y else area.end.y - 5.0)
+	if is_infinite_field():
+		for attempt in 24:
+			at = player.position + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(640.0, 820.0)
+			var blocked := false
+			for block in blocks:
+				var shape := block.get_child(0).shape as RectangleShape2D
+				if Rect2(block.position - shape.size * 0.5, shape.size).grow(18.0).has_point(at):
+					blocked = true
+					break
+			if not blocked:
+				break
+			if attempt == 23:
+				return
 	var body := FIELD_ENEMY.new()
 	body.setup(row.kind, area, row.atlas)
+	var stats: Dictionary = enemy_config.stats_for(row, run_time)
+	body.configure_difficulty(stats.damage_multiplier, stats.speed_multiplier)
 	actors.add_child(body)
 	body.position = at
-	enemies.append({"body": body, "hp": 2.0, "boss": false})
+	enemies.append({"body": body, "hp": stats.hp, "max_hp": stats.hp, "boss": false})
 
-func fire_web(at: Vector2, direction: Vector2, kind: int = FIELD_ENEMY.Kind.SPIDER) -> void:
+func fire_web(at: Vector2, direction: Vector2, kind: int = FIELD_ENEMY.Kind.SPIDER, damage_multiplier := 1.0) -> void:
 	if kind == FIELD_ENEMY.Kind.MUSHROOM:
-		spore_patches.append({"position": at, "remaining": 2.8, "next_hit": 0.32})
+		spore_patches.append({"position": at, "remaining": 2.8, "next_hit": 0.32, "damage_multiplier": damage_multiplier})
 	else:
 		var water := kind == FIELD_ENEMY.Kind.WATER_SPIRIT
-		web_shots.append({"position": at, "direction": direction, "remaining": 1.0 if water else 1.15, "water": water})
+		web_shots.append({"position": at, "direction": direction, "remaining": 1.0 if water else 1.15, "water": water, "damage_multiplier": damage_multiplier})
 	web_layer.queue_redraw()
 
 func advance_webs(delta: float) -> void:
@@ -679,12 +1036,12 @@ func advance_webs(delta: float) -> void:
 		if hit_player and not obstacle.is_empty():
 			hit_player = (player_at - at).dot(shot.direction) < at.distance_to(end)
 		shot.remaining -= delta
-		if hit_player or not obstacle.is_empty() or shot.remaining <= 0.0 or not MAP.has_point(to_local(goal)):
+		if hit_player or not obstacle.is_empty() or shot.remaining <= 0.0 or not active_map_bounds().has_point(to_local(goal)):
 			web_shots.remove_at(i)
 		else:
 			shot.position = goal
 		if hit_player:
-			hurt(FIELD_ENEMY.DAMAGE)
+			hurt(FIELD_ENEMY.DAMAGE * float(shot.get("damage_multiplier", 1.0)))
 			if ended:
 				return
 	web_layer.queue_redraw()
@@ -699,7 +1056,7 @@ func advance_spores(delta: float) -> void:
 		patch.next_hit -= delta
 		if patch.next_hit <= 0.0 and player.global_position.distance_squared_to(patch.position) <= FIELD_ENEMY.SPORE_RADIUS ** 2:
 			patch.next_hit = 0.68
-			hurt(FIELD_ENEMY.DAMAGE)
+			hurt(FIELD_ENEMY.DAMAGE * float(patch.get("damage_multiplier", 1.0)))
 			if ended:
 				return
 
@@ -754,15 +1111,23 @@ func damage_brew_enemy(entry: Dictionary, damage: float, slow_seconds: float, sl
 	damage_enemy(entry, damage)
 
 func damage_enemy(entry: Dictionary, damage: float) -> void:
-	if ended or boss_death or not enemies.has(entry):
+	if ended or boss_death or not enemies.has(entry) or damage <= 0.0 or float(entry.get("hp", 0.0)) <= 0.0:
 		return
 	var body: Node2D = entry.body
+	var dealt := minf(damage, float(entry.hp))
 	entry.hp -= damage
+	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+		hd_view.world_view.show_damage_feedback(body.position, dealt)
+	else:
+		show_damage_number(body.position, dealt)
+	if entry.boss:
+		boss.show_hurt()
+	else:
+		body.show_hurt()
 	if entry.hp > 0:
-		if entry.boss:
-			boss.show_hurt()
-		else:
-			body.show_hurt()
+		if hit_sound_cooldown <= 0.0 and is_instance_valid(enemy_hit_sound):
+			enemy_hit_sound.play()
+			hit_sound_cooldown = .07
 		return
 	var at := body.position
 	enemies.erase(entry)
@@ -772,7 +1137,7 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 	if entry.boss:
 		defeated_art[body] = boss.art
 		player.locked = true
-		hint.text = "腐化之源正在崩解"
+		hint.text = "%s正在崩解" % boss.display_name
 		boss_death = boss.play_death()
 		boss_death.finished.connect(func() -> void:
 			remove_defeated(body)
@@ -797,6 +1162,20 @@ func remove_defeated(body: Node2D) -> void:
 	defeated_art.erase(body)
 	body.queue_free()
 
+func show_damage_number(at: Vector2, damage: float) -> void:
+	var label := Label.new()
+	label.text = "−%d" % ceili(damage)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(0.91, 1.0, .77))
+	label.add_theme_color_override("font_outline_color", Color(.06, .09, .06, .85))
+	label.add_theme_constant_override("outline_size", 3)
+	label.position = at + Vector2(-12, -76)
+	effects.add_child(label)
+	var tween := label.create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 22.0, .52).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, .52)
+	tween.chain().tween_callback(label.queue_free)
+
 # 怪物死亡素材掉落（V1.1 第3.2节）：按掉落表生成掉落实体，玩家吸附后自动拾取入账本
 func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
 	if not run_manager:
@@ -812,7 +1191,7 @@ func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
 		spawn_material_drop(at, String(entry.material_id), amount)
 
 # 生成素材掉落实体（地面掉落物，等待玩家吸附拾取）
-func spawn_material_drop(at: Vector2, material_id: String, amount: int) -> void:
+func spawn_material_drop(at: Vector2, material_id: String, amount: int, scatter := true) -> void:
 	var color := _material_color(material_id)
 	var sprite := Sprite2D.new()
 	var tex := GradientTexture2D.new()
@@ -825,7 +1204,7 @@ func spawn_material_drop(at: Vector2, material_id: String, amount: int) -> void:
 	sprite.texture = tex
 	sprite.scale = Vector2.ONE * 0.9
 	actors.add_child(sprite)
-	sprite.position = at + Vector2(rng.randf_range(-6.0, 6.0), rng.randf_range(-6.0, 6.0))
+	sprite.position = at + (Vector2(rng.randf_range(-6.0, 6.0), rng.randf_range(-6.0, 6.0)) if scatter else Vector2.ZERO)
 	material_drops.append({"sprite": sprite, "material_id": material_id, "amount": amount})
 
 func _material_color(material_id: String) -> Color:
@@ -854,9 +1233,39 @@ func show_pickup_notice(text: String) -> void:
 	pickup_notice_time = 1.2
 
 # 统一素材结算（V1.1 第4章）：所有返回入口调用
-func settle_run() -> void:
-	if run_manager:
-		run_manager.settle_run_materials("exit")
+func settle_run() -> bool:
+	if run_rewards_saved:
+		return true
+	if not run_manager:
+		return false
+	var before: Dictionary = profile_store.snapshot()
+	save.set_value("village", "coins", int(save.get_value("village", "coins", 0)) + coins)
+	if not run_manager.settle_run_materials("exit"):
+		profile_store.restore(before)
+		return false
+	run_rewards_saved = true
+	return true
+
+func leave_run(to_menu := false) -> void:
+	if not ended:
+		finish(false)
+	if not settle_run():
+		hint.text = "保存失败，仍保留本局，请重试返回。"
+		return
+	RunConfig.reset()
+	var village = level_catalog.find_level(&"village_greyford") if level_catalog else null
+	var village_path: String = village.scene_path if village else "res://scenes/levels/village_greyford.tscn"
+	var packed := load("res://scenes/menu.tscn" if to_menu else village_path) as PackedScene
+	if packed == null:
+		hint.text = "返回场景加载失败，本局已保存，请检查关卡总表。"
+		return
+	var next = packed.instantiate()
+	next.save_path = save_path
+	var tree := get_tree()
+	tree.root.remove_child(self)
+	tree.root.add_child(next)
+	tree.current_scene = next
+	queue_free()
 
 func add_pickup(at: Vector2, kind: int) -> void:
 	var sprite := make_sprite(DROPS[kind], at, Vector2(21, 21))
@@ -882,6 +1291,7 @@ func finish(victory: bool) -> void:
 	if ended:
 		return
 	ended = true
+	clear_combat_effects()
 	clear_webs()
 	player.locked = true
 	if brew:
@@ -890,13 +1300,11 @@ func finish(victory: bool) -> void:
 		boss.shots.clear()
 		boss.queue_redraw()
 	# 统一素材结算：本局已拾取素材全部带出（V1.1 第4章）
-	settle_run()
+	var saved := settle_run()
 	# 未拾取的地面素材掉落不带出（V1.1 第4.1节），清理
 	for drop in material_drops:
 		if is_instance_valid(drop.sprite):
 			drop.sprite.queue_free()
 	material_drops.clear()
-	save.set_value("village", "coins", int(save.get_value("village", "coins", 0)) + coins)
-	var saved := persist()
 	var mat_total: int = run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
 	hint.text = "%s   ·   %s   ·   素材 +%d   ·   F 返回村庄" % ["腐化之源已击败" if victory else "试炼结束", "已结算 %d 金币" % coins if saved else "保存失败", mat_total]

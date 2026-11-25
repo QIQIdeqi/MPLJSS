@@ -1,0 +1,82 @@
+[
+  {
+    "sheet": "格雷弗德外围",
+    "rows": 8,
+    "images": 8,
+    "originalDetailIndices": [
+      0,
+      1,
+      2,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "norms": 19
+  },
+  {
+    "sheet": "旧商路与受灾村庄",
+    "rows": 8,
+    "images": 8,
+    "originalDetailIndices": [
+      3,
+      4,
+      5,
+      15,
+      16,
+      17,
+      18,
+      20
+    ],
+    "norms": 19
+  },
+  {
+    "sheet": "贵族庄园",
+    "rows": 8,
+    "images": 8,
+    "originalDetailIndices": [
+      6,
+      7,
+      8,
+      15,
+      16,
+      17,
+      18,
+      21
+    ],
+    "norms": 19
+  },
+  {
+    "sheet": "朝圣路",
+    "rows": 8,
+    "images": 8,
+    "originalDetailIndices": [
+      9,
+      10,
+      11,
+      15,
+      16,
+      17,
+      18,
+      22
+    ],
+    "norms": 19
+  },
+  {
+    "sheet": "王都下城",
+    "rows": 8,
+    "images": 8,
+    "originalDetailIndices": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      23
+    ],
+    "norms": 19
+  }
+]

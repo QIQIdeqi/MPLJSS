@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="PackedScene" path="res://scenes/village.tscn" id="base"]
+[node name="GreyfordVillage" instance=ExtResource("base")]
+level_id = &"village_greyford"
+spawn_position = Vector2(643, 384)
+[node name="EntrySpawn" type="Marker2D" parent="." index="5"]
+position = Vector2(643, 384)

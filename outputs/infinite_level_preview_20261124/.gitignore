@@ -1,0 +1,6 @@
+_build/chrome-profile/
+_build/crash-dumps/
+_build/verify.html
+_build/region_capture.html
+_build/unparsed_*.html
+_build/*.log

@@ -17,6 +17,9 @@ const SLIME_RADIUS := 28.0
 const DAMAGE := 9.0
 const ART_SCALE := 0.86
 const HURT_SECONDS := 0.18
+const HIT_FLASH_SECONDS := 0.1
+const HIT_FLASH_TINT := Color(2.0, 0.18, 0.16, 1.0)
+const HIT_FLASH_SHADER := preload("res://shaders/monster_hit_flash_2d.gdshader")
 const REACTIONS := [
 	preload("res://art/enemies/reactions/skeleton.png"),
 	preload("res://art/enemies/reactions/bat.png"),
@@ -49,6 +52,12 @@ var reaction_facing := 0
 var hurt_left := 0.0
 var dying := false
 var death_tween: Tween
+var damage_multiplier := 1.0
+var speed_multiplier := 1.0
+
+func configure_difficulty(damage: float, speed: float) -> void:
+	damage_multiplier = clampf(damage, 0.1, 1.8)
+	speed_multiplier = clampf(speed, 0.5, 1.2)
 
 func setup(enemy_kind: int, bounds: Rect2, atlas: Texture2D) -> void:
 	travel_bounds = bounds.grow(-14.0)
@@ -63,6 +72,9 @@ func setup(enemy_kind: int, bounds: Rect2, atlas: Texture2D) -> void:
 	feet.shape = radius
 	add_child(feet)
 	art = Sprite2D.new()
+	var flash_material := ShaderMaterial.new()
+	flash_material.shader = HIT_FLASH_SHADER
+	art.material = flash_material
 	art.name = "Art"
 	art.texture = atlas
 	art.hframes = 4
@@ -91,7 +103,7 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 				remaining = WINDUPS[kind]
 				velocity = Vector2.ZERO
 			else:
-				velocity = target_direction * SPEEDS[kind] * slow
+				velocity = target_direction * SPEEDS[kind] * slow * speed_multiplier
 				move_and_slide()
 				motion_time += delta
 		State.WINDUP:
@@ -103,13 +115,13 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 				match kind:
 					Kind.SKELETON:
 						if distance <= SWING_RADIUS and aim.dot(target_direction) >= cos(SWING_HALF_ANGLE) and clear_path(player_pos):
-							hurt.call(DAMAGE, aim)
+							hurt.call(DAMAGE * damage_multiplier, aim)
 					Kind.SPIDER:
-						fire_web.call(global_position, aim)
+						emit_web(fire_web, global_position)
 					Kind.MUSHROOM:
-						fire_web.call(locked_target, aim, kind)
+						emit_web(fire_web, locked_target)
 					Kind.WATER_SPIRIT:
-						fire_web.call(global_position, aim, kind)
+						emit_web(fire_web, global_position)
 		State.STRIKE:
 			if DASH_SPEEDS[kind] > 0.0:
 				var start := global_position
@@ -123,12 +135,12 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 						remaining = 0.0
 				if kind == Kind.SLIME:
 					if remaining <= 0.0 and global_position.distance_squared_to(player_pos) <= SLIME_RADIUS * SLIME_RADIUS and clear_path(player_pos):
-						hurt.call(DAMAGE, aim)
+						hurt.call(DAMAGE * damage_multiplier, aim)
 				elif not tagged:
 					var nearest := Geometry2D.get_closest_point_to_segment(player_pos, start, global_position)
 					if nearest.distance_squared_to(player_pos) <= 24.0 * 24.0 and (kind == Kind.BAT or clear_path(player_pos)):
 						tagged = true
-						hurt.call(DAMAGE, aim)
+						hurt.call(DAMAGE * damage_multiplier, aim)
 			if remaining <= 0.0:
 				state = State.RECOVER
 				remaining = RECOVERY[kind]
@@ -138,6 +150,13 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 				state = State.CHASE
 	update_art()
 	queue_redraw()
+
+func emit_web(receiver: Callable, at: Vector2) -> void:
+	# Existing animation checks and detached monster previews use the original 3-argument callback.
+	if receiver.get_argument_count() >= 4:
+		receiver.call(at, aim, kind, damage_multiplier)
+	else:
+		receiver.call(at, aim, kind)
 
 func clear_path(goal: Vector2) -> bool:
 	if global_position.is_equal_approx(goal):
@@ -159,6 +178,8 @@ func show_hurt() -> void:
 func play_death() -> Tween:
 	if dying:
 		return death_tween
+	var flash_on_death := hurt_left > HURT_SECONDS - HIT_FLASH_SECONDS
+	hurt_left = 0.0
 	dying = true
 	velocity = Vector2.ZERO
 	collision_layer = 0
@@ -167,11 +188,14 @@ func play_death() -> Tween:
 	var start_y := art.position.y
 	reaction_facing = facing
 	show_reaction_frame(1, 0)
-	art.modulate = Color.WHITE
+	art.modulate = HIT_FLASH_TINT if flash_on_death else Color.WHITE
+	art.material.set_shader_parameter("flash", 1.0 if flash_on_death else 0.0)
 	death_tween = create_tween()
 	death_tween.tween_method(func(progress: float) -> void:
 		show_reaction_frame(1, 0 if progress < 0.42 else 1)
 		art.position.y = lerpf(start_y, 0.0, smoothstep(0.0, 0.55, progress))
+		art.modulate = HIT_FLASH_TINT if flash_on_death and progress * DEATH_SECONDS[kind] < HIT_FLASH_SECONDS else Color.WHITE
+		art.material.set_shader_parameter("flash", 1.0 if flash_on_death and progress * DEATH_SECONDS[kind] < HIT_FLASH_SECONDS else 0.0)
 		art.modulate.a = 1.0 - smoothstep(0.66, 1.0, progress)
 	, 0.0, 1.0, DEATH_SECONDS[kind])
 	return death_tween
@@ -202,6 +226,9 @@ func update_art() -> void:
 	elif kind == Kind.SLIME and state == State.STRIKE:
 		art.position.y = -sin(PI * clampf(remaining / STRIKES[kind], 0.0, 1.0)) * 20.0
 	art.modulate = Color(1.19, 1.08, 0.89) if state == State.WINDUP else Color.WHITE
+	art.material.set_shader_parameter("flash", 1.0 if hurt_left > HURT_SECONDS - HIT_FLASH_SECONDS else 0.0)
+	if hurt_left > HURT_SECONDS - HIT_FLASH_SECONDS:
+		art.modulate = HIT_FLASH_TINT
 	if hurt_left > 0.0:
 		show_reaction_frame(0, 0 if hurt_left > HURT_SECONDS * 0.5 else 1)
 		return

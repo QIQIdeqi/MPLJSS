@@ -39,14 +39,21 @@ func settle_run_materials(exit_reason: String) -> bool:
 		return false
 	if ledger.settlement_status == RunMaterialLedger.SETTLE_SETTLED:
 		return true  # 已结算，重复调用直接返回，不重复入账
+	if profile.has_settled(run_id):
+		ledger.settlement_status = RunMaterialLedger.SETTLE_SETTLED
+		return true
+	var before := profile.snapshot()
 	ledger.settlement_status = RunMaterialLedger.SETTLE_SETTLING
 	var summary := ledger.summary()
 	var ok := profile.commit_run_materials(run_id, summary)
 	if not ok:
 		ledger.settlement_status = RunMaterialLedger.SETTLE_ACTIVE
 		return false
+	if not profile.save_profile():
+		profile.restore(before)
+		ledger.settlement_status = RunMaterialLedger.SETTLE_ACTIVE
+		return false
 	ledger.settlement_status = RunMaterialLedger.SETTLE_SETTLED
-	profile.save_profile()
 	run_materials_settled.emit(run_id, summary)
 	return true
 

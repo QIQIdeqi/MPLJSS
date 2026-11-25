@@ -1,0 +1,174 @@
+[gd_resource type="Resource" script_class="LevelCatalog" format=3]
+[ext_resource type="Script" path="res://scripts/levels/level_catalog.gd" id="catalog"]
+[ext_resource type="Script" path="res://scripts/levels/level_entry.gd" id="entry"]
+[ext_resource type="Resource" path="res://levels/greyford_01_layout.tres" id="layout_greyford_01"]
+[ext_resource type="Resource" path="res://levels/first_level_enemies.tres" id="waves_greyford_01"]
+[ext_resource type="Resource" path="res://levels/greyford_01_boss_layout.tres" id="layout_greyford_01_boss"]
+[ext_resource type="Resource" path="res://levels/greyford_01_boss_enemies.tres" id="waves_greyford_01_boss"]
+[ext_resource type="Texture2D" path="res://art/regions/greyford_01/ground.png" id="preview_greyford_01"]
+[ext_resource type="Resource" path="res://levels/trade_road_02_layout.tres" id="layout_trade_road_02"]
+[ext_resource type="Resource" path="res://levels/trade_road_02_enemies.tres" id="waves_trade_road_02"]
+[ext_resource type="Resource" path="res://levels/trade_road_02_boss_layout.tres" id="layout_trade_road_02_boss"]
+[ext_resource type="Resource" path="res://levels/trade_road_02_boss_enemies.tres" id="waves_trade_road_02_boss"]
+[ext_resource type="Texture2D" path="res://art/regions/trade_road_02/ground.png" id="preview_trade_road_02"]
+[ext_resource type="Resource" path="res://levels/manor_03_layout.tres" id="layout_manor_03"]
+[ext_resource type="Resource" path="res://levels/manor_03_enemies.tres" id="waves_manor_03"]
+[ext_resource type="Resource" path="res://levels/manor_03_boss_layout.tres" id="layout_manor_03_boss"]
+[ext_resource type="Resource" path="res://levels/manor_03_boss_enemies.tres" id="waves_manor_03_boss"]
+[ext_resource type="Texture2D" path="res://art/regions/manor_03/ground.png" id="preview_manor_03"]
+[ext_resource type="Resource" path="res://levels/pilgrimage_04_layout.tres" id="layout_pilgrimage_04"]
+[ext_resource type="Resource" path="res://levels/pilgrimage_04_enemies.tres" id="waves_pilgrimage_04"]
+[ext_resource type="Resource" path="res://levels/pilgrimage_04_boss_layout.tres" id="layout_pilgrimage_04_boss"]
+[ext_resource type="Resource" path="res://levels/pilgrimage_04_boss_enemies.tres" id="waves_pilgrimage_04_boss"]
+[ext_resource type="Texture2D" path="res://art/regions/pilgrimage_04/ground.png" id="preview_pilgrimage_04"]
+[ext_resource type="Resource" path="res://levels/capital_05_layout.tres" id="layout_capital_05"]
+[ext_resource type="Resource" path="res://levels/capital_05_enemies.tres" id="waves_capital_05"]
+[ext_resource type="Resource" path="res://levels/capital_05_boss_layout.tres" id="layout_capital_05_boss"]
+[ext_resource type="Resource" path="res://levels/capital_05_boss_enemies.tres" id="waves_capital_05_boss"]
+[ext_resource type="Texture2D" path="res://art/regions/capital_05/ground.png" id="preview_capital_05"]
+[sub_resource type="Resource" id="Village"]
+script = ExtResource("entry")
+level_id = &"village_greyford"
+display_name = "格雷弗德村庄"
+kind = 0
+scene_path = "res://scenes/levels/village_greyford.tscn"
+description = "局外准备与炼金工坊。"
+spawn_position = Vector2(643, 384)
+[sub_resource type="Resource" id="Normal0"]
+script = ExtResource("entry")
+level_id = &"greyford_01"
+display_name = "第1关 · 格雷弗德外围"
+kind = 1
+scene_path = "res://scenes/levels/greyford_01.tscn"
+sort_order = 10
+description = "草甸疏林中绕群，回到空地回收材料。无限随机区块，5分钟开放自愿Boss挑战；数值为测试默认。"
+layout = ExtResource("layout_greyford_01")
+enemy_config = ExtResource("waves_greyford_01")
+spawn_position = Vector2(640, 430)
+selectable = true
+boss_level_id = &"greyford_01_boss"
+preview = ExtResource("preview_greyford_01")
+[sub_resource type="Resource" id="Boss0"]
+script = ExtResource("entry")
+level_id = &"greyford_01_boss"
+display_name = "第1关 · 格雷弗德外围 Boss"
+kind = 2
+scene_path = "res://scenes/levels/greyford_01_boss.tscn"
+sort_order = 11
+description = "草甸疏林中绕群，回到空地回收材料。沿用本局能力、生命与材料进入独立有限场；Boss玩法为测试版本。"
+layout = ExtResource("layout_greyford_01_boss")
+enemy_config = ExtResource("waves_greyford_01_boss")
+spawn_position = Vector2(640, 450)
+boss_style = 0
+boss_name = "腐化之源"
+[sub_resource type="Resource" id="Normal1"]
+script = ExtResource("entry")
+level_id = &"trade_road_02"
+display_name = "第2关 · 旧商路与受灾村庄"
+kind = 1
+scene_path = "res://scenes/levels/trade_road_02.tscn"
+sort_order = 20
+description = "沿旧商路换线，清织网者或绕开蛛丝。无限随机区块，5分钟开放自愿Boss挑战；数值为测试默认。"
+layout = ExtResource("layout_trade_road_02")
+enemy_config = ExtResource("waves_trade_road_02")
+spawn_position = Vector2(640, 430)
+selectable = true
+boss_level_id = &"trade_road_02_boss"
+preview = ExtResource("preview_trade_road_02")
+[sub_resource type="Resource" id="Boss1"]
+script = ExtResource("entry")
+level_id = &"trade_road_02_boss"
+display_name = "第2关 · 旧商路与受灾村庄 Boss"
+kind = 2
+scene_path = "res://scenes/levels/trade_road_02_boss.tscn"
+sort_order = 21
+description = "沿旧商路换线，清织网者或绕开蛛丝。沿用本局能力、生命与材料进入独立有限场；Boss玩法为测试版本。"
+layout = ExtResource("layout_trade_road_02_boss")
+enemy_config = ExtResource("waves_trade_road_02_boss")
+spawn_position = Vector2(640, 450)
+boss_style = 1
+boss_name = "织网型首领（概念）"
+[sub_resource type="Resource" id="Normal2"]
+script = ExtResource("entry")
+level_id = &"manor_03"
+display_name = "第3关 · 贵族庄园"
+kind = 1
+scene_path = "res://scenes/levels/manor_03.tscn"
+sort_order = 30
+description = "在庭院环路观察孢子顺序，提前转区。无限随机区块，5分钟开放自愿Boss挑战；数值为测试默认。"
+layout = ExtResource("layout_manor_03")
+enemy_config = ExtResource("waves_manor_03")
+spawn_position = Vector2(640, 430)
+selectable = true
+boss_level_id = &"manor_03_boss"
+preview = ExtResource("preview_manor_03")
+[sub_resource type="Resource" id="Boss2"]
+script = ExtResource("entry")
+level_id = &"manor_03_boss"
+display_name = "第3关 · 贵族庄园 Boss"
+kind = 2
+scene_path = "res://scenes/levels/manor_03_boss.tscn"
+sort_order = 31
+description = "在庭院环路观察孢子顺序，提前转区。沿用本局能力、生命与材料进入独立有限场；Boss玩法为测试版本。"
+layout = ExtResource("layout_manor_03_boss")
+enemy_config = ExtResource("waves_manor_03_boss")
+spawn_position = Vector2(640, 450)
+boss_style = 2
+boss_name = "赤斑菇首领（概念）"
+[sub_resource type="Resource" id="Normal3"]
+script = ExtResource("entry")
+level_id = &"pilgrimage_04"
+display_name = "第4关 · 朝圣路"
+kind = 1
+scene_path = "res://scenes/levels/pilgrimage_04.tscn"
+sort_order = 40
+description = "沿长路诱导扑咬与俯冲，横移避开夹击。无限随机区块，5分钟开放自愿Boss挑战；数值为测试默认。"
+layout = ExtResource("layout_pilgrimage_04")
+enemy_config = ExtResource("waves_pilgrimage_04")
+spawn_position = Vector2(640, 430)
+selectable = true
+boss_level_id = &"pilgrimage_04_boss"
+preview = ExtResource("preview_pilgrimage_04")
+[sub_resource type="Resource" id="Boss3"]
+script = ExtResource("entry")
+level_id = &"pilgrimage_04_boss"
+display_name = "第4关 · 朝圣路 Boss"
+kind = 2
+scene_path = "res://scenes/levels/pilgrimage_04_boss.tscn"
+sort_order = 41
+description = "沿长路诱导扑咬与俯冲，横移避开夹击。沿用本局能力、生命与材料进入独立有限场；Boss玩法为测试版本。"
+layout = ExtResource("layout_pilgrimage_04_boss")
+enemy_config = ExtResource("waves_pilgrimage_04_boss")
+spawn_position = Vector2(640, 450)
+boss_style = 3
+boss_name = "突袭型首领（概念）"
+[sub_resource type="Resource" id="Normal4"]
+script = ExtResource("entry")
+level_id = &"capital_05"
+display_name = "第5关 · 王都下城"
+kind = 1
+scene_path = "res://scenes/levels/capital_05.tscn"
+sort_order = 50
+description = "读街口的远程方向，在交汇广场主动换线。无限随机区块，5分钟开放自愿Boss挑战；数值为测试默认。"
+layout = ExtResource("layout_capital_05")
+enemy_config = ExtResource("waves_capital_05")
+spawn_position = Vector2(640, 430)
+selectable = true
+boss_level_id = &"capital_05_boss"
+preview = ExtResource("preview_capital_05")
+[sub_resource type="Resource" id="Boss4"]
+script = ExtResource("entry")
+level_id = &"capital_05_boss"
+display_name = "第5关 · 王都下城 Boss"
+kind = 2
+scene_path = "res://scenes/levels/capital_05_boss.tscn"
+sort_order = 51
+description = "读街口的远程方向，在交汇广场主动换线。沿用本局能力、生命与材料进入独立有限场；Boss玩法为测试版本。"
+layout = ExtResource("layout_capital_05_boss")
+enemy_config = ExtResource("waves_capital_05_boss")
+spawn_position = Vector2(640, 450)
+boss_style = 4
+boss_name = "国王（形象占位）"
+[resource]
+script = ExtResource("catalog")
+entries = Array[ExtResource("entry")]([SubResource("Village"), SubResource("Normal0"), SubResource("Boss0"), SubResource("Normal1"), SubResource("Boss1"), SubResource("Normal2"), SubResource("Boss2"), SubResource("Normal3"), SubResource("Boss3"), SubResource("Normal4"), SubResource("Boss4")])

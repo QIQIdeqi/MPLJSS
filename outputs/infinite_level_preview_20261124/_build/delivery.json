@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-24",
+  "scope": "offline gameplay proposal only; no game implementation or Git push",
+  "files": [
+    {
+      "path": "D:\\06_独立游戏\\00_冒牌炼金术士\\outputs\\infinite_level_preview_20261124\\五关玩法预览.html",
+      "bytes": 1882400,
+      "sha256": "f7b93232a4f4caa27df47062e806643b19dfe8dd5351c4044aecf4e60fbac5ad"
+    },
+    {
+      "path": "D:\\06_独立游戏\\00_冒牌炼金术士\\outputs\\infinite_level_preview_20261124\\五关玩法总览.png",
+      "bytes": 2666584,
+      "sha256": "088b6027ec079f199f242a96f6282e89e06d2af384fcb3694221ee05680f6164",
+      "dimensions": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "path": "D:\\06_独立游戏\\00_冒牌炼金术士\\outputs\\infinite_level_preview_20261124\\打开与操作说明.txt",
+      "bytes": 1294,
+      "sha256": "d1b043c6013e1512e0cf86be6a5dbe13df932c6ad98a0d63d05d55dd6e10ba71"
+    }
+  ],
+  "requested_windows": [
+    [
+      1280,
+      720
+    ],
+    [
+      1920,
+      1080
+    ]
+  ],
+  "checks": [
+    70,
+    70
+  ],
+  "failures": [],
+  "assets": 23,
+  "source_template": "_build/page.html",
+  "screenshot_source": "五关玩法预览.html?overview=1",
+  "visual_review": [
+    "final overview",
+    "1280 window",
+    "five region and Boss screenshots"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "sheets": [
+    "格雷弗德外围",
+    "旧商路与受灾村庄",
+    "贵族庄园",
+    "朝圣路",
+    "王都下城"
+  ],
+  "rows_per_sheet": 8,
+  "art_requirement_rows": 40,
+  "unique_original_requirements": 24,
+  "common_requirements_repeated": 4,
+  "embedded_references": 40,
+  "original_image_payloads": "all retained unchanged",
+  "source_fields": "all 24 original detail records preserved; 4 common rows repeated in every region",
+  "specifications_per_sheet": 19,
+  "original_specifications_preserved": 17,
+  "error_cells": 0,
+  "xlsx_zip_crc": "passed",
+  "generated_png_unchanged": 15,
+  "backup": "outputs/five_regions_art_20261124/_build/backup-3sheets.xlsx",
+  "xlsx_bytes": 7720559,
+  "sha256": "637f0dfd78d5564780f429931e8b0bbaf3c6b91b1b6c9efca80332294983d664"
+}

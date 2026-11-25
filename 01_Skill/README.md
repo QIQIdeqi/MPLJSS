@@ -1,5 +1,9 @@
 # 项目对应的 Skill 原件
 
+[下载项目 Skill 清单（Excel）](../outputs/skill_inventory_20261124/冒牌炼金术士_Skill清单.xlsx)
+
+2026-11-24 核对，共 114 项。表内提供名称、中文作用、使用状态、分类与入口依据，包含 37 项项目工作流技能和 77 项其余已安装技能。工作流中的“可用”表示安装入口已核对，实际调用按状态列和使用记录判断。
+
 远端保留 Skill 原始材料与版本记录，运行环境在本机重建：
 
 - `sprite-gen-3.5.0-source.zip`：来自 `aldegad/sprite-gen` 固定提交 `419f02cd54b4181e33689759d4ee9c1ef0006301` 的源码包，包含 SKILL.md、脚本、文档、上游测试源码和许可证。清单、SHA256 与校验结果见 `sprite-gen-source-original.json`。

@@ -43,8 +43,13 @@ func _draw() -> void:
 		for i in 49:
 			points.append(center + Vector2.from_angle(TAU * i / 48.0) * arena)
 		draw_polyline(points, Color.CORAL, 1.0, true)
-	else:
+	elif not preset.infinite:
 		draw_circle(map.position + preset.portal_position() * ratio, 4, Color.CORAL)
+	if preset.infinite and not preset.boss:
+		draw_rect(map, Color(0.66, 0.77, 0.48, 0.9), false, 1.0, true)
+		var font := get_theme_default_font()
+		draw_string(font, map.position + Vector2(8, 20), "标准区块预览 · 四向持续展开 · 每块独立随机", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.LIGHT_GOLDENROD)
+		return
 	var playable := preset.playable_bounds()
 	var outline := Rect2(map.position + (playable.position - BOUNDS.position) * ratio, playable.size * ratio)
 	draw_rect(outline, Color(0.22, 0.035, 0.05, 0.8), false, 3.0, true)

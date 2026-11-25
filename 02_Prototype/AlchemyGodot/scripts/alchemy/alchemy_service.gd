@@ -44,10 +44,14 @@ func experiment(materials: Array) -> Dictionary:
 	# 匹配配方
 	var recipe := RECIPES.match(uniq)
 	processing = true
+	var before := profile.snapshot()
 	if recipe.is_empty():
 		# 失败：不扣料（全返还），标记失败状态
 		profile.mark_recipe_failed(RECIPES.combo_key(uniq))
-		profile.save_profile()
+		if not profile.save_profile():
+			profile.restore(before)
+			processing = false
+			return {"success": false, "ability_id": "", "recipe_id": "", "error": "保存失败，未消耗材料，请重试"}
 		processing = false
 		return {"success": false, "ability_id": "", "recipe_id": "", "error": "实验失败，未产出能力"}
 	# 成功：扣料（每种 1 份）+ 生成能力 + 标记发现
@@ -60,7 +64,10 @@ func experiment(materials: Array) -> Dictionary:
 		processing = false
 		return {"success": false, "ability_id": "", "recipe_id": "", "error": "炼制事务失败"}
 	profile.mark_recipe_found(String(recipe.recipe_id))
-	profile.save_profile()
+	if not profile.save_profile():
+		profile.restore(before)
+		processing = false
+		return {"success": false, "ability_id": "", "recipe_id": "", "error": "保存失败，材料和能力库存未改变，请重试"}
 	processing = false
 	var result := {"success": true, "ability_id": ability_id, "recipe_id": String(recipe.recipe_id), "error": ""}
 	experiment_result.emit(result)
