@@ -85,7 +85,8 @@ func setup(source: CharacterBody2D, road: PackedVector2Array) -> void:
 	walker_card.scale.y = 1.8
 	walker_card.region_enabled = true
 	walker_card.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	walker_card.pixel_size = walker_height / float(LILITA.FRAME_SIZE)
+	# 保持原图集站姿占标尺的比例（204 / 256）。
+	walker_card.pixel_size = walker_height * (204.0 / 256.0) / LILITA.STANDING_HEIGHT
 	walker_card.offset.y = float(LILITA.FEET_OFFSET)
 	add_child(walker_card)
 	if show_height_guide:

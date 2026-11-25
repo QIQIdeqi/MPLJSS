@@ -1,30 +1,30 @@
 extends CharacterBody2D
-# 角色动画：单张规范序列帧 sprite_sheet.png（5行：待机/死亡/左跑/上跑/下跑）
-# 左跑右跑通过 flip_h 镜像；待机/死亡不分方向。
 
-const SHEET := preload("res://art/lilita_motion/sprite_sheet.png")
-const FRAME_SIZE := 256
-const FEET_OFFSET := 107   # 脚底在帧内 y=235，相对帧中心 128 的偏移 = 235 - 128 = 107
+const SHEET := preload("res://art/lilita_motion/sprite_gen_sheet.png")
+const FRAME_WIDTH := 160
+const FRAME_HEIGHT := 112
+const STANDING_HEIGHT := 103
+const FEET_OFFSET := 50  # 图集脚底 y=106，帧中心 y=56。
 const BATTLE_BOUNDS := preload("res://levels/preset.gd").DEFAULT_PLAYABLE_BOUNDS
 const HURT_SOUND := preload("res://audio/S_PlayerHurt.wav")
 
-# 行索引（从上到下）
-const ROW_IDLE := 0
-const ROW_DEAD := 1
-const ROW_RUN := 2     # 左跑（右跑镜像）
-const ROW_UP := 3
-const ROW_DOWN := 4
+const IDLE_ROWS := [0, 1, 2, 3]
+const WALK_ROWS := [4, 5, 6, 7]
+const ROW_DEAD := 9
+# 同一姿态、方向、帧序，仅替换脸部。背面看不到表情。
+const HURT_ROWS := {0: 10, 2: 11, 3: 12, 4: 13, 6: 14, 7: 15}
+const HURT_RECOVERY_OFFSET := 6
+const HURT_EXPRESSION_STEP := 1.0 / 12.0
 
-# 每行帧数
-const FRAME_COUNT := {ROW_IDLE: 3, ROW_DEAD: 6, ROW_RUN: 7, ROW_UP: 7, ROW_DOWN: 7}
-
-enum Pose { IDLE, WALK, HURT, DEAD, DODGE }
+enum Facing { DOWN, UP, LEFT, RIGHT }
+enum Pose { IDLE, WALK, DEAD, DODGE }
 @export var clamp_to_battle_bounds := true
 
-var facing := 0   # 0=下, 1=上, 2=左右
+var facing := Facing.DOWN
 var pose := Pose.IDLE
 var elapsed := 0.0
 var hurt_time := 0.0
+var hurt_expression_time := 0.0
 var dead := false
 var dodge := 0.0
 var cooldown := 0.0
@@ -54,10 +54,12 @@ func _physics_process(delta: float) -> void:
 		hurt_time = maxf(0.0, hurt_time - delta)
 		if hurt_time <= 0.0:
 			art.modulate = _hurt_base_modulate
+	hurt_expression_time = maxf(0.0, hurt_expression_time - delta)
 	if dead:
 		update_pose(Pose.DEAD, delta)
 		return
 	if locked:
+		_update_art()
 		return
 	var move := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	cooldown = maxf(0, cooldown - delta)
@@ -65,11 +67,9 @@ func _physics_process(delta: float) -> void:
 	if move.length_squared() > 0.01 and dodge == 0:
 		direction = move
 		if absf(move.x) > absf(move.y):
-			facing = 2
-			art.flip_h = move.x > 0   # 左跑图为默认，向右移动时镜像
+			facing = Facing.RIGHT if move.x > 0 else Facing.LEFT
 		else:
-			facing = 0 if move.y > 0 else 1
-			art.flip_h = false
+			facing = Facing.DOWN if move.y > 0 else Facing.UP
 	if Input.is_action_just_pressed("dodge") and cooldown == 0:
 		dodge = 0.18
 		cooldown = 0.8
@@ -93,45 +93,40 @@ func show_hurt() -> void:
 	hurt_time = 0.1
 	art.modulate = _hurt_base_modulate * Color(1.0, 0.38, 0.34, 1.0)
 	hurt_sound.play()
+	hurt_expression_time = HURT_EXPRESSION_STEP * 2.0
+	_update_art()
 
 func show_death() -> void:
 	if hurt_time > 0.0:
 		art.modulate = _hurt_base_modulate
 		hurt_time = 0.0
+	hurt_expression_time = 0.0
 	dead = true
 	update_pose(Pose.DEAD, 0.0)
-
-# 根据 pose 与 facing 确定行
-func _row_for(pose: Pose) -> int:
-	match pose:
-		Pose.DEAD:
-			return ROW_DEAD
-		Pose.IDLE, Pose.HURT:
-			return ROW_IDLE
-		_:
-			# WALK / DODGE 按 facing 选方向行
-			match facing:
-				1: return ROW_UP
-				2: return ROW_RUN
-				_: return ROW_DOWN
 
 func update_pose(next: Pose, delta: float) -> void:
 	if pose != next:
 		elapsed = 0.0
 		pose = next
 	elapsed += delta
-	var row := _row_for(pose)
-	var count: int = FRAME_COUNT[row]
-	var frame := 0
+	_update_art()
+
+func _update_art() -> void:
+	var row: int = WALK_ROWS[facing]
+	var frame: int
 	match pose:
 		Pose.WALK:
-			frame = int(elapsed * 8.0) % count
+			frame = int(elapsed * 10.0) % 6
 		Pose.DODGE:
-			frame = int(elapsed * 16.0) % count
-		Pose.HURT:
-			frame = 0   # 受击复用待机第1帧（配合闪红）
+			frame = int(elapsed * 16.0) % 6
 		Pose.DEAD:
-			frame = mini(count - 1, int(elapsed * 8.0))
+			row = ROW_DEAD
+			frame = mini(5, int(elapsed * 10.0))
 		Pose.IDLE:
-			frame = int(elapsed * 4.0) % count
-	art.region_rect = Rect2(frame * FRAME_SIZE, row * FRAME_SIZE, FRAME_SIZE, FRAME_SIZE)
+			row = IDLE_ROWS[facing]
+			frame = int(elapsed * 4.0) % 4
+	if hurt_expression_time > 0.0 and HURT_ROWS.has(row):
+		row = HURT_ROWS[row]
+		if hurt_expression_time <= HURT_EXPRESSION_STEP:
+			row += HURT_RECOVERY_OFFSET
+	art.region_rect = Rect2(frame * FRAME_WIDTH, row * FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT)

@@ -227,6 +227,13 @@ func _test_player() -> void:
 	check(not battle.hurt(0) and is_equal_approx(battle.hp, 120) and player.art.modulate == base and is_zero_approx(player.hurt_time), "zero damage does not flash, play hurt feedback, or consume invulnerability")
 	check(battle.hurt(9), "first player hit succeeds")
 	check(is_equal_approx(battle.hp, 111) and player.art.modulate != base and player.hurt_time > 0, "successful hit applies 9HP and immediate local flash")
+	check(player.art.region_rect.position.y == 10 * player.FRAME_HEIGHT, "front-facing hit immediately selects the expression frame")
+	var world := WORLD.new()
+	root.add_child(world)
+	var live: Dictionary[int, bool] = {}
+	var card := world.update_card(player.art, player.position, live)
+	check(card.region_rect == player.art.region_rect and card.modulate == player.art.modulate, "HD card shows the hurt expression and red flash together")
+	world.free()
 	var flash: Color = player.art.modulate
 	check(not battle.hurt(9) and is_equal_approx(battle.hp, 111) and player.art.modulate == flash, "existing 0.55s invulnerability rejects duplicate hurt")
 	var from: Vector2 = player.position
@@ -234,13 +241,20 @@ func _test_player() -> void:
 	await physics_frame
 	player._physics_process(.04)
 	check(player.position.x > from.x and player.pose == player.Pose.WALK, "hurt feedback preserves movement and directional walk pose")
+	check(player.art.region_rect.position.y == 15 * player.FRAME_HEIGHT and not player.art.flip_h, "hurt expression follows the dedicated right-walk frames")
 	player._physics_process(.08)
-	Input.action_release(&"move_right")
 	check(is_zero_approx(player.hurt_time) and player.art.modulate == base and player.art.scale == original_scale, "flash ends after 0.1s and restores color without resizing")
+	check(player.art.region_rect.position == Vector2(player.FRAME_WIDTH, 21 * player.FRAME_HEIGHT), "expression relaxes while the underlying walk advances")
+	player._physics_process(.06)
+	check(is_zero_approx(player.hurt_expression_time) and player.art.region_rect.position == Vector2(player.FRAME_WIDTH, 7 * player.FRAME_HEIGHT), "expression ends on the active walk frame")
+	Input.action_release(&"move_right")
+	player.facing = player.Facing.UP
+	player.update_pose(player.Pose.IDLE, 0.0)
 	player.show_hurt()
+	check(player.art.region_rect.position.y == player.FRAME_HEIGHT and player.art.modulate != base, "back-facing player keeps the same direction and still flashes red")
 	player.locked = true
-	player._physics_process(.12)
-	check(player.art.modulate == base, "locked player cannot retain expired red flash")
+	player._physics_process(.18)
+	check(player.art.modulate == base and is_zero_approx(player.hurt_expression_time), "locked player clears both visual timers")
 	player.locked = false
 	player.show_hurt()
 	player.show_death()
@@ -253,6 +267,11 @@ func _test_player() -> void:
 	check(player.hurt_sound.stream != null and player.hurt_sound.stream.get_length() > 0, "player hurt feedback has playable dedicated audio stream")
 	battle.hp = 5.0
 	check(battle.hurt(9) and player.dead and player.hurt_sound.playing and player.art.modulate == base, "lethal damage plays hurt sound then preserves clean death pose")
+	check(is_zero_approx(player.hurt_expression_time) and player.art.region_rect.position == Vector2(0, 9 * player.FRAME_HEIGHT), "death takes priority over the hurt expression")
+	player._physics_process(.9)
+	var last_pose: Rect2 = player.art.region_rect
+	player._physics_process(.3)
+	check(last_pose.position == Vector2(5 * player.FRAME_WIDTH, 9 * player.FRAME_HEIGHT) and player.art.region_rect == last_pose, "death reaches its last frame and holds")
 	completed.append("player")
 
 func _finish() -> void:

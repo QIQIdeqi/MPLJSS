@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "lilita",
+    "description": "Lilita, the original chibi alchemist sprite based on the approved turnaround. A very large head, short legs, muted warm amber scarf, ivory dress and fur trim, warm dark ragged cape, silver-white long hair and single curled cowlick, red rose wreath with olive leaves, red eyes, brown boots, small herb satchel on anatomical left hip, long dark wooden open-loop staff with leaves and red berries held in anatomical right hand. Preserve the recognizable proportions, accessory side, block size and wardrobe exactly from the same-direction supplied anchor.",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 160,
+    "height": 112,
+    "safe_margin_x": 9,
+    "safe_margin_y": 9
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 220.35,
+    "min_subject_distance": 214.04,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 26799
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 192.83,
+        "min_subject_distance": 187.87,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 195.69,
+        "min_subject_distance": 192.84,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 220.35,
+        "min_subject_distance": 214.04,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 190.42,
+        "min_subject_distance": 184.23,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "down_idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "Gentle breathing and a single blink. Both soles stay planted, with the staff held in the same position and the hair remaining nearly still. End near the initial posture."
+    },
+    "up_idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "Gentle breathing in a direct rear view. Her silver locks fall naturally down the center of her back. Soles planted with the staff on the viewer's right."
+    },
+    "left_idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "Gentle breathing in a strict left profile. The staff and herb pouch retain their locations from the perspective reference. Both soles planted."
+    },
+    "right_idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "Gentle breathing in a strict right profile. Her right hand and near-side staff are visible; her anatomical left herb bag is farther away and may be partly occluded. Both soles planted."
+    },
+    "down_walk": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "action": "Walk in place in a six-pose natural game-speed cycle: first foot contact, weight transfer, other foot passing under the body, opposite foot contact, opposite transfer, and first foot passing. Make the two leading legs visibly alternate. Keep one ground contact, even leg lengths, torso center and an almost level head. Staff moves a very small amount with the existing hold. Readable front/down view, facing the camera through all poses; the forward boot is presented slightly lower and taller on the screen."
+    },
+    "up_walk": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "action": "Walk in place in a six-pose natural game-speed cycle: first foot contact, weight transfer, other foot passing under the body, opposite foot contact, opposite transfer, and first foot passing. Make the two leading legs visibly alternate. Keep one ground contact, even leg lengths, torso center and an almost level head. Staff moves a very small amount with the existing hold. Rear/up view through all poses; the trailing sole lifts one side at a time. White hair drapes down her back and gently follows the hips."
+    },
+    "left_walk": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "action": "Walk in place in a six-pose natural game-speed cycle: first foot contact, weight transfer, other foot passing under the body, opposite foot contact, opposite transfer, and first foot passing. Make the two leading legs visibly alternate. Keep one ground contact, even leg lengths, torso center and an almost level head. Staff moves a very small amount with the existing hold. Strict left profile; the near leg and far leg alternate leading. The staff stays held beside the body."
+    },
+    "right_walk": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "action": "Walk in place in a six-pose natural game-speed cycle: first foot contact, weight transfer, other foot passing under the body, opposite foot contact, opposite transfer, and first foot passing. Make the two leading legs visibly alternate. Keep one ground contact, even leg lengths, torso center and an almost level head. Staff moves a very small amount with the existing hold. Strict right profile; the near leg and far leg alternate leading. The right hand stays on the near-side staff."
+    },
+    "down_hurt": {
+      "frames": 4,
+      "fps": 12,
+      "loop": false,
+      "action": "Expression-only damage reaction, standing in the identical neutral sprite pose in every slot. First normal/open-eyed; second tightly squeezed eyes with brows slanted inward and a tiny tense open mouth; third eyes lightly closed; fourth original neutral. Freeze head location, face boundary, hair, outfit, both soles, arms, hands, and staff. Only the eyes, eyebrows and mouth pixels change; all other pixels and silhouettes match the idle anchor."
+    },
+    "down_death": {
+      "frames": 6,
+      "fps": 10,
+      "loop": false,
+      "action": "Front-facing defeat. 1 neutral, 2 close eyes as knees buckle, 3 drop to one knee with head lowering, 4 staff slips from the right hand as character loses support, 5 fall sideways with the hair following, 6 rest curled on her side, eyes closed, staff lying visibly on the ground by her. No particles or injury marks. Keep one continuous action and leave extra horizontal room for the fallen pose."
+    }
+  },
+  "style": "Chunky, genuinely low-resolution square pixel clusters and selective dark outlines, warm muted colors, restrained colors per material, original character proportions and neutral game lighting.",
+  "directions": {
+    "set": [
+      "down",
+      "up",
+      "left",
+      "right"
+    ],
+    "mirror": {},
+    "anchor_suffix": "idle"
+  },
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "nearest",
+    "align_x": "bbox-center",
+    "align_y": "bottom",
+    "ground_frames": true,
+    "pixel_unfake": true,
+    "logical_height": 112,
+    "palette_size": 54
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}
