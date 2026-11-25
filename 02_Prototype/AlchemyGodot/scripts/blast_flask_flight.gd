@@ -1,6 +1,7 @@
 extends Sprite3D
 
 const BOTTLE := preload("res://scenes/fx/brew_result_vial.png")
+const SKILL_LIGHT := preload("res://scripts/v2_skill_light.gd")
 const WORLD_UNITS_PER_PIXEL := 0.01
 
 var projectile: Dictionary
@@ -16,6 +17,7 @@ func start(state: Dictionary, from: Vector2, target: Vector2) -> void:
 	pixel_size = 0.0045
 	shaded = true
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	SKILL_LIGHT.add(self, Vector3(0.0, 0.0, 0.02), 0.28, Color(1.0, 0.48, 0.22, 0.40))
 	_process(0.0)
 
 func _process(_delta: float) -> void:

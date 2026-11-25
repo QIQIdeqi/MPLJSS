@@ -4,11 +4,31 @@ const GROUND_SHADER := preload("res://shaders/v2_skill_ground.gdshader")
 const SKILL_LIGHT := preload("res://scripts/v2_skill_light.gd")
 const VIAL := preload("res://scenes/fx/brew_result_vial.png")
 const DUST := preload("res://art/vfx/v2/clay_homunculus_summon_24f.png")
-const SMOKE := preload("res://art/vfx/v2/blast_flask_impact_24f.png")
 const MIST := preload("res://art/vfx/v2/mist_flask_cloud_24f.png")
-const MITHRIL := preload("res://art/vfx/v2/mithril_drop_impact_24f.png")
 const GOLEM := preload("res://art/vfx/v2/link_blast_homunculus_24f.png")
-const GEL_NEEDLE := preload("res://art/vfx/v2/link_soulbound_needle_24f.png")
+const CLAY_STRIKE := preload("res://art/vfx/v2/pixelfx/clay_strike.png")
+const MITHRIL_FLIGHT := preload("res://art/vfx/v2/pixelfx/mithril_flight.png")
+const MITHRIL_IMPACT := preload("res://art/vfx/v2/pixelfx/mithril_impact.png")
+const GRAVITY_FLIGHT := preload("res://art/vfx/v2/pixelfx/gravity_flight.png")
+const GRAVITY_ZONE := preload("res://art/vfx/v2/pixelfx/gravity_zone.png")
+const ACID_IMPACT := preload("res://art/vfx/v2/pixelfx/acid_impact.png")
+const ACID_ZONE := preload("res://art/vfx/v2/pixelfx/acid_zone.png")
+const MIST_ZONE := preload("res://art/vfx/v2/pixelfx/mist_zone.png")
+const CRYSTAL_IMPACT := preload("res://art/vfx/v2/pixelfx/crystal_impact.png")
+const OBSIDIAN_IMPACT := preload("res://art/vfx/v2/pixelfx/obsidian_impact.png")
+const NEEDLE_FLIGHT := preload("res://art/vfx/v2/pixelfx/needle_flight.png")
+const BLAST_GOLEM_END := preload("res://art/vfx/v2/pixelfx/blast_golem_end.png")
+const MITHRIL_ORBIT := preload("res://art/vfx/v2/pixelfx/mithril_orbit.png")
+const CORROSIVE_MIST := preload("res://art/vfx/v2/pixelfx/corrosive_mist.png")
+const CRYSTAL_SHATTER := preload("res://art/vfx/v2/pixelfx/crystal_shatter.png")
+const SOULBOUND_FLIGHT := preload("res://art/vfx/v2/pixelfx/soulbound_flight.png")
+const SOULBOUND_IMPACT := preload("res://art/vfx/v2/pixelfx/soulbound_impact.png")
+const SPIRIT_GEL_FLIGHT := preload("res://art/vfx/v2/spirit_gel/spirit_gel_flight_24f.png")
+const SPIRIT_GEL_IMPACT := preload("res://art/vfx/v2/spirit_gel/spirit_gel_impact_24f.png")
+const ATLAS_COLUMNS := 8
+const ATLAS_ROWS := 3
+const ATLAS_FRAMES := ATLAS_COLUMNS * ATLAS_ROWS
+const SPIRIT_GEL_IMPACT_FPS := 45.0
 const WORLD_SCALE := 0.01
 const FLOOR_Y := 0.055
 const ZONE_FADE_DURATION := 0.45
@@ -32,13 +52,12 @@ var launch_point := Vector2.ZERO
 var heading := Vector2.RIGHT
 var body: Node3D
 var body_card: Sprite3D
-var light: OmniLight3D
-var light_power := 0.0
+var impact_card: Sprite3D
+var library_card: Sprite3D
+var zone_duration := 0.0
+var zone_card_foot := 0.0
 var floor_mat: ShaderMaterial
 var orbiters: Array[MeshInstance3D] = []
-var vapors: Array[Sprite3D] = []
-var vapor_offsets: Array[Vector3] = []
-var vapor_colors: Array[Color] = []
 
 func start(info: Dictionary) -> void:
 	skill_id = String(info.get("skill_id", ""))
@@ -107,8 +126,12 @@ func _process(delta: float) -> void:
 			_update_zone()
 		"summon_start":
 			_update_summon()
-	if light:
-		light.light_energy = light_power * pow(maxf(0.0, 1.0 - age / 0.19), 2.0)
+	if impact_card:
+		impact_card.frame = mini(floori(age * SPIRIT_GEL_IMPACT_FPS), ATLAS_FRAMES - 1)
+		impact_card.modulate.a = 1.0 - smoothstep(0.34, lifetime, age)
+	if library_card and lifetime > 0.0:
+		library_card.frame = mini(floori(age / lifetime * ATLAS_FRAMES), ATLAS_FRAMES - 1)
+		library_card.modulate.a = 1.0 - smoothstep(lifetime * 0.66, lifetime, age)
 	if floor_mat and event_name != "zone_start":
 		var progress := clampf(age / maxf(lifetime * 0.68, 0.06), 0.0, 1.0)
 		floor_mat.set_shader_parameter("wave_radius", lerpf(0.13, 0.92, 1.0 - pow(1.0 - progress, 2.0)))
@@ -120,12 +143,9 @@ func _make_flight() -> void:
 	add_child(body)
 	match skill_id:
 		"sk_mithril_drop":
-			body_card = _card(_crop(MITHRIL, Rect2(560, 0, 32, 48)), body, 0.008, Color(0.88, 0.96, 1.0))
-			SKILL_LIGHT.add(body, Vector3.ZERO, 0.54, Color(0.34, 0.64, 1.0, 0.53))
+			library_card = _library_sprite(MITHRIL_FLIGHT, body, 0.023)
 		"sk_gravity_stone":
-			_piece(body, Vector3.ZERO, Vector3(0.21, 0.25, 0.22), Color("#231a35"), true)
-			_piece(body, Vector3(0.03, 0.045, 0.025), Vector3(0.10, 0.10, 0.11), Color("#a76bd7"), true, true)
-			SKILL_LIGHT.add(body, Vector3.ZERO, 0.62, Color(0.64, 0.34, 0.96, 0.52))
+			library_card = _library_sprite(GRAVITY_FLIGHT, body, 0.0067)
 		"sk_corrosive_flask":
 			body_card = _card(VIAL, body, 0.0045, Color(0.60, 1.0, 0.45), true)
 			SKILL_LIGHT.add(body, Vector3.ZERO, 0.34, Color(0.67, 0.94, 0.31, 0.43))
@@ -140,18 +160,14 @@ func _make_flight() -> void:
 			_streak(body, Vector3(-0.47, 0.0, 0.0), Vector3(-0.06, 0.0, 0.0), 0.022, Color("#ac63d2"))
 			SKILL_LIGHT.add(body, Vector3(-0.22, 0.0, 0.0), 0.38, Color(0.67, 0.30, 0.93, 0.48))
 		"sk_spirit_gel":
-			_piece(body, Vector3.ZERO, Vector3(0.20, 0.15, 0.16), Color("#b66519"), true)
-			_piece(body, Vector3(-0.08, 0.04, 0.03), Vector3(0.15, 0.075, 0.09), Color("#ffba52"), true, true)
-			_streak(body, Vector3(-0.21, 0.0, 0.0), Vector3(-0.04, 0.0, 0.0), 0.044, Color("#ad6d37"))
-			SKILL_LIGHT.add(body, Vector3.ZERO, 0.39, Color(1.0, 0.60, 0.21, 0.54))
+			body_card = _card(SPIRIT_GEL_FLIGHT, body, 0.010, Color.WHITE)
+			body_card.hframes = 8
+			body_card.vframes = 3
+			body_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		"sk_soul_needle":
-			_streak(body, Vector3(-0.37, 0.0, 0.0), Vector3(0.21, 0.0, 0.0), 0.025, Color("#a9f5e8"))
-			_streak(body, Vector3(-0.52, -0.031, 0.0), Vector3(-0.20, -0.031, 0.0), 0.013, Color("#668ace"))
-			SKILL_LIGHT.add(body, Vector3.RIGHT * 0.18, 0.28, Color(0.44, 1.0, 0.87, 0.59))
+			library_card = _library_sprite(NEEDLE_FLIGHT, body, 0.012)
 		"link_soulbound_needle":
-			body_card = _card(_crop(GEL_NEEDLE, Rect2(34, 51, 62, 26)), body, 0.007, Color.WHITE)
-			_streak(body, Vector3(-0.37, 0.0, 0.0), Vector3(-0.04, 0.0, 0.0), 0.031, Color("#f2b752"))
-			SKILL_LIGHT.add(body, Vector3.RIGHT * 0.15, 0.34, Color(0.87, 0.83, 0.46, 0.62))
+			library_card = _library_sprite(SOULBOUND_FLIGHT, body, 0.012)
 
 func _move_flight() -> void:
 	var at: Vector2 = state.get("pos", launch_point)
@@ -168,32 +184,40 @@ func _move_flight() -> void:
 		body.position.y = lerpf(0.32, 0.13, progress) + sin(progress * PI) * 0.25
 		body.rotation.y = 0.0
 		body_card.rotation.z = -age * (8.0 if skill_id == "sk_corrosive_flask" else 6.0)
-	elif skill_id == "sk_gravity_stone":
-		body.rotation.x = age * 9.0
+	elif skill_id == "sk_spirit_gel":
+		body_card.frame = floori(age * 36.0) % ATLAS_FRAMES
 	elif body_card:
 		body_card.rotation.y = -body.rotation.y
+	if library_card:
+		library_card.frame = floori(age * 32.0) % ATLAS_FRAMES
+		if skill_id == "sk_soul_needle" or skill_id == "link_soulbound_needle":
+			var camera := _world_camera()
+			if camera:
+				var center := library_card.global_position
+				var ahead := center + _world_at(heading * 36.0)
+				var projected := camera.unproject_position(ahead) - camera.unproject_position(center)
+				library_card.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+				library_card.global_basis = camera.global_basis * Basis(Vector3.BACK, -projected.angle())
 
 func _make_zone() -> void:
+	zone_duration = maxf(float(state.get("left", 1.0)), 0.1)
 	match skill_id:
 		"sk_gravity_stone":
 			_ground(world_radius, Ground.VORTEX, Color("#291d3e"), Color("#9e5ad1"))
-			_piece(self, Vector3(0.0, 0.13, 0.0), Vector3(0.20, 0.21, 0.18), Color("#392541"), true)
-			_make_orbiters(4, Color("#b180d7"), false)
+			_make_library_zone(GRAVITY_ZONE, 1.66, true)
 		"sk_corrosive_flask":
 			_ground(world_radius, Ground.ACID, Color("#252f13"), Color("#bbcf4b"))
-			_make_orbiters(6, Color("#c4d36a"), true)
+			_make_library_zone(ACID_ZONE, 2.0, false, 22.0)
 		"sk_mist_flask":
 			_ground(world_radius, Ground.MIST, Color("#626478"), Color("#b7bfdf"))
-			_make_vapor(5, Color(0.68, 0.73, 0.90, 0.39), world_radius * 0.54)
+			_make_library_zone(MIST_ZONE, 2.12, false, 40.0)
 		"link_mithril_orbit":
 			_ground(world_radius, Ground.ORBIT, Color("#67778f"), Color("#d2e9fa"))
-			_make_orbiters(4, Color("#eaf4ff"), false)
+			_make_library_zone(MITHRIL_ORBIT, 1.80, true)
+			_make_orbiters(4, Color("#eaf4ff"))
 		"link_corrosive_mist":
 			_ground(world_radius, Ground.MIST, Color("#484559"), Color("#768b36"))
-			_make_vapor(7, Color(0.69, 0.48, 0.77, 0.43), world_radius * 0.53)
-			for i in range(1, vapor_colors.size(), 2):
-				vapor_colors[i] = Color(0.70, 0.82, 0.43, 0.41)
-			_make_orbiters(4, Color("#b2c359"), true)
+			_make_library_zone(CORROSIVE_MIST, 2.0, false, 33.0)
 	_update_zone()
 
 func _update_zone() -> void:
@@ -201,39 +225,30 @@ func _update_zone() -> void:
 		return
 	var fade := smoothstep(0.0, 0.22, age) * (zone_fade_left / ZONE_FADE_DURATION)
 	floor_mat.set_shader_parameter("age", age)
-	floor_mat.set_shader_parameter("strength", fade * 0.79)
-	for i in vapors.size():
-		var drift := Vector3(sin(age * 0.87 + i), 0.0, cos(age * 0.71 + i)) * 0.14
-		vapors[i].position = vapor_offsets[i] + drift
-		var tint := vapor_colors[i]
-		tint.a *= fade * (0.78 + sin(age * 1.5 + i) * 0.22)
-		vapors[i].modulate = tint
+	floor_mat.set_shader_parameter("strength", fade * 0.53)
+	if library_card:
+		library_card.modulate.a = fade * (0.60 if skill_id == "sk_mist_flask" else 0.86)
+		if zone_card_foot > 0.0:
+			var camera := _world_camera()
+			var upright := camera.global_basis.y.y if camera else 0.72
+			library_card.position.y = FLOOR_Y + zone_card_foot * library_card.pixel_size * upright
+		if skill_id == "sk_mist_flask":
+			library_card.frame = mini(floori(age / zone_duration * ATLAS_FRAMES), ATLAS_FRAMES - 1)
+		else:
+			library_card.frame = floori(age * 15.0) % ATLAS_FRAMES
 	for i in orbiters.size():
-		var drift := age * (2.1 if skill_id == "link_mithril_orbit" else 0.88)
-		var angle := i * TAU / orbiters.size() + drift
-		var orbit := 0.65 + sin(age * 1.4 + i) * 0.12
-		var elevation := 0.13 + cos(age * 3.1 + i * 1.9) * 0.073
-		if skill_id == "sk_gravity_stone":
-			orbit = 0.76 - fposmod(age * 0.64 + float(i) * 0.19, 0.65)
+		var angle := i * TAU / orbiters.size() + age * 2.1
+		var orbit := 0.65 + sin(age * 1.4 + i) * 0.10
+		var elevation := 0.13 + cos(age * 3.1 + i * 1.9) * 0.04
 		var radius := world_radius * orbit
 		orbiters[i].position = Vector3(cos(angle) * radius, elevation, sin(angle) * radius)
 		orbiters[i].rotation.y = -angle
 		orbiters[i].scale = Vector3.ONE * (0.053 * maxf(fade, 0.01))
 
-func _make_orbiters(count: int, tint: Color, bubble: bool) -> void:
+func _make_orbiters(count: int, tint: Color) -> void:
 	for i in count:
-		var stone := _piece(self, Vector3.ZERO, Vector3.ONE * 0.01, tint, not bubble, true)
+		var stone := _piece(self, Vector3.ZERO, Vector3.ONE * 0.01, tint, true, true)
 		orbiters.append(stone)
-
-func _make_vapor(count: int, tint: Color, spread: float) -> void:
-	for i in count:
-		var angle := i * TAU / count
-		var offset := Vector3(cos(angle) * spread, 0.13 + (i % 2) * 0.07, sin(angle) * spread)
-		var puff := _card(_crop(SMOKE, Rect2(308, 298, 44, 51)), self, 0.020, Color(tint, 0.0))
-		puff.scale.y = 0.50
-		vapors.append(puff)
-		vapor_offsets.append(offset)
-		vapor_colors.append(tint)
 
 func _make_summon() -> void:
 	var explosive := skill_id == "link_blast_homunculus"
@@ -261,7 +276,10 @@ func _update_summon() -> void:
 func _summon_strike(target: Vector2, from: Vector2) -> void:
 	lifetime = 0.28
 	var explosive := skill_id == "link_blast_homunculus"
-	var tint := Color("#ef9857") if explosive else Color("#c3a681")
+	if not explosive:
+		_library_burst(CLAY_STRIKE, 0.42, 0.011, 0.25)
+		return
+	var tint := Color("#ef9857")
 	var direction := _world_at(target) - _world_at(from)
 	if direction.is_zero_approx():
 		direction = Vector3.RIGHT
@@ -270,65 +288,82 @@ func _summon_strike(target: Vector2, from: Vector2) -> void:
 	create_tween().tween_property(fist, "position", Vector3.UP * 0.25, 0.085)
 	create_tween().tween_property(fist, "scale", Vector3.ZERO, 0.22).set_delay(0.060)
 	_fragments(4, tint, 0.51, 0.18, 0.29)
-	SKILL_LIGHT.add(self, Vector3(0.0, 0.26, 0.07), 0.47, Color(tint, 0.76), 0.16, 0.66 if explosive else 0.37)
+	SKILL_LIGHT.add(self, Vector3(0.0, 0.26, 0.07), 0.47, Color(tint, 0.76), 0.16, 0.66)
 
 func _summon_end() -> void:
-	lifetime = 0.76
-	_ground(clampf(world_radius, 0.68, 1.16), Ground.RIPPLE, Color("#d44925"), Color("#ffb351"))
-	_flash(Color("#ffa058"), 1.6, 1.55)
-	SKILL_LIGHT.add(self, Vector3(0.0, 0.28, 0.13), 0.95, Color(1.0, 0.44, 0.11, 1.25), 0.27, 0.75)
-	_fragments(8, Color("#85513c"), 1.68, 0.62, 0.49, true)
-	_fragments(7, Color("#ffa54f"), 2.1, 0.98, 0.38)
-	_dust(4, Color(0.45, 0.29, 0.26, 0.56), 0.62)
+	_library_burst(BLAST_GOLEM_END, 0.75, 0.010, 0.18)
+	_ground(world_radius, Ground.RIPPLE, Color("#9d3c24"), Color("#f3a054"))
 
 func _impact() -> void:
 	lifetime = 0.37
 	match skill_id:
 		"sk_mithril_drop":
-			_ground(0.39, Ground.RIPPLE, Color("#637187"), Color("#d8f2ff"))
-			_fragments(6, Color("#b7d8e7"), 1.23, 0.44, 0.36, true)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.18, 0.08), 0.46, Color(0.54, 0.80, 1.0, 0.94), 0.18, 0.75)
+			_library_burst(MITHRIL_IMPACT, 0.34, 0.010, 0.25, true)
 		"sk_gravity_stone":
-			_fragments(7, Color("#b17dc4"), 1.63, 0.39, 0.35, true)
-			_flash(Color("#bd83ed"), 0.95, 1.05)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.21, 0.08), 0.57, Color(0.72, 0.36, 1.0, 0.91), 0.19, 0.34)
+			SKILL_LIGHT.add(self, Vector3(0.0, 0.16, 0.04), 0.40, Color("#ab72ca"), 0.17, 0.14)
 		"sk_corrosive_flask":
-			_fragments(6, Color("#b0d071"), 1.04, 0.50, 0.30)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.10, 0.05), 0.46, Color(0.70, 0.92, 0.24, 0.72), 0.19)
+			_library_burst(ACID_IMPACT, 0.49, 0.012, 0.18)
 		"sk_mist_flask":
-			_dust(4, Color(0.79, 0.80, 0.96, 0.49), 0.36)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.15, 0.05), 0.53, Color(0.57, 0.69, 1.0, 0.64), 0.22)
+			SKILL_LIGHT.add(self, Vector3(0.0, 0.14, 0.04), 0.35, Color(0.57, 0.69, 1.0, 0.45), 0.19)
 		"sk_crystal_growth":
-			lifetime = 0.55
-			_ground(0.36, Ground.RIPPLE, Color("#3986af"), Color("#9be0ed"))
-			_crystal_spikes()
-			_fragments(4, Color("#8ac6f0"), 0.73, 0.32, 0.34, true)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.31, 0.08), 0.50, Color(0.39, 0.85, 1.0, 0.89), 0.24, 0.62)
+			_library_burst(CRYSTAL_IMPACT, 0.54, 0.014, 0.27, true)
 		"sk_obsidian_blade":
-			lifetime = 0.24
-			var along := _world_at(heading)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.24, 0.08), 0.48, Color(0.72, 0.40, 0.96, 0.92), 0.18, 0.50)
-			var cut := _streak(self, Vector3.UP * 0.20 - along * 0.23, Vector3.UP * 0.37 + along * 0.23, 0.032, Color("#c087d6"))
-			create_tween().tween_property(cut, "scale", Vector3.ZERO, 0.21)
-			_fragments(4, Color("#ad72c3"), 0.95, 0.47, 0.23, true)
+			_library_burst(OBSIDIAN_IMPACT, 0.32, 0.0085, 0.32, true)
 		"sk_spirit_gel":
-			lifetime = 0.54
-			_ground(0.43, Ground.POOL, Color("#7f541d"), Color("#e9b24f"))
-			_fragments(5, Color("#e7a647"), 0.82, 0.35, 0.43)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.15, 0.08), 0.45, Color(1.0, 0.60, 0.18, 0.80), 0.20)
+			_spirit_gel_impact()
 		"sk_soul_needle":
 			lifetime = 0.21
-			_needle_glint(Color("#b5efe4"), 0.22, false)
+			_needle_glint(Color("#b5efe4"), 0.22)
 		"link_crystal_shatter_blade":
-			lifetime = 0.57
-			_ground(0.61, Ground.RIPPLE, Color("#43799e"), Color("#b7e9fa"))
-			_fragments(6, Color("#9bddf7"), 1.93, 0.52, 0.51, true, 0.118)
-			_flash(Color("#aaddf7"), 1.10, 1.26)
-			SKILL_LIGHT.add(self, Vector3(0.0, 0.27, 0.10), 0.72, Color(0.49, 0.83, 1.0, 1.22), 0.25, 1.0)
+			_library_burst(CRYSTAL_SHATTER, 0.60, 0.012, 0.25, true)
 		"link_soulbound_needle":
-			lifetime = 0.46
-			_needle_glint(Color("#91eadf"), 0.30, true)
-			_ground(0.28, Ground.RIPPLE, Color("#966321"), Color("#c8edb3"))
+			_library_burst(SOULBOUND_IMPACT, 0.40, 0.009, 0.28, true)
+
+func _spirit_gel_impact() -> void:
+	lifetime = ATLAS_FRAMES / SPIRIT_GEL_IMPACT_FPS
+	impact_card = _card(SPIRIT_GEL_IMPACT, self, 0.010, Color.WHITE)
+	impact_card.hframes = 8
+	impact_card.vframes = 3
+	impact_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	impact_card.position.y = 0.31
+	var camera := _world_camera()
+	if camera:
+		var toward_camera := camera.global_basis.z.slide(Vector3.UP).normalized()
+		impact_card.position += toward_camera * 0.13
+
+func _library_sprite(texture: Texture2D, parent: Node3D, pixel: float) -> Sprite3D:
+	var card := _card(texture, parent, pixel, Color.WHITE)
+	card.hframes = ATLAS_COLUMNS
+	card.vframes = ATLAS_ROWS
+	card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	return card
+
+func _library_burst(texture: Texture2D, duration: float, pixel: float, height: float, directional := false) -> void:
+	lifetime = duration
+	library_card = _library_sprite(texture, self, pixel)
+	library_card.position.y = height
+	var camera := _world_camera()
+	if camera:
+		var toward_camera := camera.global_basis.z.slide(Vector3.UP).normalized()
+		library_card.position += toward_camera * 0.13
+		library_card.flip_h = directional and camera.global_basis.x.dot(_world_at(heading)) < 0.0
+
+func _world_camera() -> Camera3D:
+	var viewport := get_viewport()
+	return viewport.get_camera_3d() if viewport else null
+
+func _make_library_zone(texture: Texture2D, extent: float, flat: bool, foot := 0.0) -> void:
+	var frame_width := float(texture.get_width()) / ATLAS_COLUMNS
+	library_card = _library_sprite(texture, self, world_radius * extent / frame_width)
+	library_card.position.y = FLOOR_Y + 0.008
+	# A tilted camera projects sprite pixels down toward the terrain. Keep the source
+	# baseline above the ground so the fog retains its soft lower edge at every pitch.
+	zone_card_foot = foot + 4.0 if not flat else 0.0
+	if flat:
+		library_card.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+		library_card.rotation_degrees.x = -90.0
+		if skill_id == "sk_gravity_stone":
+			library_card.scale.y = 1.34
 
 func _zone_tick() -> void:
 	lifetime = 0.22
@@ -350,38 +385,23 @@ func _zone_tick() -> void:
 
 func _hop(target: Vector2, from: Vector2) -> void:
 	lifetime = 0.18
-	var tint := Color("#c9e6f4") if skill_id == "sk_mithril_drop" else Color("#9969b0")
+	var metallic := skill_id == "sk_mithril_drop"
+	var tint := Color("#c9e6f4") if metallic else Color("#9969b0")
 	var previous := _world_at(from - target) + Vector3.UP * 0.27
 	var end := Vector3.UP * 0.27
 	var sideways := Vector3.UP.cross(previous.direction_to(end))
-	var joint := previous.lerp(end, 0.45) + sideways * 0.075
+	var joint := previous.lerp(end, 0.45) + sideways * (0.075 if metallic else 0.0)
 	for segment in [[previous, joint], [joint, end]]:
 		var trace := _streak(self, segment[0], segment[1], 0.026, tint)
 		create_tween().tween_property(trace, "scale", Vector3.ZERO, 0.16)
 	SKILL_LIGHT.add(self, end + Vector3.BACK * 0.07, 0.43, Color(tint, 0.92), 0.16, 0.65)
 
-func _crystal_spikes() -> void:
-	for i in 3:
-		var tint := Color("#a8e2ec") if i == 1 else Color("#4684ad")
-		var size := Vector3(0.13, 0.47 if i == 1 else 0.32, 0.10)
-		var offset := Vector3((i - 1) * 0.12, size.y * 0.45, 0.015 * i)
-		var spike := _piece(self, offset * Vector3(1.0, 0.2, 1.0), size * Vector3(1.0, 0.12, 1.0), tint, true, i == 1)
-		spike.rotation.z = (1 - i) * 0.32
-		var tween := create_tween().set_parallel(true)
-		tween.tween_property(spike, "scale", size, 0.085)
-		tween.tween_property(spike, "position", offset, 0.085)
-		tween.chain().tween_property(spike, "scale", Vector3.ZERO, 0.25).set_delay(0.15)
-
-func _needle_glint(tint: Color, size: float, bound: bool) -> void:
+func _needle_glint(tint: Color, size: float) -> void:
 	var at := Vector3.UP * 0.28
-	SKILL_LIGHT.add(self, at + Vector3.BACK * 0.08, size * 1.85, Color(tint, 1.06 if bound else 0.80),
-		0.22 if bound else 0.14, 0.88 if bound else 0.62)
+	SKILL_LIGHT.add(self, at + Vector3.BACK * 0.08, size * 1.85, Color(tint, 0.8), 0.14, 0.62)
 	for axis in [Vector3.RIGHT, Vector3.UP]:
 		var line := _streak(self, at - axis * size * 0.5, at + axis * size * 0.5, 0.022, tint)
 		create_tween().tween_property(line, "scale", Vector3.ZERO, 0.18)
-	if bound:
-		var mark := _piece(self, at, Vector3(0.095, 0.076, 0.037), Color("#e9b14f"), true, true)
-		create_tween().tween_property(mark, "scale", Vector3.ZERO, 0.29).set_delay(0.125)
 
 func _ground(radius: float, kind: Ground, tint: Color, accent: Color) -> void:
 	floor_mat = ShaderMaterial.new()
@@ -398,16 +418,6 @@ func _ground(radius: float, kind: Ground, tint: Color, accent: Color) -> void:
 	disc.position.y = FLOOR_Y
 	disc.rotation_degrees.x = -90.0
 	add_child(disc)
-
-func _flash(tint: Color, power: float, radius: float) -> void:
-	light = OmniLight3D.new()
-	light.light_color = tint
-	light.light_energy = power
-	light.omni_range = radius
-	light.omni_attenuation = 1.65
-	light.position.y = 0.38
-	light_power = power
-	add_child(light)
 
 func _fragments(count: int, tint: Color, speed: float, height: float, duration: float, pointed := false, size := 0.064) -> void:
 	for i in count:
