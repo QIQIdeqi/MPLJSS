@@ -1,0 +1,163 @@
+[gd_resource type="Resource" load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://scripts/picture_book/book.gd" id="1_book"]
+[ext_resource type="Script" path="res://scripts/picture_book/page.gd" id="2_page"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-01.png" id="image_1"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-02.png" id="image_2"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-03.png" id="image_3"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-04.png" id="image_4"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-05.png" id="image_5"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-06.png" id="image_6"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-07.png" id="image_7"]
+[ext_resource type="Texture2D" path="res://picture_books/prologue/images/scene-08.png" id="image_8"]
+
+[sub_resource type="Resource" id="Page_01"]
+script = ExtResource("2_page")
+title = "01 · 她的笑"
+image_action = 1
+image = ExtResource("image_1")
+text_action = 1
+text = "我最先记住的，\n是她的笑。"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 1.0
+text_delay = 0.55
+text_duration = 0.55
+auto_advance = true
+hold_seconds = 6.0
+
+[sub_resource type="Resource" id="Page_02"]
+script = ExtResource("2_page")
+title = "02 · 先吃这一口"
+image_action = 1
+image = ExtResource("image_2")
+text_action = 1
+text = "家里常有人\n等着喝药。\n我等着吃饭。"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 0.8
+text_delay = 0.35
+text_duration = 0.55
+auto_advance = true
+hold_seconds = 7.0
+
+[sub_resource type="Resource" id="Page_03"]
+script = ExtResource("2_page")
+title = "03 · 门边的小观察者"
+image_action = 1
+image = ExtResource("image_3")
+text_action = 1
+text = "原来大人有时候\n也要人喂。"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 0.8
+text_delay = 0.35
+text_duration = 0.55
+auto_advance = true
+hold_seconds = 7.0
+
+[sub_resource type="Resource" id="Page_04"]
+script = ExtResource("2_page")
+title = "04 · 动静倒不小"
+image_action = 1
+image = ExtResource("image_4")
+text_action = 1
+text = "我也试了一次。\n药没配好，\n动静倒不小。"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 0.8
+text_delay = 0.35
+text_duration = 0.55
+auto_advance = true
+hold_seconds = 8.0
+
+[sub_resource type="Resource" id="Page_05"]
+script = ExtResource("2_page")
+title = "05 · 一起蹲下来"
+image_action = 1
+image = ExtResource("image_5")
+text_action = 1
+text = "后来，她教我\n先认清锅里\n放的是什么。"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 0.8
+text_delay = 0.35
+text_duration = 0.55
+auto_advance = true
+hold_seconds = 7.0
+
+[sub_resource type="Resource" id="Page_06"]
+script = ExtResource("2_page")
+title = "06 · 集市里的小声音"
+image_action = 1
+image = ExtResource("image_6")
+text_action = 1
+text = "有些人叫她魔女。\n我还是叫她妈妈。"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 0.8
+text_delay = 0.35
+text_duration = 0.55
+auto_advance = true
+hold_seconds = 7.0
+
+[sub_resource type="Resource" id="Page_07"]
+script = ExtResource("2_page")
+title = "07 · 那晚还没睡"
+image_action = 1
+image = ExtResource("image_7")
+text_action = 1
+text = "那晚她还没睡。\n我以为她明天\n会晚一点起床。"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 1.0
+text_delay = 0.55
+text_duration = 0.6
+auto_advance = true
+hold_seconds = 8.0
+
+[sub_resource type="Resource" id="Page_08"]
+script = ExtResource("2_page")
+title = "08 · 妈妈？"
+image_action = 1
+image = ExtResource("image_8")
+text_action = 1
+text = "妈妈？"
+image_rect = Rect2(424, 112, 800, 450)
+text_rect = Rect2(64, 205, 312, 260)
+font_size = 32
+text_color = Color(0.31764705882352939, 0.23137254901960785, 0.16862745098039217, 1)
+image_delay = 0.0
+image_duration = 1.2
+text_delay = 0.7
+text_duration = 0.7
+auto_advance = true
+hold_seconds = 7.0
+
+[resource]
+script = ExtResource("1_book")
+title = "P00｜序章：格蕾丝和我"
+background_color = Color(0.90980392156862744, 0.84705882352941175, 0.71372549019607845, 1)
+text_shadow_color = Color(0, 0, 0, 0)
+pages = Array[Resource]([SubResource("Page_01"), SubResource("Page_02"), SubResource("Page_03"), SubResource("Page_04"), SubResource("Page_05"), SubResource("Page_06"), SubResource("Page_07"), SubResource("Page_08")])

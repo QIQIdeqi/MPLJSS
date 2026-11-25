@@ -494,13 +494,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			workbench_ui.open()
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("ui_cancel") and not combat:
+		get_viewport().set_input_as_handled()
 		if is_instance_valid(workbench_ui) and workbench_ui.visible:
 			workbench_ui.close()
 		elif is_instance_valid(entry_select_ui) and entry_select_ui.visible:
 			entry_select_ui.close()
 		else:
-			get_tree().change_scene_to_file("res://scenes/menu.tscn")
-		get_viewport().set_input_as_handled()
+			var packed := load("res://scenes/menu.tscn") as PackedScene
+			if packed == null:
+				hint.text = "开始界面加载失败，请重试返回。"
+				return
+			RunConfig.reset()
+			_replace_scene(packed.instantiate())
 	# V1.1：局内不提供炼金工房，Q 键不再呼出旧炼丹 UI（素材自动掉落+拾取，返回时统一结算）
 
 func update_camera(delta: float) -> void:
@@ -1260,6 +1265,10 @@ func leave_run(to_menu := false) -> void:
 		hint.text = "返回场景加载失败，本局已保存，请检查关卡总表。"
 		return
 	var next = packed.instantiate()
+	_replace_scene(next)
+
+func _replace_scene(next: Node) -> void:
+	# All field exits preserve the active profile path before the new scene's _ready().
 	next.save_path = save_path
 	var tree := get_tree()
 	tree.root.remove_child(self)

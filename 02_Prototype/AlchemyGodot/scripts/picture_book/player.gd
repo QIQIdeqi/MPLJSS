@@ -18,6 +18,7 @@ var image_previous: TextureRect
 var text_current: Label
 var text_previous: Label
 var canvas: Control
+var background: ColorRect
 
 var _single_page: bool = false
 var _elapsed: float = 0.0
@@ -47,7 +48,7 @@ func _ensure_nodes() -> void:
 	canvas.clip_contents = true
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(canvas)
-	var background := ColorRect.new()
+	background = ColorRect.new()
 	background.color = Color("18212b")
 	background.size = DESIGN_SIZE
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -102,6 +103,7 @@ func _set_text(view: Label, state: Dictionary) -> void:
 	view.size = rect.size
 	view.add_theme_font_size_override("font_size", int(state.get("font_size", 32)))
 	view.add_theme_color_override("font_color", state.get("text_color", Color.WHITE))
+	view.add_theme_color_override("font_shadow_color", state.get("text_shadow_color", Color(0, 0, 0, 0.85)))
 	view.visible = not view.text.is_empty()
 	view.modulate.a = 1.0
 
@@ -116,6 +118,7 @@ func show_static(source: Resource, page_index: int) -> void:
 		index = -1
 		_clear()
 		return
+	background.color = book.background_color
 	index = page_index
 	_target = book.resolve(index)
 	_set_image(image_current, _target)
@@ -137,6 +140,7 @@ func _start(source: Resource, page_index: int, single: bool) -> void:
 		index = -1
 		_clear()
 		return
+	background.color = book.background_color
 	is_playing = true
 	_single_page = single
 	_enter_page(page_index)
@@ -252,5 +256,5 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton:
 		confirm = event.pressed and event.button_index == MOUSE_BUTTON_LEFT and get_global_rect().has_point(event.position)
 	if confirm:
-		advance()
 		get_viewport().set_input_as_handled()
+		advance()

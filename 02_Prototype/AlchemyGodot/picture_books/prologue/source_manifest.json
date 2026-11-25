@@ -1,0 +1,98 @@
+{
+  "source_readme": "00_Doc/美术/序章绘本/storyboard/README.md",
+  "story_outline": "00_Doc/故事/第一幕分场大纲.md#P00",
+  "pages": [
+    {
+      "page": 1,
+      "title": "01 · 她的笑",
+      "text": "我最先记住的，是她的笑。",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-01.png",
+      "runtime": "picture_books/prologue/images/scene-01.png",
+      "sha256": "1f6a2868086fc13af4f4298d6c9da08a9b5fdcd423c1c66869adeb91f2029c68",
+      "read_hold_seconds": 6.0,
+      "entrance_seconds": 1.1,
+      "display_text": "我最先记住的，\n是她的笑。"
+    },
+    {
+      "page": 2,
+      "title": "02 · 先吃这一口",
+      "text": "家里常有人等着喝药。我等着吃饭。",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-02.png",
+      "runtime": "picture_books/prologue/images/scene-02.png",
+      "sha256": "98ebc3d755cf856bf5318772f92b5daae287b902e8c32ea29fc29d28e2f1e8c6",
+      "read_hold_seconds": 7.0,
+      "entrance_seconds": 0.9,
+      "display_text": "家里常有人\n等着喝药。\n我等着吃饭。"
+    },
+    {
+      "page": 3,
+      "title": "03 · 门边的小观察者",
+      "text": "原来大人有时候也要人喂。",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-03.png",
+      "runtime": "picture_books/prologue/images/scene-03.png",
+      "sha256": "28fbafd4b0c69bd77c7a423f763846a73a760534c5d7d81315594272cc1289ee",
+      "read_hold_seconds": 7.0,
+      "entrance_seconds": 0.9,
+      "display_text": "原来大人有时候\n也要人喂。"
+    },
+    {
+      "page": 4,
+      "title": "04 · 动静倒不小",
+      "text": "我也试了一次。药没配好，动静倒不小。",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-04.png",
+      "runtime": "picture_books/prologue/images/scene-04.png",
+      "sha256": "71f167c2df9d06db8bdb7de0ba875dfc67b38c272b8abe07b16b32b3dd568336",
+      "read_hold_seconds": 8.0,
+      "entrance_seconds": 0.9,
+      "display_text": "我也试了一次。\n药没配好，\n动静倒不小。"
+    },
+    {
+      "page": 5,
+      "title": "05 · 一起蹲下来",
+      "text": "后来，她教我先认清锅里放的是什么。",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-05.png",
+      "runtime": "picture_books/prologue/images/scene-05.png",
+      "sha256": "ce51d9f13256e0af88f442ad6c1f87f9e210dc2f17c1f55d06b694ce1a619d18",
+      "read_hold_seconds": 7.0,
+      "entrance_seconds": 0.9,
+      "display_text": "后来，她教我\n先认清锅里\n放的是什么。"
+    },
+    {
+      "page": 6,
+      "title": "06 · 集市里的小声音",
+      "text": "有些人叫她魔女。我还是叫她妈妈。",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-06.png",
+      "runtime": "picture_books/prologue/images/scene-06.png",
+      "sha256": "da02c3d1b5cf304a2a90dcd23a2b6ccf0543d04e6a166c03fc684830f1ffad83",
+      "read_hold_seconds": 7.0,
+      "entrance_seconds": 0.9,
+      "display_text": "有些人叫她魔女。\n我还是叫她妈妈。"
+    },
+    {
+      "page": 7,
+      "title": "07 · 那晚还没睡",
+      "text": "那晚她还没睡。我以为她明天会晚一点起床。",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-07.png",
+      "runtime": "picture_books/prologue/images/scene-07.png",
+      "sha256": "c33552e622a354649de214034744f04f263ec8272639e9d80d6014eff38b1ed6",
+      "read_hold_seconds": 8.0,
+      "entrance_seconds": 1.15,
+      "display_text": "那晚她还没睡。\n我以为她明天\n会晚一点起床。"
+    },
+    {
+      "page": 8,
+      "title": "08 · 妈妈？",
+      "text": "妈妈？",
+      "source": "00_Doc/美术/序章绘本/storyboard/scene-08.png",
+      "runtime": "picture_books/prologue/images/scene-08.png",
+      "sha256": "02233bfc053abbb304f9e728e22dc42da1f4af2016a16f95253e0b344973b49c",
+      "read_hold_seconds": 7.0,
+      "entrance_seconds": 1.4,
+      "display_text": "妈妈？"
+    }
+  ],
+  "reading_hold_total_seconds": 57.0,
+  "playback_total_seconds": 65.15,
+  "source_images_unchanged": true,
+  "story_node": "story_p00_prologue"
+}

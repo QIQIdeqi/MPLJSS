@@ -4,6 +4,8 @@ extends Resource
 const Page = preload("res://scripts/picture_book/page.gd")
 
 @export var title: String = "未命名绘本"
+@export var background_color: Color = Color("18212b")
+@export var text_shadow_color: Color = Color(0, 0, 0, 0.85)
 @export var pages: Array[Resource] = []
 
 ## Resolve from the beginning every time: selection and reorder cannot leave
@@ -13,6 +15,7 @@ func resolve(page_index: int) -> Dictionary:
 		"image": null, "text": "", "image_rect": Rect2(0, 0, 1280, 720),
 		"text_rect": Rect2(96, 540, 1088, 130), "font_size": 32,
 		"text_color": Color.WHITE,
+		"text_shadow_color": text_shadow_color,
 	}
 	if page_index < 0 or page_index >= pages.size():
 		return result
