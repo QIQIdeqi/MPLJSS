@@ -1,0 +1,43 @@
+[gd_resource type="Resource" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/picture_book/book.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/picture_book/page.gd" id="2"]
+[ext_resource type="Texture2D" path="res://picture_books/demo/morning.svg" id="3"]
+[ext_resource type="Texture2D" path="res://picture_books/demo/evening.svg" id="4"]
+
+[sub_resource type="Resource" id="Page1"]
+script = ExtResource("2")
+title = "晨光 · 图文"
+image_action = 1
+image = ExtResource("3")
+text_action = 1
+text = "这是独立演示绘本。\n双击文字，在画布上写下你的内容。"
+
+[sub_resource type="Resource" id="Page2"]
+script = ExtResource("2")
+title = "保留图片 · 只换字"
+image_action = 0
+text_action = 1
+text = "图片保持不动，只有文字交叉淡变。\n试着把这一页拖到暮色页后面。"
+text_duration = 1.0
+
+[sub_resource type="Resource" id="Page3"]
+script = ExtResource("2")
+title = "暮色 · 纯图"
+image_action = 1
+image = ExtResource("4")
+text_action = 2
+
+[sub_resource type="Resource" id="Page4"]
+script = ExtResource("2")
+title = "结尾 · 纯文"
+image_action = 2
+text_action = 1
+text = "每一页可以是图片、文字，或两者。\n确认键在淡变中只补完这一页，再按才翻页。"
+text_rect = Rect2(150, 270, 980, 180)
+text_delay = 0.5
+
+[resource]
+script = ExtResource("1")
+title = "绘本编辑器 · 独立示例"
+pages = Array[Resource]([SubResource("Page1"), SubResource("Page2"), SubResource("Page3"), SubResource("Page4")])

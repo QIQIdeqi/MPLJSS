@@ -1,6 +1,6 @@
 # MPLJSS · 冒牌炼金术士
 
-当前主线为 [Godot 工程](02_Prototype/AlchemyGodot/README.md)。用 Godot 4.7.2 Standard 导入 [project.godot](02_Prototype/AlchemyGodot/project.godot)，按 F5 从开始界面运行。流程为封面 → 格雷弗德村庄 → 外围战斗与炼金 → 可选 Boss → 回村。
+当前主线为 [Godot 工程](02_Prototype/AlchemyGodot/README.md)。用 Godot 4.7.2 Standard 导入 [project.godot](02_Prototype/AlchemyGodot/project.godot)，按 F5 从开始界面运行。当前流程为封面 → 新游戏 P00 八画序章 → 格雷弗德村庄与工房 → 出战准备 → 外围战斗 → 可选 Boss → 回村。2026-11-25 的序章接入基于 main `9b0d715f`；旧档继续直进村庄，未完序章可继续观看。详见[接入与存档事件记录](04_工具与协作/AgentTeam/2026-11-25_新游戏序章接入与存档事件.md)。
 
 局外村庄使用 HD-2D 透视、实时光照与景深，支持昼夜、随机天气、积雪与融化。普通战斗和 Boss 场地使用两层随机生成，可在 Godot 的「Alchemy 关卡」面板调整配置。
 
@@ -18,6 +18,8 @@ Git LFS 用于仓库中的部分共享素材和试玩包。
 ## Windows 试玩
 
 [下载 2026-11-11 Windows 64 位试玩 ZIP](03_Build/AlchemyGodot_Win64_20261111.zip) · [SHA-256](03_Build/AlchemyGodot_Win64_20261111.zip.sha256)
+
+本次序章仅更新 Godot 源工程，Windows 试玩 ZIP 尚未重新打包。
 
 解压整个 ZIP，双击 `AlchemyGodot.exe`。`AlchemyGodot.pck` 需放在同目录，源工程提交号见包内的 `VERSION.txt`。
 

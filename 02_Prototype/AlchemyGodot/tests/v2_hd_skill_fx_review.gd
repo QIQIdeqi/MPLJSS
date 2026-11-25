@@ -171,8 +171,9 @@ func _review_skill(test: Dictionary) -> bool:
 		return _fail("Crystal shatter should show one break per combo")
 	if hits == 0:
 		return _fail("%s caused no hit in a stationary enemy group" % id)
-	# Physics tracked effects may have a brief finish fade after their state is gone.
-	await create_timer(0.8).timeout
+	# Give transient visuals time to finish before checking the persistent battlefield.
+	# The flask blast plays for 0.85 seconds, including in headless mode.
+	await create_timer(1.0).timeout
 	for node in attack_effects.get_children():
 		var event := String(node.get_meta("event", ""))
 		if event in ["cast", "flight", "zone_start", "summon_start"]:
