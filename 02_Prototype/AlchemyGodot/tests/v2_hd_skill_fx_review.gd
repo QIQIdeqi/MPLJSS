@@ -6,7 +6,7 @@ const STEP := 1.0 / 60.0
 const OUTPUT := "res://.godot/v2_hd_fx_review"
 const TESTS := [
 	{"id": "sk_blast_flask", "events": ["cast", "impact"], "capture": ["cast", "impact"]},
-	{"id": "sk_clay_homunculus", "events": ["summon_start", "summon_strike"], "capture": ["summon_start", "summon_strike"]},
+	{"id": "sk_brittle_mark", "events": ["mark_start", "mark_break"], "capture": ["mark_start", "mark_break"]},
 	{"id": "sk_mithril_drop", "events": ["flight", "impact", "hop"], "capture": ["flight", "hop"]},
 	{"id": "sk_gravity_stone", "events": ["flight", "impact", "zone_start"], "capture": ["impact", "zone_start"]},
 	{"id": "sk_corrosive_flask", "events": ["flight", "impact", "zone_start", "zone_tick"], "capture": ["flight", "zone_tick"]},
@@ -15,7 +15,7 @@ const TESTS := [
 	{"id": "sk_obsidian_blade", "events": ["flight", "impact", "hop"], "capture": ["flight", "hop"]},
 	{"id": "sk_spirit_gel", "events": ["flight", "impact"], "capture": ["flight", "impact"]},
 	{"id": "sk_soul_needle", "events": ["flight", "impact"], "capture": ["flight", "impact"]},
-	{"id": "link_blast_homunculus", "events": ["summon_start", "summon_strike", "summon_end"], "capture": ["summon_strike", "summon_end"]},
+	{"id": "link_blast_mark", "events": ["shard_flight", "shard_impact"], "capture": ["shard_flight", "shard_impact"]},
 	{"id": "link_mithril_orbit", "events": ["zone_start", "zone_tick"], "capture": ["zone_start", "zone_tick"]},
 	{"id": "link_corrosive_mist", "events": ["zone_start", "zone_tick"], "capture": ["zone_start", "zone_tick"]},
 	{"id": "link_crystal_shatter_blade", "events": ["impact"], "capture": ["impact"]},
@@ -100,6 +100,7 @@ func _review() -> void:
 
 func _review_skill(test: Dictionary) -> bool:
 	var id: String = test.id
+	var needs_mark_hit := id in ["sk_brittle_mark", "link_blast_mark"]
 	var from: Vector2 = battle.player.position
 	skill_manager.clear()
 	if capture:
@@ -133,9 +134,22 @@ func _review_skill(test: Dictionary) -> bool:
 		return _fail("%s activated outside skill range" % id)
 
 	_reset_targets(from)
+	var primary: Dictionary = targets[0]
+	var previous_hp: float = primary.hp
+	var basic_damage := 0.0
+	if needs_mark_hit:
+		primary.hp = 1000.0
 	skill_manager.cast_equipped(STEP, from, targets, _record_hit)
 	# Release once and advance the same live states without automatically rearming other skills.
 	for frame in 450:
+		if needs_mark_hit:
+			# Allow the persistent mark capture first, then break it with the actual basic attack.
+			if frame == 12:
+				battle.launch_basic_projectile(primary)
+				if battle.basic_projectiles.is_empty():
+					return _fail("%s did not fire the basic attack for the mark probe" % id)
+				basic_damage = float(battle.basic_projectiles.back().damage)
+			battle.advance_basic_projectiles(STEP)
 		skill_manager._update_active(STEP, from, targets, _record_hit)
 		for node in attack_effects.get_children():
 			if String(node.get_meta("skill_id", "")) != id:
@@ -147,7 +161,7 @@ func _review_skill(test: Dictionary) -> bool:
 					instances[event] = {}
 				instances[event][node.get_instance_id()] = true
 			if capture and event in test.capture and not capture_schedule.has(event):
-				var delay := 3 if event in ["flight", "cast", "hop"] else 7
+				var delay := 3 if event in ["flight", "cast", "hop", "shard_flight"] else 7
 				capture_schedule[event] = frame + delay
 		if capture:
 			for event in capture_schedule:
@@ -157,9 +171,17 @@ func _review_skill(test: Dictionary) -> bool:
 						return false
 			if capture_schedule.size() < test.capture.size() or capture_schedule.values().max() > frame:
 				await process_frame
-		if skill_manager.active.is_empty() and (not capture or (capture_schedule.size() == test.capture.size() and capture_schedule.values().max() <= frame)):
+		var waiting_for_mark_hit: bool = needs_mark_hit and (frame < 12 or not battle.basic_projectiles.is_empty())
+		if not waiting_for_mark_hit and skill_manager.active.is_empty() and (not capture or (capture_schedule.size() == test.capture.size() and capture_schedule.values().max() <= frame)):
 			break
 
+	if needs_mark_hit:
+		var dealt: float = 1000.0 - float(primary.hp)
+		primary.hp = previous_hp
+		var mark_runtime := skill_manager.runtime_for(&"sk_brittle_mark")
+		if mark_runtime == null or not is_equal_approx(dealt, basic_damage + mark_runtime.damage()):
+			return _fail("%s basic attack did not consume exactly one mark and apply its bonus" % id)
+		hits += 1
 	if not skill_manager.active.is_empty():
 		return _fail("%s retained an active gameplay state after 7.5s" % id)
 	for event in required:
@@ -169,6 +191,10 @@ func _review_skill(test: Dictionary) -> bool:
 		return _fail("Soulbound should release three needles and mark the target only once per volley")
 	if id == "link_crystal_shatter_blade" and instances.impact.size() != 1:
 		return _fail("Crystal shatter should show one break per combo")
+	if id == "link_blast_mark":
+		var shards := mini(3, targets.size() - 1)
+		if instances.shard_flight.size() != shards or instances.shard_impact.size() != shards:
+			return _fail("Blast mark should create one flight and impact per eligible nearby secondary target")
 	if hits == 0:
 		return _fail("%s caused no hit in a stationary enemy group" % id)
 	# Give transient visuals time to finish before checking the persistent battlefield.
@@ -176,7 +202,7 @@ func _review_skill(test: Dictionary) -> bool:
 	await create_timer(1.0).timeout
 	for node in attack_effects.get_children():
 		var event := String(node.get_meta("event", ""))
-		if event in ["cast", "flight", "zone_start", "summon_start"]:
+		if event in ["cast", "flight", "zone_start", "mark_start", "shard_flight"]:
 			return _fail("%s retained %s/%s after its state ended" % [id, node.get_meta("skill_id", ""), event])
 	world.rebuild()
 	await process_frame

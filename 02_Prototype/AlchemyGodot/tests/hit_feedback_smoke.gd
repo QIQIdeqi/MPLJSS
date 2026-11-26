@@ -63,6 +63,7 @@ func _run() -> void:
 	_test_basic()
 	_test_zones()
 	_test_fallback_zone()
+	_test_mark_fallback()
 	await _test_player()
 	_finish()
 
@@ -215,6 +216,54 @@ func _test_fallback_zone() -> void:
 	check(battle.fallback_skill_visuals.is_empty(), "2D fallback mist releases after end fade")
 	completed.append("fallback")
 
+func _test_mark_fallback() -> void:
+	battle.clear_combat_effects()
+	var manager: SkillManager = battle.alchemy_system.skills
+	manager.clear()
+	manager.add_skill(&"sk_brittle_mark")
+	manager.add_skill(&"sk_blast_flask")
+	var primary: Dictionary
+	var secondary: Dictionary
+	for offset in [Vector2(112, 0), Vector2(180, 40)]:
+		var foe := ENEMY.new()
+		foe.setup(0, battle.player.movement_bounds, SKELETON)
+		battle.actors.add_child(foe)
+		foe.position = battle.player.position + offset
+		var entry := {"body":foe, "hp":100.0, "boss":false, "elite":false}
+		battle.enemies.append(entry)
+		if primary.is_empty():
+			primary = entry
+		else:
+			secondary = entry
+	var mark: SkillRuntime = manager.runtime_for(&"sk_brittle_mark")
+	manager._cast(mark, battle.player.position, primary, battle.enemies)
+	if check(battle.fallback_skill_visuals.size() == 1, "the 2D fallback registers a live mark"):
+		var sprite: Node2D = battle.fallback_skill_visuals[0].node
+		var before := sprite.position
+		primary.body.position.y += 12.0
+		manager._update_active(.02, battle.player.position, battle.enemies, battle.damage_brew_enemy)
+		battle.advance_fallback_skill_visuals(.02)
+		check(is_equal_approx(sprite.position.y - before.y, 12.0), "the 2D mark follows its enemy")
+	battle.launch_basic_projectile(primary)
+	for frame in 30:
+		battle.advance_basic_projectiles(.02)
+		if battle.basic_projectiles.is_empty():
+			break
+	battle.advance_fallback_skill_visuals(.02)
+	check(is_equal_approx(primary.hp, 99.0 - mark.damage())
+		and battle.fallback_skill_visuals.size() == 1, "one basic hit replaces the 2D mark with a travelling shard")
+	for frame in 30:
+		manager._update_active(.02, battle.player.position, battle.enemies, battle.damage_brew_enemy)
+		battle.advance_fallback_skill_visuals(.02)
+	check(is_equal_approx(secondary.hp, 100.0 - mark.damage() * .65)
+		and battle.fallback_skill_visuals.is_empty(), "the 2D shard lands once and releases its visual")
+	battle.clear_combat_effects()
+	manager.clear()
+	for entry: Dictionary in [primary, secondary]:
+		battle.enemies.erase(entry)
+		entry.body.queue_free()
+	completed.append("mark_fallback")
+
 func _test_player() -> void:
 	var player = battle.player
 	player.locked = false
@@ -276,7 +325,7 @@ func _test_player() -> void:
 
 func _finish() -> void:
 	Input.action_release(&"move_right")
-	check(completed == ["basic", "zone1", "zone4", "fallback", "player"], "every regression section reached its final check")
+	check(completed == ["basic", "zone1", "zone4", "fallback", "mark_fallback", "player"], "every regression section reached its final check")
 	if is_instance_valid(battle):
 		for sound in battle.find_children("*", "AudioStreamPlayer", true, false):
 			sound.stop()

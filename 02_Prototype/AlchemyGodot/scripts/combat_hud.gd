@@ -3,6 +3,7 @@ extends Control
 const SKILLS := preload("res://data/brew_skills.gd").ROWS
 const INGREDIENTS := preload("res://scripts/brew.gd").ICONS
 const SLOT_COOLDOWN := preload("res://scripts/skill_slot_cooldown.gd")
+const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
 
 var field
 var panel := ""
@@ -49,6 +50,8 @@ func _process(_delta: float) -> void:
 	$Top/Time.text = "%02d:%02d" % [floori(field.run_time / 60.0), int(field.run_time) % 60]
 	var definition = field.level_catalog.find_level(field.level_id)
 	phase_caption.text = "%s · %s" % [definition.display_name if definition else "战斗", field.enemy_config.phase_name(field.run_time) if not field.stage_is_boss else "独立 Boss 战"]
+	if _has_split_alchemy():
+		phase_caption.text += " · 分裂炼金（等待首个技能）" if field.alchemy_system.skills.runtimes.is_empty() else " · 分裂炼金"
 	$Right/Kills.text = str(field.kills)
 	$Right/Coins.text = str(field.coins)
 	$Bottom/Level.text = "Lv.%d" % field.level
@@ -75,6 +78,9 @@ func _process(_delta: float) -> void:
 	# V1.1：局内不提供炼金工房，炼金按钮始终禁用（旧局内炼丹已移除）
 	$Bottom/Alchemy.disabled = true
 	minimap.queue_redraw()
+
+func _has_split_alchemy() -> bool:
+	return is_instance_valid(field.alchemy_system) and field.alchemy_system.skills.ability_id == ABILITIES.ABILITY_SPLIT
 
 func update_slots() -> void:
 	var runtimes: Array = field.alchemy_system.skills.runtimes if is_instance_valid(field.alchemy_system) else []
@@ -160,7 +166,7 @@ func open_panel(kind: String) -> void:
 		add_action("继续战斗", close_panel)
 		add_action("返回开始界面", return_to_menu)
 	else:
-		title.text = "已装备技能"
+		title.text = "已装备技能 · 分裂炼金" if _has_split_alchemy() else "已装备技能"
 		var skills: SkillManager = field.alchemy_system.skills if is_instance_valid(field.alchemy_system) else null
 		var runtimes: Array = skills.runtimes if skills != null else []
 		if runtimes.is_empty():

@@ -4,10 +4,9 @@ const GROUND_SHADER := preload("res://shaders/v2_skill_ground.gdshader")
 const SKILL_LIGHT := preload("res://scripts/v2_skill_light.gd")
 const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
 const VIAL := preload("res://scenes/fx/brew_result_vial.png")
-const DUST := preload("res://art/vfx/v2/clay_homunculus_summon_24f.png")
 const MIST := preload("res://art/vfx/v2/mist_flask_cloud_24f.png")
-const GOLEM := preload("res://art/vfx/v2/link_blast_homunculus_24f.png")
-const CLAY_STRIKE := preload("res://art/vfx/v2/pixelfx/clay_strike.png")
+const BRITTLE_SHATTER := preload("res://art/vfx/v2/pixelfx/brittle_mark_break.png")
+const BLAST_MARK_CONTACT := preload("res://art/vfx/v2/pixelfx/blast_mark_contact.png")
 const MITHRIL_FLIGHT := preload("res://art/vfx/v2/pixelfx/mithril_flight.png")
 const MITHRIL_IMPACT := preload("res://art/vfx/v2/pixelfx/mithril_impact.png")
 const GRAVITY_FLIGHT := preload("res://art/vfx/v2/pixelfx/gravity_flight.png")
@@ -18,7 +17,6 @@ const MIST_ZONE := preload("res://art/vfx/v2/pixelfx/mist_zone.png")
 const CRYSTAL_IMPACT := preload("res://art/vfx/v2/pixelfx/crystal_impact.png")
 const OBSIDIAN_IMPACT := preload("res://art/vfx/v2/pixelfx/obsidian_impact.png")
 const NEEDLE_FLIGHT := preload("res://art/vfx/v2/pixelfx/needle_flight.png")
-const BLAST_GOLEM_END := preload("res://art/vfx/v2/pixelfx/blast_golem_end.png")
 const MITHRIL_ORBIT := preload("res://art/vfx/v2/pixelfx/mithril_orbit.png")
 const CORROSIVE_MIST := preload("res://art/vfx/v2/pixelfx/corrosive_mist.png")
 const CRYSTAL_SHATTER := preload("res://art/vfx/v2/pixelfx/crystal_shatter.png")
@@ -33,6 +31,9 @@ const SPIRIT_GEL_IMPACT_FPS := 45.0
 const WORLD_SCALE := 0.01
 const FLOOR_Y := 0.055
 const ZONE_FADE_DURATION := 0.45
+const BREAK_DURATION := 0.36
+const SHARD_CONTACT_DURATION := 0.25
+const MARK_COLOR := Color("#ffc171")
 
 enum Ground { RIPPLE, POOL, VORTEX, ORBIT, MIST, ACID }
 
@@ -40,7 +41,9 @@ static var box_mesh := BoxMesh.new()
 static var shard_mesh := PrismMesh.new()
 static var surface_materials: Dictionary[String, StandardMaterial3D] = {}
 static var atlas_crops: Dictionary[String, AtlasTexture] = {}
-static var clay_texture: ImageTexture
+static var fallback_animations: Dictionary[Texture2D, SpriteFrames] = {}
+static var mark_textures: Dictionary[int, ImageTexture] = {}
+static var shard_texture: ImageTexture
 
 var state: Dictionary = {}
 var skill_id := ""
@@ -76,7 +79,7 @@ func start(info: Dictionary) -> void:
 	world_radius = maxf(float(state.get("radius", info.get("radius", 0.0))) * WORLD_SCALE, 0.42)
 	position = _world_at(target)
 	match event_name:
-		"flight":
+		"flight", "shard_flight":
 			if state.is_empty():
 				queue_free()
 				return
@@ -90,17 +93,16 @@ func start(info: Dictionary) -> void:
 			lifetime = -1.0
 			position = _world_at(state.get("pos", target))
 			_make_zone()
-		"summon_start":
+		"mark_start":
 			if state.is_empty():
 				queue_free()
 				return
 			lifetime = -1.0
-			position = _world_at(state.get("pos", launch_point))
-			_make_summon()
-		"summon_strike":
-			_summon_strike(target, launch_point)
-		"summon_end":
-			_summon_end()
+			_make_mark()
+		"mark_break":
+			_mark_break()
+		"shard_impact":
+			_shard_impact()
 		"impact":
 			_impact()
 		"zone_tick":
@@ -110,27 +112,28 @@ func start(info: Dictionary) -> void:
 	if is_zero_approx(lifetime):
 		queue_free()
 	elif split_side != 0:
-		_add_split_accent()
+		_add_split_accent(split_side)
+	elif event_name == "mark_break" and state.get("split_merged", false):
+		_add_split_accent(-1)
+		_add_split_accent(1)
 
-func _add_split_accent() -> void:
+func _add_split_accent(side: int) -> void:
 	match event_name:
 		"flight":
 			var accent := SPLIT_ALCHEMY_FX.new()
 			body.add_child(accent)
 			var trailing := skill_id != "sk_corrosive_flask" and skill_id != "sk_mist_flask"
-			accent.start_follow(split_side, false, trailing)
-		"summon_start":
-			var accent := SPLIT_ALCHEMY_FX.new()
-			add_child(accent)
-			accent.start_follow(split_side, true)
-		"impact", "zone_start":
+			accent.start_follow(side, false, trailing)
+		"impact", "zone_start", "mark_break":
 			var accent := SPLIT_ALCHEMY_FX.new()
 			add_child(accent)
 			var camera := _world_camera()
 			if camera:
 				accent.position = camera.global_basis.z.slide(Vector3.UP).normalized() * 0.14
 			var height := 0.20 if event_name == "zone_start" else 0.37
-			accent.start_mark(split_side, heading, height, 0.42)
+			if event_name == "mark_break":
+				height = _mark_height(state)
+			accent.start_mark(side, heading, height, 0.42)
 
 func _process(delta: float) -> void:
 	age += delta
@@ -146,13 +149,13 @@ func _process(delta: float) -> void:
 			queue_free()
 			return
 	match event_name:
-		"flight":
+		"flight", "shard_flight":
 			_move_flight()
 		"zone_start":
 			position = _world_at(state.get("pos", Vector2.ZERO))
 			_update_zone()
-		"summon_start":
-			_update_summon()
+		"mark_start":
+			_move_mark()
 	if impact_card:
 		impact_card.frame = mini(floori(age * SPIRIT_GEL_IMPACT_FPS), ATLAS_FRAMES - 1)
 		impact_card.modulate.a = 1.0 - smoothstep(0.34, lifetime, age)
@@ -169,6 +172,10 @@ func _make_flight() -> void:
 	body = Node3D.new()
 	add_child(body)
 	match skill_id:
+		"link_blast_mark":
+			body_card = _card(_mark_shard_texture(), body, 0.018, Color.WHITE)
+			_streak(body, Vector3(-0.32, 0.0, 0.0), Vector3(-0.06, 0.0, 0.0), 0.013, Color("#ff914b"))
+			SKILL_LIGHT.add(body, Vector3(-0.048, 0.0, 0.0), 0.24, Color(MARK_COLOR, 0.40))
 		"sk_mithril_drop":
 			library_card = _library_sprite(MITHRIL_FLIGHT, body, 0.023)
 		"sk_gravity_stone":
@@ -213,6 +220,13 @@ func _move_flight() -> void:
 		body_card.rotation.z = -age * (8.0 if skill_id == "sk_corrosive_flask" else 6.0)
 	elif skill_id == "sk_spirit_gel":
 		body_card.frame = floori(age * 36.0) % ATLAS_FRAMES
+	elif skill_id == "link_blast_mark":
+		var camera := _world_camera()
+		if camera:
+			var center := body_card.global_position
+			var ahead := center + _world_at(heading * 36.0)
+			var projected := camera.unproject_position(ahead) - camera.unproject_position(center)
+			body_card.global_basis = camera.global_basis * Basis(Vector3.BACK, -projected.angle())
 	elif body_card:
 		body_card.rotation.y = -body.rotation.y
 	if library_card:
@@ -277,49 +291,34 @@ func _make_orbiters(count: int, tint: Color) -> void:
 		var stone := _piece(self, Vector3.ZERO, Vector3.ONE * 0.01, tint, true, true)
 		orbiters.append(stone)
 
-func _make_summon() -> void:
-	var explosive := skill_id == "link_blast_homunculus"
-	if explosive:
-		body_card = _card(_crop(GOLEM, Rect2(26, 18, 76, 60)), self, 0.0091, Color.WHITE, true)
-		SKILL_LIGHT.add(self, Vector3(0.0, 0.32, 0.08), 0.51, Color(1.0, 0.42, 0.15, 0.39))
-	else:
-		body_card = _card(_clay_sprite(), self, 0.040, Color.WHITE, true)
-	_ground(0.30 if explosive else 0.27, Ground.RIPPLE, Color("#3f3023"), Color("#b18a5e"))
-	floor_mat.set_shader_parameter("wave_radius", 0.76)
-	_dust(3, Color(0.62, 0.52, 0.41, 0.64), 0.36)
-	_update_summon()
+func _make_mark() -> void:
+	body = Node3D.new()
+	add_child(body)
+	var merged: bool = state.get("split_merged", false)
+	body_card = _card(_brittle_texture(split_side, merged), body, 0.028 if merged else 0.024, Color.WHITE)
+	body_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	SKILL_LIGHT.add(body, Vector3.ZERO, 0.39, Color(MARK_COLOR, 0.62), 0.24, 0.30)
+	_move_mark()
 
-func _update_summon() -> void:
+func _move_mark() -> void:
 	position = _world_at(state.get("pos", launch_point))
-	var facing: Vector2 = state.get("direction", Vector2.RIGHT)
+	body.position = Vector3.UP * _mark_height(state)
+	var camera := _world_camera()
+	if camera:
+		body.position += camera.global_basis.z.slide(Vector3.UP).normalized() * 0.27
 	var remaining := float(state.get("left", 1.0))
-	var explosive := skill_id == "link_blast_homunculus"
-	var fade := smoothstep(0.0, 0.17, age) * (1.0 if explosive else clampf(remaining / 0.3, 0.0, 1.0))
-	body_card.flip_h = facing.x < -0.05
-	body_card.modulate.a = fade
-	body_card.position.y = (0.26 if explosive else 0.31) + absf(sin(age * 9.8)) * 0.033 if not facing.is_zero_approx() else (0.26 if explosive else 0.31)
-	floor_mat.set_shader_parameter("strength", fade * 0.39)
+	body_card.modulate.a = (0.86 + 0.14 * cos(age * TAU * 1.8)) * minf(remaining * 7.0, 1.0)
 
-func _summon_strike(target: Vector2, from: Vector2) -> void:
-	lifetime = 0.28
-	var explosive := skill_id == "link_blast_homunculus"
-	if not explosive:
-		_library_burst(CLAY_STRIKE, 0.42, 0.011, 0.25)
-		return
-	var tint := Color("#ef9857")
-	var direction := _world_at(target) - _world_at(from)
-	if direction.is_zero_approx():
-		direction = Vector3.RIGHT
-	direction = direction.normalized()
-	var fist := _piece(self, -direction * 0.37 + Vector3.UP * 0.26, Vector3(0.15, 0.13, 0.15), tint, true)
-	create_tween().tween_property(fist, "position", Vector3.UP * 0.25, 0.085)
-	create_tween().tween_property(fist, "scale", Vector3.ZERO, 0.22).set_delay(0.060)
-	_fragments(4, tint, 0.51, 0.18, 0.29)
-	SKILL_LIGHT.add(self, Vector3(0.0, 0.26, 0.07), 0.47, Color(tint, 0.76), 0.16, 0.66)
+func _mark_break() -> void:
+	_library_burst(BRITTLE_SHATTER, BREAK_DURATION, 0.0067, _mark_height(state))
+	# 源图集的碎裂重心偏右，把炸开的中心对准敌人身上的刻印。
+	library_card.offset.x = -27.0
+	library_card.modulate = _mark_tint(split_side)
+	SKILL_LIGHT.add(self, Vector3.UP * (_mark_height(state) + 0.035), 0.49, Color(MARK_COLOR, 0.67), 0.16, 0.42)
 
-func _summon_end() -> void:
-	_library_burst(BLAST_GOLEM_END, 0.75, 0.010, 0.18)
-	_ground(world_radius, Ground.RIPPLE, Color("#9d3c24"), Color("#f3a054"))
+func _shard_impact() -> void:
+	_library_burst(BLAST_MARK_CONTACT, SHARD_CONTACT_DURATION, 0.0058, 0.31, true)
+	SKILL_LIGHT.add(self, Vector3.UP * 0.31, 0.34, Color("#ff9f55"), 0.12)
 
 func _impact() -> void:
 	lifetime = 0.37
@@ -469,19 +468,6 @@ func _fragments(count: int, tint: Color, speed: float, height: float, duration: 
 		var fade := create_tween()
 		fade.tween_property(speck, "scale", Vector3.ZERO, duration * 0.46).set_delay(duration * 0.54)
 
-func _dust(count: int, tint: Color, duration: float) -> void:
-	for i in count:
-		var angle := i * TAU / count
-		var direction := Vector3(cos(angle), 0.0, sin(angle))
-		var puff := _card(_crop(DUST, Rect2(46, 173, 36, 36)), self, 0.011, tint)
-		puff.position = direction * 0.095 + Vector3.UP * 0.09
-		puff.scale.y = 0.56
-		var tween := create_tween().set_parallel(true)
-		tween.tween_property(puff, "modulate:a", 0.0, duration)
-		tween.tween_property(puff, "position", direction * 0.43 + Vector3.UP * 0.18, duration)
-		tween.tween_property(puff, "scale", Vector3(1.35, 0.72, 1.0), duration)
-		tween.chain().tween_callback(puff.queue_free)
-
 func _streak(parent: Node3D, from: Vector3, to: Vector3, width: float, tint: Color) -> MeshInstance3D:
 	var length := from.distance_to(to)
 	var line := _piece(parent, from.lerp(to, 0.5), Vector3(width, width, maxf(length, 0.001)), tint, false, true)
@@ -537,33 +523,128 @@ static func _crop(texture: Texture2D, region: Rect2) -> AtlasTexture:
 		atlas_crops[key] = crop
 	return atlas_crops[key]
 
-static func _clay_sprite() -> ImageTexture:
-	if clay_texture:
-		return clay_texture
-	var colors := {"d": Color("#3a2923"), "m": Color("#8c6751"), "h": Color("#b48a68"), "g": Color("#e1ac68")}
-	var rows := [
-		"....dddd....",
-		"...dhhhmd...",
-		"...dhmmmd...",
-		"...dgmgmd...",
-		"..ddmmmmdd..",
-		".dhhmmmhhd..",
-		"dhmhmmhmmhmd",
-		"dmdhmgmmddmd",
-		"dd.dhmmmd.dd",
-		"...dmmmmmd..",
-		"...dmd.dmd..",
-		"..dmmd.dmd..",
-		"..dddd.ddd..",
-	]
-	var image := Image.create_empty(12, rows.size(), false, Image.FORMAT_RGBA8)
+static func _mark_tint(side: int) -> Color:
+	if side == 0:
+		return Color.WHITE
+	return Color.WHITE.lerp(SPLIT_ALCHEMY_FX.branch_color(side), 0.55)
+
+static func _mark_height(mark: Dictionary) -> float:
+	var victim: Dictionary = mark.get("target", {})
+	return 0.55 if victim.get("boss", false) else 0.43
+
+static func _brittle_texture(side: int, merged: bool) -> ImageTexture:
+	var palette := 2 if merged else side
+	if not mark_textures.has(palette):
+		mark_textures[palette] = _mark_pixel_texture([
+		"...............",
+		"..........a....",
+		"....a....ag....",
+		".....o..og.....",
+		".....go.og.....",
+		"......gog..a...",
+		"..ao...cgao....",
+		"...gogccgo.....",
+		"....agcg.......",
+		".....gogog.....",
+		"....og..oggo...",
+		"....ga....ao...",
+		"...a...........",
+		"...............",
+		"...............",
+		], palette)
+	return mark_textures[palette]
+
+static func _mark_shard_texture() -> ImageTexture:
+	if not shard_texture:
+		shard_texture = _mark_pixel_texture([
+		".................",
+		".............ao..",
+		"...a......oogga..",
+		"....agggogggcgo..",
+		"aagggccgccccggga.",
+		"....agggocgggga..",
+		"......aa..oggo...",
+		"............a....",
+		".................",
+		])
+	return shard_texture
+
+static func _mark_colors(side: int) -> Dictionary:
+	if side == 0:
+		return {"o": Color("#663121"), "a": Color("#a65b37"), "g": MARK_COLOR, "c": Color("#fff1c3")}
+	var tint := SPLIT_ALCHEMY_FX.branch_color(side)
+	return {"o": tint.darkened(.64), "a": tint.darkened(.34), "g": tint, "c": tint.lerp(Color.WHITE, .68)}
+
+static func _mark_pixel_texture(rows: PackedStringArray, palette := 0) -> ImageTexture:
+	var width := rows[0].length()
+	var image := Image.create_empty(width, rows.size(), false, Image.FORMAT_RGBA8)
+	var left_colors := _mark_colors(-1 if palette == 2 else palette)
+	var right_colors := _mark_colors(1) if palette == 2 else left_colors
 	for y in rows.size():
-		for x in 12:
-			var mark: String = rows[y][x]
-			if colors.has(mark):
-				image.set_pixel(x, y, colors[mark])
-	clay_texture = ImageTexture.create_from_image(image)
-	return clay_texture
+		for x in width:
+			var pixel := rows[y][x]
+			var colors := left_colors if x * 2 < width else right_colors
+			if colors.has(pixel):
+				image.set_pixel(x, y, colors[pixel])
+	return ImageTexture.create_from_image(image)
+
+## Shares the mark and shard art with the HD view. Returns only nodes bound to a live state.
+static func start_fallback(parent: Node2D, info: Dictionary) -> Node2D:
+	var event := String(info.get("event", ""))
+	var live_state: Dictionary = info.get("state", {})
+	var side := int(info.get("split_side", live_state.get("split_side", 0)))
+	if event == "mark_start" or event == "shard_flight":
+		if live_state.is_empty():
+			return null
+		var sprite := Sprite2D.new()
+		var merged: bool = live_state.get("split_merged", false)
+		sprite.texture = _brittle_texture(side, merged) if event == "mark_start" else _mark_shard_texture()
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.scale = Vector2.ONE * (1.85 if merged else (1.6 if event == "mark_start" else 1.35))
+		parent.add_child(sprite)
+		update_fallback(sprite, live_state)
+		return sprite
+	var burst := AnimatedSprite2D.new()
+	burst.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	burst.modulate = _mark_tint(side)
+	var target: Vector2 = info.get("target", Vector2.ZERO)
+	if event == "mark_break":
+		burst.sprite_frames = _fallback_frames(BRITTLE_SHATTER, BREAK_DURATION)
+		burst.position = target + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
+		burst.offset.x = -27.0
+		burst.scale = Vector2.ONE * 0.52
+	else:
+		burst.sprite_frames = _fallback_frames(BLAST_MARK_CONTACT, SHARD_CONTACT_DURATION)
+		burst.position = target + Vector2.UP * 31.0
+		burst.scale = Vector2.ONE * 0.53
+		var direction: Vector2 = live_state.get("direction", Vector2.RIGHT)
+		burst.rotation = direction.angle()
+	parent.add_child(burst)
+	burst.animation_finished.connect(burst.queue_free, CONNECT_ONE_SHOT)
+	burst.play()
+	return null
+
+static func update_fallback(node: Node2D, live_state: Dictionary) -> void:
+	var at: Vector2 = live_state.get("pos", Vector2.ZERO)
+	if live_state.get("kind", "") == "brittle_mark":
+		node.position = at + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
+		node.modulate.a = minf(float(live_state.get("left", 1.0)) * 7.0, 1.0)
+	else:
+		node.position = at + Vector2.UP * 31.0
+		var direction: Vector2 = live_state.get("direction", Vector2.RIGHT)
+		node.rotation = direction.angle()
+
+static func _fallback_frames(texture: Texture2D, duration: float) -> SpriteFrames:
+	if not fallback_animations.has(texture):
+		var animation := SpriteFrames.new()
+		animation.set_animation_speed(&"default", ATLAS_FRAMES / duration)
+		animation.set_animation_loop(&"default", false)
+		var cell := texture.get_size() / Vector2(ATLAS_COLUMNS, ATLAS_ROWS)
+		for frame in ATLAS_FRAMES:
+			var origin := Vector2(frame % ATLAS_COLUMNS, floori(float(frame) / ATLAS_COLUMNS)) * cell
+			animation.add_frame(&"default", _crop(texture, Rect2(origin, cell)))
+		fallback_animations[texture] = animation
+	return fallback_animations[texture]
 
 static func _world_at(point: Vector2) -> Vector3:
 	return Vector3(point.x, 0.0, point.y) * WORLD_SCALE

@@ -10,7 +10,7 @@ const ELEMENT_THUNDER := &"thunder"
 const ELEMENT_WIND := &"wind"
 const ELEMENT_POISON := &"poison"
 const BEHAVIOR_BOTTLE := &"bottle"
-const BEHAVIOR_SUMMON := &"summon"
+const BEHAVIOR_MARK := &"mark"
 const BEHAVIOR_BOUNCE := &"bounce"
 const BEHAVIOR_PULL := &"pull"
 const BEHAVIOR_POOL := &"pool"
@@ -34,7 +34,7 @@ const UNIT := 64.0
 
 const ROWS := [
 	{"id":"sk_blast_flask", "name":"爆裂药瓶", "behavior":BEHAVIOR_BOTTLE, "color":Color("e65b37"), "base_damage":28.0, "power":[1.0,1.2,1.2,1.5,1.75], "cooldowns":[2.8,2.8,2.8,2.8,2.5], "radius_units":[1.5,1.5,1.75,1.75,1.9], "range_units":[6.0,6.0,6.5,6.5,7.0], "speed":310.0},
-	{"id":"sk_clay_homunculus", "name":"炼金魔偶", "behavior":BEHAVIOR_SUMMON, "color":Color("b69b83"), "base_damage":25.0, "power":[.36,.42,.48,.54,.60], "cooldowns":[7.0,7.0,7.0,7.0,7.0], "interval":[.90,.90,.82,.82,.74], "speed_units":[4.5,4.5,5.0,5.0,5.5], "life":6.0, "range_units":[6.0,6.0,6.5,6.5,7.0]},
+	{"id":"sk_brittle_mark", "name":"脆化刻印", "behavior":BEHAVIOR_MARK, "color":Color("e6a34f"), "base_damage":20.0, "power":[.9,1.05,1.2,1.35,1.5], "cooldowns":[3.4,3.4,3.2,3.2,3.0], "range_units":[6.0,6.0,6.5,6.5,7.0], "duration":2.5},
 	{"id":"sk_mithril_drop", "name":"秘银液滴", "behavior":BEHAVIOR_BOUNCE, "color":Color("c4d3d8"), "base_damage":24.0, "power":[.55,.64,.74,.84,.95], "cooldowns":[1.9,1.9,1.9,1.8,1.7], "targets":[3,3,4,4,5], "bounce_units":[3.2,3.2,3.5,3.5,3.8], "range_units":[6.0,6.0,6.5,6.5,7.0], "speed":470.0},
 	{"id":"sk_gravity_stone", "name":"引力石", "behavior":BEHAVIOR_PULL, "color":Color("6d416f"), "base_damage":23.0, "power":[.30,.36,.42,.48,.55], "cooldowns":[5.0,5.0,5.0,5.0,4.6], "radius_units":[2.2,2.2,2.4,2.4,2.6], "duration":[2.4,2.4,2.6,2.6,2.8], "range_units":[6.0,6.0,6.4,6.4,6.8], "speed":360.0},
 	{"id":"sk_corrosive_flask", "name":"蚀骨药剂", "behavior":BEHAVIOR_POOL, "color":Color("4f9d47"), "base_damage":20.0, "power":[.18,.21,.24,.28,.32], "cooldowns":[3.8,3.8,3.8,3.8,3.5], "radius_units":[1.6,1.6,1.8,1.8,2.0], "duration":[3.0,3.0,3.0,3.5,3.5], "ticks":[6,6,6,7,7], "range_units":[6.0,6.0,6.4,6.4,6.8], "speed":330.0},
@@ -46,7 +46,7 @@ const ROWS := [
 ]
 
 const CHAINS := [
-	{"id":"link_blast_homunculus", "name":"爆裂魔偶", "parents":["sk_blast_flask","sk_clay_homunculus"], "carrier":"sk_clay_homunculus", "cooldown":6.0, "color":Color("ec6947")},
+	{"id":"link_blast_mark", "name":"爆裂刻印", "parents":["sk_blast_flask","sk_brittle_mark"], "carrier":"sk_brittle_mark", "cooldown":6.0, "radius":150.0, "targets":3, "damage_ratio":.65, "speed":850.0, "color":Color("ed853e")},
 	{"id":"link_mithril_orbit", "name":"秘银星环", "parents":["sk_mithril_drop","sk_gravity_stone"], "carrier":"sk_gravity_stone", "cooldown":8.0, "color":Color("d9edf2")},
 	{"id":"link_corrosive_mist", "name":"蚀骨毒雾", "parents":["sk_corrosive_flask","sk_mist_flask"], "carrier":"sk_mist_flask", "cooldown":8.0, "color":Color("a4b450")},
 	{"id":"link_crystal_shatter_blade", "name":"晶裂飞刃", "parents":["sk_crystal_growth","sk_obsidian_blade"], "carrier":"sk_obsidian_blade", "cooldown":5.0, "color":Color("b9eaff")},

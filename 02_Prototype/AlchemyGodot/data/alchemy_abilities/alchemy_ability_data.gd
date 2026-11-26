@@ -49,7 +49,7 @@ const ABILITIES := [
 	},
 	{
 		"id": ABILITY_SPLIT, "name": "分裂炼金",
-		"desc": "基础技能每次释放分成两份，各造成 60% 伤害。优先攻击不同目标，范围效果略小。",
+		"desc": "升级获得的基础技能分成两份，各造成 60% 伤害。优先分打不同目标，范围效果略小。",
 		"effect_type": EFFECT_SPLIT,
 		"param_keys": {"count": 2, "damage_ratio": SPLIT_DAMAGE_RATIO, "area_ratio": SPLIT_AREA_RATIO},
 	},

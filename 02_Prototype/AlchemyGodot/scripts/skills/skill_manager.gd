@@ -1,11 +1,12 @@
 class_name SkillManager
 extends RefCounted
 
-# V2 的逻辑层：投射物、区域、召唤物和固定连锁都在这里保有真实寿命，
+# V2 的逻辑层：投射物、区域、刻印和固定连锁都在这里保有真实寿命，
 # 不在施放帧直接结算全部伤害。field 只负责敌人、伤害反馈与视觉桥接。
 const SKILLS := preload("res://data/skills/skill_data.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
 const BLAST_FLASK := &"sk_blast_flask"
+const BLAST_MARK := &"link_blast_mark"
 const SPLIT_LAUNCH_OFFSET := 16.0
 
 var field
@@ -14,6 +15,7 @@ var runtimes: Array[SkillRuntime] = []
 var max_skill_slots := 6
 var active: Array[Dictionary] = []
 var chain_cooldowns: Dictionary = {}
+var brittle_marks: Dictionary[int, Dictionary] = {}
 
 func setup(p_ability_id: StringName, p_field) -> void:
 	ability_id = p_ability_id
@@ -55,6 +57,9 @@ func clear_active() -> void:
 	for state in active:
 		state.finished = true
 	active.clear()
+	for mark: Dictionary in brittle_marks.values():
+		mark.finished = true
+	brittle_marks.clear()
 
 func cast_equipped(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
 	for chain_id in chain_cooldowns.keys():
@@ -76,8 +81,8 @@ func _cast(runtime: SkillRuntime, from: Vector2, target: Dictionary, enemies: Ar
 		_cast_split(runtime, from, target, enemies)
 	else:
 		_cast_branch(runtime, from, target)
-	# 落点触发的组合由命中分支处理，其他组合按原施放时机触发一次。
-	if not _chain_on_impact(runtime):
+	# 落点和破印型组合各自等待触发事件。
+	if not _chain_on_impact(runtime) and runtime.behavior() != SKILLS.BEHAVIOR_MARK:
 		_try_chain(runtime, from, point, target)
 
 func _cast_split(runtime: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array) -> void:
@@ -90,6 +95,11 @@ func _cast_split(runtime: SkillRuntime, from: Vector2, target: Dictionary, enemi
 		other = target
 	var chain_gate := {"used": false}
 	_emit_fx(runtime, "split_cast", from, point)
+	if grouped and runtime.behavior() == SKILLS.BEHAVIOR_MARK:
+		_apply_brittle_mark(runtime, other, {
+			"ratio": 2.0 * ABILITIES.SPLIT_DAMAGE_RATIO, "split_chain_gate": chain_gate, "split_merged": true,
+		})
+		return
 	for side: int in [-1, 1]:
 		var branch_target: Dictionary = target if side < 0 else other
 		var offset := lateral * SPLIT_LAUNCH_OFFSET * side
@@ -126,20 +136,15 @@ func _cast_branch(runtime: SkillRuntime, from: Vector2, target: Dictionary, bran
 		return
 	var behavior := runtime.behavior()
 	match behavior:
-		SKILLS.BEHAVIOR_SUMMON:
-			var state := {"kind":"summon", "runtime":runtime, "pos":from,
-				"left":float(runtime.value("life", 6.0)), "attack_left":0.15, "combo":false,
-				"mult":ratio, "split_side":int(branch.get("split_side", 0))}
-			if not branch.is_empty():
-				state.preferred_target = target
-			_add_effect_state(state, "summon_start")
+		SKILLS.BEHAVIOR_MARK:
+			_apply_brittle_mark(runtime, target, branch)
 		SKILLS.BEHAVIOR_CRYSTAL:
 			var direction := from.direction_to(point)
 			var radius := 42.0 * _branch_area_ratio(branch)
 			for index in int(runtime.value("count", 5)):
 				active.append({"kind":"delayed_hit", "runtime":runtime, "left":float(runtime.value("step_delay", .06)) * index,
 					"pos":from + direction * (58.0 + index * 46.0), "radius":radius, "ratio":ratio,
-					"direction":direction, "split_side":int(branch.get("split_side", 0))})
+					"direction":direction, "split_side":int(branch.get("split_side", 0)), "direct_hit":true})
 		SKILLS.BEHAVIOR_NEEDLE:
 			_spawn_needles(runtime, target, false, ratio, branch)
 		SKILLS.BEHAVIOR_POOL, SKILLS.BEHAVIOR_MIST:
@@ -157,6 +162,89 @@ func _cast_branch(runtime: SkillRuntime, from: Vector2, target: Dictionary, bran
 
 func _branch_area_ratio(state: Dictionary) -> float:
 	return ABILITIES.SPLIT_AREA_RATIO if int(state.get("split_side", 0)) != 0 else 1.0
+
+func _apply_brittle_mark(runtime: SkillRuntime, target: Dictionary, branch: Dictionary) -> void:
+	if not _living(target):
+		return
+	var body_id: int = target.body.get_instance_id()
+	_take_brittle_mark(body_id)
+	var point: Vector2 = target.body.position
+	var mark := {
+		"kind": "brittle_mark", "runtime": runtime, "target": target, "pos": point,
+		"left": float(runtime.value("duration", 2.5)), "ratio": float(branch.get("ratio", 1.0)),
+		"split_side": int(branch.get("split_side", 0)), "split_chain_gate": branch.get("split_chain_gate", {}),
+		"split_merged": bool(branch.get("split_merged", false)),
+		"finished": false,
+	}
+	brittle_marks[body_id] = mark
+	_emit_state_fx(mark, "mark_start", point, point)
+
+func _update_brittle_marks(delta: float, enemies: Array) -> void:
+	for body_id: int in brittle_marks.keys():
+		var mark: Dictionary = brittle_marks[body_id]
+		var target: Dictionary = mark.target
+		mark.left = float(mark.left) - delta
+		if mark.left <= 0.0 or not _living(target) or not enemies.has(target):
+			_take_brittle_mark(body_id)
+		else:
+			mark.pos = target.body.position
+
+func _take_brittle_mark(body_id: int) -> Dictionary:
+	var mark: Dictionary = brittle_marks.get(body_id, {})
+	if not mark.is_empty():
+		brittle_marks.erase(body_id)
+		mark.finished = true
+	return mark
+
+func discard_brittle_mark(entry: Dictionary) -> void:
+	if is_instance_valid(entry.get("body")):
+		_take_brittle_mark(entry.body.get_instance_id())
+
+# 由直接命中在扣血前调用，使附伤与本次命中合并，致死时也能从破印位置发射碎片。
+func break_brittle_mark(entry: Dictionary, enemies: Array) -> float:
+	if not _living(entry):
+		return 0.0
+	var mark := _take_brittle_mark(entry.body.get_instance_id())
+	if mark.is_empty():
+		return 0.0
+	var point: Vector2 = entry.body.position
+	mark.pos = point
+	_emit_state_fx(mark, "mark_break", point, point)
+	_try_blast_mark(mark, entry, point, enemies)
+	var runtime: SkillRuntime = mark.runtime
+	return runtime.damage() * float(mark.ratio)
+
+func _try_blast_mark(mark: Dictionary, entry: Dictionary, point: Vector2, enemies: Array) -> void:
+	var gate: Dictionary = mark.split_chain_gate
+	if gate.get("used", false) or float(chain_cooldowns.get(BLAST_MARK, 0.0)) > 0.0:
+		return
+	for chain: Dictionary in unlocked_chains():
+		if StringName(chain.id) != BLAST_MARK:
+			continue
+		var runtime: SkillRuntime = mark.runtime
+		var flask := runtime_for(BLAST_FLASK)
+		var q := 1.0 + .18 * float(mini(runtime.level, flask.level) - 1)
+		var excluded: Array = [entry.body]
+		var radius: float = chain.radius
+		var speed: float = chain.speed
+		for _index in int(chain.targets):
+			var target := nearest_enemy(point, radius, enemies, excluded)
+			if target.is_empty():
+				break
+			excluded.append(target.body)
+			var aim: Vector2 = target.body.position
+			var shard := {
+				"kind": "projectile", "impact": "shard_on_hit", "runtime": runtime, "target": target,
+				"pos": point, "direction": point.direction_to(aim), "speed": speed,
+				"left": maxf(.35, radius / speed + .25), "ratio": float(chain.damage_ratio) * q,
+				"fx_id": BLAST_MARK, "fx_color": chain.color, "finished": false,
+			}
+			active.append(shard)
+			_emit_state_fx(shard, "shard_flight", point, aim)
+		if excluded.size() > 1:
+			gate.used = true
+			chain_cooldowns[BLAST_MARK] = float(chain.cooldown)
+		return
 
 func _launch_blast_flask(runtime: SkillRuntime, from: Vector2, landing: Vector2, branch: Dictionary = {}) -> void:
 	# 只在范围内选中活目标时出手。药瓶瞄准地面，出手后不再依赖怪物节点。
@@ -211,6 +299,7 @@ func _spawn_needles(runtime: SkillRuntime, target: Dictionary, combo: bool, rati
 			"target":target, "combo":combo, "ratio":ratio, "marked":marked, "branch":branch})
 
 func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
+	_update_brittle_marks(delta, enemies)
 	for index in range(active.size() - 1, -1, -1):
 		var state := active[index]
 		var finished := false
@@ -229,7 +318,8 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 				state.left = float(state.left) - delta
 				if state.left <= 0.0:
 					_emit_state_fx(state, "impact", state.pos, state.pos)
-					_hit_area(state.runtime, state.pos, float(state.radius), enemies, apply_hit, float(state.ratio))
+					_hit_area(state.runtime, state.pos, float(state.radius), enemies, apply_hit,
+						float(state.ratio), 0.0, 0.0, bool(state.get("direct_hit", false)))
 					finished = true
 			"blast_flask":
 				var landing: Vector2 = state.landing
@@ -237,14 +327,16 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 				if state.pos == landing:
 					var runtime: SkillRuntime = state.runtime
 					_emit_state_fx(state, "impact", landing, landing)
-					_hit_area(runtime, landing, float(state.radius), enemies, apply_hit, float(state.ratio))
+					_hit_area(runtime, landing, float(state.radius), enemies, apply_hit,
+						float(state.ratio), 0.0, 0.0, true)
 					if int(state.split_side) == 0:
 						_apply_ability(runtime, landing, enemies, apply_hit)
 					finished = true
 			"projectile":
 				state.left = float(state.left) - delta
 				var locked_ground := state.has("landing")
-				if not locked_ground and not _living(state.target):
+				var shard: bool = state.impact == "shard_on_hit"
+				if not locked_ground and (not _living(state.target) or (shard and not enemies.has(state.target))):
 					finished = true
 				else:
 					var point: Vector2 = state.landing if locked_ground else state.target.body.position
@@ -252,7 +344,7 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 					if direction != Vector2.ZERO:
 						state.direction = direction
 					state.pos = (state.pos as Vector2).move_toward(point, float(state.speed) * delta)
-					var tolerance := 0.0 if locked_ground else 18.0
+					var tolerance := 0.0 if locked_ground or shard else 18.0
 					if (state.pos as Vector2).distance_to(point) <= tolerance:
 						_resolve_projectile(state, point, enemies, apply_hit)
 						finished = true
@@ -276,25 +368,6 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 						entry.body.position = entry.body.position.lerp(state.pos, minf(.12, delta * .55) * strength)
 				if state.left <= 0.0:
 					finished = true
-			"summon":
-				state.left = float(state.left) - delta
-				state.attack_left = float(state.attack_left) - delta
-				var foe: Dictionary = state.get("preferred_target", {})
-				if not _living(foe) or (state.pos as Vector2).distance_to(foe.body.position) > 520.0:
-					foe = nearest_enemy(state.pos, 520.0, enemies)
-				if not foe.is_empty():
-					state.direction = (state.pos as Vector2).direction_to(foe.body.position)
-					state.pos = (state.pos as Vector2).move_toward(foe.body.position, float(state.runtime.value("speed_units", 4.5)) * SKILLS.UNIT * delta)
-					if state.attack_left <= 0.0 and (state.pos as Vector2).distance_to(foe.body.position) <= 44.0:
-						# 爆裂魔偶沿用魔偶的追击与拳击，但伤害必须乘固定连锁强度。
-						_emit_state_fx(state, "summon_strike", state.pos, foe.body.position)
-						_hit(state.runtime, foe, apply_hit, float(state.get("mult", 1.0)))
-						state.attack_left = float(state.runtime.value("interval", .9))
-				if state.left <= 0.0:
-					if bool(state.combo):
-						_emit_state_fx(state, "summon_end", state.pos, state.pos)
-						_hit_area(state.runtime, state.pos, 78.0, enemies, apply_hit, 1.25 * float(state.get("mult", 1.0)))
-					finished = true
 		if state.get("finished", false):
 			# 战斗回调可能结束整个场景并清空状态。
 			return
@@ -307,6 +380,10 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 func _resolve_projectile(state: Dictionary, point: Vector2, enemies: Array, apply_hit: Callable) -> void:
 	var runtime: SkillRuntime = state.runtime
 	var ratio := float(state.get("ratio", 1.0))
+	if state.impact == "shard_on_hit":
+		_emit_state_fx(state, "shard_impact", state.pos, point)
+		apply_hit.call(state.target, runtime.damage() * ratio, 0.0, 1.0, state.fx_color)
+		return
 	var radius := float(state.get("radius", runtime.radius_px()))
 	var side := int(state.get("split_side", 0))
 	if state.has("marked"):
@@ -317,11 +394,11 @@ func _resolve_projectile(state: Dictionary, point: Vector2, enemies: Array, appl
 	else:
 		_emit_state_fx(state, "impact", state.pos, point)
 	match String(state.impact):
-		"blast_on_hit": _hit_area(runtime, point, radius, enemies, apply_hit, ratio)
+		"blast_on_hit": _hit_area(runtime, point, radius, enemies, apply_hit, ratio, 0.0, 0.0, true)
 		"bounce_on_hit":
 			_hit_projectile_chain(state, enemies, apply_hit, float(runtime.value("bounce_units", 3.2)) * SKILLS.UNIT)
 		"pull_on_hit":
-			_hit_area(runtime, point, radius * .62, enemies, apply_hit, ratio)
+			_hit_area(runtime, point, radius * .62, enemies, apply_hit, ratio, 0.0, 0.0, true)
 			_add_effect_state({"kind":"pull", "runtime":runtime, "pos":point,
 				"left":float(runtime.value("duration", 2.4)), "radius":radius, "split_side":side}, "zone_start")
 		"zone_on_hit":
@@ -332,8 +409,10 @@ func _resolve_projectile(state: Dictionary, point: Vector2, enemies: Array, appl
 		"pierce_on_hit":
 			_hit_projectile_chain(state, enemies, apply_hit, runtime.range_px())
 		"gel_on_hit":
-			_hit(runtime, state.target, apply_hit, ratio, float(runtime.value("slow", .3)), float(runtime.value("slow_duration", 2.0)))
-		"needle_on_hit": _hit(runtime, state.target, apply_hit, ratio)
+			_hit(runtime, state.target, apply_hit, ratio, float(runtime.value("slow", .3)),
+				float(runtime.value("slow_duration", 2.0)), enemies)
+		"needle_on_hit":
+			_hit(runtime, state.target, apply_hit, ratio, 0.0, 0.0, [] if state.combo else enemies)
 	if state.finished:
 		return
 	if side == 0 and not bool(state.get("combo", false)):
@@ -356,18 +435,24 @@ func _hit_projectile_chain(state: Dictionary, enemies: Array, apply_hit: Callabl
 		used.append(current.body)
 		if turn > 0:
 			_emit_state_fx(state, "hop", previous, point)
-		_hit(runtime, current, apply_hit, float(state.get("ratio", 1.0)))
+		_hit(runtime, current, apply_hit, float(state.get("ratio", 1.0)), 0.0, 0.0, enemies)
 		previous = point
 		current = nearest_enemy(point, reach, enemies, used)
 
-func _hit(runtime: SkillRuntime, entry: Dictionary, apply_hit: Callable, ratio := 1.0, slow := 0.0, slow_duration := 0.0) -> void:
+func _hit(runtime: SkillRuntime, entry: Dictionary, apply_hit: Callable, ratio := 1.0, slow := 0.0,
+		slow_duration := 0.0, direct_targets: Array = []) -> void:
 	if not _living(entry): return
-	apply_hit.call(entry, runtime.damage() * ratio, slow_duration, maxf(0.0, 1.0 - slow), runtime.base.color)
+	var damage := runtime.damage() * ratio
+	if damage > 0.0 and not direct_targets.is_empty():
+		damage += break_brittle_mark(entry, direct_targets)
+	apply_hit.call(entry, damage, slow_duration, maxf(0.0, 1.0 - slow), runtime.base.color)
 
-func _hit_area(runtime: SkillRuntime, at: Vector2, radius: float, enemies: Array, apply_hit: Callable, ratio := 1.0, slow := 0.0, slow_duration := 0.0) -> void:
-	for entry in enemies:
+func _hit_area(runtime: SkillRuntime, at: Vector2, radius: float, enemies: Array, apply_hit: Callable,
+		ratio := 1.0, slow := 0.0, slow_duration := 0.0, direct_hit := false) -> void:
+	var direct_targets: Array = enemies if direct_hit else []
+	for entry in enemies.duplicate():
 		if _living(entry) and entry.body.position.distance_to(at) <= radius:
-			_hit(runtime, entry, apply_hit, ratio, slow, slow_duration)
+			_hit(runtime, entry, apply_hit, ratio, slow, slow_duration, direct_targets)
 
 func _apply_ability(runtime: SkillRuntime, at: Vector2, enemies: Array, apply_hit: Callable) -> void:
 	var ability := ABILITIES.by_id(ability_id)
@@ -388,10 +473,6 @@ func _try_chain(runtime: SkillRuntime, from: Vector2, point: Vector2, target: Di
 		var q: float = 1.0 + .18 * float(min(first.level, second.level) - 1)
 		var state := {"runtime":runtime, "fx_id":StringName(chain.id), "fx_color":chain.color, "pos":point}
 		match String(chain.id):
-			"link_blast_homunculus":
-				state.merge({"kind":"summon", "pos":from, "left":6.0, "attack_left":.15,
-					"radius":78.0, "combo":true, "mult":q}, true)
-				_add_effect_state(state, "summon_start")
 			"link_mithril_orbit":
 				state.merge({"kind":"zone", "left":2.6, "tick_left":.5, "radius":132.0,
 					"ratio":.48 * q, "slow":0.0, "slow_duration":0.0})
@@ -421,7 +502,7 @@ func _emit_fx(runtime: SkillRuntime, event_name: String, from: Vector2, target: 
 	var info := {"skill_id":state.get("fx_id", runtime.skill_id), "event":event_name,
 		"from":from, "target":target, "color":state.get("fx_color", runtime.base.color),
 		"radius":state.get("radius", runtime.radius_px()),
-		"speed":float(runtime.config.get("speed", 420.0)), "split_side":int(state.get("split_side", 0))}
+		"speed":float(state.get("speed", runtime.config.get("speed", 420.0))), "split_side":int(state.get("split_side", 0))}
 	if not state.is_empty():
 		info.state = state
 	field.play_skill_fx(info)

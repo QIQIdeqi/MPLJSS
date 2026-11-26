@@ -10,6 +10,10 @@ func _init() -> void:
 		assert((row.power as Array).size() == 5, "%s 的伤害等级表不完整" % row.id)
 		assert((row.cooldowns as Array).size() == 5, "%s 的冷却等级表不完整" % row.id)
 	var ids := SKILLS.ids()
+	assert(ids.has("sk_brittle_mark") and not ids.has("sk_clay_homunculus"), "脆化刻印应替代炼金魔偶奖励")
+	var blast_mark: Array = SKILLS.CHAINS.filter(func(chain: Dictionary) -> bool: return chain.id == "link_blast_mark")
+	assert(blast_mark.size() == 1 and blast_mark[0].parents == ["sk_blast_flask", "sk_brittle_mark"],
+		"爆裂刻印只由两项新配方父技能激活")
 	for chain in SKILLS.CHAINS:
 		assert(ids.has(chain.parents[0]) and ids.has(chain.parents[1]), "%s 的父技能不存在" % chain.id)
 		assert(float(chain.cooldown) > 0.0, "%s 缺少独立冷却" % chain.id)

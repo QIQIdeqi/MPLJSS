@@ -94,7 +94,7 @@ func _element_name(el: StringName) -> String:
 func _behavior_name(b: StringName) -> String:
 	match b:
 		SKILLS.BEHAVIOR_BOTTLE: return "预判投瓶"
-		SKILLS.BEHAVIOR_SUMMON: return "召唤追击"
+		SKILLS.BEHAVIOR_MARK: return "下一次直接命中破印并追加伤害"
 		SKILLS.BEHAVIOR_BOUNCE: return "弹射命中"
 		SKILLS.BEHAVIOR_PULL: return "落点牵引"
 		SKILLS.BEHAVIOR_POOL: return "腐蚀区域"

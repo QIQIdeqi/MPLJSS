@@ -10,6 +10,7 @@ const BREW := preload("res://scenes/brew.tscn")
 const BOSS := preload("res://scenes/boss_arena.tscn")
 const FX := preload("res://scripts/battle_fx.gd")
 const SKILL_FX := preload("res://scripts/skill_fx.gd")
+const V2_SKILL_FX := preload("res://scripts/v2_skill_fx.gd")
 const LEVEL_LAYOUT := preload("res://scripts/level_layout.gd")
 const LEVEL_PRESET := preload("res://levels/preset.gd")
 const INFINITE_LAYOUT := preload("res://scripts/infinite_field_layout.gd")
@@ -686,7 +687,10 @@ func advance_basic_projectiles(delta: float) -> void:
 				state.finished = true
 				play_skill_fx({"skill_id":"magic_bolt", "event":"impact", "from":state.pos,
 					"target":target.body.position, "color":Color(0.65, 0.30, 1.00), "state":state})
-				damage_enemy(target, float(state.damage))
+				var damage := float(state.damage)
+				if alchemy_system and alchemy_system.skills:
+					damage += alchemy_system.skills.break_brittle_mark(target, enemies)
+				damage_enemy(target, damage)
 		if state.finished:
 			basic_projectiles.remove_at(index)
 
@@ -849,6 +853,11 @@ func play_skill_fx(info: Dictionary) -> void:
 		SKILL_FX.explosion(effects, center - sideways * 14.0, Color("#78ebcf"), 12.0)
 		SKILL_FX.explosion(effects, center + sideways * 14.0, Color("#d198ff"), 12.0)
 		return
+	if skill_id in ["sk_brittle_mark", "link_blast_mark"]:
+		var visual := V2_SKILL_FX.start_fallback(effects, info)
+		if visual:
+			fallback_skill_visuals.append({"state":info.state, "node":visual, "follow_v2":true})
+		return
 	if split_side != 0:
 		var accent := Color("#78ebcf") if split_side < 0 else Color("#d198ff")
 		color = color.lerp(accent, 0.44)
@@ -888,13 +897,11 @@ func play_skill_fx(info: Dictionary) -> void:
 					SKILL_FX.line(effects, from, target, color)
 				else:
 					SKILL_FX.projectile(effects, from, target, color, speed)
-			"summon_start":
-				SKILL_FX.earth_spike(effects, target, color)
 			"zone_start":
 				SKILL_FX.zone(effects, target, color, radius)
 			"hop":
 				SKILL_FX.line(effects, from, target, color)
-			"impact", "summon_strike", "summon_end":
+			"impact":
 				if skill_id == "sk_crystal_growth":
 					SKILL_FX.ice_spike(effects, from, target, color)
 				else:
@@ -966,7 +973,13 @@ func advance_fallback_skill_visuals(delta: float) -> void:
 		if not is_instance_valid(node):
 			fallback_skill_visuals.remove_at(index)
 			continue
-		if String(state.kind) in ["projectile", "blast_flask"]:
+		if visual.get("follow_v2", false):
+			if bool(state.finished):
+				node.queue_free()
+				fallback_skill_visuals.remove_at(index)
+			else:
+				V2_SKILL_FX.update_fallback(node, state)
+		elif String(state.kind) in ["projectile", "blast_flask"]:
 			node.position = (state.pos as Vector2) + Vector2(0, -24)
 			if bool(state.finished):
 				node.queue_free()
@@ -1151,6 +1164,8 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 		return
 	var at := body.position
 	enemies.erase(entry)
+	if alchemy_system and alchemy_system.skills:
+		alchemy_system.skills.discard_brittle_mark(entry)
 	kills += 1
 	enemy_death_sound.play()
 	burst(at, Color(0.4, 0.8, 0.6))
