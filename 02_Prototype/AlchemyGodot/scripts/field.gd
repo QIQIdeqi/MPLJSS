@@ -11,6 +11,8 @@ const BOSS := preload("res://scenes/boss_arena.tscn")
 const FX := preload("res://scripts/battle_fx.gd")
 const SKILL_FX := preload("res://scripts/skill_fx.gd")
 const V2_SKILL_FX := preload("res://scripts/v2_skill_fx.gd")
+const EXPANSION_FX := preload("res://scripts/skill_expansion_fx.gd")
+const SKILL_MOBILITY := preload("res://scripts/skills/skill_mobility.gd")
 const LEVEL_LAYOUT := preload("res://scripts/level_layout.gd")
 const LEVEL_PRESET := preload("res://levels/preset.gd")
 const INFINITE_LAYOUT := preload("res://scripts/infinite_field_layout.gd")
@@ -31,6 +33,7 @@ const SPAWN := Vector2(640, 430)
 const BOSS_SPAWN := Vector2(640, 450)
 const MAP := LEVEL_PRESET.MAP_BOUNDS
 const CAMERA_ZOOM := 1.45
+const MAX_HP := 120.0
 
 @export var combat := false
 @export var enemy_config: ENEMY_WAVES
@@ -59,7 +62,7 @@ var until_spawn := 0.0
 var spawn_wave := 0
 var until_attack := 0.0
 var hurt_cooldown := 0.0
-var hp := 120.0
+var hp := MAX_HP
 var xp := 0
 var coins := 0
 var level := 1
@@ -72,6 +75,7 @@ var fallback_skill_visuals: Array[Dictionary] = []
 var inventory := [0, 0, 0, 0, 0, 0]
 var brew
 var alchemy_system: ALCHEMY_SYSTEM
+var skill_mobility: SKILL_MOBILITY
 var village_alchemy  # 村庄场景的炼金管理器（入场选择用）
 var upgrade_ui
 var entry_select_ui
@@ -258,6 +262,10 @@ func _ready() -> void:
 		alchemy_system.ability_id = String(incoming_run.get("ability", RunConfig.selected_ability))
 		alchemy_system.setup(self, save)
 		alchemy_system.upgrade_offered.connect(on_upgrade_offered)
+		skill_mobility = SKILL_MOBILITY.new()
+		skill_mobility.setup(alchemy_system.skills, player, play_skill_fx)
+		player.resolve_dodge = skill_mobility.choose_dodge
+		player.dodge_finished.connect(skill_mobility.on_dodge_finished)
 		# 本局素材账本 + 永久库存（V1.1 资源闭环）
 		profile_store = ProfileStore.new()
 		profile_store.setup(save, profile_path())
@@ -592,11 +600,15 @@ func _physics_process(delta: float) -> void:
 			var body: FIELD_ENEMY = entry.body
 			var slow_left := maxf(0, float(entry.get("slow_left", 0.0)) - delta)
 			entry.slow_left = slow_left
+			var freeze_left := float(entry.get("freeze_left", 0.0))
+			if freeze_left > 0.0:
+				entry.freeze_left = maxf(0.0, freeze_left - delta)
+				continue
 			var slow := float(entry.get("slow_factor", 1.0)) if slow_left > 0.0 else 1.0
 			body.advance(delta, player.global_position, hurt, fire_web, slow)
 			if ended:
 				return
-	# V2：魔法弹恢复为独立普通攻击；它不占技能槽，也不进入十技能/升级池。
+	# 魔法弹独立于基础技能与升级池。
 	until_attack -= delta
 	if until_attack <= 0:
 		var nearest: Dictionary = {}
@@ -614,6 +626,11 @@ func _physics_process(delta: float) -> void:
 	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
 	if alchemy_system:
 		alchemy_system.tick(delta, player.position, enemies, damage_brew_enemy)
+	if ended or boss_death:
+		return
+	if skill_mobility:
+		skill_mobility.tick(delta, player.position, enemies, skill_action_context())
+		player.walk_speed_scale = skill_mobility.walk_speed_scale
 	for i in range(pickups.size() - 1, -1, -1):
 		var pickup := pickups[i]
 		var art: Sprite2D = pickup.sprite
@@ -700,10 +717,18 @@ func clear_combat_effects() -> void:
 	basic_projectiles.clear()
 	if is_instance_valid(alchemy_system) and alchemy_system.skills:
 		alchemy_system.skills.clear_active()
+	if skill_mobility:
+		skill_mobility.clear()
+		if is_instance_valid(player):
+			player.walk_speed_scale = skill_mobility.walk_speed_scale
 	for visual in fallback_skill_visuals:
 		if is_instance_valid(visual.node):
 			visual.node.queue_free()
 	fallback_skill_visuals.clear()
+	if is_instance_valid(effects):
+		for effect in effects.get_children():
+			if effect.has_meta("skill_expansion_fx"):
+				effect.queue_free()
 	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
 		hd_view.world_view.clear_skill_fx()
 
@@ -843,6 +868,9 @@ func play_skill_fx(info: Dictionary) -> void:
 	# 只交给其 3D 呈现层，避免与下方 2D 特效双播；非 HD 才继续走 2D。
 	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
 		hd_view.world_view.show_skill_fx(info)
+		return
+	if EXPANSION_FX.supports(skill_id):
+		EXPANSION_FX.start_fallback(effects, info)
 		return
 	var split_side := int(info.get("split_side", 0))
 	if event_name == "split_cast":
@@ -991,11 +1019,25 @@ func advance_fallback_skill_visuals(delta: float) -> void:
 				node.queue_free()
 				fallback_skill_visuals.remove_at(index)
 
+func skill_action_context() -> Dictionary:
+	return {"moving":player.walked_this_frame and not player.locked,
+		"facing":player.direction, "missing_health":maxf(0.0, MAX_HP - hp),
+		"heal":heal_player, "bounds":Rect2() if is_infinite_field() else player.movement_bounds}
+
+func heal_player(amount: float) -> float:
+	if not stage_active or not combat or ended or boss_death or hp <= 0.0 or amount <= 0.0:
+		return 0.0
+	var restored := minf(amount, maxf(0.0, MAX_HP - hp))
+	hp += restored
+	return restored
+
 func hurt(amount: float, knock_direction := Vector2.ZERO) -> bool:
 	if ended or boss_death or hurt_cooldown > 0 or player.dodge > 0 or amount <= 0.0:
 		return false
 	hurt_cooldown = 0.55
 	hp = maxf(0.0, hp - amount)
+	if skill_mobility:
+		skill_mobility.interrupt_dew()
 	player.show_hurt()
 	if hp <= 0:
 		player.show_death()
@@ -1130,8 +1172,9 @@ func draw_webs() -> void:
 func damage_brew_enemy(entry: Dictionary, damage: float, slow_seconds: float, slow_factor: float, color: Color) -> void:
 	if ended or not enemies.has(entry):
 		return
-	entry.slow_left = maxf(slow_seconds, float(entry.get("slow_left", 0.0)))
-	entry.slow_factor = slow_factor
+	if slow_seconds > 0.0 and slow_factor < 1.0:
+		entry.slow_left = maxf(slow_seconds, float(entry.get("slow_left", 0.0)))
+		entry.slow_factor = slow_factor
 	# HD 技能已有专属 3D 表现，跳过通用 2D 命中爆点，防止同次命中重复显示。
 	if not is_instance_valid(hd_view):
 		if color.g > 0.62 and color.r < 0.5 and color.b < 0.55:

@@ -91,7 +91,7 @@ func update_slots() -> void:
 		slot_cooldowns[i].show_runtime(rt)
 		if rt != null:
 			rank.text = "Lv.%d" % rt.level
-			slot.tooltip_text = rt.base.get("name", "")
+			slot.tooltip_text = "%s · %s" % [rt.base.name, rt.base.attribute]
 		else:
 			rank.text = ""
 			slot.tooltip_text = ""
@@ -179,7 +179,7 @@ func open_panel(kind: String) -> void:
 			empty.add_theme_color_override("font_color", Color("#ddc5a5"))
 			actions.add_child(empty)
 		for rt in runtimes:
-			add_action("%s  Lv.%d  ·  %s" % [rt.base.get("name", ""), rt.level, _element_name(rt.element())], Callable())
+			add_action("%s  Lv.%d  ·  %s" % [rt.base.name, rt.level, rt.base.attribute], Callable())
 		if skills != null:
 			var chain_names := PackedStringArray()
 			for chain in skills.unlocked_chains():
@@ -192,15 +192,6 @@ func open_panel(kind: String) -> void:
 				note.add_theme_color_override("font_color", Color("#ddc5a5"))
 				actions.add_child(note)
 		add_action("返回战斗", close_panel)
-
-func _element_name(el: StringName) -> String:
-	match el:
-		&"fire": return "火"
-		&"ice": return "冰"
-		&"thunder": return "雷"
-		&"wind": return "风"
-		&"poison": return "毒"
-		_: return "无元素"
 
 func add_action(caption: String, callback: Callable) -> void:
 	var button := Button.new()

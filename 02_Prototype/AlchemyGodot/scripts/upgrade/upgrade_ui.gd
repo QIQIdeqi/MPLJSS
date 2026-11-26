@@ -31,7 +31,7 @@ func build_ui() -> void:
 		var pick: Dictionary = candidates[i]
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(240, 160)
-		btn.text = "%s\n\n%s" % [pick.get("label", ""), pick.get("desc", "")]
+		btn.text = "%s\n属性 %s · %s\n\n%s" % [pick.label, pick.attribute, pick.category, pick.desc]
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		btn.pressed.connect(_choose.bind(pick))
 		row.add_child(btn)

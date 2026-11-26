@@ -3,12 +3,15 @@ extends SceneTree
 const SKILLS := preload("res://data/skills/skill_data.gd")
 
 func _init() -> void:
-	assert(SKILLS.ROWS.size() == 10, "V2 只应有十个可装备基础技能")
+	assert(SKILLS.ROWS.size() == 20, "扩展后应有二十个可装备基础技能")
 	assert(not SKILLS.ids().has("magic_bolt"), "魔法弹必须留在独立普通攻击")
 	assert(SKILLS.CHAINS.size() == 5, "V2 应有五组固定连锁")
+	var attribute_counts := {}
 	for row in SKILLS.ROWS:
 		assert((row.power as Array).size() == 5, "%s 的伤害等级表不完整" % row.id)
 		assert((row.cooldowns as Array).size() == 5, "%s 的冷却等级表不完整" % row.id)
+		attribute_counts[row.attribute] = int(attribute_counts.get(row.attribute, 0)) + 1
+	assert(attribute_counts == {"星火": 4, "潮汐": 7, "晶核": 4, "以太": 5})
 	var ids := SKILLS.ids()
 	assert(ids.has("sk_brittle_mark") and not ids.has("sk_clay_homunculus"), "脆化刻印应替代炼金魔偶奖励")
 	var blast_mark: Array = SKILLS.CHAINS.filter(func(chain: Dictionary) -> bool: return chain.id == "link_blast_mark")
@@ -16,6 +19,8 @@ func _init() -> void:
 		"爆裂刻印只由两项新配方父技能激活")
 	for chain in SKILLS.CHAINS:
 		assert(ids.has(chain.parents[0]) and ids.has(chain.parents[1]), "%s 的父技能不存在" % chain.id)
+		assert(SKILLS.by_id(chain.parents[0]).attribute == SKILLS.by_id(chain.parents[1]).attribute,
+			"%s 的两项基础技能应有相同属性" % chain.id)
 		assert(float(chain.cooldown) > 0.0, "%s 缺少独立冷却" % chain.id)
 	_check_upgrade_pool()
 	print("V2_SKILL_DATA_SMOKE_PASS")
@@ -27,9 +32,10 @@ func _check_upgrade_pool() -> void:
 	var upgrades := UpgradeManager.new()
 	upgrades.setup(skills)
 	var pool := upgrades._build_pool()
-	assert(pool.size() == 10, "开局候选应恰好有十项，携带炼金能力也一样")
+	assert(pool.size() == 20, "开局候选应恰好有二十项，携带炼金能力也一样")
 	for pick: Dictionary in pool:
 		assert(pick.type == UpgradeManager.CAT_NEW_SKILL and SKILLS.ids().has(pick.skill_id))
+		assert(pick.attribute == SKILLS.by_id(pick.skill_id).attribute)
 	assert(upgrades.roll_candidates().size() == 3)
 
 	for chain: Dictionary in SKILLS.CHAINS:
@@ -46,6 +52,7 @@ func _check_upgrade_pool() -> void:
 		assert(not skills.add_skill(StringName(chain.id)))
 		for pick: Dictionary in upgrades._build_pool():
 			assert(pick.type == UpgradeManager.CAT_SKILL_UPGRADE and chain.parents.has(String(pick.skill_id)))
+			assert(pick.attribute == SKILLS.by_id(pick.skill_id).attribute)
 
 		var parent := skills.runtime_for(StringName(chain.parents[0]))
 		for i in 6:

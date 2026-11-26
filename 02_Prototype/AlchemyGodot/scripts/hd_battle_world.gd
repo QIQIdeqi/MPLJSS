@@ -19,6 +19,7 @@ const EARTH_SPIKE_SHEET := preload("res://art/vfx/generated/earth_spike_24f.png"
 const BLAST_FLASK_IMPACT := preload("res://scripts/blast_flask_impact.gd")
 const BLAST_FLASK_FLIGHT := preload("res://scripts/blast_flask_flight.gd")
 const V2_SKILL_FX := preload("res://scripts/v2_skill_fx.gd")
+const EXPANSION_SKILL_FX := preload("res://scripts/skill_expansion_fx.gd")
 const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
 const UNITS_PER_PIXEL := 0.01
 const SOURCE_HIDDEN_LAYER := 4
@@ -299,6 +300,11 @@ func show_skill_fx(info: Dictionary) -> void:
 		fork.position = world_at(from)
 		_add_v2_effect(fork, skill_id, event_name)
 		fork.start_cast(from.direction_to(target))
+		return
+	if EXPANSION_SKILL_FX.supports(skill_id):
+		var expansion_effect := EXPANSION_SKILL_FX.new()
+		_add_v2_effect(expansion_effect, skill_id, event_name)
+		expansion_effect.start(info)
 		return
 	if skill_id == "sk_blast_flask":
 		if event_name == "cast":

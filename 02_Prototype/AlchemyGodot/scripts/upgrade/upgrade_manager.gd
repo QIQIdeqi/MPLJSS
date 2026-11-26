@@ -13,6 +13,18 @@ const CAT_SKILL_UPGRADE := "skill_upgrade"
 
 # 每技能等级上限
 const MAX_SKILL_LEVEL := 5
+const EXPANSION_UPGRADE_STATS := {
+	SKILLS.BEHAVIOR_THUNDER_SALT: ["power", "基础伤害", 1.0, ""],
+	SKILLS.BEHAVIOR_FIRE_OIL: ["power", "每跳伤害", 1.0, ""],
+	SKILLS.BEHAVIOR_MERCURY_RING: ["power", "每环伤害", 1.0, ""],
+	SKILLS.BEHAVIOR_FROST_POWDER: ["duration", "冻结", 1.0, " 秒"],
+	SKILLS.BEHAVIOR_WIND_FLASK: ["push_units", "推距", SKILLS.UNIT, " 像素"],
+	SKILLS.BEHAVIOR_FEATHER_DRAUGHT: ["speed_bonus", "跑速提升", 100.0, "%"],
+	SKILLS.BEHAVIOR_WIND_BOOTS: ["dodge_bonus", "闪避距离提升", 100.0, "%"],
+	SKILLS.BEHAVIOR_RETURN_WIND_POWDER: ["window", "追加闪避窗口", 1.0, " 秒"],
+	SKILLS.BEHAVIOR_RENEWAL_FLASK: ["heal", "每跳回复", 1.0, ""],
+	SKILLS.BEHAVIOR_DEW_TONIC: ["heal", "每次回复", 1.0, ""],
+}
 
 func setup(skills: SkillManager) -> void:
 	skill_manager = skills
@@ -55,13 +67,15 @@ func _build_pool() -> Array:
 		for s: Dictionary in SKILLS.ROWS:
 			if not skill_manager.has_skill(StringName(s.id)):
 				pool.append({"type": CAT_NEW_SKILL, "skill_id": s.id, "weight": 1.0,
-					"label": "获得技能「%s」" % s.name, "desc": _new_skill_desc(s)})
+					"label": "获得技能「%s」" % s.name, "desc": _new_skill_desc(s),
+					"attribute": s.attribute, "category": _category(s)})
 	for rt in skill_manager.runtimes:
 		var lv := rt.level
 		if lv < MAX_SKILL_LEVEL:
 			pool.append({"type": CAT_SKILL_UPGRADE, "skill_id": rt.skill_id, "weight": 1.0,
 				"label": "强化「%s」 Lv.%d→%d" % [rt.base.name, lv, lv + 1],
-				"desc": "伤害 +12%，冷却 −4%"})
+				"attribute": rt.base.attribute,
+				"desc": _upgrade_desc(rt.base, lv + 1), "category": _category(rt.base)})
 	return pool
 
 func apply(pick: Dictionary) -> void:
@@ -75,12 +89,37 @@ func apply(pick: Dictionary) -> void:
 				runtime.level += 1
 
 func _new_skill_desc(skill: Dictionary) -> String:
-	var description := "%s · 冷却 %.1fs" % [_behavior_name(skill.behavior), float(skill.cooldowns[0])]
+	var effect := String(skill.get("description", ""))
+	if effect.is_empty():
+		effect = _behavior_name(skill.behavior)
+	var description := "%s\n冷却 %.1f 秒" % [effect, float(skill.cooldowns[0])]
 	for chain: Dictionary in SKILLS.CHAINS:
 		var pair_index: int = chain.parents.find(skill.id)
 		if pair_index >= 0 and skill_manager.has_skill(StringName(chain.parents[1 - pair_index])):
 			return description + "\n自动解锁组合「%s」" % chain.name
 	return description
+
+func _upgrade_desc(skill: Dictionary, level: int) -> String:
+	var stat: Array = EXPANSION_UPGRADE_STATS.get(StringName(skill.behavior), [])
+	if stat.is_empty():
+		return "伤害 +12%，冷却 −4%"
+	var values: Array = skill[stat[0]]
+	var before := _format_upgrade_stat(float(values[level - 2]) * float(stat[2]))
+	var after := _format_upgrade_stat(float(values[level - 1]) * float(stat[2]))
+	var cooldowns: Array = skill.cooldowns
+	return "%s %s→%s%s\n升级后冷却 %.1f 秒" % [stat[1], before, after, stat[3], float(cooldowns[level - 1])]
+
+func _format_upgrade_stat(value: float) -> String:
+	return ("%.2f" % value).rstrip("0").trim_suffix(".")
+
+func _category(skill: Dictionary) -> String:
+	if skill.has("category"):
+		return String(skill.category)
+	match StringName(skill.behavior):
+		SKILLS.BEHAVIOR_PULL, SKILLS.BEHAVIOR_MIST, SKILLS.BEHAVIOR_GEL:
+			return "控制"
+		_:
+			return "进攻"
 
 func _element_name(el: StringName) -> String:
 	match el:

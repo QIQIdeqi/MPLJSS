@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+signal dodge_finished(at: Vector2, heading: Vector2)
+
 const SHEET := preload("res://art/lilita_motion/sprite_gen_sheet.png")
 const FRAME_WIDTH := 160
 const FRAME_HEIGHT := 112
@@ -7,6 +9,10 @@ const STANDING_HEIGHT := 103
 const FEET_OFFSET := 50  # 图集脚底 y=106，帧中心 y=56。
 const BATTLE_BOUNDS := preload("res://levels/preset.gd").DEFAULT_PLAYABLE_BOUNDS
 const HURT_SOUND := preload("res://audio/S_PlayerHurt.wav")
+const WALK_SPEED := 200.0
+const DODGE_SPEED := 490.0
+const DODGE_DURATION := 0.18
+const DODGE_COOLDOWN := 0.8
 
 const IDLE_ROWS := [0, 1, 2, 3]
 const WALK_ROWS := [4, 5, 6, 7]
@@ -30,6 +36,10 @@ var dodge := 0.0
 var cooldown := 0.0
 var direction := Vector2.DOWN
 var locked := false
+var walked_this_frame := false
+var walk_speed_scale := 1.0
+var resolve_dodge: Callable
+var _dodge_speed_scale := 1.0
 var movement_bounds := BATTLE_BOUNDS
 var knockback := Vector2.ZERO
 var knockback_time := 0.0
@@ -50,6 +60,7 @@ func _ready() -> void:
 	update_pose(Pose.IDLE, 0.0)
 
 func _physics_process(delta: float) -> void:
+	walked_this_frame = false
 	if hurt_time > 0.0:
 		hurt_time = maxf(0.0, hurt_time - delta)
 		if hurt_time <= 0.0:
@@ -63,23 +74,34 @@ func _physics_process(delta: float) -> void:
 		return
 	var move := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	cooldown = maxf(0, cooldown - delta)
+	var was_dodging := dodge > 0.0
 	dodge = maxf(0, dodge - delta)
+	if was_dodging and dodge == 0.0:
+		dodge_finished.emit(position, direction)
 	if move.length_squared() > 0.01 and dodge == 0:
 		direction = move
 		if absf(move.x) > absf(move.y):
 			facing = Facing.RIGHT if move.x > 0 else Facing.LEFT
 		else:
 			facing = Facing.DOWN if move.y > 0 else Facing.UP
-	if Input.is_action_just_pressed("dodge") and cooldown == 0:
-		dodge = 0.18
-		cooldown = 0.8
-	velocity = direction * 490 if dodge > 0 else move * 200
-	if knockback_time > 0.0:
+	if Input.is_action_just_pressed("dodge"):
+		var speed_scale := 1.0 if cooldown == 0.0 else 0.0
+		if resolve_dodge.is_valid():
+			speed_scale = float(resolve_dodge.call(position, direction, cooldown == 0.0, DODGE_SPEED * DODGE_DURATION))
+		if speed_scale > 0.0:
+			_dodge_speed_scale = speed_scale
+			dodge = DODGE_DURATION
+			cooldown = DODGE_COOLDOWN
+	velocity = direction * DODGE_SPEED * _dodge_speed_scale if dodge > 0.0 else move * WALK_SPEED * walk_speed_scale
+	var knocked_back := knockback_time > 0.0
+	if knocked_back:
 		velocity = knockback
 		knockback_time -= delta
+	var before := position
 	move_and_slide()
 	if clamp_to_battle_bounds:
 		position = position.clamp(movement_bounds.position, movement_bounds.end)
+	walked_this_frame = dodge == 0.0 and not knocked_back and move.length_squared() > 0.01 and before.distance_squared_to(position) > 0.01
 	if dodge > 0.0:
 		update_pose(Pose.DODGE, delta)
 	else:

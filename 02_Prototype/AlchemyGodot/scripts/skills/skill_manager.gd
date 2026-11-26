@@ -16,6 +16,7 @@ var max_skill_slots := 6
 var active: Array[Dictionary] = []
 var chain_cooldowns: Dictionary = {}
 var brittle_marks: Dictionary[int, Dictionary] = {}
+var combat_clock := 0.0
 
 func setup(p_ability_id: StringName, p_field) -> void:
 	ability_id = p_ability_id
@@ -54,6 +55,7 @@ func clear() -> void:
 	chain_cooldowns.clear()
 
 func clear_active() -> void:
+	combat_clock = 0.0
 	for state in active:
 		state.finished = true
 	active.clear()
@@ -61,19 +63,199 @@ func clear_active() -> void:
 		mark.finished = true
 	brittle_marks.clear()
 
-func cast_equipped(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
+func cast_equipped(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable,
+		context: Dictionary = {}) -> void:
+	combat_clock += delta
 	for chain_id in chain_cooldowns.keys():
 		chain_cooldowns[chain_id] = maxf(0.0, float(chain_cooldowns[chain_id]) - delta)
 	for runtime in runtimes:
 		runtime.tick(delta)
 		if not runtime.ready():
 			continue
+		if _cast_extension(runtime, player_pos, enemies, context):
+			continue
 		var target := densest_enemy(player_pos, runtime.range_px(), enemies) if runtime.behavior() == SKILLS.BEHAVIOR_BOTTLE else nearest_enemy(player_pos, runtime.range_px(), enemies)
 		if target.is_empty():
 			continue # 无有效目标不进入冷却
 		runtime.reset_cooldown()
 		_cast(runtime, player_pos, target, enemies)
-	_update_active(delta, player_pos, enemies, apply_hit)
+	_update_active(delta, player_pos, enemies, apply_hit, context)
+
+# 返回 true 代表此技能走扩展规则，等待触发时也不进入旧的自动索敌流程。
+func _cast_extension(runtime: SkillRuntime, from: Vector2, enemies: Array, context: Dictionary) -> bool:
+	var split := ability_id == ABILITIES.ABILITY_SPLIT
+	var facing: Vector2 = context.get("facing", Vector2.DOWN)
+	if facing.is_zero_approx():
+		facing = Vector2.DOWN
+	match runtime.behavior():
+		SKILLS.BEHAVIOR_FEATHER_DRAUGHT, SKILLS.BEHAVIOR_WIND_BOOTS, \
+		SKILLS.BEHAVIOR_RETURN_WIND_POWDER, SKILLS.BEHAVIOR_DEW_TONIC:
+			# 角色移动、闪避与实际治疗条件由玩家侧处理。
+			pass
+		SKILLS.BEHAVIOR_THUNDER_SALT, SKILLS.BEHAVIOR_FROST_POWDER:
+			_cast_extension_toss(runtime, from, enemies, split)
+		SKILLS.BEHAVIOR_FIRE_OIL:
+			if bool(context.get("moving", false)) and not nearest_enemy(from, runtime.range_px(), enemies).is_empty():
+				runtime.reset_cooldown()
+				active.append({"kind": "oil_trail", "runtime": runtime, "pos": from,
+					"left": float(runtime.value("lay_time")), "sample_distance": 0.0, "split": split,
+					"lane_hits": {-1: {}, 0: {}, 1: {}}, "finished": false})
+				_emit_fx(runtime, "cast", from, from + facing * 24.0)
+		SKILLS.BEHAVIOR_MERCURY_RING:
+			var radius := runtime.radius_px() * (ABILITIES.SPLIT_AREA_RATIO if split else 1.0)
+			if not nearest_enemy(from, radius, enemies).is_empty():
+				runtime.reset_cooldown()
+				if split:
+					_start_mercury_ring(runtime, from, radius, -1, 0.0)
+					_start_mercury_ring(runtime, from, radius, 1, .10)
+				else:
+					_start_mercury_ring(runtime, from, radius, 0, 0.0)
+		SKILLS.BEHAVIOR_WIND_FLASK:
+			_cast_wind_flask(runtime, from, facing, enemies, split, context.get("bounds", Rect2()))
+		SKILLS.BEHAVIOR_RENEWAL_FLASK:
+			var heal: Callable = context.get("heal", Callable())
+			if heal.is_valid() and float(context.get("missing_health", 0.0)) > 0.0:
+				runtime.reset_cooldown()
+				var bounds: Rect2 = context.get("bounds", Rect2())
+				if split:
+					var offset := facing.orthogonal().normalized() * 20.0
+					_start_renewal_pool(runtime, _clamp_to_bounds(from - offset, bounds), -1)
+					_start_renewal_pool(runtime, _clamp_to_bounds(from + offset, bounds), 1)
+				else:
+					_start_renewal_pool(runtime, _clamp_to_bounds(from, bounds), 0)
+		_:
+			return false
+	return true
+
+func _cast_extension_toss(runtime: SkillRuntime, from: Vector2, enemies: Array, split: bool) -> void:
+	var frost := runtime.behavior() == SKILLS.BEHAVIOR_FROST_POWDER
+	var target := _extension_toss_target(from, runtime.range_px(), enemies, frost)
+	if target.is_empty():
+		return
+	runtime.reset_cooldown()
+	if not split:
+		_start_extension_toss(runtime, from, target, frost, Vector2.ZERO, 0)
+		return
+	var secondary := _extension_toss_target(from, runtime.range_px(), enemies, frost, target.body)
+	var point: Vector2 = target.body.position
+	var direction := from.direction_to(point)
+	var lateral := (Vector2.RIGHT if direction.is_zero_approx() else direction).orthogonal()
+	var offset := lateral * SPLIT_LAUNCH_OFFSET
+	_start_extension_toss(runtime, from - offset, target, frost, -offset if secondary.is_empty() else Vector2.ZERO, -1)
+	_start_extension_toss(runtime, from + offset, target if secondary.is_empty() else secondary,
+		frost, offset if secondary.is_empty() else Vector2.ZERO, 1)
+
+func _extension_toss_target(from: Vector2, reach: float, enemies: Array, frost: bool,
+		excluded: Node2D = null) -> Dictionary:
+	var target := {}
+	var priority := false
+	var best_distance := INF
+	for entry: Dictionary in enemies:
+		if not _living(entry) or entry.body == excluded:
+			continue
+		var elite := bool(entry.get("boss", false)) or bool(entry.get("elite", false))
+		var distance := from.distance_squared_to(entry.body.position)
+		if distance > reach * reach or (frost and elite):
+			continue
+		if target.is_empty() or (elite and not priority) or (elite == priority and distance < best_distance):
+			target = entry
+			priority = elite
+			best_distance = distance
+	return target
+
+func _start_extension_toss(runtime: SkillRuntime, from: Vector2, target: Dictionary, frost: bool,
+		landing_offset: Vector2, side: int) -> void:
+	var landing: Vector2 = target.body.position
+	if frost:
+		landing += landing_offset
+	var speed := float(runtime.value("speed", 720.0))
+	var duration := maxf(.08, from.distance_to(landing) / speed) if frost else float(runtime.value("flight_time", .32))
+	var state := {
+		"kind": "extension_toss", "runtime": runtime, "frost": frost, "pos": from, "origin": from,
+		"target": target, "landing": landing, "direction": from.direction_to(landing),
+		"left": duration, "duration": duration, "flight_height": 0.0, "speed": from.distance_to(landing) / duration,
+		"radius": runtime.radius_px() * (1.0 if side == 0 else ABILITIES.SPLIT_AREA_RATIO),
+		"ratio": 1.0 if side == 0 else ABILITIES.SPLIT_DAMAGE_RATIO, "split_side": side, "finished": false,
+	}
+	active.append(state)
+	_emit_state_fx(state, "cast", from, landing)
+
+func _start_mercury_ring(runtime: SkillRuntime, at: Vector2, radius: float, side: int, delay: float) -> void:
+	var speed := float(runtime.value("speed"))
+	var state := {
+		"kind": "mercury_ring", "runtime": runtime, "pos": at, "radius": radius,
+		"current_radius": 0.0, "speed": speed, "duration": radius / speed, "delay": delay, "hit": {},
+		"ratio": 1.0 if side == 0 else ABILITIES.SPLIT_DAMAGE_RATIO, "split_side": side, "finished": false,
+	}
+	active.append(state)
+	if delay <= 0.0:
+		_emit_state_fx(state, "zone_start", at, at)
+
+func _cast_wind_flask(runtime: SkillRuntime, from: Vector2, facing: Vector2, enemies: Array, split: bool,
+		bounds: Rect2) -> void:
+	var radius := runtime.range_px() * (ABILITIES.SPLIT_AREA_RATIO if split else 1.0)
+	var half_angle := deg_to_rad(float(runtime.value("half_angle_degrees")))
+	var candidates: Array[Dictionary] = []
+	for entry: Dictionary in enemies:
+		if _living(entry) and not bool(entry.get("boss", false)) and from.distance_to(entry.body.position) <= radius:
+			candidates.append(entry)
+	if candidates.is_empty():
+		return
+	var direction := facing.normalized()
+	var best_count := -1
+	var best_distance := INF
+	for candidate: Dictionary in candidates:
+		var point: Vector2 = candidate.body.position
+		var aim := from.direction_to(point)
+		if aim.is_zero_approx():
+			aim = facing.normalized()
+		var count := 0
+		for entry in candidates:
+			if _inside_wind_cone(from, aim, entry.body.position, half_angle):
+				count += 1
+		var distance := from.distance_squared_to(point)
+		if count > best_count or (count == best_count and distance < best_distance):
+			direction = aim
+			best_count = count
+			best_distance = distance
+	runtime.reset_cooldown()
+	var push := float(runtime.value("push_units")) * SKILLS.UNIT * (ABILITIES.SPLIT_DAMAGE_RATIO if split else 1.0)
+	var sides: Array = [-1, 1] if split else [0]
+	var pushed := {}
+	for side: int in sides:
+		var angle := direction.rotated(deg_to_rad(20.0) * side)
+		_emit_fx(runtime, "impact", from, from + angle * radius, {
+			"direction": angle, "radius": radius, "half_angle": half_angle, "split_side": side})
+		for entry in candidates:
+			var body: Node2D = entry.body
+			if pushed.has(body) or not _inside_wind_cone(from, angle, body.position, half_angle):
+				continue
+			pushed[body] = true
+			var away := from.direction_to(body.position)
+			if away.is_zero_approx():
+				away = angle
+			var displacement := away * push * (.5 if bool(entry.get("elite", false)) else 1.0)
+			displacement = _clamp_to_bounds(body.position + displacement, bounds) - body.position
+			if body is CharacterBody2D:
+				body.move_and_collide(displacement)
+			else:
+				body.position += displacement
+
+func _inside_wind_cone(from: Vector2, direction: Vector2, point: Vector2, half_angle: float) -> bool:
+	var toward := from.direction_to(point)
+	return toward.is_zero_approx() or direction.dot(toward) >= cos(half_angle)
+
+func _clamp_to_bounds(point: Vector2, bounds: Rect2) -> Vector2:
+	return point.clamp(bounds.position, bounds.end) if bounds.has_area() else point
+
+func _start_renewal_pool(runtime: SkillRuntime, at: Vector2, side: int) -> void:
+	var duration := float(runtime.value("duration"))
+	_add_effect_state({
+		"kind": "renewal_pool", "runtime": runtime, "pos": at, "left": duration, "duration": duration,
+		"radius": runtime.radius_px() * (1.0 if side == 0 else ABILITIES.SPLIT_AREA_RATIO), "split_side": side,
+		"next_tick": float(runtime.value("tick_interval")),
+		"amount": float(runtime.value("heal")) * (1.0 if side == 0 else ABILITIES.SPLIT_DAMAGE_RATIO),
+	}, "zone_start")
 
 func _cast(runtime: SkillRuntime, from: Vector2, target: Dictionary, enemies: Array = []) -> void:
 	var point: Vector2 = target.body.position
@@ -298,12 +480,23 @@ func _spawn_needles(runtime: SkillRuntime, target: Dictionary, combo: bool, rati
 		active.append({"kind":"delayed_projectile", "runtime":runtime, "left":launch_delay,
 			"target":target, "combo":combo, "ratio":ratio, "marked":marked, "branch":branch})
 
-func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
+func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable,
+		context: Dictionary = {}) -> void:
 	_update_brittle_marks(delta, enemies)
 	for index in range(active.size() - 1, -1, -1):
 		var state := active[index]
 		var finished := false
 		match String(state.kind):
+			"extension_toss":
+				finished = _advance_extension_toss(state, delta, enemies, apply_hit)
+			"oil_trail":
+				finished = _advance_oil_trail(state, delta, player_pos, context.get("bounds", Rect2()))
+			"oil_patch":
+				finished = _advance_oil_patch(state, delta, enemies, apply_hit)
+			"mercury_ring":
+				finished = _advance_mercury_ring(state, delta, enemies, apply_hit)
+			"renewal_pool":
+				finished = _advance_renewal_pool(state, delta, player_pos, context.get("heal", Callable()))
 			"delayed_projectile":
 				state.left = float(state.left) - delta
 				if state.left <= 0.0:
@@ -376,6 +569,131 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 			active.remove_at(index)
 		else:
 			active[index] = state
+
+func _advance_extension_toss(state: Dictionary, delta: float, enemies: Array, apply_hit: Callable) -> bool:
+	var target: Dictionary = state.target
+	var frost := bool(state.frost)
+	if not frost and (not _living(target) or not enemies.has(target)):
+		return true
+	var landing: Vector2 = state.landing if frost else target.body.position
+	var runtime: SkillRuntime = state.runtime
+	state.left = maxf(0.0, float(state.left) - delta)
+	var progress := 1.0 - float(state.left) / float(state.duration)
+	var origin: Vector2 = state.origin
+	state.pos = origin.lerp(landing, progress)
+	state.direction = origin.direction_to(landing)
+	state.flight_height = 4.0 * float(runtime.value("flight_height")) * progress * (1.0 - progress)
+	if float(state.left) > 0.00001:
+		return false
+	_emit_state_fx(state, "impact", landing, landing)
+	if frost:
+		var duration := float(runtime.value("duration")) * float(state.ratio)
+		for entry: Dictionary in enemies:
+			if not _living(entry) or bool(entry.get("boss", false)) or bool(entry.get("elite", false)):
+				continue
+			if landing.distance_to(entry.body.position) <= float(state.radius):
+				var previous_freeze := float(entry.get("freeze_left", 0.0))
+				entry.freeze_left = maxf(duration, previous_freeze)
+				if previous_freeze <= 0.0:
+					_emit_fx(runtime, "freeze_start", landing, entry.body.position, {
+						"radius": 24.0, "duration": duration, "freeze_target": entry, "split_side": state.split_side,
+					})
+	else:
+		_hit(runtime, target, apply_hit, float(state.ratio), 0.0, 0.0, enemies)
+	return true
+
+func _advance_oil_trail(state: Dictionary, delta: float, player_pos: Vector2, bounds: Rect2) -> bool:
+	var runtime: SkillRuntime = state.runtime
+	var origin: Vector2 = state.pos
+	var end := origin.lerp(player_pos, minf(1.0, float(state.left) / maxf(delta, .00001)))
+	var distance := origin.distance_to(end)
+	var direction := origin.direction_to(end)
+	var spacing := float(runtime.value("spacing"))
+	var traveled := spacing - float(state.sample_distance)
+	var sides: Array = [-1, 1] if bool(state.split) else [0]
+	# 跳转不生成跨场景或跨瞬移位置的油路。
+	if distance <= SKILLS.UNIT * 2.0:
+		while traveled <= distance:
+			for side: int in sides:
+				var point := origin + direction * traveled + direction.orthogonal() * SPLIT_LAUNCH_OFFSET * side
+				if not bounds.has_area() or bounds.has_point(point):
+					_start_oil_patch(runtime, point, side, state.lane_hits[side])
+			traveled += spacing
+		state.sample_distance = spacing - (traveled - distance)
+	else:
+		state.sample_distance = 0.0
+	state.pos = player_pos
+	state.left = float(state.left) - delta
+	return float(state.left) <= 0.00001
+
+func _start_oil_patch(runtime: SkillRuntime, at: Vector2, side: int, lane_hits: Dictionary) -> void:
+	var duration := float(runtime.value("duration"))
+	_add_effect_state({
+		"kind": "oil_patch", "runtime": runtime, "pos": at, "left": duration, "duration": duration,
+		"radius": runtime.radius_px() * (1.0 if side == 0 else ABILITIES.SPLIT_AREA_RATIO),
+		"ratio": 1.0 if side == 0 else ABILITIES.SPLIT_DAMAGE_RATIO, "split_side": side,
+		"next_tick": float(runtime.value("tick_interval")), "lane_hits": lane_hits,
+	}, "zone_start")
+
+func _advance_oil_patch(state: Dictionary, delta: float, enemies: Array, apply_hit: Callable) -> bool:
+	var runtime: SkillRuntime = state.runtime
+	var interval := float(runtime.value("tick_interval"))
+	state.left = maxf(0.0, float(state.left) - delta)
+	var elapsed := float(state.duration) - float(state.left)
+	if elapsed + 0.00001 >= float(state.next_tick):
+		state.next_tick = float(state.next_tick) + interval
+		var point: Vector2 = state.pos
+		for entry: Dictionary in enemies.duplicate():
+			if not _living(entry) or point.distance_to(entry.body.position) > float(state.radius):
+				continue
+			var id: int = entry.body.get_instance_id()
+			if combat_clock + 0.00001 >= float(state.lane_hits.get(id, 0.0)):
+				state.lane_hits[id] = combat_clock + interval
+				_hit(runtime, entry, apply_hit, float(state.ratio))
+				if state.finished:
+					return true
+	return float(state.left) <= 0.00001
+
+func _advance_mercury_ring(state: Dictionary, delta: float, enemies: Array, apply_hit: Callable) -> bool:
+	if float(state.delay) > 0.0:
+		state.delay = float(state.delay) - delta
+		if float(state.delay) > 0.00001:
+			return false
+		delta = maxf(0.0, -float(state.delay))
+		state.delay = 0.0
+		_emit_state_fx(state, "zone_start", state.pos, state.pos)
+	var previous := float(state.current_radius)
+	var radius := float(state.radius)
+	var current := minf(radius, previous + float(state.speed) * delta)
+	state.current_radius = current
+	var point: Vector2 = state.pos
+	for entry: Dictionary in enemies.duplicate():
+		if not _living(entry):
+			continue
+		var distance := point.distance_to(entry.body.position)
+		if distance < previous or distance > current:
+			continue
+		var id: int = entry.body.get_instance_id()
+		if not state.hit.has(id):
+			state.hit[id] = true
+			_hit(state.runtime, entry, apply_hit, float(state.ratio), 0.0, 0.0, enemies)
+			if state.finished:
+				return true
+	return current >= radius
+
+func _advance_renewal_pool(state: Dictionary, delta: float, player_pos: Vector2, heal: Callable) -> bool:
+	var runtime: SkillRuntime = state.runtime
+	state.left = maxf(0.0, float(state.left) - delta)
+	var elapsed := float(state.duration) - float(state.left)
+	var point: Vector2 = state.pos
+	var interval := float(runtime.value("tick_interval"))
+	while elapsed + 0.00001 >= float(state.next_tick):
+		state.next_tick = float(state.next_tick) + interval
+		if heal.is_valid() and point.distance_to(player_pos) <= float(state.radius):
+			var recovered := float(heal.call(float(state.amount)))
+			if recovered > 0.0:
+				_emit_state_fx(state, "heal", point, player_pos)
+	return float(state.left) <= 0.00001
 
 func _resolve_projectile(state: Dictionary, point: Vector2, enemies: Array, apply_hit: Callable) -> void:
 	var runtime: SkillRuntime = state.runtime

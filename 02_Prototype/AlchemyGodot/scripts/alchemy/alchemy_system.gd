@@ -10,7 +10,7 @@ const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd
 
 # 可视化可调参数（@export，挂在本节点 Inspector 可直接调）
 @export var max_skill_slots := 6                    # 技能槽位（策划案7.5）
-@export var starting_skills: Array[String] = []  # V2：魔法弹为独立普攻，十技能从升级池获得。
+@export var starting_skills: Array[String] = []  # 魔法弹为独立普攻，基础技能从升级池获得。
 @export var ability_id: String = ABILITIES.ABILITY_INITIAL    # 本局能力
 @export var debug_verbose := false                  # 调试日志
 
@@ -41,7 +41,10 @@ func setup(p_field, p_save: ConfigFile) -> void:
 
 # 主循环：tick 技能、联动
 func tick(delta: float, player_pos: Vector2, enemies: Array, apply_hit: Callable) -> void:
-	skills.cast_equipped(delta, player_pos, enemies, apply_hit)
+	var action_context: Dictionary = {}
+	if is_instance_valid(field) and field.has_method("skill_action_context"):
+		action_context = field.skill_action_context()
+	skills.cast_equipped(delta, player_pos, enemies, apply_hit, action_context)
 	synergies.tick(delta)
 
 # 元素联动回调（由 SkillManager 触发）

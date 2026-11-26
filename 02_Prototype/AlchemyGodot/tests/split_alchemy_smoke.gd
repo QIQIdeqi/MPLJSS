@@ -1,6 +1,5 @@
 extends SceneTree
 
-const SKILLS := preload("res://data/skills/skill_data.gd")
 const RECIPES := preload("res://data/materials/recipe_data.gd")
 const STEP := 1.0 / 60.0
 const MARK := &"sk_brittle_mark"
@@ -42,7 +41,8 @@ func _initialize() -> void:
 func _run() -> void:
 	_expect(RECIPES.match(["earth_core", "fire_powder"]).get("recipe_id") == "recipe_split", "two-slot recipe")
 	_expect(RECIPES.match(["magic_shard", "earth_core", "fire_powder"]).get("recipe_id") == "recipe_split", "old recipe ID still recognized")
-	for id: String in SKILLS.ids():
+	# 原技能的分裂施放规则。扩展技能由各自的动作及战斗用例覆盖。
+	for id: String in CAST_EVENTS:
 		_check_skill(StringName(id))
 	_check_target_selection()
 	_check_ground_lock()
