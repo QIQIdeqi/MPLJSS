@@ -142,3 +142,36 @@ memory/archives/2026-10-27-old-build-saves/
 # Local legacy checkout and historical Unreal build copies.
 /02_Prototype/AlchemyHD2D/
 /03_Build/Greyford_Current_Win64_20261109/
+
+# Local sync backups and historical Godot Win64 test packages (keep on SSD)
+/04_工具与协作/Git同步备份/
+/03_Build/Godot_Win64_20261111_4ef6725f/
+/03_Build/Godot_Win64_Monster_Reactions_20261111/
+/03_Build/Godot_Win64_Monster_SpriteGen_20261111/
+
+# Rebuildable outputs caches, archives, inspection logs, and unconfirmed previews (keep on SSD)
+/outputs/**/node_modules/
+/outputs/**/*.zip
+/outputs/**/*.inspect.ndjson
+/outputs/first_level_art_20261105/_build/
+/outputs/five_regions_art_20261124/_build/backup-*
+/outputs/five_regions_art_20261124/_build/reference_layout.png
+/outputs/five_regions_art_20261124/_build/verify_five_sheets.py
+/outputs/five_regions_art_20261124/_build/workbook_inspect.ndjson
+/outputs/five_regions_art_20261124/_build/*验片*.png
+/outputs/infinite_level_preview_20261124/_build/assets/
+/outputs/infinite_level_preview_20261124/_build/*.png
+/outputs/skill_inventory_20261124/_build/
+/outputs/TOD_物件投影参考/
+/outputs/alchemy_ui_motion_20261108/
+/outputs/day1_visual_baseline_20261126/
+/outputs/figma_ui_20261108/
+/outputs/ground_tile_tutorial_20261115/
+/outputs/hit_feedback_preview_20261124/
+/outputs/level_entry_mockups_20261124/
+/outputs/level_tool_video_20261124/
+/outputs/monster_reaction_spritegen_20261111/
+/outputs/monster_sprite_design_20261111/
+/outputs/village_art_20261112/
+/outputs/village_garden_concept/
+/outputs/怪物掉落_金币与经验球/
