@@ -251,15 +251,18 @@ func _make_zone() -> void:
 			_make_library_zone(ACID_ZONE, 2.0, false, 22.0)
 		"sk_mist_flask":
 			_ground(world_radius, Ground.MIST, Color("#626478"), Color("#b7bfdf"))
-			_make_library_zone(MIST_ZONE, 2.12, false, 40.0)
+			_make_library_zone(MIST_ZONE, 2.12, true, 0.0)
 		"link_mithril_orbit":
 			_ground(world_radius, Ground.ORBIT, Color("#67778f"), Color("#d2e9fa"))
 			_make_library_zone(MITHRIL_ORBIT, 1.80, true)
 			_make_orbiters(4, Color("#eaf4ff"))
 		"link_corrosive_mist":
 			_ground(world_radius, Ground.MIST, Color("#484559"), Color("#768b36"))
-			_make_library_zone(CORROSIVE_MIST, 2.0, false, 33.0)
+			_make_library_zone(CORROSIVE_MIST, 2.0, true, 0.0)
 	_update_zone()
+
+func _is_mist_zone() -> bool:
+	return skill_id == "sk_mist_flask" or skill_id == "link_corrosive_mist"
 
 func _update_zone() -> void:
 	if not floor_mat:
@@ -268,7 +271,12 @@ func _update_zone() -> void:
 	floor_mat.set_shader_parameter("age", age)
 	floor_mat.set_shader_parameter("strength", fade * 0.53)
 	if library_card:
-		library_card.modulate.a = fade * (0.60 if skill_id == "sk_mist_flask" else 0.86)
+		var card_alpha := 0.86
+		if skill_id == "sk_mist_flask":
+			card_alpha = 0.40
+		elif skill_id == "link_corrosive_mist":
+			card_alpha = 0.45
+		library_card.modulate.a = fade * card_alpha
 		if zone_card_foot > 0.0:
 			var camera := _world_camera()
 			var upright := camera.global_basis.y.y if camera else 0.72
@@ -381,7 +389,7 @@ func _world_camera() -> Camera3D:
 func _make_library_zone(texture: Texture2D, extent: float, flat: bool, foot := 0.0) -> void:
 	var frame_width := float(texture.get_width()) / ATLAS_COLUMNS
 	library_card = _library_sprite(texture, self, world_radius * extent / frame_width)
-	library_card.position.y = FLOOR_Y + 0.008
+	library_card.position.y = 0.024 if _is_mist_zone() else FLOOR_Y + 0.008
 	if split_side != 0:
 		library_card.modulate = Color.WHITE.lerp(SPLIT_ALCHEMY_FX.branch_color(split_side), 0.24)
 	# A tilted camera projects sprite pixels down toward the terrain. Keep the source
@@ -448,7 +456,7 @@ func _ground(radius: float, kind: Ground, tint: Color, accent: Color) -> void:
 	disc.mesh = quad
 	disc.material_override = floor_mat
 	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	disc.position.y = FLOOR_Y
+	disc.position.y = 0.018 if _is_mist_zone() else FLOOR_Y
 	disc.rotation_degrees.x = -90.0
 	add_child(disc)
 

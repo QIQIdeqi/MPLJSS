@@ -64,6 +64,7 @@ func setup(source: Node2D, canvas_texture: Texture2D) -> void:
 	material.blend_mode = BaseMaterial3D.BLEND_MODE_PREMULT_ALPHA
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	material.render_priority = 1
 	material.disable_fog = true
 	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
 	quad.material = material
