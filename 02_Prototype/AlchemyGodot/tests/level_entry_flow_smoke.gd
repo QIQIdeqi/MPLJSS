@@ -123,12 +123,13 @@ func run_checks() -> void:
 	active.alchemy_system.apply_upgrade({"type": "skill_upgrade", "skill_id": &"sk_blast_flask"})
 	active.alchemy_system.apply_upgrade({"type": "skill_upgrade", "skill_id": &"sk_blast_flask"})
 	active.alchemy_system.apply_upgrade({"type": "new_skill", "skill_id": &"sk_brittle_mark"})
+	active.alchemy_system.apply_upgrade({"type": "new_skill", "skill_id": &"sk_fire_oil"})
 	var runtime = active.alchemy_system.skills.runtime_for(&"sk_blast_flask")
 	runtime.reset_cooldown()
 	var cast_duration: float = runtime.cooldown_total
 	runtime.cooldown_left = 1.23
 	runtime.config["stage_test_marker"] = "preserved"
-	active.alchemy_system.skills.chain_cooldowns = {&"link_blast_mark": 2.5}
+	active.alchemy_system.skills.chain_cooldowns = {&"link_blast_mark": 2.5, &"combo_fuse": 3.5, &"combo_furnace": 4.25}
 	active.alchemy_system.synergies.cooldowns = {&"test_synergy": 1.4}
 	active.run_manager.collect_material("dew", 3)
 	active.run_manager.collect_material("fire_powder", 2)
@@ -167,8 +168,11 @@ func run_checks() -> void:
 	check(runtime != null and runtime.level == 3 and is_equal_approx(runtime.cooldown_left, 1.23) and runtime.config.get("stage_test_marker") == "preserved", "Boss preserves skill level cooldown and configuration")
 	check(runtime != null and is_equal_approx(runtime.cooldown_total, cast_duration), "Boss preserves the cooldown HUD progress denominator")
 	var unlocked: Array = active.alchemy_system.skills.unlocked_chains()
-	check(active.alchemy_system.skills.runtimes.size() == 2 and unlocked.is_empty(), "Boss preserves both base skills without restoring the retired combo")
-	check(active.alchemy_system.skills.chain_cooldowns.is_empty() and active.alchemy_system.synergies.cooldowns.get(&"test_synergy") == 1.4, "Boss discards retired combo cooldowns and preserves synergy cooldowns")
+	check(active.alchemy_system.skills.runtimes.size() == 3 and unlocked.size() == 1 and unlocked[0].id == &"combo_furnace",
+		"Boss preserves the equipped skills and their fixed recipe")
+	check(active.alchemy_system.skills.chain_cooldowns == {&"combo_furnace": 4.25}
+		and active.alchemy_system.synergies.cooldowns.get(&"test_synergy") == 1.4,
+		"Boss restores current combo and synergy cooldowns and discards old recipe cooldowns")
 	check(active.run_manager.ledger.materials == {"dew":3,"fire_powder":2} and active.run_manager.is_run_active(), "Boss preserves unsettled material ledger")
 	check(active.brew.pills.has(1) and active.brew.equipped == [1] and active.brew.bag == [2] and active.brew.cooldowns.get(1) == 0.67, "Boss preserves current drag-brew pills equipment bag and cooldowns")
 	check(active.field_seed == expected_seed and active.field_seed != normal_seed and active.layout_preset.boss, "Boss layout has derived independent stage seed and preset")

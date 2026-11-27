@@ -17,11 +17,15 @@ expand_mode = 1
 stretch_mode = 6
 mouse_filter = 2
 [node name="Actions" type="VBoxContainer" parent="."]
-layout_mode = 0
-offset_left = 510
-offset_top = 515
-offset_right = 770
-offset_bottom = 690
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -130.0
+offset_top = -239.0
+offset_right = 130.0
+offset_bottom = -39.0
 theme_override_constants/separation = 8
 [node name="Start" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(0, 44)
@@ -29,6 +33,9 @@ text = "开始游戏"
 [node name="Continue" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(0, 44)
 text = "继续游戏"
+[node name="SkillTest" type="Button" parent="Actions"]
+custom_minimum_size = Vector2(0, 44)
+text = "技能测试场"
 [node name="Quit" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(0, 44)
 text = "退出游戏"

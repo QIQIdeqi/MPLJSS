@@ -1,6 +1,7 @@
 extends RefCounted
 
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
+const INDEPENDENT_MOVEMENT := preload("res://scripts/skills/skill_independent_movement.gd")
 const FEATHER_DRAUGHT := &"sk_feather_draught"
 const WIND_BOOTS := &"sk_wind_boots"
 const RETURN_WIND := &"sk_return_wind_powder"
@@ -10,6 +11,7 @@ const DEW_PULSE_DELAY := 0.24
 var _skills: SkillManager
 var _player: Node2D
 var _play_fx: Callable
+var independent: INDEPENDENT_MOVEMENT
 var walk_speed_scale := 1.0
 var _feather_charge := 0.0
 var _feather_left := 0.0
@@ -26,6 +28,8 @@ func setup(skills: SkillManager, player: Node2D, play_fx: Callable) -> void:
 	_skills = skills
 	_player = player
 	_play_fx = play_fx
+	_player.set("track_dodge_motion", _on_dodge_motion)
+	_player.set("resolve_gate_dodge", _take_gate)
 
 func clear() -> void:
 	walk_speed_scale = 1.0
@@ -39,8 +43,12 @@ func clear() -> void:
 	_dew_interrupted = false
 	_dew_pulse_left = 0.0
 	_dew_pulse_amount = 0.0
+	if independent != null:
+		independent.clear()
 
 func tick(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> void:
+	if independent != null:
+		independent.tick(delta, at, enemies, context)
 	_return_left = maxf(0.0, _return_left - delta)
 	var moving := bool(context.get("moving", false))
 	_tick_feather(delta, at, moving)
@@ -50,6 +58,9 @@ func tick(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> voi
 func interrupt_dew() -> void:
 	_dew_charge = 0.0
 	_dew_interrupted = true
+
+func feather_active() -> bool:
+	return _feather_left > 0.0
 
 # 返回零表示本帧冷却中，否则返回这次闪避的位移倍率。
 func choose_dodge(at: Vector2, heading: Vector2, ordinary_ready: bool, base_distance: float) -> float:
@@ -63,8 +74,11 @@ func choose_dodge(at: Vector2, heading: Vector2, ordinary_ready: bool, base_dist
 	if not ordinary_ready:
 		return 0.0
 	_may_open_return = return_wind != null and return_wind.ready()
+	if independent != null:
+		independent.begin_ordinary_dodge()
 	var boots := _skills.runtime_for(WIND_BOOTS)
-	if boots == null or not boots.ready():
+	var boosted := boots != null and boots.ready()
+	if not boosted:
 		return 1.0
 	boots.reset_cooldown()
 	var bonus := float(boots.value("dodge_bonus"))
@@ -75,16 +89,29 @@ func choose_dodge(at: Vector2, heading: Vector2, ordinary_ready: bool, base_dist
 	return scale
 
 func on_dodge_finished(at: Vector2, heading: Vector2) -> void:
-	if not _may_open_return:
-		return
+	if _may_open_return:
+		var runtime := _skills.runtime_for(RETURN_WIND)
+		if runtime != null and runtime.ready():
+			_return_left = float(runtime.value("window"))
+			if _is_split():
+				_return_left *= 2.0 * ABILITIES.SPLIT_DAMAGE_RATIO
+			_emit(runtime, "ready", at, at + heading, 0, _return_left, true)
 	_may_open_return = false
-	var runtime := _skills.runtime_for(RETURN_WIND)
-	if runtime == null or not runtime.ready():
-		return
-	_return_left = float(runtime.value("window"))
-	if _is_split():
-		_return_left *= 2.0 * ABILITIES.SPLIT_DAMAGE_RATIO
-	_emit(runtime, "ready", at, at + heading, 0, _return_left, true)
+	if independent != null:
+		independent.finish_ordinary_dodge()
+
+func _on_dodge_motion(from: Vector2, at: Vector2, knocked_back: bool) -> void:
+	if independent != null:
+		independent.observe_dodge_motion(from, at, knocked_back)
+
+func _take_gate(at: Vector2) -> Variant:
+	if independent == null:
+		return null
+	var target: Variant = independent.use_gate(at, true)
+	if target is Vector2:
+		_may_open_return = false
+		_return_left = 0.0
+	return target
 
 func _tick_feather(delta: float, at: Vector2, moving: bool) -> void:
 	var runtime := _skills.runtime_for(FEATHER_DRAUGHT)

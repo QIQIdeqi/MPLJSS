@@ -5,7 +5,9 @@ const SKILLS := preload("res://data/skills/skill_data.gd")
 func _init() -> void:
 	assert(SKILLS.ROWS.size() == 20, "扩展后应有二十个可装备基础技能")
 	assert(not SKILLS.ids().has("magic_bolt"), "魔法弹必须留在独立普通攻击")
-	assert(SKILLS.CHAINS.is_empty(), "旧固定组合已从配方表移除")
+	assert(SKILLS.CHAINS.size() == 9, "应当有九组新固定配方")
+	var expected := ["熔火炉", "雷衣", "回浪镜", "回流锚", "净路剂", "晶门", "寒晶墙", "照影", "收露瓶"]
+	assert(SKILLS.CHAINS.map(func(recipe: Dictionary) -> String: return recipe.name) == expected)
 	var attribute_counts := {}
 	for row in SKILLS.ROWS:
 		assert((row.power as Array).size() == 5, "%s 的伤害等级表不完整" % row.id)
@@ -29,6 +31,31 @@ func _check_upgrade_pool() -> void:
 		assert(pick.type == UpgradeManager.CAT_NEW_SKILL and SKILLS.ids().has(pick.skill_id))
 		assert(pick.attribute == SKILLS.by_id(pick.skill_id).attribute)
 	assert(upgrades.roll_candidates().size() == 3)
+
+	var paired := {}
+	for chain: Dictionary in SKILLS.CHAINS:
+		skills.clear()
+		var parents: Array = chain.parents
+		for parent_id: String in parents:
+			assert(not paired.has(parent_id))
+			assert(SKILLS.by_id(parent_id).attribute == chain.attribute)
+			paired[parent_id] = chain.id
+		assert(not skills.add_skill(chain.id))
+		assert(skills.add_skill(StringName(parents[0])) and skills.unlocked_chains().is_empty())
+		var partner_cards := upgrades._build_pool().filter(
+			func(pick: Dictionary) -> bool: return pick.skill_id == parents[1])
+		assert(partner_cards.size() == 1 and String(partner_cards[0].desc).contains(chain.name))
+		upgrades.apply(partner_cards[0])
+		assert(skills.runtimes.size() == 2 and skills.unlocked_chains() == [chain])
+		assert(skills.combo_rules.ready(chain.id))
+		var first := skills.runtime_for(StringName(parents[0]))
+		var second := skills.runtime_for(StringName(parents[1]))
+		first.level = 5
+		second.level = 3
+		assert(is_equal_approx(skills.combo_rules.commit(chain.id), 1.36))
+		assert(float(skills.chain_cooldowns.get(chain.id)) == chain.cooldown)
+		assert(skills.combo_rules.commit(chain.id) == 0.0)
+	assert(paired.size() == 18 and not paired.has("sk_mist_flask") and not paired.has("sk_spirit_gel"))
 
 	var retired := {
 		"link_blast_mark": ["sk_blast_flask", "sk_brittle_mark"],

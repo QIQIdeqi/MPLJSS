@@ -73,7 +73,10 @@ func _process(delta: float) -> void:
 		world_view.update_view(delta)
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not is_instance_valid(world_view) or world_view.field.brew.is_open() or world_view.field.portal_dialog.visible:
+	if not is_instance_valid(world_view):
+		return
+	var portal: ConfirmationDialog = field.portal_dialog
+	if (is_instance_valid(field.brew) and field.brew.is_open()) or (is_instance_valid(portal) and portal.visible):
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return

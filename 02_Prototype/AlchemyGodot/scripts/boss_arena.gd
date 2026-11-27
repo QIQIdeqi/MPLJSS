@@ -48,6 +48,7 @@ var max_hp := MAX_HP
 var zones: Array[Dictionary] = []
 var target := Vector2.ZERO
 var dash_chain := 0
+var attack_token := 0
 
 func setup(actors: Node2D, dash_first: bool, playable_bounds: Rect2 = BOUNDS, style: int = 0, title: String = "腐化之源") -> void:
 	boss_style = clampi(style, 0, 4)
@@ -140,7 +141,21 @@ func restore_base_art() -> void:
 	art_scale = 86.0 / ART.get_height() if boss_style in [0, 4] else 1.35
 	art.scale = Vector2.ONE * art_scale
 
-func advance(delta: float, player: CharacterBody2D, hurt: Callable, burst: Callable) -> void:
+func windup_snapshot() -> Dictionary:
+	if dying or preparation > 0.0 or not locked:
+		return {}
+	var length := 0.0
+	match phase:
+		Phase.AIM_DASH: length = 1.0
+		Phase.AIM_FAN: length = 1.25
+		Phase.SECOND_FAN: length = 0.8
+	var left := length - elapsed
+	if left <= 0.0:
+		return {}
+	return {"token": attack_token, "aim": aim, "remaining": left, "interruptible": false}
+
+func advance(delta: float, player: CharacterBody2D, hurt: Callable, burst: Callable,
+		before_shots: Callable = Callable(), check_wall: Callable = Callable()) -> void:
 	if dying:
 		return
 	if preparation > 0.0:
@@ -167,6 +182,8 @@ func advance(delta: float, player: CharacterBody2D, hurt: Callable, burst: Calla
 			var movement := aim * step
 			var next := (before + movement).clamp(travel_bounds.position, travel_bounds.end)
 			var collision := body.move_and_collide(next - before)
+			if check_wall.is_valid():
+				check_wall.call(before, body.position, RADIUS)
 			dash_remaining -= step
 			if not dash_hit and Geometry2D.get_closest_point_to_segment(player.position, before, body.position).distance_to(player.position) <= 29.0:
 				dash_hit = hurt.call(24.0, aim)
@@ -198,6 +215,10 @@ func advance(delta: float, player: CharacterBody2D, hurt: Callable, burst: Calla
 				else:
 					dash_chain = 0
 					start_attack()
+	if check_wall.is_valid():
+		check_wall.call(body.position, body.position, RADIUS)
+	if before_shots.is_valid():
+		before_shots.call(delta)
 	for i in range(shots.size() - 1, -1, -1):
 		var shot := shots[i]
 		if shot.fade >= 0.0:
@@ -235,6 +256,7 @@ func start_attack() -> void:
 func lock_aim(at: float) -> void:
 	if elapsed >= at and not locked:
 		locked = true
+		attack_token += 1
 		play(LOCK)
 
 func recover() -> void:

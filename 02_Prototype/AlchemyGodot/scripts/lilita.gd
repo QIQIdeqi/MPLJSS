@@ -37,9 +37,17 @@ var cooldown := 0.0
 var direction := Vector2.DOWN
 var locked := false
 var walked_this_frame := false
+var walk_from := Vector2.ZERO
+var ordinary_from := Vector2.ZERO
+var ordinary_to := Vector2.ZERO
+var ordinary_motion := false
+var forced_motion := false
 var walk_speed_scale := 1.0
 var resolve_dodge: Callable
+var resolve_gate_dodge: Callable
+var track_dodge_motion: Callable
 var _dodge_speed_scale := 1.0
+var _gate_dodging := false
 var movement_bounds := BATTLE_BOUNDS
 var knockback := Vector2.ZERO
 var knockback_time := 0.0
@@ -61,6 +69,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	walked_this_frame = false
+	ordinary_motion = false
+	forced_motion = false
+	ordinary_from = position
+	ordinary_to = position
 	if hurt_time > 0.0:
 		hurt_time = maxf(0.0, hurt_time - delta)
 		if hurt_time <= 0.0:
@@ -77,7 +89,9 @@ func _physics_process(delta: float) -> void:
 	var was_dodging := dodge > 0.0
 	dodge = maxf(0, dodge - delta)
 	if was_dodging and dodge == 0.0:
-		dodge_finished.emit(position, direction)
+		if not _gate_dodging:
+			dodge_finished.emit(position, direction)
+		_gate_dodging = false
 	if move.length_squared() > 0.01 and dodge == 0:
 		direction = move
 		if absf(move.x) > absf(move.y):
@@ -85,6 +99,18 @@ func _physics_process(delta: float) -> void:
 		else:
 			facing = Facing.DOWN if move.y > 0 else Facing.UP
 	if Input.is_action_just_pressed("dodge"):
+		if cooldown == 0.0 and dodge == 0.0 and knockback_time <= 0.0 and resolve_gate_dodge.is_valid():
+			var destination: Variant = resolve_gate_dodge.call(position)
+			if destination is Vector2:
+				position = destination
+				ordinary_to = position
+				forced_motion = true
+				_gate_dodging = true
+				dodge = DODGE_DURATION
+				cooldown = DODGE_COOLDOWN
+				velocity = Vector2.ZERO
+				update_pose(Pose.DODGE, delta)
+				return
 		var speed_scale := 1.0 if cooldown == 0.0 else 0.0
 		if resolve_dodge.is_valid():
 			speed_scale = float(resolve_dodge.call(position, direction, cooldown == 0.0, DODGE_SPEED * DODGE_DURATION))
@@ -92,6 +118,9 @@ func _physics_process(delta: float) -> void:
 			_dodge_speed_scale = speed_scale
 			dodge = DODGE_DURATION
 			cooldown = DODGE_COOLDOWN
+	if _gate_dodging:
+		update_pose(Pose.DODGE, delta)
+		return
 	velocity = direction * DODGE_SPEED * _dodge_speed_scale if dodge > 0.0 else move * WALK_SPEED * walk_speed_scale
 	var knocked_back := knockback_time > 0.0
 	if knocked_back:
@@ -101,11 +130,34 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	if clamp_to_battle_bounds:
 		position = position.clamp(movement_bounds.position, movement_bounds.end)
-	walked_this_frame = dodge == 0.0 and not knocked_back and move.length_squared() > 0.01 and before.distance_squared_to(position) > 0.01
+	walk_from = before
+	ordinary_to = position
+	forced_motion = knocked_back
+	ordinary_motion = not knocked_back and before.distance_squared_to(position) > 0.01 \
+		and (dodge > 0.0 or move.length_squared() > 0.01)
+	walked_this_frame = ordinary_motion and dodge == 0.0
+	if dodge > 0.0 and track_dodge_motion.is_valid():
+		_track_actual_dodge(before, knocked_back)
 	if dodge > 0.0:
 		update_pose(Pose.DODGE, delta)
 	else:
 		update_pose(Pose.WALK if get_real_velocity().length_squared() > 1 else Pose.IDLE, delta)
+
+func _track_actual_dodge(before: Vector2, knocked_back: bool) -> void:
+	if knocked_back:
+		track_dodge_motion.call(before, position, true)
+		return
+	# An angled collision can produce multiple segments in one physics frame.
+	var cursor := before
+	var collision_at := before
+	for index in get_slide_collision_count():
+		collision_at += get_slide_collision(index).get_travel()
+		var next := collision_at
+		if clamp_to_battle_bounds:
+			next = next.clamp(movement_bounds.position, movement_bounds.end)
+		track_dodge_motion.call(cursor, next, false)
+		cursor = next
+	track_dodge_motion.call(cursor, position, false)
 
 func show_hurt() -> void:
 	if dead:

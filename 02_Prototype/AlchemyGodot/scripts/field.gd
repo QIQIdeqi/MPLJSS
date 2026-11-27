@@ -12,7 +12,12 @@ const FX := preload("res://scripts/battle_fx.gd")
 const SKILL_FX := preload("res://scripts/skill_fx.gd")
 const V2_SKILL_FX := preload("res://scripts/v2_skill_fx.gd")
 const EXPANSION_FX := preload("res://scripts/skill_expansion_fx.gd")
+const COMBO_FX_CANVAS := preload("res://scripts/combo_fx_canvas.gd")
+const SKILLS := preload("res://data/skills/skill_data.gd")
 const SKILL_MOBILITY := preload("res://scripts/skills/skill_mobility.gd")
+const INDEPENDENT_MOVEMENT := preload("res://scripts/skills/skill_independent_movement.gd")
+const INDEPENDENT_FIELD := preload("res://scripts/skills/skill_independent_field.gd")
+const INDEPENDENT_GUARD := preload("res://scripts/skills/skill_independent_guard.gd")
 const LEVEL_LAYOUT := preload("res://scripts/level_layout.gd")
 const LEVEL_PRESET := preload("res://levels/preset.gd")
 const INFINITE_LAYOUT := preload("res://scripts/infinite_field_layout.gd")
@@ -76,6 +81,9 @@ var inventory := [0, 0, 0, 0, 0, 0]
 var brew
 var alchemy_system: ALCHEMY_SYSTEM
 var skill_mobility: SKILL_MOBILITY
+var independent_field: INDEPENDENT_FIELD
+var independent_guard: INDEPENDENT_GUARD
+var combo_fx_canvas: COMBO_FX_CANVAS
 var village_alchemy  # 村庄场景的炼金管理器（入场选择用）
 var upgrade_ui
 var entry_select_ui
@@ -92,6 +100,7 @@ var effects: Node2D
 var web_layer: Node2D
 var web_shots: Array[Dictionary] = []
 var spore_patches: Array[Dictionary] = []
+var _next_hazard_id := 1
 var camera: Camera2D
 var hd_view: HD_BATTLE
 var portal: Node2D
@@ -149,7 +158,7 @@ func stream_field(force := false) -> bool:
 		for item in change.added[coord].props:
 			nodes.props.append(make_sprite(item.texture, item.position, item.size, item.foot_fraction))
 			if item.collision != Vector2.ZERO:
-				add_block(item.position, item.collision)
+				add_block(item.position, item.collision, item.texture.resource_path.get_file() == "crates.png")
 				nodes.blocks.append(blocks.back())
 		chunk_nodes[coord] = nodes
 		restore_chunk_drops(coord)
@@ -223,13 +232,7 @@ func _ready() -> void:
 		$EntrySpawn.position = spawn_position
 	player.position = spawn_position
 	$Interface.visible = stage_active
-	camera = Camera2D.new()
-	camera.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
-	add_child(camera)
-	update_camera(0)
-	effects = Node2D.new()
-	effects.y_sort_enabled = true
-	actors.add_child(effects)
+	setup_combat_canvas()
 	if combat:
 		if field_seed == 0:
 			rng.randomize()
@@ -239,9 +242,7 @@ func _ready() -> void:
 			startup_error = "关卡随机布局无法生成，请调整物件数量或密度。"
 			stage_active = false
 			return
-		web_layer = Node2D.new()
-		actors.add_child(web_layer)
-		web_layer.draw.connect(draw_webs)
+		setup_enemy_hazards()
 		enemy_death_sound = AudioStreamPlayer.new()
 		enemy_death_sound.stream = preload("res://audio/S_EnemyDeath.wav")
 		enemy_death_sound.volume_db = -16
@@ -255,17 +256,7 @@ func _ready() -> void:
 		brew.attach(self)
 		$Interface/CombatHUD.attach(self, MAP)
 		brew.brew_settled.connect(on_brew_settled)
-		# 新炼金能力与技能联动系统
-		alchemy_system = ALCHEMY_SYSTEM.new()
-		alchemy_system.name = "AlchemySystem"
-		add_child(alchemy_system)
-		alchemy_system.ability_id = String(incoming_run.get("ability", RunConfig.selected_ability))
-		alchemy_system.setup(self, save)
-		alchemy_system.upgrade_offered.connect(on_upgrade_offered)
-		skill_mobility = SKILL_MOBILITY.new()
-		skill_mobility.setup(alchemy_system.skills, player, play_skill_fx)
-		player.resolve_dodge = skill_mobility.choose_dodge
-		player.dodge_finished.connect(skill_mobility.on_dodge_finished)
+		setup_combat_skills(String(incoming_run.get("ability", RunConfig.selected_ability)))
 		# 本局素材账本 + 永久库存（V1.1 资源闭环）
 		profile_store = ProfileStore.new()
 		profile_store.setup(save, profile_path())
@@ -334,6 +325,43 @@ func _ready() -> void:
 		field_events = FIELD_EVENTS.new()
 		field_events.setup(self)
 	startup_complete = startup_error.is_empty()
+
+func setup_combat_canvas() -> void:
+	camera = Camera2D.new()
+	camera.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
+	add_child(camera)
+	update_camera(0)
+	effects = Node2D.new()
+	effects.y_sort_enabled = true
+	actors.add_child(effects)
+
+func setup_combat_skills(ability: String) -> void:
+	# 新炼金能力与技能联动系统
+	alchemy_system = ALCHEMY_SYSTEM.new()
+	alchemy_system.name = "AlchemySystem"
+	add_child(alchemy_system)
+	alchemy_system.ability_id = ability
+	alchemy_system.setup(self, save)
+	alchemy_system.upgrade_offered.connect(on_upgrade_offered)
+	skill_mobility = SKILL_MOBILITY.new()
+	skill_mobility.setup(alchemy_system.skills, player, play_skill_fx)
+	var combo_rules := alchemy_system.skills.combo_rules
+	skill_mobility.independent = INDEPENDENT_MOVEMENT.new()
+	skill_mobility.independent.setup(combo_rules)
+	independent_field = INDEPENDENT_FIELD.new()
+	independent_field.setup(combo_rules)
+	independent_guard = INDEPENDENT_GUARD.new()
+	independent_guard.setup(combo_rules)
+	player.resolve_dodge = skill_mobility.choose_dodge
+	player.dodge_finished.connect(skill_mobility.on_dodge_finished)
+
+func setup_enemy_hazards() -> void:
+	web_layer = Node2D.new()
+	actors.add_child(web_layer)
+	web_layer.draw.connect(draw_webs)
+
+func world_controls_blocked() -> bool:
+	return (is_instance_valid(brew) and brew.blocks_world()) or (is_instance_valid(portal_dialog) and portal_dialog.visible)
 
 func prepare_stage(id: StringName, handoff: Dictionary = {}) -> Node2D:
 	var definition = level_catalog.find_level(id) if level_catalog else null
@@ -450,13 +478,13 @@ func generate_field(boss_stage: bool, layout_seed: int) -> bool:
 	for prop in layout.props:
 		props.append(make_sprite(prop.texture, prop.position, prop.size, prop.foot_fraction))
 		if prop.collision != Vector2.ZERO:
-			add_block(prop.position, prop.collision)
+			add_block(prop.position, prop.collision, prop.texture.resource_path.get_file() == "crates.png")
 	if is_instance_valid(hd_view):
 		hd_view.rebuild()
 	queue_redraw()
 	return true
 
-func add_block(at: Vector2, size: Vector2) -> void:
+func add_block(at: Vector2, size: Vector2, gate_crossable := false) -> void:
 	var block := StaticBody2D.new()
 	var shape := CollisionShape2D.new()
 	var rectangle := RectangleShape2D.new()
@@ -465,6 +493,8 @@ func add_block(at: Vector2, size: Vector2) -> void:
 	block.add_child(shape)
 	add_child(block)
 	block.position = at
+	if gate_crossable:
+		block.set_meta("gate_crossable", true)
 	blocks.append(block)
 
 func _draw() -> void:
@@ -550,7 +580,7 @@ func _physics_process(delta: float) -> void:
 	if ended or boss_death:
 		player.locked = true
 		return
-	var paused: bool = brew.blocks_world() or portal_dialog.visible
+	var paused := world_controls_blocked()
 	player.locked = paused or (is_instance_valid(boss) and boss.preparation > 0.0)
 	if paused:
 		return
@@ -571,10 +601,19 @@ func _physics_process(delta: float) -> void:
 	if pickup_notice_time > 0.0:
 		pickup_notice_time = maxf(0.0, pickup_notice_time - delta)
 	hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
+	for entry in enemies:
+		if float(entry.get("freeze_left", 0.0)) > 0.0:
+			entry.windup = {}
+	var actor_context := skill_action_context()
+	actor_context.frame_delta = delta
+	independent_field.pre_actor_tick(player.position, enemies, actor_context)
+	if ended or boss_death:
+		return
 	if boss:
 		hint.text = "%s   ·   %s" % [boss.display_name, "准备 %d" % ceili(boss.preparation) if boss.preparation > 0 else "生命 %d%%   ·   先读地面预警，再横向移动   ·   Space 闪避" % ceili(float(boss.entry.hp) * 100.0 / boss.max_hp)]
-		boss.advance(delta, player, hurt, burst)
-		if ended or boss.preparation > 0:
+		boss.advance(delta, player, hurt.bind(boss.body), burst, _reflect_enemy_shots, independent_field.boss_sweep)
+		boss.entry.windup = boss.windup_snapshot()
+		if ended or boss_death or boss.preparation > 0:
 			return
 	else:
 		run_time += delta
@@ -596,41 +635,32 @@ func _physics_process(delta: float) -> void:
 		advance_webs(delta)
 		if ended:
 			return
-		for entry in enemies:
+		for entry in enemies.duplicate():
 			var body: FIELD_ENEMY = entry.body
+			if not is_instance_valid(body) or not enemies.has(entry):
+				continue
 			var slow_left := maxf(0, float(entry.get("slow_left", 0.0)) - delta)
 			entry.slow_left = slow_left
 			var freeze_left := float(entry.get("freeze_left", 0.0))
 			if freeze_left > 0.0:
 				entry.freeze_left = maxf(0.0, freeze_left - delta)
+				entry.windup = {}
+				continue
+			if independent_field.is_rewinding(entry):
+				entry.windup = {}
 				continue
 			var slow := float(entry.get("slow_factor", 1.0)) if slow_left > 0.0 else 1.0
-			body.advance(delta, player.global_position, hurt, fire_web, slow)
+			var goal: Vector2 = independent_field.enemy_steering(entry, player.position)
+			var motion_limit := func(from: Vector2, to: Vector2) -> Vector2:
+				return actors.to_global(independent_field.stop_enemy_motion(entry, actors.to_local(from), actors.to_local(to)))
+			body.advance(delta, player.global_position, hurt.bind(body), fire_web.bind(body), slow,
+				actors.to_global(goal) if goal.is_finite() else goal, motion_limit)
+			entry.windup = body.windup_snapshot()
 			if ended:
 				return
-	# 魔法弹独立于基础技能与升级池。
-	until_attack -= delta
-	if until_attack <= 0:
-		var nearest: Dictionary = {}
-		var reach := 148.0
-		for entry in enemies:
-			var dist: float = player.position.distance_to(entry.body.position)
-			if dist < reach:
-				reach = dist
-				nearest = entry
-		if not nearest.is_empty():
-			until_attack = 0.47
-			launch_basic_projectile(nearest)
+	advance_combat_skills(delta)
 	if ended or boss_death:
 		return
-	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
-	if alchemy_system:
-		alchemy_system.tick(delta, player.position, enemies, damage_brew_enemy)
-	if ended or boss_death:
-		return
-	if skill_mobility:
-		skill_mobility.tick(delta, player.position, enemies, skill_action_context())
-		player.walk_speed_scale = skill_mobility.walk_speed_scale
 	for i in range(pickups.size() - 1, -1, -1):
 		var pickup := pickups[i]
 		var art: Sprite2D = pickup.sprite
@@ -663,6 +693,35 @@ func _physics_process(delta: float) -> void:
 				run_manager.collect_material(String(drop.material_id), int(drop.amount))
 			dsprite.queue_free()
 			material_drops.remove_at(i)
+
+func advance_combat_skills(delta: float, basic_attack_enabled := true) -> void:
+	if basic_attack_enabled:
+		until_attack -= delta
+		if until_attack <= 0:
+			var nearest: Dictionary = {}
+			var reach := 148.0
+			for entry in enemies:
+				var dist: float = player.position.distance_to(entry.body.position)
+				if dist < reach:
+					reach = dist
+					nearest = entry
+			if not nearest.is_empty():
+				until_attack = 0.47
+				launch_basic_projectile(nearest)
+	if ended or boss_death:
+		return
+	# 新技能系统：炼金能力改造 + 元素联动（替换旧 brew.cast_equipped）
+	if alchemy_system:
+		alchemy_system.tick(delta, player.position, enemies, damage_brew_enemy)
+	if ended or boss_death:
+		return
+	if skill_mobility:
+		skill_mobility.tick(delta, player.position, enemies, skill_action_context())
+		player.walk_speed_scale = skill_mobility.walk_speed_scale
+	if independent_field:
+		independent_field.tick(delta, player.position, enemies, skill_action_context())
+	if not ended and not boss_death and independent_guard:
+		independent_guard.tick(delta, player.position, enemies, skill_action_context())
 
 func update_field_hint() -> void:
 	# 获得提示优先显示（短暂）
@@ -721,10 +780,16 @@ func clear_combat_effects() -> void:
 		skill_mobility.clear()
 		if is_instance_valid(player):
 			player.walk_speed_scale = skill_mobility.walk_speed_scale
+	if independent_field:
+		independent_field.clear()
+	if independent_guard:
+		independent_guard.clear()
 	for visual in fallback_skill_visuals:
 		if is_instance_valid(visual.node):
 			visual.node.queue_free()
 	fallback_skill_visuals.clear()
+	if is_instance_valid(combo_fx_canvas):
+		combo_fx_canvas.clear_effects()
 	if is_instance_valid(effects):
 		for effect in effects.get_children():
 			if effect.has_meta("skill_expansion_fx"):
@@ -862,6 +927,18 @@ func on_synergy_effect(syn: Dictionary, at: Vector2) -> void:
 # info: {"skill_id", "event", "from", "target", "color", "radius", "speed", "split_side", "state"}
 func play_skill_fx(info: Dictionary) -> void:
 	var skill_id: String = String(info.get("skill_id", ""))
+	var combo := SKILLS.combo_by_id(StringName(skill_id))
+	if not combo.is_empty():
+		if ended or boss_death:
+			return
+		if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+			hd_view.world_view.show_skill_fx(info)
+		elif is_instance_valid(effects):
+			if not is_instance_valid(combo_fx_canvas):
+				combo_fx_canvas = COMBO_FX_CANVAS.new()
+				effects.add_child(combo_fx_canvas)
+			combo_fx_canvas.show_effect(info)
+		return
 	var event_name: String = String(info.get("event", "cast"))
 	var behavior: String = String(info.get("behavior", ""))
 	var from: Vector2 = info.get("from", Vector2.ZERO)
@@ -1026,8 +1103,82 @@ func advance_fallback_skill_visuals(delta: float) -> void:
 
 func skill_action_context() -> Dictionary:
 	return {"moving":player.walked_this_frame and not player.locked,
+		"walk_from":player.walk_from, "move_from":player.ordinary_from, "move_to":player.ordinary_to,
+		"ordinary_motion":player.ordinary_motion and not player.locked, "forced_motion":player.forced_motion,
+		"walk_speed":player.WALK_SPEED * player.walk_speed_scale, "dodge_ready":player.cooldown <= 0.0,
 		"facing":player.direction, "missing_health":maxf(0.0, MAX_HP - hp),
-		"heal":heal_player, "bounds":Rect2() if is_infinite_field() else player.movement_bounds}
+		"heal":heal_player, "bounds":Rect2() if is_infinite_field() else player.movement_bounds,
+		"clip_segment":_clip_combo_segment, "clip_walk":_clip_combo_walk,
+		"valid_dew_ground":_combo_ground_clear, "valid_combo_ground":_combo_ground_clear,
+		"gate_walk_clear":_gate_walk_clear, "gate_exit_valid":_gate_exit_valid,
+		"hazards":_active_combo_hazards(), "interrupt_attack":_interrupt_combo_attack,
+		"combo_damage":_damage_combo_enemy}
+
+func _bounded_combo_target(from: Vector2, target: Vector2) -> Vector2:
+	var bounds: Rect2 = active_map_bounds() if is_infinite_field() else player.movement_bounds
+	return alchemy_system.skills.combo_rules.clip({"bounds": bounds}, from, target)
+
+func _clip_combo_segment(from: Vector2, target: Vector2) -> Vector2:
+	var end := _bounded_combo_target(from, target)
+	if from.is_equal_approx(end):
+		return end
+	var query := PhysicsRayQueryParameters2D.create(actors.to_global(from), actors.to_global(end), 1)
+	query.hit_from_inside = true
+	var hit := get_world_2d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return end
+	var contact: Vector2 = actors.to_local(hit.position)
+	return contact.move_toward(from, 0.5)
+
+func _clip_combo_walk(from: Vector2, target: Vector2) -> Vector2:
+	var end := _bounded_combo_target(from, target)
+	var query := _combo_feet_query(from)
+	var space := get_world_2d().direct_space_state
+	if not space.intersect_shape(query, 1).is_empty():
+		return from
+	if from.is_equal_approx(end):
+		return end
+	query.motion = actors.to_global(end) - actors.to_global(from)
+	var fractions := space.cast_motion(query)
+	return from.lerp(end, fractions[0]) if not fractions.is_empty() else from
+
+func _combo_feet_query(at: Vector2) -> PhysicsShapeQueryParameters2D:
+	var feet: CollisionShape2D = player.get_node("Feet")
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = feet.shape
+	query.collision_mask = 1
+	query.transform = feet.global_transform
+	query.transform.origin = actors.to_global(at) + feet.global_position - player.global_position
+	return query
+
+func _combo_ground_clear(at: Vector2) -> bool:
+	var bounds: Rect2 = active_map_bounds() if is_infinite_field() else player.movement_bounds
+	if not bounds.has_point(at) or (is_infinite_field() and not chunk_nodes.has(chunk_at(at))):
+		return false
+	return get_world_2d().direct_space_state.intersect_shape(_combo_feet_query(at), 1).is_empty()
+
+func _gate_walk_clear(from: Vector2, target: Vector2) -> bool:
+	return _combo_ground_clear(target) and _clip_combo_walk(from, target).distance_squared_to(target) <= 0.04
+
+func _gate_exit_valid(from: Vector2, target: Vector2) -> bool:
+	if not _combo_ground_clear(target) or (portal_ready and target.distance_to(portal_position) < 65.0):
+		return false
+	var query := PhysicsRayQueryParameters2D.create(actors.to_global(from), actors.to_global(target), 1)
+	query.hit_from_inside = true
+	var excluded: Array[RID] = []
+	for block in blocks:
+		if is_instance_valid(block) and block.has_meta("gate_crossable"):
+			excluded.append(block.get_rid())
+	query.exclude = excluded
+	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
+
+func _interrupt_combo_attack(entry: Dictionary, token: int, recovery: float) -> bool:
+	var body := entry.get("body") as FIELD_ENEMY
+	if not is_instance_valid(body) or int(body.windup_snapshot().get("token", -1)) != token:
+		return false
+	body.interrupt_windup(token, recovery)
+	entry.windup = body.windup_snapshot()
+	return true
 
 func heal_player(amount: float) -> float:
 	if not stage_active or not combat or ended or boss_death or hp <= 0.0 or amount <= 0.0:
@@ -1036,11 +1187,12 @@ func heal_player(amount: float) -> float:
 	hp += restored
 	return restored
 
-func hurt(amount: float, knock_direction := Vector2.ZERO) -> bool:
+func hurt(amount: float, knock_direction := Vector2.ZERO, source: Node2D = null) -> bool:
 	if ended or boss_death or hurt_cooldown > 0 or player.dodge > 0 or amount <= 0.0:
 		return false
 	hurt_cooldown = 0.55
-	hp = maxf(0.0, hp - amount)
+	var coat := independent_guard.mitigate(amount, player.position) if independent_guard else {}
+	hp = maxf(0.0, hp - float(coat.get("amount", amount)))
 	if skill_mobility:
 		skill_mobility.interrupt_dew()
 	player.show_hurt()
@@ -1051,6 +1203,8 @@ func hurt(amount: float, knock_direction := Vector2.ZERO) -> bool:
 		if not knock_direction.is_zero_approx():
 			player.knockback = knock_direction * 133.333
 			player.knockback_time = 0.15
+		if not coat.is_empty():
+			independent_guard.counter(player.position, source, enemies, float(coat.counter_damage), skill_action_context())
 	return true
 
 func spawn_enemy(kind: int = -1) -> void:
@@ -1084,17 +1238,23 @@ func add_enemy(row: ENEMY_ROW) -> void:
 	body.configure_difficulty(stats.damage_multiplier, stats.speed_multiplier)
 	actors.add_child(body)
 	body.position = at
-	enemies.append({"body": body, "hp": stats.hp, "max_hp": stats.hp, "boss": false})
+	enemies.append({"body": body, "hp": stats.hp, "max_hp": stats.hp, "boss": false,
+		"flying": row.kind == FIELD_ENEMY.Kind.BAT})
 
-func fire_web(at: Vector2, direction: Vector2, kind: int = FIELD_ENEMY.Kind.SPIDER, damage_multiplier := 1.0) -> void:
+func fire_web(at: Vector2, direction: Vector2, kind: int = FIELD_ENEMY.Kind.SPIDER,
+		damage_multiplier := 1.0, source: Node2D = null) -> void:
 	if kind == FIELD_ENEMY.Kind.MUSHROOM:
-		spore_patches.append({"position": at, "remaining": 2.8, "next_hit": 0.32, "damage_multiplier": damage_multiplier})
+		spore_patches.append({"id": _next_hazard_id, "position": at, "remaining": 2.8,
+			"next_hit": 0.32, "damage_multiplier": damage_multiplier, "source": source})
+		_next_hazard_id += 1
 	else:
 		var water := kind == FIELD_ENEMY.Kind.WATER_SPIRIT
-		web_shots.append({"position": at, "direction": direction, "remaining": 1.0 if water else 1.15, "water": water, "damage_multiplier": damage_multiplier})
+		web_shots.append({"position": at, "direction": direction, "remaining": 1.0 if water else 1.15,
+			"water": water, "damage_multiplier": damage_multiplier, "source": source})
 	web_layer.queue_redraw()
 
 func advance_webs(delta: float) -> void:
+	_reflect_enemy_shots(delta)
 	if web_shots.is_empty() and spore_patches.is_empty():
 		return
 	advance_spores(delta)
@@ -1121,7 +1281,8 @@ func advance_webs(delta: float) -> void:
 		else:
 			shot.position = goal
 		if hit_player:
-			hurt(FIELD_ENEMY.DAMAGE * float(shot.get("damage_multiplier", 1.0)))
+			hurt(FIELD_ENEMY.DAMAGE * float(shot.get("damage_multiplier", 1.0)), Vector2.ZERO,
+				_living_damage_source(shot))
 			if ended:
 				return
 	web_layer.queue_redraw()
@@ -1136,7 +1297,10 @@ func advance_spores(delta: float) -> void:
 		patch.next_hit -= delta
 		if patch.next_hit <= 0.0 and player.global_position.distance_squared_to(patch.position) <= FIELD_ENEMY.SPORE_RADIUS ** 2:
 			patch.next_hit = 0.68
-			hurt(FIELD_ENEMY.DAMAGE * float(patch.get("damage_multiplier", 1.0)))
+			if skill_mobility and skill_mobility.independent.hazard_safe(int(patch.get("id", -1)), player.position):
+				continue
+			hurt(FIELD_ENEMY.DAMAGE * float(patch.get("damage_multiplier", 1.0)), Vector2.ZERO,
+				_living_damage_source(patch))
 			if ended:
 				return
 
@@ -1146,6 +1310,38 @@ func clear_webs() -> void:
 	if is_instance_valid(web_layer):
 		web_layer.queue_redraw()
 
+func _active_combo_hazards() -> Array[Dictionary]:
+	var hazards: Array[Dictionary] = []
+	for patch in spore_patches:
+		var left := float(patch.remaining)
+		if left > 0.0 and left <= 2.48 and patch.has("id"):
+			hazards.append({"id":patch.id, "pos":actors.to_local(patch.position),
+				"radius":FIELD_ENEMY.SPORE_RADIUS, "remaining":left})
+	return hazards
+
+func _living_damage_source(event: Dictionary) -> Node2D:
+	var source: Variant = event.get("source")
+	return source if is_instance_valid(source) else null
+
+func _reflect_enemy_shots(delta: float) -> void:
+	if independent_guard == null or ended or boss_death:
+		return
+	var flying: Array[Dictionary] = []
+	for shot in web_shots:
+		flying.append({"owner":web_shots, "shot":shot, "pos":actors.to_local(shot.position),
+			"direction":shot.direction, "speed":330.0 if shot.water else 280.0, "left":shot.remaining})
+	if is_instance_valid(boss):
+		for shot: Dictionary in boss.shots:
+			if float(shot.fade) < 0.0:
+				flying.append({"owner":boss.shots, "shot":shot, "pos":shot.point,
+					"direction":shot.direction, "speed":boss.SHOT_SPEED, "left":shot.life,
+					"clip":_clip_boss_combo_shot})
+	independent_guard.intercept(delta, player.position, flying, skill_action_context())
+
+func _clip_boss_combo_shot(from: Vector2, target: Vector2) -> Vector2:
+	var end: Vector2 = alchemy_system.skills.combo_rules.clip({"bounds":boss.travel_bounds}, from, target)
+	return boss.wall_hit(from, end)
+
 func draw_webs() -> void:
 	for patch in spore_patches:
 		var at := web_layer.to_local(patch.position)
@@ -1153,12 +1349,28 @@ func draw_webs() -> void:
 		var age: float = 2.8 - patch.remaining
 		var visibility := minf(patch.remaining / 0.45, 1.0)
 		var armed := age >= 0.32
-		web_layer.draw_circle(at, radius, Color(0.63, 0.32, 0.73, (0.29 if armed else 0.12) * visibility))
-		web_layer.draw_arc(at, radius, 0, TAU, 32, Color(0.89, 0.69, 0.94, 0.78 * visibility), 2.0, true)
+		var id := int(patch.get("id", -1))
+		var movement = skill_mobility.independent if skill_mobility else null
+		var cut: bool = movement != null and not movement.hazard_mask(id).is_empty()
+		var fill := Color(0.63, 0.32, 0.73, (0.29 if armed else 0.12) * visibility)
+		var edge := Color(0.89, 0.69, 0.94, 0.78 * visibility)
+		if cut:
+			for polygon: PackedVector2Array in movement.hazard_fill(id):
+				web_layer.draw_colored_polygon(polygon, fill)
+			for index in 32:
+				var start := at + Vector2.from_angle(TAU * float(index) / 32.0) * radius
+				var end := at + Vector2.from_angle(TAU * float(index + 1) / 32.0) * radius
+				if not movement.hazard_safe(id, start.lerp(end, 0.5)):
+					web_layer.draw_line(start, end, edge, 2.0, true)
+		else:
+			web_layer.draw_circle(at, radius, fill)
+			web_layer.draw_arc(at, radius, 0, TAU, 32, edge, 2.0, true)
 		if armed:
 			for mote in range(7):
 				var angle := mote * 2.39996 + age * 0.85
 				var offset := Vector2.from_angle(angle) * (11.0 + mote * 4.0)
+				if cut and movement.hazard_safe(id, at + offset):
+					continue
 				web_layer.draw_circle(at + offset, 1.5 + (mote % 3) * 0.45, Color(0.93, 0.77, 1.0, 0.62 * visibility))
 	for shot in web_shots:
 		var at := web_layer.to_local(shot.position)
@@ -1191,20 +1403,16 @@ func damage_brew_enemy(entry: Dictionary, damage: float, slow_seconds: float, sl
 			burst(entry.body.position, color)
 	damage_enemy(entry, damage)
 
+func _damage_combo_enemy(_combo_id: StringName, entry: Dictionary, amount: float) -> void:
+	damage_enemy(entry, amount)
+
 func damage_enemy(entry: Dictionary, damage: float) -> void:
 	if ended or boss_death or not enemies.has(entry) or damage <= 0.0 or float(entry.get("hp", 0.0)) <= 0.0:
 		return
 	var body: Node2D = entry.body
 	var dealt := minf(damage, float(entry.hp))
 	entry.hp -= damage
-	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
-		hd_view.world_view.show_damage_feedback(body.position, dealt)
-	else:
-		show_damage_number(body.position, dealt)
-	if entry.boss:
-		boss.show_hurt()
-	else:
-		body.show_hurt()
+	show_enemy_hit_feedback(entry, dealt)
 	if entry.hp > 0:
 		if hit_sound_cooldown <= 0.0 and is_instance_valid(enemy_hit_sound):
 			enemy_hit_sound.play()
@@ -1227,6 +1435,8 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 			boss_death = null
 			finish(true), CONNECT_ONE_SHOT)
 		return
+	if independent_field:
+		independent_field.notify_kill(at, skill_action_context())
 	defeated_art[body] = body.art
 	var death: Tween = body.play_death()
 	death.finished.connect(remove_defeated.bind(body), CONNECT_ONE_SHOT)
@@ -1240,6 +1450,17 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 		inventory[4] += 1
 	add_pickup(at + Vector2(-9, 0), 0)
 	add_pickup(at + Vector2(9, 0), 1)
+
+func show_enemy_hit_feedback(entry: Dictionary, damage: float) -> void:
+	var body: Node2D = entry.body
+	if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+		hd_view.world_view.show_damage_feedback(body.position, damage)
+	else:
+		show_damage_number(body.position, damage)
+	if entry.boss:
+		boss.show_hurt()
+	else:
+		body.show_hurt()
 
 func remove_defeated(body: Node2D) -> void:
 	defeated_art.erase(body)

@@ -85,7 +85,24 @@ func setup(enemy_kind: int, bounds: Rect2, atlas: Texture2D) -> void:
 	add_child(art)
 	update_art()
 
-func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callable, slow: float = 1.0) -> void:
+var attack_token := 0
+
+func windup_snapshot() -> Dictionary:
+	if dying or state != State.WINDUP or remaining <= 0.0:
+		return {}
+	return {"token": attack_token, "aim": aim, "remaining": remaining, "interruptible": true}
+
+func interrupt_windup(token: int, recovery: float) -> void:
+	if dying or state != State.WINDUP or token != attack_token:
+		return
+	state = State.RECOVER
+	remaining = recovery
+	velocity = Vector2.ZERO
+	update_art()
+	queue_redraw()
+
+func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callable, slow: float = 1.0,
+		chase_goal := Vector2.INF, limit_motion: Callable = Callable()) -> void:
 	if dying:
 		return
 	hurt_left = maxf(0.0, hurt_left - delta)
@@ -100,10 +117,15 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 				aim = target_direction
 				locked_target = player_pos
 				state = State.WINDUP
+				attack_token += 1
 				remaining = WINDUPS[kind]
 				velocity = Vector2.ZERO
 			else:
-				velocity = target_direction * SPEEDS[kind] * slow * speed_multiplier
+				var heading := target_direction if not chase_goal.is_finite() else global_position.direction_to(chase_goal)
+				velocity = heading * SPEEDS[kind] * slow * speed_multiplier
+				if limit_motion.is_valid() and delta > 0.0:
+					var step_end: Vector2 = limit_motion.call(global_position, global_position + velocity * delta)
+					velocity = (step_end - global_position) / delta
 				move_and_slide()
 				motion_time += delta
 		State.WINDUP:
@@ -126,6 +148,9 @@ func advance(delta: float, player_pos: Vector2, hurt: Callable, fire_web: Callab
 			if DASH_SPEEDS[kind] > 0.0:
 				var start := global_position
 				var movement: Vector2 = aim * DASH_SPEEDS[kind] * slow * clampf(remaining + delta, 0.0, delta)
+				if limit_motion.is_valid():
+					var step_end: Vector2 = limit_motion.call(start, start + movement)
+					movement = step_end - start
 				var obstacle := move_and_collide(movement) if not hop_blocked else null
 				global_position = global_position.clamp(travel_bounds.position, travel_bounds.end)
 				if obstacle:

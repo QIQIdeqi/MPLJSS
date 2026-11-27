@@ -12,6 +12,7 @@ var pending_prologue: ConfigFile
 func _ready() -> void:
 	$Actions/Start.pressed.connect(start_new)
 	$Actions/Continue.pressed.connect(continue_game)
+	$Actions/SkillTest.pressed.connect(open_skill_test)
 	$Actions/Quit.pressed.connect(get_tree().quit)
 	refresh_continue()
 	$Actions/Start.grab_focus()
@@ -24,6 +25,21 @@ func _ready() -> void:
 	music.stream = loop
 	music.volume_db = -14
 	music.play()
+
+func open_skill_test() -> void:
+	var scene := load("res://scenes/skill_test_stage.tscn") as PackedScene
+	if scene == null:
+		show_message("技能测试场加载失败。")
+		return
+	var stage := scene.instantiate()
+	if stage.get_script() == null:
+		stage.free()
+		show_message("技能测试场加载失败。")
+		return
+	stage.save_path = save_path
+	if get_tree().change_scene_to_node(stage) != OK:
+		stage.free()
+		show_message("技能测试场加载失败。")
 
 func start_new() -> void:
 	if is_instance_valid(prologue):

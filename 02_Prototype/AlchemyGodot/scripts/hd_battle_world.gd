@@ -20,6 +20,8 @@ const BLAST_FLASK_IMPACT := preload("res://scripts/blast_flask_impact.gd")
 const BLAST_FLASK_FLIGHT := preload("res://scripts/blast_flask_flight.gd")
 const V2_SKILL_FX := preload("res://scripts/v2_skill_fx.gd")
 const EXPANSION_SKILL_FX := preload("res://scripts/skill_expansion_fx.gd")
+const COMBO_FX_DATA := preload("res://scripts/combo_fx_composition.gd")
+const COMBO_FX_WORLD := preload("res://scripts/combo_fx_world.gd")
 const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
 const UNITS_PER_PIXEL := 0.01
 const SOURCE_HIDDEN_LAYER := 4
@@ -32,6 +34,7 @@ var landscape: LANDSCAPE
 var actor_cards: Dictionary[int, Sprite3D] = {}
 var raised_hits: Array[Node2D] = []
 var attack_effects := Node3D.new()
+var combo_effects := COMBO_FX_WORLD.new()
 var particle_mesh: QuadMesh
 var generated_frames: Dictionary = {}
 var battle_focus := Vector3.ZERO
@@ -54,6 +57,8 @@ func setup(source: Node2D, canvas_texture: Texture2D) -> void:
 	landscape = LANDSCAPE.new()
 	add_child(landscape)
 	add_child(attack_effects)
+	add_child(combo_effects)
+	combo_effects.name = "ComboEffects"
 	rebuild()
 	var overlay := MeshInstance3D.new()
 	overlay.name = "GroundEffects"
@@ -120,6 +125,7 @@ func clear_skill_fx() -> void:
 		return
 	for effect in attack_effects.get_children():
 		effect.queue_free()
+	combo_effects.clear_effects()
 	raised_hits.clear()
 	tracked_projectiles.clear()
 	damage_numbers.clear()
@@ -169,7 +175,8 @@ func update_view(delta: float) -> void:
 	var boss_depth := -camera.to_local(boss_focus).z
 	lens.dof_blur_near_distance = maxf(camera.near, minf(player_depth, boss_depth) - 0.9)
 	lens.dof_blur_far_distance = maxf(player_depth, boss_depth) + 1.2
-	if not field.ended and not field.brew.blocks_world() and not field.portal_dialog.visible:
+	var advancing: bool = not field.ended and not field.world_controls_blocked()
+	if advancing:
 		weather.advance(delta, player_at)
 		update_time_of_day(delta)
 	landscape.set_snow_cover(weather.snow_cover)
@@ -178,8 +185,8 @@ func update_view(delta: float) -> void:
 	atmosphere.ambient_light_energy = maxf(0.34, atmosphere.ambient_light_energy)
 	sun.light_energy = maxf(0.19, sun.light_energy)
 	update_actor_cards()
-	var advancing: bool = not field.ended and not field.brew.blocks_world() and not field.portal_dialog.visible
 	attack_effects.process_mode = Node.PROCESS_MODE_INHERIT if advancing else Node.PROCESS_MODE_DISABLED
+	combo_effects.process_mode = attack_effects.process_mode
 	_update_tracked_fx(delta if advancing else 0.0)
 
 func update_actor_cards() -> void:
@@ -288,6 +295,9 @@ func raise_attack(impact: Node2D, from: Vector2, at: Vector2, tint: Color) -> vo
 # 视图中呈现同一次施法，避免效果被地面捕获画布压暗或遮挡。
 func show_skill_fx(info: Dictionary) -> void:
 	var skill_id := String(info.get("skill_id", ""))
+	if COMBO_FX_DATA.supports(skill_id):
+		combo_effects.show_effect(info)
+		return
 	var event_name := String(info.get("event", "cast"))
 	var from: Vector2 = info.get("from", Vector2.ZERO)
 	var target: Vector2 = info.get("target", from)

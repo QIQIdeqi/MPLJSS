@@ -5,6 +5,7 @@ extends RefCounted
 # 不在施放帧直接结算全部伤害。field 只负责敌人、伤害反馈与视觉桥接。
 const SKILLS := preload("res://data/skills/skill_data.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
+const COMBO_RULES := preload("res://scripts/skills/skill_combo_rules.gd")
 const BLAST_FLASK := &"sk_blast_flask"
 const SPLIT_LAUNCH_OFFSET := 16.0
 
@@ -16,10 +17,12 @@ var active: Array[Dictionary] = []
 var chain_cooldowns: Dictionary = {}
 var brittle_marks: Dictionary[int, Dictionary] = {}
 var combat_clock := 0.0
+var combo_rules := COMBO_RULES.new()
 
 func setup(p_ability_id: StringName, p_field) -> void:
 	ability_id = p_ability_id
 	field = p_field
+	combo_rules.setup(self)
 
 func add_skill(skill_id: StringName) -> bool:
 	if runtimes.size() >= max_skill_slots or has_skill(skill_id):
@@ -230,6 +233,8 @@ func _cast_wind_flask(runtime: SkillRuntime, from: Vector2, facing: Vector2, ene
 			if pushed.has(body) or not _inside_wind_cone(from, angle, body.position, half_angle):
 				continue
 			pushed[body] = true
+			if bool(entry.get("anchored", false)) or bool(entry.get("rewinding", false)):
+				continue
 			var away := from.direction_to(body.position)
 			if away.is_zero_approx():
 				away = angle
@@ -505,7 +510,8 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 				# 两份引力各用一半牵引，重叠时不会把同一目标拉得比原版更快。
 				var strength := 0.5 if int(state.get("split_side", 0)) != 0 else 1.0
 				for entry in enemies:
-					if _living(entry) and entry.body.position.distance_to(state.pos) <= float(state.radius):
+					if _living(entry) and not bool(entry.get("anchored", false)) and not bool(entry.get("rewinding", false)) \
+							and entry.body.position.distance_to(state.pos) <= float(state.radius):
 						entry.body.position = entry.body.position.lerp(state.pos, minf(.12, delta * .55) * strength)
 				if state.left <= 0.0:
 					finished = true

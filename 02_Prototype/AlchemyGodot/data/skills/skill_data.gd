@@ -122,8 +122,33 @@ const ROWS := [
 	},
 ]
 
-# 新组合完成设计后在这里注册配方。
-const CHAINS: Array[Dictionary] = []
+# 固定组合由两项已装备的基础技能解锁，独立于基础技能池和技能槽。
+const CHAINS: Array[Dictionary] = [
+	{"id": &"combo_furnace", "name": "熔火炉", "parents": ["sk_blast_flask", "sk_fire_oil"],
+		"attribute": ATTRIBUTE_STARFIRE, "cooldown": 9.0, "color": Color("ff9b55")},
+	{"id": &"combo_thunder_coat", "name": "雷衣", "parents": ["sk_brittle_mark", "sk_thunder_salt"],
+		"attribute": ATTRIBUTE_STARFIRE, "cooldown": 12.0, "color": Color("ffe0a5")},
+	{"id": &"combo_tide_mirror", "name": "回浪镜", "parents": ["sk_mithril_drop", "sk_wind_flask"],
+		"attribute": ATTRIBUTE_TIDE, "cooldown": 8.5, "color": Color("a9edee")},
+	{"id": &"combo_rewind_anchor", "name": "回流锚", "parents": ["sk_gravity_stone", "sk_mercury_ring"],
+		"attribute": ATTRIBUTE_TIDE, "cooldown": 9.5, "color": Color("a5cdf6")},
+	{"id": &"combo_cleanser", "name": "净路剂", "parents": ["sk_corrosive_flask", "sk_return_wind_powder"],
+		"attribute": ATTRIBUTE_TIDE, "cooldown": 10.0, "color": Color("acf9dc")},
+	{"id": &"combo_crystal_gate", "name": "晶门", "parents": ["sk_crystal_growth", "sk_wind_boots"],
+		"attribute": ATTRIBUTE_CRYSTAL_CORE, "cooldown": 10.0, "color": Color("b7f6ff")},
+	{"id": &"combo_crystal_wall", "name": "寒晶墙", "parents": ["sk_obsidian_blade", "sk_frost_powder"],
+		"attribute": ATTRIBUTE_CRYSTAL_CORE, "cooldown": 12.0, "color": Color("91ddff")},
+	{"id": &"combo_opening_counter", "name": "照影", "parents": ["sk_soul_needle", "sk_feather_draught"],
+		"attribute": ATTRIBUTE_AETHER, "cooldown": 8.0, "color": Color("f3dbac")},
+	{"id": &"combo_dew_pickup", "name": "收露瓶", "parents": ["sk_renewal_flask", "sk_dew_tonic"],
+		"attribute": ATTRIBUTE_AETHER, "cooldown": 11.0, "color": Color("ffdc89")},
+]
+
+static func combo_by_id(combo_id: StringName) -> Dictionary:
+	for chain: Dictionary in CHAINS:
+		if chain.id == combo_id:
+			return chain
+	return {}
 
 static func by_id(id: StringName) -> Dictionary:
 	for row in ROWS:
