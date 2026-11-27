@@ -331,7 +331,7 @@ func show_skill_fx(info: Dictionary) -> void:
 					accent.position = camera.global_basis.z.slide(Vector3.UP).normalized() * 0.14
 				accent.start_mark(split_side, direction, 0.35, 0.38)
 		return
-	if skill_id.begins_with("sk_") or skill_id.begins_with("link_"):
+	if skill_id.begins_with("sk_"):
 		var effect := V2_SKILL_FX.new()
 		_add_v2_effect(effect, skill_id, event_name)
 		effect.start(info)

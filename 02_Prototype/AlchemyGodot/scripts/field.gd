@@ -706,7 +706,7 @@ func advance_basic_projectiles(delta: float) -> void:
 					"target":target.body.position, "color":Color(0.65, 0.30, 1.00), "state":state})
 				var damage := float(state.damage)
 				if alchemy_system and alchemy_system.skills:
-					damage += alchemy_system.skills.break_brittle_mark(target, enemies)
+					damage += alchemy_system.skills.break_brittle_mark(target)
 				damage_enemy(target, damage)
 		if state.finished:
 			basic_projectiles.remove_at(index)
@@ -806,7 +806,12 @@ func restore_run(state: Dictionary) -> void:
 			runtime.config = item.config.duplicate(true)
 			runtime.cooldown_left = float(item.cooldown)
 			runtime.cooldown_total = maxf(runtime.cooldown_left, float(item.get("cooldown_total", runtime.cooldown())))
-	alchemy_system.skills.chain_cooldowns = state.chain_cooldowns.duplicate(true)
+	alchemy_system.skills.chain_cooldowns.clear()
+	var previous_chain_cooldowns: Dictionary = state.get("chain_cooldowns", {})
+	for chain: Dictionary in alchemy_system.skills.unlocked_chains():
+		var chain_id := StringName(chain.id)
+		if previous_chain_cooldowns.has(chain_id):
+			alchemy_system.skills.chain_cooldowns[chain_id] = previous_chain_cooldowns[chain_id]
 	alchemy_system.synergies.cooldowns = state.synergy_cooldowns.duplicate(true)
 	alchemy_system.upgrades.rng.seed = int(state.upgrade_rng_seed)
 	alchemy_system.upgrades.rng.state = int(state.upgrade_rng_state)
@@ -881,7 +886,7 @@ func play_skill_fx(info: Dictionary) -> void:
 		SKILL_FX.explosion(effects, center - sideways * 14.0, Color("#78ebcf"), 12.0)
 		SKILL_FX.explosion(effects, center + sideways * 14.0, Color("#d198ff"), 12.0)
 		return
-	if skill_id in ["sk_brittle_mark", "link_blast_mark"]:
+	if skill_id == "sk_brittle_mark":
 		var visual := V2_SKILL_FX.start_fallback(effects, info)
 		if visual:
 			fallback_skill_visuals.append({"state":info.state, "node":visual, "follow_v2":true})
@@ -918,10 +923,10 @@ func play_skill_fx(info: Dictionary) -> void:
 		cloud.modulate = Color(color, .48)
 		fallback_skill_visuals.append({"state":state, "node":cloud, "fade":0.45})
 		return
-	if skill_id.begins_with("sk_") or skill_id.begins_with("link_"):
+	if skill_id.begins_with("sk_"):
 		match event_name:
 			"cast", "flight":
-				if skill_id in ["sk_soul_needle", "link_soulbound_needle"]:
+				if skill_id == "sk_soul_needle":
 					SKILL_FX.line(effects, from, target, color)
 				else:
 					SKILL_FX.projectile(effects, from, target, color, speed)

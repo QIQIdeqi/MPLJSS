@@ -122,13 +122,8 @@ const ROWS := [
 	},
 ]
 
-const CHAINS := [
-	{"id":"link_blast_mark", "name":"爆裂刻印", "parents":["sk_blast_flask","sk_brittle_mark"], "carrier":"sk_brittle_mark", "cooldown":6.0, "radius":150.0, "targets":3, "damage_ratio":.65, "speed":850.0, "color":Color("ed853e")},
-	{"id":"link_mithril_orbit", "name":"秘银星环", "parents":["sk_mithril_drop","sk_gravity_stone"], "carrier":"sk_gravity_stone", "cooldown":8.0, "color":Color("d9edf2")},
-	{"id":"link_corrosive_mist", "name":"蚀骨毒雾", "parents":["sk_corrosive_flask","sk_mist_flask"], "carrier":"sk_mist_flask", "cooldown":8.0, "color":Color("a4b450")},
-	{"id":"link_crystal_shatter_blade", "name":"晶裂飞刃", "parents":["sk_crystal_growth","sk_obsidian_blade"], "carrier":"sk_obsidian_blade", "cooldown":5.0, "color":Color("b9eaff")},
-	{"id":"link_soulbound_needle", "name":"噬魂针", "parents":["sk_spirit_gel","sk_soul_needle"], "carrier":"sk_soul_needle", "cooldown":4.0, "color":Color("91e7ef")},
-]
+# 新组合完成设计后在这里注册配方。
+const CHAINS: Array[Dictionary] = []
 
 static func by_id(id: StringName) -> Dictionary:
 	for row in ROWS:

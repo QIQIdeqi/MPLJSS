@@ -1,7 +1,6 @@
 extends SceneTree
 
 const HD_BATTLE := preload("res://scripts/hd_battle_view.gd")
-const SKILLS := preload("res://data/skills/skill_data.gd")
 const STEP := 1.0 / 60.0
 const OUTPUT := "res://.godot/v2_hd_fx_review"
 const TESTS := [
@@ -15,11 +14,6 @@ const TESTS := [
 	{"id": "sk_obsidian_blade", "events": ["flight", "impact", "hop"], "capture": ["flight", "hop"]},
 	{"id": "sk_spirit_gel", "events": ["flight", "impact"], "capture": ["flight", "impact"]},
 	{"id": "sk_soul_needle", "events": ["flight", "impact"], "capture": ["flight", "impact"]},
-	{"id": "link_blast_mark", "events": ["shard_flight", "shard_impact"], "capture": ["shard_flight", "shard_impact"]},
-	{"id": "link_mithril_orbit", "events": ["zone_start", "zone_tick"], "capture": ["zone_start", "zone_tick"]},
-	{"id": "link_corrosive_mist", "events": ["zone_start", "zone_tick"], "capture": ["zone_start", "zone_tick"]},
-	{"id": "link_crystal_shatter_blade", "events": ["impact"], "capture": ["impact"]},
-	{"id": "link_soulbound_needle", "events": ["flight", "impact"], "capture": ["flight", "impact"]},
 ]
 const TARGET_OFFSETS := [Vector2(109, 5), Vector2(156, -34), Vector2(172, 39), Vector2(214, 2)]
 
@@ -100,28 +94,20 @@ func _review() -> void:
 
 func _review_skill(test: Dictionary) -> bool:
 	var id: String = test.id
-	var needs_mark_hit := id in ["sk_brittle_mark", "link_blast_mark"]
+	var needs_mark_hit := id == "sk_brittle_mark"
 	var from: Vector2 = battle.player.position
 	skill_manager.clear()
 	if capture:
 		world.cycle_time = 38.0 if capture_night else 0.0
 		world.update_time_of_day(0.0)
 	var required: Dictionary = {}
-	var instances: Dictionary = {}
 	for event: String in test.events:
 		required[event] = false
 	var capture_schedule: Dictionary = {}
 	hits = 0
-	for base_id: String in _equipped_ids(id):
-		battle.apply_upgrade({"type":"new_skill", "skill_id":base_id})
-		if not skill_manager.has_skill(StringName(base_id)):
-			return _fail("%s cannot equip %s" % [id, base_id])
-	if id.begins_with("link_"):
-		if skill_manager.runtimes.size() != 2 or skill_manager.has_skill(StringName(id)):
-			return _fail("%s consumed a skill slot" % id)
-		var active_combos := skill_manager.unlocked_chains()
-		if active_combos.size() != 1 or active_combos[0].id != id:
-			return _fail("%s was not activated by its two parent rewards" % id)
+	battle.apply_upgrade({"type":"new_skill", "skill_id":id})
+	if not skill_manager.has_skill(StringName(id)):
+		return _fail("%s cannot equip %s" % [id, id])
 
 	var targets: Array = battle.enemies
 	var empty_targets: Array = []
@@ -157,11 +143,8 @@ func _review_skill(test: Dictionary) -> bool:
 			var event := String(node.get_meta("event", ""))
 			if required.has(event):
 				required[event] = true
-				if not instances.has(event):
-					instances[event] = {}
-				instances[event][node.get_instance_id()] = true
 			if capture and event in test.capture and not capture_schedule.has(event):
-				var delay := 3 if event in ["flight", "cast", "hop", "shard_flight"] else 7
+				var delay := 3 if event in ["flight", "cast", "hop"] else 7
 				capture_schedule[event] = frame + delay
 		if capture:
 			for event in capture_schedule:
@@ -187,14 +170,6 @@ func _review_skill(test: Dictionary) -> bool:
 	for event in required:
 		if not required[event]:
 			return _fail("%s did not create a node for %s" % [id, event])
-	if id == "link_soulbound_needle" and (instances.flight.size() != 3 or instances.impact.size() != 1):
-		return _fail("Soulbound should release three needles and mark the target only once per volley")
-	if id == "link_crystal_shatter_blade" and instances.impact.size() != 1:
-		return _fail("Crystal shatter should show one break per combo")
-	if id == "link_blast_mark":
-		var shards := mini(3, targets.size() - 1)
-		if instances.shard_flight.size() != shards or instances.shard_impact.size() != shards:
-			return _fail("Blast mark should create one flight and impact per eligible nearby secondary target")
 	if hits == 0:
 		return _fail("%s caused no hit in a stationary enemy group" % id)
 	# Give transient visuals time to finish before checking the persistent battlefield.
@@ -202,7 +177,7 @@ func _review_skill(test: Dictionary) -> bool:
 	await create_timer(1.0).timeout
 	for node in attack_effects.get_children():
 		var event := String(node.get_meta("event", ""))
-		if event in ["cast", "flight", "zone_start", "mark_start", "shard_flight"]:
+		if event in ["cast", "flight", "zone_start", "mark_start"]:
 			return _fail("%s retained %s/%s after its state ended" % [id, node.get_meta("skill_id", ""), event])
 	world.rebuild()
 	await process_frame
@@ -232,7 +207,7 @@ func _capture_overlap() -> bool:
 	world.rebuild()
 	await process_frame
 	await process_frame
-	print("V2_HD_FX_OVERLAP_CAPTURED: six equipped skills and three linked pairs")
+	print("V2_HD_FX_OVERLAP_CAPTURED: six equipped skills")
 	return true
 
 func _check_target_loss(id: StringName, outcome_event: String, expects_ground_effect: bool) -> bool:
@@ -272,12 +247,6 @@ func _check_target_loss(id: StringName, outcome_event: String, expects_ground_ef
 	await process_frame
 	print("V2_HD_FX_TARGET_LOSS_PASS %s" % id)
 	return true
-
-func _equipped_ids(id: String) -> Array:
-	for chain: Dictionary in SKILLS.CHAINS:
-		if chain.id == id:
-			return chain.parents
-	return [id]
 
 func _place_targets() -> void:
 	var enemies: Array = battle.enemies

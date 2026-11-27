@@ -6,7 +6,6 @@ const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
 const VIAL := preload("res://scenes/fx/brew_result_vial.png")
 const MIST := preload("res://art/vfx/v2/mist_flask_cloud_24f.png")
 const BRITTLE_SHATTER := preload("res://art/vfx/v2/pixelfx/brittle_mark_break.png")
-const BLAST_MARK_CONTACT := preload("res://art/vfx/v2/pixelfx/blast_mark_contact.png")
 const MITHRIL_FLIGHT := preload("res://art/vfx/v2/pixelfx/mithril_flight.png")
 const MITHRIL_IMPACT := preload("res://art/vfx/v2/pixelfx/mithril_impact.png")
 const GRAVITY_FLIGHT := preload("res://art/vfx/v2/pixelfx/gravity_flight.png")
@@ -17,11 +16,6 @@ const MIST_ZONE := preload("res://art/vfx/v2/pixelfx/mist_zone.png")
 const CRYSTAL_IMPACT := preload("res://art/vfx/v2/pixelfx/crystal_impact.png")
 const OBSIDIAN_IMPACT := preload("res://art/vfx/v2/pixelfx/obsidian_impact.png")
 const NEEDLE_FLIGHT := preload("res://art/vfx/v2/pixelfx/needle_flight.png")
-const MITHRIL_ORBIT := preload("res://art/vfx/v2/pixelfx/mithril_orbit.png")
-const CORROSIVE_MIST := preload("res://art/vfx/v2/pixelfx/corrosive_mist.png")
-const CRYSTAL_SHATTER := preload("res://art/vfx/v2/pixelfx/crystal_shatter.png")
-const SOULBOUND_FLIGHT := preload("res://art/vfx/v2/pixelfx/soulbound_flight.png")
-const SOULBOUND_IMPACT := preload("res://art/vfx/v2/pixelfx/soulbound_impact.png")
 const SPIRIT_GEL_FLIGHT := preload("res://art/vfx/v2/spirit_gel/spirit_gel_flight_24f.png")
 const SPIRIT_GEL_IMPACT := preload("res://art/vfx/v2/spirit_gel/spirit_gel_impact_24f.png")
 const ATLAS_COLUMNS := 8
@@ -32,7 +26,6 @@ const WORLD_SCALE := 0.01
 const FLOOR_Y := 0.055
 const ZONE_FADE_DURATION := 0.45
 const BREAK_DURATION := 0.36
-const SHARD_CONTACT_DURATION := 0.25
 const MARK_COLOR := Color("#ffc171")
 
 enum Ground { RIPPLE, POOL, VORTEX, ORBIT, MIST, ACID }
@@ -43,7 +36,6 @@ static var surface_materials: Dictionary[String, StandardMaterial3D] = {}
 static var atlas_crops: Dictionary[String, AtlasTexture] = {}
 static var fallback_animations: Dictionary[Texture2D, SpriteFrames] = {}
 static var mark_textures: Dictionary[int, ImageTexture] = {}
-static var shard_texture: ImageTexture
 
 var state: Dictionary = {}
 var skill_id := ""
@@ -62,7 +54,6 @@ var library_card: Sprite3D
 var zone_duration := 0.0
 var zone_card_foot := 0.0
 var floor_mat: ShaderMaterial
-var orbiters: Array[MeshInstance3D] = []
 
 func start(info: Dictionary) -> void:
 	skill_id = String(info.get("skill_id", ""))
@@ -79,7 +70,7 @@ func start(info: Dictionary) -> void:
 	world_radius = maxf(float(state.get("radius", info.get("radius", 0.0))) * WORLD_SCALE, 0.42)
 	position = _world_at(target)
 	match event_name:
-		"flight", "shard_flight":
+		"flight":
 			if state.is_empty():
 				queue_free()
 				return
@@ -101,8 +92,6 @@ func start(info: Dictionary) -> void:
 			_make_mark()
 		"mark_break":
 			_mark_break()
-		"shard_impact":
-			_shard_impact()
 		"impact":
 			_impact()
 		"zone_tick":
@@ -149,7 +138,7 @@ func _process(delta: float) -> void:
 			queue_free()
 			return
 	match event_name:
-		"flight", "shard_flight":
+		"flight":
 			_move_flight()
 		"zone_start":
 			position = _world_at(state.get("pos", Vector2.ZERO))
@@ -172,10 +161,6 @@ func _make_flight() -> void:
 	body = Node3D.new()
 	add_child(body)
 	match skill_id:
-		"link_blast_mark":
-			body_card = _card(_mark_shard_texture(), body, 0.018, Color.WHITE)
-			_streak(body, Vector3(-0.32, 0.0, 0.0), Vector3(-0.06, 0.0, 0.0), 0.013, Color("#ff914b"))
-			SKILL_LIGHT.add(body, Vector3(-0.048, 0.0, 0.0), 0.24, Color(MARK_COLOR, 0.40))
 		"sk_mithril_drop":
 			library_card = _library_sprite(MITHRIL_FLIGHT, body, 0.023)
 		"sk_gravity_stone":
@@ -200,8 +185,6 @@ func _make_flight() -> void:
 			body_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		"sk_soul_needle":
 			library_card = _library_sprite(NEEDLE_FLIGHT, body, 0.012)
-		"link_soulbound_needle":
-			library_card = _library_sprite(SOULBOUND_FLIGHT, body, 0.012)
 
 func _move_flight() -> void:
 	var at: Vector2 = state.get("pos", launch_point)
@@ -220,18 +203,11 @@ func _move_flight() -> void:
 		body_card.rotation.z = -age * (8.0 if skill_id == "sk_corrosive_flask" else 6.0)
 	elif skill_id == "sk_spirit_gel":
 		body_card.frame = floori(age * 36.0) % ATLAS_FRAMES
-	elif skill_id == "link_blast_mark":
-		var camera := _world_camera()
-		if camera:
-			var center := body_card.global_position
-			var ahead := center + _world_at(heading * 36.0)
-			var projected := camera.unproject_position(ahead) - camera.unproject_position(center)
-			body_card.global_basis = camera.global_basis * Basis(Vector3.BACK, -projected.angle())
 	elif body_card:
 		body_card.rotation.y = -body.rotation.y
 	if library_card:
 		library_card.frame = floori(age * 32.0) % ATLAS_FRAMES
-		if skill_id == "sk_soul_needle" or skill_id == "link_soulbound_needle":
+		if skill_id == "sk_soul_needle":
 			var camera := _world_camera()
 			if camera:
 				var center := library_card.global_position
@@ -252,17 +228,10 @@ func _make_zone() -> void:
 		"sk_mist_flask":
 			_ground(world_radius, Ground.MIST, Color("#626478"), Color("#b7bfdf"))
 			_make_library_zone(MIST_ZONE, 2.12, true, 0.0)
-		"link_mithril_orbit":
-			_ground(world_radius, Ground.ORBIT, Color("#67778f"), Color("#d2e9fa"))
-			_make_library_zone(MITHRIL_ORBIT, 1.80, true)
-			_make_orbiters(4, Color("#eaf4ff"))
-		"link_corrosive_mist":
-			_ground(world_radius, Ground.MIST, Color("#484559"), Color("#768b36"))
-			_make_library_zone(CORROSIVE_MIST, 2.0, true, 0.0)
 	_update_zone()
 
 func _is_mist_zone() -> bool:
-	return skill_id == "sk_mist_flask" or skill_id == "link_corrosive_mist"
+	return skill_id == "sk_mist_flask"
 
 func _update_zone() -> void:
 	if not floor_mat:
@@ -274,8 +243,6 @@ func _update_zone() -> void:
 		var card_alpha := 0.86
 		if skill_id == "sk_mist_flask":
 			card_alpha = 0.40
-		elif skill_id == "link_corrosive_mist":
-			card_alpha = 0.45
 		library_card.modulate.a = fade * card_alpha
 		if zone_card_foot > 0.0:
 			var camera := _world_camera()
@@ -285,19 +252,7 @@ func _update_zone() -> void:
 			library_card.frame = mini(floori(age / zone_duration * ATLAS_FRAMES), ATLAS_FRAMES - 1)
 		else:
 			library_card.frame = floori(age * 15.0) % ATLAS_FRAMES
-	for i in orbiters.size():
-		var angle := i * TAU / orbiters.size() + age * 2.1
-		var orbit := 0.65 + sin(age * 1.4 + i) * 0.10
-		var elevation := 0.13 + cos(age * 3.1 + i * 1.9) * 0.04
-		var radius := world_radius * orbit
-		orbiters[i].position = Vector3(cos(angle) * radius, elevation, sin(angle) * radius)
-		orbiters[i].rotation.y = -angle
-		orbiters[i].scale = Vector3.ONE * (0.053 * maxf(fade, 0.01))
 
-func _make_orbiters(count: int, tint: Color) -> void:
-	for i in count:
-		var stone := _piece(self, Vector3.ZERO, Vector3.ONE * 0.01, tint, true, true)
-		orbiters.append(stone)
 
 func _make_mark() -> void:
 	body = Node3D.new()
@@ -324,10 +279,6 @@ func _mark_break() -> void:
 	library_card.modulate = _mark_tint(split_side)
 	SKILL_LIGHT.add(self, Vector3.UP * (_mark_height(state) + 0.035), 0.49, Color(MARK_COLOR, 0.67), 0.16, 0.42)
 
-func _shard_impact() -> void:
-	_library_burst(BLAST_MARK_CONTACT, SHARD_CONTACT_DURATION, 0.0058, 0.31, true)
-	SKILL_LIGHT.add(self, Vector3.UP * 0.31, 0.34, Color("#ff9f55"), 0.12)
-
 func _impact() -> void:
 	lifetime = 0.37
 	match skill_id:
@@ -348,10 +299,6 @@ func _impact() -> void:
 		"sk_soul_needle":
 			lifetime = 0.21
 			_needle_glint(Color("#b5efe4"), 0.22)
-		"link_crystal_shatter_blade":
-			_library_burst(CRYSTAL_SHATTER, 0.60, 0.012, 0.25, true)
-		"link_soulbound_needle":
-			_library_burst(SOULBOUND_IMPACT, 0.40, 0.009, 0.28, true)
 
 func _spirit_gel_impact() -> void:
 	lifetime = ATLAS_FRAMES / SPIRIT_GEL_IMPACT_FPS
@@ -411,13 +358,9 @@ func _zone_tick() -> void:
 			tint = Color("#a9c858")
 		"sk_mist_flask":
 			tint = Color("#9caebf")
-		"link_mithril_orbit":
-			tint = Color("#c1d9e6")
-		"link_corrosive_mist":
-			tint = Color("#b2b760")
 		_:
 			return
-	_fragments(3, tint, minf(1.0, world_radius), 0.18, 0.19, skill_id == "link_mithril_orbit", 0.034)
+	_fragments(3, tint, minf(1.0, world_radius), 0.18, 0.19, false, 0.034)
 
 func _hop(target: Vector2, from: Vector2) -> void:
 	lifetime = 0.18
@@ -562,21 +505,6 @@ static func _brittle_texture(side: int, merged: bool) -> ImageTexture:
 		], palette)
 	return mark_textures[palette]
 
-static func _mark_shard_texture() -> ImageTexture:
-	if not shard_texture:
-		shard_texture = _mark_pixel_texture([
-		".................",
-		".............ao..",
-		"...a......oogga..",
-		"....agggogggcgo..",
-		"aagggccgccccggga.",
-		"....agggocgggga..",
-		"......aa..oggo...",
-		"............a....",
-		".................",
-		])
-	return shard_texture
-
 static func _mark_colors(side: int) -> Dictionary:
 	if side == 0:
 		return {"o": Color("#663121"), "a": Color("#a65b37"), "g": MARK_COLOR, "c": Color("#fff1c3")}
@@ -596,37 +524,32 @@ static func _mark_pixel_texture(rows: PackedStringArray, palette := 0) -> ImageT
 				image.set_pixel(x, y, colors[pixel])
 	return ImageTexture.create_from_image(image)
 
-## Shares the mark and shard art with the HD view. Returns only nodes bound to a live state.
+## Shares the mark art with the HD view. Returns only nodes bound to a live state.
 static func start_fallback(parent: Node2D, info: Dictionary) -> Node2D:
 	var event := String(info.get("event", ""))
 	var live_state: Dictionary = info.get("state", {})
 	var side := int(info.get("split_side", live_state.get("split_side", 0)))
-	if event == "mark_start" or event == "shard_flight":
+	if event == "mark_start":
 		if live_state.is_empty():
 			return null
 		var sprite := Sprite2D.new()
 		var merged: bool = live_state.get("split_merged", false)
-		sprite.texture = _brittle_texture(side, merged) if event == "mark_start" else _mark_shard_texture()
+		sprite.texture = _brittle_texture(side, merged)
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.scale = Vector2.ONE * (1.85 if merged else (1.6 if event == "mark_start" else 1.35))
+		sprite.scale = Vector2.ONE * (1.85 if merged else 1.6)
 		parent.add_child(sprite)
 		update_fallback(sprite, live_state)
 		return sprite
+	if event != "mark_break":
+		return null
 	var burst := AnimatedSprite2D.new()
 	burst.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	burst.modulate = _mark_tint(side)
 	var target: Vector2 = info.get("target", Vector2.ZERO)
-	if event == "mark_break":
-		burst.sprite_frames = _fallback_frames(BRITTLE_SHATTER, BREAK_DURATION)
-		burst.position = target + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
-		burst.offset.x = -27.0
-		burst.scale = Vector2.ONE * 0.52
-	else:
-		burst.sprite_frames = _fallback_frames(BLAST_MARK_CONTACT, SHARD_CONTACT_DURATION)
-		burst.position = target + Vector2.UP * 31.0
-		burst.scale = Vector2.ONE * 0.53
-		var direction: Vector2 = live_state.get("direction", Vector2.RIGHT)
-		burst.rotation = direction.angle()
+	burst.sprite_frames = _fallback_frames(BRITTLE_SHATTER, BREAK_DURATION)
+	burst.position = target + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
+	burst.offset.x = -27.0
+	burst.scale = Vector2.ONE * 0.52
 	parent.add_child(burst)
 	burst.animation_finished.connect(burst.queue_free, CONNECT_ONE_SHOT)
 	burst.play()
@@ -634,13 +557,9 @@ static func start_fallback(parent: Node2D, info: Dictionary) -> Node2D:
 
 static func update_fallback(node: Node2D, live_state: Dictionary) -> void:
 	var at: Vector2 = live_state.get("pos", Vector2.ZERO)
-	if live_state.get("kind", "") == "brittle_mark":
-		node.position = at + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
-		node.modulate.a = minf(float(live_state.get("left", 1.0)) * 7.0, 1.0)
-	else:
-		node.position = at + Vector2.UP * 31.0
-		var direction: Vector2 = live_state.get("direction", Vector2.RIGHT)
-		node.rotation = direction.angle()
+	node.position = at + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
+	node.modulate.a = minf(float(live_state.get("left", 1.0)) * 7.0, 1.0)
+
 
 static func _fallback_frames(texture: Texture2D, duration: float) -> SpriteFrames:
 	if not fallback_animations.has(texture):

@@ -16,26 +16,15 @@ func _initialize() -> void:
 	var world := BATTLE_WORLD.new()
 	root.add_child(world)
 	world.add_child(world.attack_effects)
-	world.show_skill_fx({"skill_id":"link_crystal_shatter_blade", "event":"impact", "target":Vector2(200.0, 200.0)})
-	assert(world.attack_effects.get_child_count() == 1, "Crystal combo should create one dedicated effect")
-	world.show_skill_fx({"skill_id":"link_soulbound_needle", "event":"impact", "target":Vector2(200.0, 200.0)})
-	assert(world.attack_effects.get_child_count() == 2, "Soulbound impact should create one dedicated mark")
 	world.show_skill_fx({"skill_id":"sk_blast_flask", "event":"impact", "target":Vector2(200.0, 200.0), "radius":96.0, "color":Color("e65b37")})
 	world.show_skill_fx({"skill_id":"sk_corrosive_flask", "event":"impact", "target":Vector2(200.0, 200.0), "radius":100.0, "color":Color("4f9d47")})
-	assert(world.attack_effects.get_child_count() == 4, "Grounded and stabilized impact effects should start")
-	var manager := SKILL_MANAGER.new()
-	var runtime := SkillRuntime.new()
-	runtime.setup(&"sk_soul_needle")
-	manager._spawn_needles(runtime, {}, true)
-	assert(manager.active.size() == 3, "Soulbound combo should schedule exactly three needles")
-	for index in 3:
-		assert(is_equal_approx(float(manager.active[index].left), .06 + .12 * index), "Soulbound launch timing mismatch")
-	_check_soulbound_flight(world)
+	assert(world.attack_effects.get_child_count() == 2, "Both base impact effects should start")
+	_check_needle_flight(world)
 	await _check_blast_flask(world)
-	print("v2_combo_fx_smoke: combo effects and blast flask launch, landing and cleanup passed")
+	print("v2_projectile_fx_smoke: basic needle volley and blast flask launch, landing and cleanup passed")
 	quit()
 
-func _check_soulbound_flight(world: Node3D) -> void:
+func _check_needle_flight(world: Node3D) -> void:
 	var effects := BattleFx.new()
 	effects.world = world
 	var manager := SKILL_MANAGER.new()
@@ -48,17 +37,20 @@ func _check_soulbound_flight(world: Node3D) -> void:
 	var enemy := {"body":target, "hp":1000.0}
 	var hits: Array[float] = []
 	var apply_hit := func(_entry, amount, _slow, _factor, _color): hits.append(amount)
-	manager._spawn_needles(runtime, enemy, true)
+	manager._spawn_needles(runtime, enemy)
+	assert(manager.active.size() == 3)
+	for index in 3:
+		assert(is_equal_approx(float(manager.active[index].left), .12 * index))
 	for step in 31:
 		manager._update_active(.01, Vector2.ZERO, [enemy], apply_hit)
 	assert(effects.events.size() == 3 and hits.is_empty(),
-		"Three combo needles must launch before damage occurs")
+		"Three basic needles must launch before damage occurs")
 	for event in effects.events:
-		assert(event.skill_id == "link_soulbound_needle" and event.event == "flight")
+		assert(event.skill_id == "sk_soul_needle" and event.event == "flight")
 	for step in 100:
 		manager._update_active(.01, Vector2.ZERO, [enemy], apply_hit)
-	assert(manager.active.is_empty() and hits.size() == 3 and effects.events.size() == 4,
-		"Each needle deals one hit and the volley creates one impact mark")
+	assert(manager.active.is_empty() and hits.size() == 3 and effects.events.size() == 6,
+		"Each basic needle deals one hit and shows one impact")
 	assert(effects.events.back().event == "impact")
 	target.queue_free()
 

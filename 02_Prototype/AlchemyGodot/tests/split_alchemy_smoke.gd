@@ -3,7 +3,6 @@ extends SceneTree
 const RECIPES := preload("res://data/materials/recipe_data.gd")
 const STEP := 1.0 / 60.0
 const MARK := &"sk_brittle_mark"
-const MARK_COMBO := &"link_blast_mark"
 const CAST_EVENTS := {
 	"sk_blast_flask": ["cast", 2],
 	"sk_brittle_mark": ["mark_start", 2],
@@ -46,10 +45,10 @@ func _run() -> void:
 		_check_skill(StringName(id))
 	_check_target_selection()
 	_check_ground_lock()
-	_check_chain()
+	_check_retired_combinations()
 	_check_brittle_mark()
-	_check_blast_mark()
-	_check_split_mark_chain()
+	_check_lethal_brittle_mark()
+	_check_split_marks()
 	for enemy in enemies:
 		enemy.body.queue_free()
 	await process_frame
@@ -138,9 +137,9 @@ func _check_target_selection() -> void:
 	var marks := recorder.select(MARK, "mark_start")
 	_expect(manager.brittle_marks.size() == 1 and marks.size() == 1 and marks[0].state.get("split_merged", false),
 		"a split cast on one enemy leaves a single mark with a merged visual state")
-	var single_bonus := manager.break_brittle_mark(enemies[0], enemies)
+	var single_bonus := manager.break_brittle_mark(enemies[0])
 	_expect(is_equal_approx(single_bonus, manager.runtime_for(MARK).damage() * 1.2)
-		and is_zero_approx(manager.break_brittle_mark(enemies[0], enemies)), "the lone target combines both split doses in one break")
+		and is_zero_approx(manager.break_brittle_mark(enemies[0])), "the lone target combines both split doses in one break")
 
 func _check_ground_lock() -> void:
 	_set_targets([Vector2(180, 0), Vector2(620, 0)])
@@ -157,17 +156,26 @@ func _check_ground_lock() -> void:
 				return info.split_side == cast.split_side and info.target == cast.target)), "the two locked ground points remain distinct")
 	_expect(hits.is_empty(), "dead target and distant enemy are not hit")
 
-func _check_chain() -> void:
-	_set_targets([Vector2(128, -25), Vector2(140, 27)])
-	var manager := _manager(&"sk_gravity_stone")
-	manager.add_skill(&"sk_mithril_drop")
-	manager.runtime_for(&"sk_mithril_drop").cooldown_left = 10.0
-	manager.cast_equipped(0.0, Vector2.ZERO, enemies, _record_hit)
-	_advance(manager, 90)
-	var combos := recorder.select(&"link_mithril_orbit", "zone_start")
-	_expect(combos.size() == 1 and combos[0].split_side == 0, "both split impacts can trigger only one unmodified fixed combo")
-	manager.clear_active()
-	_expect(manager.active.is_empty(), "clear removes both active branches and their combo")
+func _check_retired_combinations() -> void:
+	var pairs := [
+		[&"sk_blast_flask", &"sk_brittle_mark"],
+		[&"sk_mithril_drop", &"sk_gravity_stone"],
+		[&"sk_corrosive_flask", &"sk_mist_flask"],
+		[&"sk_crystal_growth", &"sk_obsidian_blade"],
+		[&"sk_spirit_gel", &"sk_soul_needle"],
+	]
+	for ability: StringName in [&"initial", &"split"]:
+		for pair: Array in pairs:
+			_set_targets([Vector2(128, -25), Vector2(140, 27)])
+			var manager := _manager(pair[0], ability)
+			manager.add_skill(pair[1])
+			manager.cast_equipped(0.0, Vector2.ZERO, enemies, _record_hit)
+			_advance(manager, 90)
+			var only_base_events := recorder.events.all(func(info: Dictionary) -> bool:
+				return info.skill_id in pair)
+			_expect(not recorder.events.is_empty() and only_base_events
+				and manager.unlocked_chains().is_empty() and manager.chain_cooldowns.is_empty(),
+				"%s: %s cast without a retired combination" % [ability, pair])
 
 func _check_brittle_mark() -> void:
 	_set_targets([Vector2(110, 0), Vector2(650, 0)])
@@ -190,14 +198,13 @@ func _check_brittle_mark() -> void:
 	_expect(not hits.is_empty() and hits.all(func(hit: Dictionary) -> bool: return is_equal_approx(hit.damage, poison.damage())),
 		"corrosive zone ticks deal only their own damage")
 	_expect(manager.brittle_marks.has(id) and recorder.select(MARK, "mark_break").is_empty(), "damage-over-time leaves the mark primed")
-	var bonus := manager.break_brittle_mark(target, enemies)
-	_expect(is_equal_approx(bonus, runtime.damage()) and is_zero_approx(manager.break_brittle_mark(target, enemies)),
+	var bonus := manager.break_brittle_mark(target)
+	_expect(is_equal_approx(bonus, runtime.damage()) and is_zero_approx(manager.break_brittle_mark(target)),
 		"a direct attack can consume the bonus exactly once")
-	_expect(recorder.select(MARK_COMBO, "shard_flight").is_empty(), "mark alone cannot trigger the fixed combo")
 	manager.clear_active()
 	manager._cast(runtime, Vector2.ZERO, target, enemies)
 	_advance(manager, ceili((float(runtime.value("duration", 2.5)) + STEP) / STEP))
-	_expect(manager.brittle_marks.is_empty() and is_zero_approx(manager.break_brittle_mark(target, enemies)),
+	_expect(manager.brittle_marks.is_empty() and is_zero_approx(manager.break_brittle_mark(target)),
 		"an expired mark grants no bonus")
 	manager._cast(runtime, Vector2.ZERO, target, enemies)
 	var removed_mark: Dictionary = manager.brittle_marks.get(id, {})
@@ -207,7 +214,7 @@ func _check_brittle_mark() -> void:
 		"despawn invalidates both the mark and its visual state")
 	target.body.free()
 
-func _check_blast_mark() -> void:
+func _check_lethal_brittle_mark() -> void:
 	_set_targets([Vector2(120, 0), Vector2(158, 28), Vector2(188, -32), Vector2(224, 40), Vector2(248, -20), Vector2(285, 0)])
 	var manager := _manager(MARK, &"initial")
 	var mark := manager.runtime_for(MARK)
@@ -226,40 +233,25 @@ func _check_blast_mark() -> void:
 			break
 	_expect(hits.size() == 1 and is_equal_approx(hits[0].damage, gel.damage() + mark.damage()) and victim.hp <= 0.0,
 		"the lethal direct hit includes the bonus in one damage callback")
-	var flights := recorder.select(MARK_COMBO, "shard_flight")
-	_expect(flights.size() == 3 and is_equal_approx(float(manager.chain_cooldowns.get(MARK_COMBO, 0.0)), 6.0),
-		"the lethal break launches three shards and starts the independent cooldown")
-	var intended_targets := [enemies[1].body.position, enemies[2].body.position, enemies[3].body.position]
-	_expect(flights.all(func(info: Dictionary) -> bool: return info.from == victim.body.position and info.target in intended_targets),
-		"shards leave the break position and choose the nearest eligible secondary targets")
 	_advance(manager, 60)
-	var secondary_targets := {}
-	for i in range(1, hits.size()):
-		secondary_targets[hits[i].target] = true
-	var expected_shard_damage := mark.damage() * 0.65 * 1.18
-	_expect(hits.size() == 4 and secondary_targets.size() == 3 and hits.slice(1).all(
-		func(hit: Dictionary) -> bool: return is_equal_approx(hit.damage, expected_shard_damage)),
-		"each shard arrives and damages a distinct enemy using the lower parent level")
-	_expect(recorder.select(MARK_COMBO, "shard_impact").size() == 3 and manager.active.is_empty(),
-		"each shard impact is emitted once and all projectile states are released")
+	_expect(hits.size() == 1 and manager.active.is_empty(),
+		"breaking a mark still grants its bonus without causing secondary damage")
 
-func _check_split_mark_chain() -> void:
+func _check_split_marks() -> void:
 	_set_targets([Vector2(120, 0), Vector2(134, 28), Vector2(168, 40)])
 	var manager := _manager(MARK)
 	manager.add_skill(&"sk_blast_flask")
 	manager.runtime_for(&"sk_blast_flask").cooldown_left = 10.0
 	manager.cast_equipped(0.0, Vector2.ZERO, enemies, _record_hit)
-	var first := manager.break_brittle_mark(enemies[0], enemies)
-	var shard_count := recorder.select(MARK_COMBO, "shard_flight").size()
-	_advance(manager, 25)
-	_expect(recorder.select(MARK_COMBO, "shard_impact").size() == 2
-		and recorder.select(MARK, "mark_break").size() == 1, "a shard can damage a second marked enemy without consuming its mark")
-	manager.chain_cooldowns.clear()
-	var second := manager.break_brittle_mark(enemies[1], enemies)
-	_expect(first > 0.0 and is_equal_approx(first, second) and shard_count == 2 and recorder.select(MARK_COMBO, "shard_flight").size() == shard_count,
-		"two split marks can break, but share the one-combo-per-cast gate even when cooldown is reset")
+	var first := manager.break_brittle_mark(enemies[0])
+	var second := manager.break_brittle_mark(enemies[1])
+	var expected := manager.runtime_for(MARK).damage() * .6
+	_expect(is_equal_approx(first, expected) and is_equal_approx(second, expected),
+		"both split marks still apply their normal bonus independently")
+	_expect(recorder.select(MARK, "mark_break").size() == 2 and manager.active.is_empty(),
+		"both marks break without spawning additional projectiles")
 	manager.clear_active()
-	_expect(manager.brittle_marks.is_empty() and manager.active.is_empty(), "clear releases marks and combo projectiles")
+	_expect(manager.brittle_marks.is_empty(), "clear releases marks")
 
 func _advance(manager: SkillManager, frames: int) -> void:
 	for frame in frames:

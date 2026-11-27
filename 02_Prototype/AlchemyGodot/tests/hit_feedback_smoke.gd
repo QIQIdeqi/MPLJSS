@@ -251,12 +251,12 @@ func _test_mark_fallback() -> void:
 			break
 	battle.advance_fallback_skill_visuals(.02)
 	check(is_equal_approx(primary.hp, 99.0 - mark.damage())
-		and battle.fallback_skill_visuals.size() == 1, "one basic hit replaces the 2D mark with a travelling shard")
+		and battle.fallback_skill_visuals.is_empty(), "one basic hit breaks and releases the 2D mark")
 	for frame in 30:
 		manager._update_active(.02, battle.player.position, battle.enemies, battle.damage_brew_enemy)
 		battle.advance_fallback_skill_visuals(.02)
-	check(is_equal_approx(secondary.hp, 100.0 - mark.damage() * .65)
-		and battle.fallback_skill_visuals.is_empty(), "the 2D shard lands once and releases its visual")
+	check(is_equal_approx(secondary.hp, 100.0)
+		and battle.fallback_skill_visuals.is_empty(), "breaking a mark no longer launches a shard at other enemies")
 	battle.clear_combat_effects()
 	manager.clear()
 	for entry: Dictionary in [primary, secondary]:
