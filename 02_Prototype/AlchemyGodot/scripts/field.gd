@@ -444,12 +444,16 @@ func activate_stage() -> void:
 		play_music(preload("res://audio/Music_Boss.wav") if stage_is_boss else preload("res://audio/Music_Field.wav"))
 		player.locked = stage_is_boss
 
+func _play_audio(player_node: AudioStreamPlayer) -> void:
+	if DisplayServer.get_name() != "headless" and is_instance_valid(player_node):
+		player_node.play()
+
 func play_music(stream: AudioStreamWAV) -> void:
 	var loop := stream.duplicate() as AudioStreamWAV
 	loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	loop.loop_end = roundi(loop.get_length() * loop.mix_rate)
 	music.stream = loop
-	music.play()
+	_play_audio(music)
 
 func generate_field(boss_stage: bool, layout_seed: int) -> bool:
 	var preset: LEVEL_PRESET = layout_preset if layout_preset else (BOSS_LAYOUT if boss_stage else NORMAL_LAYOUT)
@@ -795,6 +799,10 @@ func clear_combat_effects() -> void:
 		hd_view.world_view.clear_skill_fx()
 
 func _exit_tree() -> void:
+	for player_node: AudioStreamPlayer in [music, enemy_death_sound, enemy_hit_sound]:
+		if is_instance_valid(player_node):
+			player_node.stop()
+			player_node.stream = null
 	clear_combat_effects()
 
 func enter_boss() -> void:
@@ -1420,8 +1428,8 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 	entry.hp -= damage
 	show_enemy_hit_feedback(entry, dealt)
 	if entry.hp > 0:
-		if hit_sound_cooldown <= 0.0 and is_instance_valid(enemy_hit_sound):
-			enemy_hit_sound.play()
+		if hit_sound_cooldown <= 0.0:
+			_play_audio(enemy_hit_sound)
 			hit_sound_cooldown = .07
 		return
 	var at := body.position
@@ -1429,7 +1437,7 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 	if alchemy_system and alchemy_system.skills:
 		alchemy_system.skills.discard_brittle_mark(entry)
 	kills += 1
-	enemy_death_sound.play()
+	_play_audio(enemy_death_sound)
 	burst(at, Color(0.4, 0.8, 0.6))
 	if entry.boss:
 		defeated_art[body] = boss.art
