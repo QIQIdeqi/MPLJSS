@@ -11,6 +11,7 @@ class SelectionOverlay extends Control:
 	func _draw() -> void:
 		host.draw_selection(self)
 
+var previewing := false
 var overlay: Control
 var book: Resource
 var index := -1
@@ -59,7 +60,7 @@ func _draw() -> void:
 
 func draw_selection(surface: Control) -> void:
 	surface.draw_rect(Rect2(origin, Vector2(1280, 720) * factor), Color("738093"), false, 1)
-	if book == null or index < 0 or index >= book.pages.size():
+	if previewing or book == null or index < 0 or index >= book.pages.size():
 		return
 	var rect: Rect2 = book.pages[index].get(selected_layer + "_rect")
 	rect = Rect2(origin + rect.position * factor, rect.size * factor)
@@ -67,7 +68,7 @@ func draw_selection(surface: Control) -> void:
 	surface.draw_rect(Rect2(rect.end - Vector2(6, 6), Vector2(12, 12)), Color("78e2cd"))
 
 func _gui_input(event: InputEvent) -> void:
-	if book == null or index < 0:
+	if previewing or book == null or index < 0:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if not event.pressed:

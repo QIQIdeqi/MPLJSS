@@ -95,9 +95,9 @@ func run() -> void:
 	workspace.preview.set_process(false)
 	press("Present")
 	expect(workspace.preview_panel.visible and workspace.preview.index == 3, "present toolbar starts from selected middle page")
-	expect(workspace.preview.image_current.texture.resource_path == EVENING and workspace.preview.image_current.modulate.a == 1.0, "middle-page entry keeps inherited image opaque")
+	expect(workspace.preview.image_current.texture.resource_path == EVENING and workspace.preview.image_current.modulate.a == 0.0, "middle-page entry starts inherited image transparently")
 	workspace.preview._process(0.5)
-	expect(workspace.preview.is_transitioning and workspace.preview.image_current.modulate.a == 1.0, "changing text leaves image fully visible midway")
+	expect(workspace.preview.is_transitioning and workspace.preview.text_current.text == workspace.book.pages[3].text, "entry keeps current narration stable while fading")
 	var confirm := InputEventKey.new()
 	confirm.keycode = KEY_ENTER
 	confirm.pressed = true
@@ -111,7 +111,10 @@ func run() -> void:
 	confirm.echo = false
 	Input.parse_input_event(confirm)
 	await process_frame
-	expect(workspace.preview.index == 4, "second deliberate Enter advances to the text-only ending")
+	expect(workspace.preview.index == 3 and workspace.preview.phase == "exit", "second deliberate Enter starts the current page exit")
+	Input.parse_input_event(confirm)
+	await process_frame
+	expect(workspace.preview.index == 4 and workspace.preview.phase == "enter", "third Enter skips exit but leaves the next entry intact")
 	workspace.preview.advance()
 	expect(workspace.preview.image_current.texture == null and workspace.preview.text_current.text != "", "text-only page clears the inherited image")
 	press("ClosePreview")

@@ -1,7 +1,18 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/story/prologue.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/picture_book/player.gd" id="2"]
+
+[ext_resource type="Texture2D" path="res://assets/ui/picture_fast_forward.svg" id="3_quick"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_controls"]
+bg_color = Color(0.035, 0.045, 0.065, 0.76)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_quick"]
 
 [node name="Prologue" type="Control"]
 layout_mode = 3
@@ -19,13 +30,24 @@ anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("2")
 
+[node name="CaptionBacking" type="Panel" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 48.0
+offset_top = 18.0
+offset_right = 240.0
+offset_bottom = 68.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_controls")
+
 [node name="Caption" type="Label" parent="."]
+visible = false
 layout_mode = 0
 offset_left = 64.0
 offset_top = 28.0
 offset_right = 800.0
 offset_bottom = 58.0
-theme_override_colors/font_color = Color(0.317647, 0.231373, 0.168627, 1)
+theme_override_colors/font_color = Color(0.96, 0.94, 0.88, 1)
 theme_override_font_sizes/font_size = 20
 text = "序章"
 
@@ -36,10 +58,25 @@ offset_left = 64.0
 offset_top = 586.0
 offset_right = 1216.0
 offset_bottom = 630.0
-theme_override_colors/font_color = Color(0.6, 0.12, 0.08, 1)
+theme_override_colors/font_color = Color(1, 0.72, 0.64, 1)
 autowrap_mode = 2
 
+[node name="ControlBacking" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = -74.0
+offset_right = -48.0
+offset_bottom = -10.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_controls")
+
 [node name="Controls" type="HBoxContainer" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -64,9 +101,9 @@ text = "确认 / 下一页"
 [node name="Hint" type="Label" parent="Controls"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.317647, 0.231373, 0.168627, 1)
+theme_override_colors/font_color = Color(0.96, 0.94, 0.88, 1)
 theme_override_font_sizes/font_size = 16
-text = "自动翻页 · 空格 / 回车确认 · Esc 返回菜单"
+text = "点击补全 / 淡出 / 下一页 · Esc 返回"
 horizontal_alignment = 1
 
 [node name="Back" type="Button" parent="Controls"]
@@ -78,3 +115,107 @@ text = "返回开始界面"
 layout_mode = 2
 focus_mode = 0
 text = "跳过并进入村庄"
+
+[node name="QuickSkip" type="Button" parent="."]
+visible = false
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 41.0
+offset_top = -55.0
+offset_right = 69.0
+offset_bottom = -33.0
+icon = ExtResource("3_quick")
+theme_override_colors/icon_normal_color = Color(0.29, 0.25, 0.20, 1)
+theme_override_colors/icon_hover_color = Color(0.14, 0.11, 0.08, 1)
+theme_override_colors/icon_pressed_color = Color(0.08, 0.06, 0.04, 1)
+theme_override_colors/icon_focus_color = Color(0.12, 0.09, 0.06, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_quick")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_quick")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_quick")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_quick")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_quick")
+
+[node name="Modal" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.015, 0.02, 0.03, 0.7)
+
+[node name="Pause" type="Control" parent="Modal"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -100.0
+offset_right = 280.0
+offset_bottom = 100.0
+theme_override_constants/separation = 16
+
+[node name="Symbol" type="Label" parent="Modal/Pause"]
+layout_mode = 0
+offset_right = 560.0
+offset_bottom = 100.0
+text = "Ⅱ"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 64
+
+[node name="Resume" type="Button" parent="Modal/Pause"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 120.0
+offset_right = 170.0
+offset_bottom = 168.0
+custom_minimum_size = Vector2(0, 44)
+text = "恢复播放"
+
+[node name="Replay" type="Button" parent="Modal/Pause"]
+layout_mode = 0
+offset_left = 195.0
+offset_top = 120.0
+offset_right = 365.0
+offset_bottom = 168.0
+custom_minimum_size = Vector2(0, 44)
+text = "重新播放"
+
+[node name="Skip" type="Button" parent="Modal/Pause"]
+layout_mode = 0
+offset_left = 390.0
+offset_top = 120.0
+offset_right = 560.0
+offset_bottom = 168.0
+custom_minimum_size = Vector2(0, 44)
+text = "跳过剧情"
+
+[node name="Confirm" type="VBoxContainer" parent="Modal"]
+visible = false
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -96.0
+offset_right = 160.0
+offset_bottom = 96.0
+theme_override_constants/separation = 16
+
+[node name="Question" type="Label" parent="Modal/Confirm"]
+layout_mode = 2
+text = "跳过这段剧情？"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+
+[node name="Cancel" type="Button" parent="Modal/Confirm"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "继续观看"
+
+[node name="Accept" type="Button" parent="Modal/Confirm"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "确认跳过"
