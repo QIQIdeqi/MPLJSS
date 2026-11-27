@@ -428,6 +428,9 @@ func _update_tracked_fx(delta: float) -> void:
 
 func show_damage_feedback(at: Vector2, amount: float) -> void:
 	_skill_burst(at, Color("#e9e3c2"), 7, 0.48, 0.14)
+	show_combat_text(at, "−%d" % ceili(amount), Color("#f5ecd4"))
+
+func show_combat_text(at: Vector2, message: String, color: Color) -> void:
 	for i in range(damage_numbers.size() - 1, -1, -1):
 		if not is_instance_valid(damage_numbers[i]):
 			damage_numbers.remove_at(i)
@@ -435,14 +438,14 @@ func show_damage_feedback(at: Vector2, amount: float) -> void:
 		damage_numbers.pop_front().queue_free()
 	var number := Label3D.new()
 	number.name = "HitDamage"
-	number.text = "−%d" % ceili(amount)
+	number.text = message
 	number.font_size = 28
 	number.outline_size = 6
 	number.pixel_size = 0.0075
 	number.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	number.no_depth_test = true
 	number.shaded = false
-	number.modulate = Color("#f5ecd4")
+	number.modulate = color
 	number.position = world_at(at) + Vector3.UP * 0.85
 	number.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	attack_effects.add_child(number)

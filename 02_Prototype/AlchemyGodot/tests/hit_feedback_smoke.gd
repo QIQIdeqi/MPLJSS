@@ -237,26 +237,41 @@ func _test_mark_fallback() -> void:
 			secondary = entry
 	var mark: SkillRuntime = manager.runtime_for(&"sk_brittle_mark")
 	manager._cast(mark, battle.player.position, primary, battle.enemies)
-	if check(battle.fallback_skill_visuals.size() == 1, "the 2D fallback registers a live mark"):
-		var sprite: Node2D = battle.fallback_skill_visuals[0].node
+	if check(battle.fallback_skill_visuals.size() == 1 and manager.brittle_marks.is_empty(), "the 2D fallback registers a vial before any mark"):
+		var vial: Node2D = battle.fallback_skill_visuals[0].node
+		var start := vial.position
+		manager._update_active(.08, battle.player.position, battle.enemies, battle.damage_brew_enemy)
+		battle.advance_fallback_skill_visuals(.08)
+		check(vial.position.x > start.x and vial.position.y < start.y, "the 2D vial visibly advances and rises")
+	manager._update_active(.25, battle.player.position, battle.enemies, battle.damage_brew_enemy)
+	battle.advance_fallback_skill_visuals(.25)
+	if check(battle.fallback_skill_visuals.size() == 2, "the two enemies in the landing circle show persistent marks"):
+		var sprite: Node2D = battle.fallback_skill_visuals.filter(func(visual: Dictionary) -> bool:
+			return visual.state.target == primary)[0].node
 		var before := sprite.position
 		primary.body.position.y += 12.0
 		manager._update_active(.02, battle.player.position, battle.enemies, battle.damage_brew_enemy)
 		battle.advance_fallback_skill_visuals(.02)
 		check(is_equal_approx(sprite.position.y - before.y, 12.0), "the 2D mark follows its enemy")
 	battle.launch_basic_projectile(primary)
+	var normal_damage := 1.0
+	if not battle.basic_projectiles.is_empty():
+		normal_damage = float(battle.basic_projectiles.back().damage)
 	for frame in 30:
 		battle.advance_basic_projectiles(.02)
 		if battle.basic_projectiles.is_empty():
 			break
 	battle.advance_fallback_skill_visuals(.02)
-	check(is_equal_approx(primary.hp, 99.0 - mark.damage())
-		and battle.fallback_skill_visuals.is_empty(), "one basic hit breaks and releases the 2D mark")
-	for frame in 30:
-		manager._update_active(.02, battle.player.position, battle.enemies, battle.damage_brew_enemy)
-		battle.advance_fallback_skill_visuals(.02)
-	check(is_equal_approx(secondary.hp, 100.0)
-		and battle.fallback_skill_visuals.is_empty(), "breaking a mark no longer launches a shard at other enemies")
+	check(is_equal_approx(primary.hp, 100.0 - normal_damage * 1.2)
+		and battle.fallback_skill_visuals.size() == 2, "a basic hit gains 20 percent without consuming the marks")
+	battle.damage_brew_enemy(primary, 10.0, 0.0, 1.0, Color.WHITE)
+	check(is_equal_approx(primary.hp, 88.0 - normal_damage * 1.2) and is_equal_approx(secondary.hp, 100.0),
+		"the next damage event stays amplified without hurting other marked enemies")
+	manager._update_active(2.6, battle.player.position, battle.enemies, battle.damage_brew_enemy)
+	battle.advance_fallback_skill_visuals(.02)
+	battle.damage_enemy(secondary, 10.0)
+	check(is_equal_approx(secondary.hp, 90.0) and battle.fallback_skill_visuals.is_empty(),
+		"expiry removes both markers and restores ordinary damage")
 	battle.clear_combat_effects()
 	manager.clear()
 	for entry: Dictionary in [primary, secondary]:

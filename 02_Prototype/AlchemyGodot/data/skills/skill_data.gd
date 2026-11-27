@@ -49,7 +49,10 @@ const UNIT := 64.0
 
 const ROWS := [
 	{"id":"sk_blast_flask", "name":"爆裂药瓶", "attribute":ATTRIBUTE_STARFIRE, "behavior":BEHAVIOR_BOTTLE, "color":Color("e65b37"), "base_damage":28.0, "power":[1.0,1.2,1.2,1.5,1.75], "cooldowns":[2.8,2.8,2.8,2.8,2.5], "radius_units":[1.5,1.5,1.75,1.75,1.9], "range_units":[6.0,6.0,6.5,6.5,7.0], "speed":310.0},
-	{"id":"sk_brittle_mark", "name":"脆化刻印", "attribute":ATTRIBUTE_STARFIRE, "behavior":BEHAVIOR_MARK, "color":Color("e6a34f"), "base_damage":20.0, "power":[.9,1.05,1.2,1.35,1.5], "cooldowns":[3.4,3.4,3.2,3.2,3.0], "range_units":[6.0,6.0,6.5,6.5,7.0], "duration":2.5},
+	{"id":"sk_brittle_mark", "name":"脆化刻印", "attribute":ATTRIBUTE_STARFIRE, "behavior":BEHAVIOR_MARK,
+		"color":Color("e6a34f"), "cooldowns":[3.4,3.4,3.2,3.2,3.0], "range_units":[6.0,6.0,6.5,6.5,7.0],
+		"radius_units":1.4, "speed":640.0, "duration":2.5, "vulnerability":[.20,.21,.22,.23,.24],
+		"description":"向怪群抛出药瓶，使落点内的敌人进入脆弱状态，2.5 秒内受到的伤害提高 20%。"},
 	{"id":"sk_mithril_drop", "name":"秘银液滴", "attribute":ATTRIBUTE_TIDE, "behavior":BEHAVIOR_BOUNCE, "color":Color("c4d3d8"), "base_damage":24.0, "power":[.55,.64,.74,.84,.95], "cooldowns":[1.9,1.9,1.9,1.8,1.7], "targets":[3,3,4,4,5], "bounce_units":[3.2,3.2,3.5,3.5,3.8], "range_units":[6.0,6.0,6.5,6.5,7.0], "speed":470.0},
 	{"id":"sk_gravity_stone", "name":"引力石", "attribute":ATTRIBUTE_TIDE, "behavior":BEHAVIOR_PULL, "color":Color("6d416f"), "base_damage":23.0, "power":[.30,.36,.42,.48,.55], "cooldowns":[5.0,5.0,5.0,5.0,4.6], "radius_units":[2.2,2.2,2.4,2.4,2.6], "duration":[2.4,2.4,2.6,2.6,2.8], "range_units":[6.0,6.0,6.4,6.4,6.8], "speed":360.0},
 	{"id":"sk_corrosive_flask", "name":"蚀骨药剂", "attribute":ATTRIBUTE_TIDE, "behavior":BEHAVIOR_POOL, "color":Color("4f9d47"), "base_damage":20.0, "power":[.18,.21,.24,.28,.32], "cooldowns":[3.8,3.8,3.8,3.8,3.5], "radius_units":[1.6,1.6,1.8,1.8,2.0], "duration":[3.0,3.0,3.0,3.5,3.5], "ticks":[6,6,6,7,7], "range_units":[6.0,6.0,6.4,6.4,6.8], "speed":330.0},

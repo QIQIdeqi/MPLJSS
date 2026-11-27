@@ -28,7 +28,7 @@ const ZONE_FADE_DURATION := 0.45
 const BREAK_DURATION := 0.36
 const MARK_COLOR := Color("#ffc171")
 
-enum Ground { RIPPLE, POOL, VORTEX, ORBIT, MIST, ACID }
+enum Ground { RIPPLE = 0, VORTEX = 2, MIST = 4, ACID = 5 }
 
 static var box_mesh := BoxMesh.new()
 static var shard_mesh := PrismMesh.new()
@@ -90,8 +90,6 @@ func start(info: Dictionary) -> void:
 				return
 			lifetime = -1.0
 			_make_mark()
-		"mark_break":
-			_mark_break()
 		"impact":
 			_impact()
 		"zone_tick":
@@ -102,26 +100,21 @@ func start(info: Dictionary) -> void:
 		queue_free()
 	elif split_side != 0:
 		_add_split_accent(split_side)
-	elif event_name == "mark_break" and state.get("split_merged", false):
-		_add_split_accent(-1)
-		_add_split_accent(1)
 
 func _add_split_accent(side: int) -> void:
 	match event_name:
 		"flight":
 			var accent := SPLIT_ALCHEMY_FX.new()
 			body.add_child(accent)
-			var trailing := skill_id != "sk_corrosive_flask" and skill_id != "sk_mist_flask"
+			var trailing := skill_id not in ["sk_brittle_mark", "sk_corrosive_flask", "sk_mist_flask"]
 			accent.start_follow(side, false, trailing)
-		"impact", "zone_start", "mark_break":
+		"impact", "zone_start":
 			var accent := SPLIT_ALCHEMY_FX.new()
 			add_child(accent)
 			var camera := _world_camera()
 			if camera:
 				accent.position = camera.global_basis.z.slide(Vector3.UP).normalized() * 0.14
 			var height := 0.20 if event_name == "zone_start" else 0.37
-			if event_name == "mark_break":
-				height = _mark_height(state)
 			accent.start_mark(side, heading, height, 0.42)
 
 func _process(delta: float) -> void:
@@ -161,6 +154,10 @@ func _make_flight() -> void:
 	body = Node3D.new()
 	add_child(body)
 	match skill_id:
+		"sk_brittle_mark":
+			body_card = _card(VIAL, body, 0.008, Color("#ffd28f"))
+			body_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			SKILL_LIGHT.add(body, Vector3.ZERO, 0.40, Color(MARK_COLOR, 0.56))
 		"sk_mithril_drop":
 			library_card = _library_sprite(MITHRIL_FLIGHT, body, 0.023)
 		"sk_gravity_stone":
@@ -194,7 +191,12 @@ func _move_flight() -> void:
 	position = _world_at(at)
 	body.rotation.y = -heading.angle()
 	body.position.y = 0.31
-	if skill_id == "sk_corrosive_flask" or skill_id == "sk_mist_flask":
+	if skill_id == "sk_brittle_mark":
+		var progress := _brittle_flight_progress(state)
+		body.position.y = _brittle_flight_height(progress) * WORLD_SCALE
+		body.rotation.y = 0.0
+		body_card.rotation.z = progress * TAU * (1.15 if heading.x < 0.0 else -1.15)
+	elif skill_id == "sk_corrosive_flask" or skill_id == "sk_mist_flask":
 		var end: Vector2 = state.get("landing", state.get("destination", at))
 		var distance := launch_point.distance_to(end)
 		var progress := clampf(launch_point.distance_to(at) / maxf(distance, 0.01), 0.0, 1.0)
@@ -257,8 +259,7 @@ func _update_zone() -> void:
 func _make_mark() -> void:
 	body = Node3D.new()
 	add_child(body)
-	var merged: bool = state.get("split_merged", false)
-	body_card = _card(_brittle_texture(split_side, merged), body, 0.028 if merged else 0.024, Color.WHITE)
+	body_card = _card(_brittle_texture(split_side), body, 0.024, Color.WHITE)
 	body_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	SKILL_LIGHT.add(body, Vector3.ZERO, 0.39, Color(MARK_COLOR, 0.62), 0.24, 0.30)
 	_move_mark()
@@ -272,16 +273,16 @@ func _move_mark() -> void:
 	var remaining := float(state.get("left", 1.0))
 	body_card.modulate.a = (0.86 + 0.14 * cos(age * TAU * 1.8)) * minf(remaining * 7.0, 1.0)
 
-func _mark_break() -> void:
-	_library_burst(BRITTLE_SHATTER, BREAK_DURATION, 0.0067, _mark_height(state))
-	# 源图集的碎裂重心偏右，把炸开的中心对准敌人身上的刻印。
-	library_card.offset.x = -27.0
-	library_card.modulate = _mark_tint(split_side)
-	SKILL_LIGHT.add(self, Vector3.UP * (_mark_height(state) + 0.035), 0.49, Color(MARK_COLOR, 0.67), 0.16, 0.42)
-
 func _impact() -> void:
 	lifetime = 0.37
 	match skill_id:
+		"sk_brittle_mark":
+			_library_burst(BRITTLE_SHATTER, BREAK_DURATION, 0.011, 0.18)
+			# 源图集的碎裂重心偏右，把亮芯对准真实落点。
+			library_card.offset.x = -27.0
+			library_card.modulate = _mark_tint(split_side)
+			_ground(world_radius, Ground.RIPPLE, Color("#654034"), MARK_COLOR)
+			SKILL_LIGHT.add(self, Vector3.UP * 0.16, 0.60, Color(MARK_COLOR, 0.76), 0.19, 0.54)
 		"sk_mithril_drop":
 			_library_burst(MITHRIL_IMPACT, 0.34, 0.010, 0.25, true)
 		"sk_gravity_stone":
@@ -483,10 +484,9 @@ static func _mark_height(mark: Dictionary) -> float:
 	var victim: Dictionary = mark.get("target", {})
 	return 0.55 if victim.get("boss", false) else 0.43
 
-static func _brittle_texture(side: int, merged: bool) -> ImageTexture:
-	var palette := 2 if merged else side
-	if not mark_textures.has(palette):
-		mark_textures[palette] = _mark_pixel_texture([
+static func _brittle_texture(side: int) -> ImageTexture:
+	if not mark_textures.has(side):
+		mark_textures[side] = _mark_pixel_texture([
 		"...............",
 		"..........a....",
 		"....a....ag....",
@@ -502,8 +502,8 @@ static func _brittle_texture(side: int, merged: bool) -> ImageTexture:
 		"...a...........",
 		"...............",
 		"...............",
-		], palette)
-	return mark_textures[palette]
+		], side)
+	return mark_textures[side]
 
 static func _mark_colors(side: int) -> Dictionary:
 	if side == 0:
@@ -514,12 +514,10 @@ static func _mark_colors(side: int) -> Dictionary:
 static func _mark_pixel_texture(rows: PackedStringArray, palette := 0) -> ImageTexture:
 	var width := rows[0].length()
 	var image := Image.create_empty(width, rows.size(), false, Image.FORMAT_RGBA8)
-	var left_colors := _mark_colors(-1 if palette == 2 else palette)
-	var right_colors := _mark_colors(1) if palette == 2 else left_colors
+	var colors := _mark_colors(palette)
 	for y in rows.size():
 		for x in width:
 			var pixel := rows[y][x]
-			var colors := left_colors if x * 2 < width else right_colors
 			if colors.has(pixel):
 				image.set_pixel(x, y, colors[pixel])
 	return ImageTexture.create_from_image(image)
@@ -529,27 +527,28 @@ static func start_fallback(parent: Node2D, info: Dictionary) -> Node2D:
 	var event := String(info.get("event", ""))
 	var live_state: Dictionary = info.get("state", {})
 	var side := int(info.get("split_side", live_state.get("split_side", 0)))
-	if event == "mark_start":
+	if event in ["flight", "mark_start"]:
 		if live_state.is_empty():
 			return null
 		var sprite := Sprite2D.new()
-		var merged: bool = live_state.get("split_merged", false)
-		sprite.texture = _brittle_texture(side, merged)
+		var flying := event == "flight"
+		sprite.texture = VIAL if flying else _brittle_texture(side)
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.scale = Vector2.ONE * (1.85 if merged else 1.6)
+		sprite.scale = Vector2.ONE * (0.67 if flying else 1.6)
 		parent.add_child(sprite)
 		update_fallback(sprite, live_state)
 		return sprite
-	if event != "mark_break":
+	if event != "impact":
 		return null
 	var burst := AnimatedSprite2D.new()
 	burst.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	burst.modulate = _mark_tint(side)
 	var target: Vector2 = info.get("target", Vector2.ZERO)
 	burst.sprite_frames = _fallback_frames(BRITTLE_SHATTER, BREAK_DURATION)
-	burst.position = target + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
+	burst.position = target + Vector2.UP * 18.0
 	burst.offset.x = -27.0
-	burst.scale = Vector2.ONE * 0.52
+	var radius := float(live_state.get("radius", 89.6))
+	burst.scale = Vector2.ONE * (0.85 * radius / 89.6)
 	parent.add_child(burst)
 	burst.animation_finished.connect(burst.queue_free, CONNECT_ONE_SHOT)
 	burst.play()
@@ -557,8 +556,21 @@ static func start_fallback(parent: Node2D, info: Dictionary) -> Node2D:
 
 static func update_fallback(node: Node2D, live_state: Dictionary) -> void:
 	var at: Vector2 = live_state.get("pos", Vector2.ZERO)
+	if live_state.kind == "blast_flask":
+		var progress := _brittle_flight_progress(live_state)
+		var direction: Vector2 = live_state.direction
+		node.position = at + Vector2.UP * _brittle_flight_height(progress)
+		node.rotation = progress * TAU * (1.15 if direction.x < 0.0 else -1.15)
+		return
 	node.position = at + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
 	node.modulate.a = minf(float(live_state.get("left", 1.0)) * 7.0, 1.0)
+
+static func _brittle_flight_progress(flight: Dictionary) -> float:
+	var origin: Vector2 = flight.origin
+	return clampf(origin.distance_to(flight.pos) / maxf(origin.distance_to(flight.landing), 0.01), 0.0, 1.0)
+
+static func _brittle_flight_height(progress: float) -> float:
+	return lerpf(29.0, 6.0, progress) + 4.0 * 48.0 * progress * (1.0 - progress)
 
 
 static func _fallback_frames(texture: Texture2D, duration: float) -> SpriteFrames:

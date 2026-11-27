@@ -14,6 +14,7 @@ const CAT_SKILL_UPGRADE := "skill_upgrade"
 # 每技能等级上限
 const MAX_SKILL_LEVEL := 5
 const EXPANSION_UPGRADE_STATS := {
+	SKILLS.BEHAVIOR_MARK: ["vulnerability", "脆弱增伤", 100.0, "%"],
 	SKILLS.BEHAVIOR_THUNDER_SALT: ["power", "基础伤害", 1.0, ""],
 	SKILLS.BEHAVIOR_FIRE_OIL: ["power", "每跳伤害", 1.0, ""],
 	SKILLS.BEHAVIOR_MERCURY_RING: ["power", "每环伤害", 1.0, ""],
@@ -133,7 +134,7 @@ func _element_name(el: StringName) -> String:
 func _behavior_name(b: StringName) -> String:
 	match b:
 		SKILLS.BEHAVIOR_BOTTLE: return "预判投瓶"
-		SKILLS.BEHAVIOR_MARK: return "下一次直接命中破印并追加伤害"
+		SKILLS.BEHAVIOR_MARK: return "投瓶落地后对范围内的敌人施加脆弱"
 		SKILLS.BEHAVIOR_BOUNCE: return "弹射命中"
 		SKILLS.BEHAVIOR_PULL: return "落点牵引"
 		SKILLS.BEHAVIOR_POOL: return "腐蚀区域"

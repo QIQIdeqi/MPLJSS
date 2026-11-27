@@ -5,7 +5,7 @@ const STEP := 1.0 / 60.0
 const OUTPUT := "res://.godot/v2_hd_fx_review"
 const TESTS := [
 	{"id": "sk_blast_flask", "events": ["cast", "impact"], "capture": ["cast", "impact"]},
-	{"id": "sk_brittle_mark", "events": ["mark_start", "mark_break"], "capture": ["mark_start", "mark_break"]},
+	{"id": "sk_brittle_mark", "events": ["flight", "impact", "mark_start"], "capture": ["flight", "impact", "mark_start"]},
 	{"id": "sk_mithril_drop", "events": ["flight", "impact", "hop"], "capture": ["flight", "hop"]},
 	{"id": "sk_gravity_stone", "events": ["flight", "impact", "zone_start"], "capture": ["impact", "zone_start"]},
 	{"id": "sk_corrosive_flask", "events": ["flight", "impact", "zone_start", "zone_tick"], "capture": ["flight", "zone_tick"]},
@@ -94,7 +94,7 @@ func _review() -> void:
 
 func _review_skill(test: Dictionary) -> bool:
 	var id: String = test.id
-	var needs_mark_hit := id == "sk_brittle_mark"
+	var applies_vulnerability := id == "sk_brittle_mark"
 	var from: Vector2 = battle.player.position
 	skill_manager.clear()
 	if capture:
@@ -120,23 +120,12 @@ func _review_skill(test: Dictionary) -> bool:
 		return _fail("%s activated outside skill range" % id)
 
 	_reset_targets(from)
-	var primary: Dictionary = targets[0]
-	var previous_hp: float = primary.hp
-	var basic_damage := 0.0
-	if needs_mark_hit:
-		primary.hp = 1000.0
 	skill_manager.cast_equipped(STEP, from, targets, _record_hit)
+	var marked_more_than_one := false
 	# Release once and advance the same live states without automatically rearming other skills.
 	for frame in 450:
-		if needs_mark_hit:
-			# Allow the persistent mark capture first, then break it with the actual basic attack.
-			if frame == 12:
-				battle.launch_basic_projectile(primary)
-				if battle.basic_projectiles.is_empty():
-					return _fail("%s did not fire the basic attack for the mark probe" % id)
-				basic_damage = float(battle.basic_projectiles.back().damage)
-			battle.advance_basic_projectiles(STEP)
 		skill_manager._update_active(STEP, from, targets, _record_hit)
+		marked_more_than_one = marked_more_than_one or skill_manager.brittle_marks.size() > 1
 		for node in attack_effects.get_children():
 			if String(node.get_meta("skill_id", "")) != id:
 				continue
@@ -154,23 +143,17 @@ func _review_skill(test: Dictionary) -> bool:
 						return false
 			if capture_schedule.size() < test.capture.size() or capture_schedule.values().max() > frame:
 				await process_frame
-		var waiting_for_mark_hit: bool = needs_mark_hit and (frame < 12 or not battle.basic_projectiles.is_empty())
-		if not waiting_for_mark_hit and skill_manager.active.is_empty() and (not capture or (capture_schedule.size() == test.capture.size() and capture_schedule.values().max() <= frame)):
+		if skill_manager.brittle_marks.is_empty() and skill_manager.active.is_empty() and (not capture or (capture_schedule.size() == test.capture.size() and capture_schedule.values().max() <= frame)):
 			break
 
-	if needs_mark_hit:
-		var dealt: float = 1000.0 - float(primary.hp)
-		primary.hp = previous_hp
-		var mark_runtime := skill_manager.runtime_for(&"sk_brittle_mark")
-		if mark_runtime == null or not is_equal_approx(dealt, basic_damage + mark_runtime.damage()):
-			return _fail("%s basic attack did not consume exactly one mark and apply its bonus" % id)
-		hits += 1
+	if applies_vulnerability and (hits > 0 or not marked_more_than_one):
+		return _fail("%s did not apply area vulnerability without landing damage" % id)
 	if not skill_manager.active.is_empty():
 		return _fail("%s retained an active gameplay state after 7.5s" % id)
 	for event in required:
 		if not required[event]:
 			return _fail("%s did not create a node for %s" % [id, event])
-	if hits == 0:
+	if hits == 0 and not applies_vulnerability:
 		return _fail("%s caused no hit in a stationary enemy group" % id)
 	# Give transient visuals time to finish before checking the persistent battlefield.
 	# The flask blast plays for 0.85 seconds, including in headless mode.

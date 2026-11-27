@@ -120,12 +120,34 @@ func _test_rewind() -> void:
 	var left_anchor: Vector2 = sites[0].point if sites[0].point.x < 0.0 else sites[1].point
 	_targets[0].body.position.x = -60.0
 	_targets[1].body.position.x = 60.0
-	_field.tick(0.86, Vector2.ZERO, _targets, context)
+	_field.tick(0.60, Vector2.ZERO, _targets, context)
 	_check(_field.is_rewinding(_targets[0]) and _targets[0].body.position.x < -60, "anchor takes over live movement")
-	_field.tick(0.18, Vector2.ZERO, _targets, context)
+	_field.tick(0.24, Vector2.ZERO, _targets, context)
 	_check(_targets[0].body.position.is_equal_approx(left_anchor) and not _field.is_rewinding(_targets[0]),
 		"rewind restores old feet and clears movement ownership")
 	_check(_targets[2].body.position == Vector2(90, 0) and _hits.is_empty(), "fixed dummy stays put and rewind deals no damage")
+	_check(_last_event(REWIND, "combo_launch") and _last_event(REWIND, "combo_hit"),
+		"rewind announces both the actual reversal and completed displacement")
+
+	_fixture(REWIND, [Vector2(175, -8), Vector2(182, 11)])
+	for frame in 13:
+		if frame > 0:
+			for entry in _targets:
+				entry.body.position.x -= 0.35
+		_field.tick(STEP, Vector2.ZERO, _targets, context)
+	_check(_rules.casts == 1 and _field._rewind.sites.size() == 2,
+		"slow enemies pursuing from the same side still trigger rewind")
+
+	_fixture(REWIND, [Vector2(130, 0)])
+	for frame in 13:
+		if frame > 0:
+			_targets[0].body.position.x -= 1.0
+		_field.tick(STEP, Vector2.ZERO, _targets, context)
+	_check(_rules.casts == 1 and _field._rewind.sites.size() == 1,
+		"one nearby enemy triggers after longer continuing pursuit")
+	if not _field._rewind.is_empty():
+		_check(_field._rewind.sites[0].point == Vector2(130, 0),
+			"anchor keeps the older foot position from the start of approach")
 
 
 func _test_wall() -> void:
@@ -146,16 +168,37 @@ func _test_wall() -> void:
 
 
 func _test_counter() -> void:
-	_fixture(COUNTER, [Vector2(70, 0)])
+	_fixture(COUNTER, [Vector2(70, 0), Vector2(30, 0), Vector2(135, 0), Vector2(-39, 0)])
 	var context := _context()
+	context.ordinary_motion = false
+	context.clip_segment = _clip_at_110
 	_targets[0].windup = {"token": 3, "aim": Vector2.LEFT, "remaining": 0.50, "interruptible": true}
 	_field.tick(STEP, Vector2.ZERO, _targets, context)
-	var marker := _last(COUNTER, "mark")
-	_check(not marker.is_empty() and _rules.casts == 0, "live enemy windup creates one available flank mark")
-	var point: Vector2 = marker.get("target", Vector2.ZERO)
-	_field.pre_actor_tick(point, _targets, context)
-	_check(_rules.casts == 1 and _interrupts == 1 and _hits.size() == 1 and _hits[0].amount == 28.0,
-		"ordinary movement steals the windup with one interruption and one damage event")
+	var marker := _last(COUNTER, "warn")
+	_check(marker.get("target") == Vector2.ZERO and _rules.casts == 0,
+		"live enemy windup begins a centered warning without immediately spending cooldown")
+	context.frame_delta = 0.13
+	_field.pre_actor_tick(Vector2(40, 0), _targets, context)
+	_field.tick(0.13, Vector2(40, 0), _targets, context)
+	_check(_last(COUNTER, "warn").get("target") == Vector2(40, 0) and _rules.casts == 0,
+		"warning follows actual player feet and uses one countdown update per frame")
+	_field.pre_actor_tick(Vector2(60, 0), _targets, context)
+	_check(_rules.casts == 1 and _interrupts == 1 and _hits.size() == 2 and _hits[0].amount == 26.0 and _hits[1].amount == 26.0,
+		"automatic stomp hits all visible enemies in range, then only interrupts the recorded source")
+
+	_fixture(COUNTER, [Vector2(70, 0)])
+	_targets[0].boss = true
+	_targets[0].windup = {"token": 3, "aim": Vector2.LEFT, "remaining": 0.40, "interruptible": true}
+	_field.tick(STEP, Vector2.ZERO, _targets, context)
+	_field.tick(0.27, Vector2.ZERO, _targets, context)
+	_check(_hits.size() == 1 and _interrupts == 0, "boss takes stomp damage while keeping its attack")
+
+	_fixture(COUNTER, [Vector2(104, 0)])
+	_targets[0].windup = {"token": 3, "aim": Vector2.LEFT, "remaining": 0.16, "interruptible": true}
+	_field.tick(STEP, Vector2.ZERO, _targets, context)
+	_field.tick(0.27, Vector2.ZERO, _targets, context)
+	_check(_last_event(COUNTER, "combo_launch") and _rules.casts == 0 and _hits.is_empty(),
+		"an empty stomp keeps its cooldown ready after a short retry")
 
 
 func _test_dew() -> void:

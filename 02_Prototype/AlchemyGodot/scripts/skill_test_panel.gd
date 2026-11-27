@@ -3,19 +3,20 @@ extends Control
 const SKILLS := preload("res://data/skills/skill_data.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
 const COMBO_TIPS := {
-	&"combo_furnace": "靠近三根木桩亮起炉圈，往想喷火的方向走出。",
-	&"combo_thunder_coat": "用测试受击检查吸收与反击。靠近木桩可看到短雷。",
-	&"combo_tide_mirror": "发射一枚测试敌弹，观察水镜拦截和返弹。",
-	&"combo_rewind_anchor": "需要至少两个从不同方向接近的敌人。固定木桩可检查配方。",
+	&"combo_furnace": "靠近三根木桩点亮余火，往想喷火的方向走出火星区域。",
+	&"combo_thunder_coat": "测试受击时，金色雷衣破开并显示减伤。附近有攻击者时会回击。",
+	&"combo_tide_mirror": "发射测试敌弹，观察青色水镜挡弹、反向推出水浪。",
+	&"combo_rewind_anchor": "召出一组测试追兵，观察脚点锚印和追兵退回原位。",
 	&"combo_cleanser": "先布置孢子区，待地面变亮后朝危险区闪避。",
 	&"combo_crystal_gate": "靠近木桩时朝同一方向跑一段。看到出口后，在入口按空格。",
 	&"combo_crystal_wall": "把三根木桩放到同一侧可检查墙体生成。绕墙需在实战验证。",
-	&"combo_opening_counter": "在附近木桩显示测试前摇后，尽快踩中侧面光点。",
+	&"combo_opening_counter": "靠近木桩并显示前摇。脚下亮起金色火星，稍后在角色周围踩踏。",
 	&"combo_dew_pickup": "用测试击杀事件生成露滴，缺血时走过去拾取。",
 }
 const TEST_CONDITIONS := {
 	&"combo_thunder_coat": "测试受击",
 	&"combo_tide_mirror": "发射测试敌弹",
+	&"combo_rewind_anchor": "模拟追兵靠近",
 	&"combo_cleanser": "布置测试孢子区",
 	&"combo_opening_counter": "显示测试前摇",
 	&"combo_dew_pickup": "生成测试露滴",

@@ -10,7 +10,8 @@ func _init() -> void:
 	assert(SKILLS.CHAINS.map(func(recipe: Dictionary) -> String: return recipe.name) == expected)
 	var attribute_counts := {}
 	for row in SKILLS.ROWS:
-		assert((row.power as Array).size() == 5, "%s 的伤害等级表不完整" % row.id)
+		var values: Array = row.vulnerability if row.behavior == SKILLS.BEHAVIOR_MARK else row.power
+		assert(values.size() == 5, "%s 的效果等级表不完整" % row.id)
 		assert((row.cooldowns as Array).size() == 5, "%s 的冷却等级表不完整" % row.id)
 		attribute_counts[row.attribute] = int(attribute_counts.get(row.attribute, 0)) + 1
 	assert(attribute_counts == {"星火": 4, "潮汐": 7, "晶核": 4, "以太": 5})

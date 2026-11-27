@@ -3,6 +3,7 @@ extends "res://scripts/field.gd"
 const PANEL := preload("res://scripts/skill_test_panel.gd")
 const DUMMY := preload("res://scripts/skill_test_dummy.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
+const PURSUER_ART := preload("res://art/enemies/slime.png")
 const TEST_SPAWN := Vector2(540.0, 410.0)
 const DUMMY_OFFSETS := [
 	Vector2(114.0, -6.0), Vector2(176.0, -51.0), Vector2(158.0, 53.0),
@@ -12,6 +13,8 @@ const DUMMY_OFFSETS := [
 var test_dummy_count := 3
 var test_basic_attack := false
 var _panel: PANEL
+var _test_pursuers: Array[Dictionary] = []
+var _pursuit_left := 0.0
 
 
 func _ready() -> void:
@@ -56,6 +59,7 @@ func _physics_process(delta: float) -> void:
 	advance_basic_projectiles(delta)
 	advance_fallback_skill_visuals(delta)
 	advance_webs(delta)
+	_advance_test_pursuit(delta)
 	for dummy in enemies:
 		dummy.freeze_left = maxf(0.0, float(dummy.get("freeze_left", 0.0)) - delta)
 		dummy.slow_left = maxf(0.0, float(dummy.get("slow_left", 0.0)) - delta)
@@ -81,7 +85,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func damage_enemy(entry: Dictionary, damage: float) -> void:
 	if damage > 0.0 and enemies.has(entry):
-		show_enemy_hit_feedback(entry, damage)
+		show_enemy_hit_feedback(entry, damage_with_vulnerability(entry, damage))
 
 
 func test_skills() -> SkillManager:
@@ -129,6 +133,7 @@ func clear_test_skills() -> void:
 func reset_test_cooldowns() -> void:
 	clear_combat_effects()
 	clear_webs()
+	_clear_test_pursuit()
 	var skills := test_skills()
 	for runtime in skills.runtimes:
 		runtime.cooldown_left = 0.0
@@ -192,11 +197,13 @@ func prepare_test_condition(id: StringName) -> void:
 			&"combo_tide_mirror":
 				var origin := at + Vector2.RIGHT * 2.5 * SKILLS.UNIT
 				fire_web(actors.to_global(origin), Vector2.LEFT)
+			&"combo_rewind_anchor":
+				_start_test_pursuit(at)
 			&"combo_cleanser":
 				var center: Vector2 = at + player.direction * SKILLS.UNIT
 				fire_web(actors.to_global(center), Vector2.ZERO, FIELD_ENEMY.Kind.MUSHROOM)
 			&"combo_opening_counter":
-				if not target.is_empty():
+				if not target.is_empty() and at.distance_to(target.body.position) <= 1.80 * SKILLS.UNIT:
 					var toward: Vector2 = (target.body.position as Vector2).direction_to(at)
 					target.windup = {"token": 1, "aim": toward, "remaining": 1.05, "interruptible": false}
 			&"combo_dew_pickup":
@@ -204,6 +211,43 @@ func prepare_test_condition(id: StringName) -> void:
 					hp = MAX_HP * 0.5
 				var point: Vector2 = target.body.position if not target.is_empty() else at + Vector2.RIGHT * SKILLS.UNIT
 				independent_field.notify_kill(point, skill_action_context())
+
+func _start_test_pursuit(at: Vector2) -> void:
+	for offset: Vector2 in [Vector2(190, -60), Vector2(-175, 45)]:
+		var point := _clip_combo_walk(at, at + offset)
+		if point.distance_to(at) < 70.0:
+			continue
+		var body := FIELD_ENEMY.new()
+		body.setup(FIELD_ENEMY.Kind.SLIME, player.movement_bounds, PURSUER_ART)
+		body.position = point
+		actors.add_child(body)
+		var entry := {"body":body, "hp":100.0, "max_hp":100.0, "boss":false, "anchored":false}
+		enemies.append(entry)
+		_test_pursuers.append(entry)
+	_pursuit_left = 2.6
+
+func _advance_test_pursuit(delta: float) -> void:
+	if _test_pursuers.is_empty():
+		return
+	_pursuit_left -= delta
+	if _pursuit_left <= 0.0:
+		_clear_test_pursuit()
+		return
+	for entry in _test_pursuers:
+		var body: FIELD_ENEMY = entry.body
+		if not independent_field.is_rewinding(entry) and body.position.distance_squared_to(player.position) > 60.0 * 60.0:
+			var target := body.position.move_toward(player.position, 96.0 * delta)
+			body.facing = body.direction_row(body.position.direction_to(target))
+			body.position = _clip_combo_walk(body.position, target)
+			body.motion_time += delta
+		body.hurt_left = maxf(0.0, body.hurt_left - delta)
+		body.update_art()
+
+func _clear_test_pursuit() -> void:
+	for entry in _test_pursuers:
+		enemies.erase(entry)
+		entry.body.queue_free()
+	_test_pursuers.clear()
 
 
 func return_to_menu() -> void:

@@ -2,7 +2,7 @@
 
 透明图集使用 [winkidney/pixelfx-godot](https://github.com/winkidney/pixelfx-godot/tree/620f7556f13be39724998ef5cb2157074d5940c1) 提交 `620f7556f13be39724998ef5cb2157074d5940c1`。Godot 移植作者为 winkidney，原版 PixelFX 由 Patch 制作。上游素材归属见 [NOTICE](https://github.com/winkidney/pixelfx-godot/blob/620f7556f13be39724998ef5cb2157074d5940c1/NOTICE.md)，本目录保留上游 MIT `LICENSE`。
 
-每个图集使用 8 列 × 3 行，共 24 个透明帧。导出使用上游像素画布的效果层，按本项目的技能时序、脚点与配色裁切。游戏内播放的图集仅含效果像素。运行时轮廓和亮边由 `footprint.gdshader`、既有微光组件和技能逻辑状态驱动。
+每个图集使用 8 列 × 3 行，共 24 个透明帧。导出使用上游像素画布的效果层，按本项目的技能时序、脚点与配色裁切。运行时根据技能的真实位置、范围和持续时间播放特效图集并驱动微光。分裂分支的颜色体现在图集和粒子中。
 
 | 图集 | 上游效果 | 游戏内改动 |
 |---|---|---|

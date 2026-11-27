@@ -225,10 +225,15 @@ func check_split_in_battle() -> void:
 	hud._process(0.0)
 	check(hud.phase_caption.text.ends_with("分裂炼金"), "HUD confirms split alchemy once a skill is equipped")
 	active.alchemy_system.tick(0.0, active.player.position, targets, active.damage_brew_enemy)
-	var sides: Array[int] = []
-	for mark: Dictionary in skills.brittle_marks.values():
-		sides.append(int(mark.split_side))
-	check(sides.size() == 2 and -1 in sides and 1 in sides, "the first equipped mark skill splits onto two live targets")
+	var throws: Array[int] = []
+	for projectile: Dictionary in skills.active:
+		throws.append(int(projectile.split_side))
+	check(throws.size() == 2 and -1 in throws and 1 in throws and skills.brittle_marks.is_empty(),
+		"the first equipped brittle skill launches two bottles before applying vulnerability")
+	for _frame in 24:
+		active.alchemy_system.tick(1.0 / 60.0, active.player.position, targets, active.damage_brew_enemy)
+	check(targets.all(func(entry: Dictionary) -> bool: return is_equal_approx(skills.brittle_damage_multiplier(entry), 1.20)),
+		"both targets receive one vulnerability after the two bottles land")
 	active.clear_combat_effects()
 	skills.clear()
 	for entry in targets:

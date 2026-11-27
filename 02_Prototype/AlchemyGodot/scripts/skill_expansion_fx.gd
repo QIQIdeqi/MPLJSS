@@ -1,6 +1,5 @@
 extends Node3D
 
-const FOOTPRINT_SHADER := preload("res://art/vfx/skill_expansion/footprint.gdshader")
 const SKILL_LIGHT := preload("res://scripts/v2_skill_light.gd")
 const SPLIT_FX := preload("res://scripts/split_alchemy_fx.gd")
 const SCALE := 0.01
@@ -21,7 +20,6 @@ const SHEETS := {
 	"sk_dew_tonic": preload("res://art/vfx/skill_expansion/dew_tonic.png"),
 }
 
-static var _floor_quad := QuadMesh.new()
 static var _stroke_mesh := BoxMesh.new()
 static var _frost_mesh := PrismMesh.new()
 static var _parcels: Dictionary = {}
@@ -30,9 +28,6 @@ var _info: Dictionary
 var _state: Dictionary
 var _style: Dictionary
 var _card: Sprite3D
-var _floor_material: ShaderMaterial
-var _floor_mesh: MeshInstance3D
-var _tint: Color
 var _accent: Color
 var _card_tint: Color
 var _feature_materials: Array[StandardMaterial3D] = []
@@ -58,8 +53,8 @@ func start(info: Dictionary) -> void:
 	var kind: String = _style.kind
 	_lifetime = _duration(info, _state, _style)
 	var side := int(info.get("split_side", _state.get("split_side", 0)))
-	_tint = info.get("color", Color.WHITE)
-	_accent = _tint.lightened(0.55) if side == 0 else SPLIT_FX.branch_color(side)
+	var tint: Color = info.get("color", Color.WHITE)
+	_accent = tint.lightened(0.55) if side == 0 else SPLIT_FX.branch_color(side)
 	_card_tint = Color.WHITE if side == 0 else Color.WHITE.lerp(_accent, 0.34)
 	if side != 0:
 		set_meta("split_side", side)
@@ -90,8 +85,6 @@ func start(info: Dictionary) -> void:
 	elif kind == "cone":
 		var camera := get_viewport().get_camera_3d()
 		_card.flip_h = is_instance_valid(camera) and camera.global_basis.x.dot(_world(_heading(info, _state))) < 0.0
-	if _style.has("shape"):
-		_add_footprint()
 	_add_readability_layers(skill_id, kind, side)
 	if _style.has("light"):
 		SKILL_LIGHT.add(self, Vector3.UP * maxf(_card.position.y, 0.13), float(_style.light),
@@ -118,7 +111,6 @@ func _process(delta: float) -> void:
 	if kind == "ring":
 		var current := Motion.ring_radius(_state, _info, _age)
 		_card.scale = Vector3.ONE * maxf(current / radius, 0.02)
-		_card.modulate.a *= 0.42
 	elif kind == "cone":
 		_card.position += _world(_heading(_info, _state)) * radius * SCALE * 0.55 - _card.position.slide(Vector3.UP)
 	elif kind == "dash":
@@ -135,29 +127,6 @@ func _process(delta: float) -> void:
 		var tint := material.albedo_color
 		tint.a = fade
 		material.albedo_color = tint
-	if _floor_material:
-		_floor_material.set_shader_parameter("age", _age)
-		_floor_material.set_shader_parameter("strength", fade * float(_style.get("ground", 0.8)))
-		_floor_material.set_shader_parameter("wave", Motion.ring_radius(_state, _info, _age) / radius if kind == "ring" else phase)
-
-
-func _add_footprint() -> void:
-	_floor_mesh = MeshInstance3D.new()
-	_floor_mesh.mesh = _floor_quad
-	_floor_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_floor_mesh.rotation.x = -PI * 0.5
-	_floor_mesh.position.y = FLOOR
-	var radius := float(_style.get("footprint_radius", Motion.radius(_info, _state)))
-	_floor_mesh.scale = Vector3.ONE * (radius * 2.0 * SCALE)
-	_floor_material = ShaderMaterial.new()
-	_floor_material.shader = FOOTPRINT_SHADER
-	_floor_material.set_shader_parameter("tint", _tint)
-	_floor_material.set_shader_parameter("accent", _accent)
-	_floor_material.set_shader_parameter("shape", int(_style.shape))
-	_floor_material.set_shader_parameter("heading", _heading(_info, _state))
-	_floor_material.set_shader_parameter("cone_cosine", cos(_half_angle(_info, _state)))
-	_floor_mesh.material_override = _floor_material
-	add_child(_floor_mesh)
 
 
 func _add_readability_layers(skill_id: String, kind: String, side: int) -> void:
@@ -268,27 +237,25 @@ static func _profile(info: Dictionary) -> Dictionary:
 			if event in ["cast", "flight"]:
 				return {"kind":"arc", "time":0.32, "size":0.30}
 			if event == "impact":
-				return {"kind":"burst", "time":0.43, "size":1.03, "height":0.49, "light":0.67,
-					"shape":0, "ground":1.0, "footprint_radius":31.0}
+				return {"kind":"burst", "time":0.43, "size":1.03, "height":0.49, "light":0.67}
 		"sk_fire_oil":
 			if event == "cast":
 				return {"kind":"burst", "time":0.24, "size":0.62, "height":0.16, "light":0.33}
 			if event == "zone_start":
-				return {"kind":"zone", "time":1.8, "size":diameter * 1.02, "height":0.20, "shape":0, "ground":0.8}
+				return {"kind":"zone", "time":1.8, "size":diameter * 1.02, "height":0.20}
 		"sk_mercury_ring":
 			if event in ["zone_start", "ring_start"]:
-				return {"kind":"ring", "time":0.4, "size":diameter, "height":FLOOR + 0.007, "shape":1, "flat":true}
+				return {"kind":"ring", "time":0.4, "size":diameter, "height":FLOOR + 0.007, "flat":true}
 		"sk_frost_powder":
 			if event in ["cast", "flight"]:
 				return {"kind":"arc", "time":0.32, "size":0.36}
 			if event == "impact":
-				return {"kind":"burst", "time":0.58, "size":diameter * 0.70, "height":0.35, "shape":0, "ground":0.77, "light":0.50}
+				return {"kind":"burst", "time":0.58, "size":diameter * 0.70, "height":0.35, "light":0.50}
 			if event == "freeze_start":
-				return {"kind":"freeze", "time":0.8, "size":0.54, "height":0.10,
-					"shape":0, "ground":0.72, "footprint_radius":27.0}
+				return {"kind":"freeze", "time":0.8, "size":0.54, "height":0.10}
 		"sk_wind_flask":
 			if event == "impact":
-				return {"kind":"cone", "time":0.28, "size":diameter * 0.45, "height":0.30, "shape":2, "light":0.42}
+				return {"kind":"cone", "time":0.28, "size":diameter * 0.45, "height":0.30, "light":0.42}
 		"sk_feather_draught":
 			if event in ["buff_start", "buff_pulse", "boost"]:
 				return {"kind":"follow", "time":2.0, "size":0.90, "height":0.20, "opacity":0.78}
@@ -302,7 +269,7 @@ static func _profile(info: Dictionary) -> Dictionary:
 				return {"kind":"dash", "time":0.34, "size":0.97, "height":0.23, "light":0.43}
 		"sk_renewal_flask":
 			if event == "zone_start":
-				return {"kind":"zone", "time":3.0, "size":diameter, "height":0.57, "shape":0, "ground":0.83, "opacity":0.7}
+				return {"kind":"zone", "time":3.0, "size":diameter, "height":0.57, "opacity":0.7}
 			if event in ["heal", "zone_tick"]:
 				return {"kind":"heal", "time":0.28, "size":0.58, "height":0.35, "light":0.37}
 		"sk_dew_tonic":
@@ -325,10 +292,6 @@ static func _heading(info: Dictionary, state: Dictionary) -> Vector2:
 	var target: Vector2 = info.get("target", origin)
 	var heading: Vector2 = state.get("direction", origin.direction_to(target))
 	return Vector2.RIGHT if heading.is_zero_approx() else heading.normalized()
-
-
-static func _half_angle(info: Dictionary, state: Dictionary) -> float:
-	return float(state.get("half_angle", float(info.get("angle", deg_to_rad(70.0))) * 0.5))
 
 
 static func _width(texture: Texture2D, kind: String) -> float:
@@ -375,13 +338,10 @@ static func start_fallback(parent: Node2D, info: Dictionary) -> void:
 	var side := int(info.get("split_side", state.get("split_side", 0)))
 	if side != 0:
 		effect.set_meta("split_side", side)
-	var tint: Color = info.get("color", Color.WHITE)
-	effect.accent = tint.lightened(0.5) if side == 0 else SPLIT_FX.branch_color(side)
-	effect.card_tint = Color.WHITE if side == 0 else Color.WHITE.lerp(effect.accent, 0.34)
+	effect.card_tint = Color.WHITE if side == 0 else Color.WHITE.lerp(SPLIT_FX.branch_color(side), 0.34)
 	effect.time = _duration(info, state, style)
-	effect.radius = float(style.get("footprint_radius", Motion.radius(info, state)))
+	effect.radius = Motion.radius(info, state)
 	effect.heading = _heading(info, state)
-	effect.half_angle = _half_angle(info, state)
 	effect.card = Sprite2D.new()
 	effect.card.texture = texture
 	effect.card.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -446,9 +406,7 @@ class FallbackEffect extends Node2D:
 	var style: Dictionary
 	var card: Sprite2D
 	var card_tint: Color
-	var accent: Color
 	var heading: Vector2
-	var half_angle: float
 	var time: float
 	var radius: float
 	var card_scale: float
@@ -471,7 +429,6 @@ class FallbackEffect extends Node2D:
 		card.modulate = Color(card_tint, Motion.fade(age, time, kind) * float(style.get("opacity", 0.88)))
 		if kind == "ring":
 			card.scale *= Motion.ring_radius(state, info, age) / radius
-			card.modulate.a *= 0.42
 		elif kind == "cone":
 			card.position = heading * radius * 0.55 + Vector2.UP * 16.0
 		elif kind == "dash":
@@ -480,20 +437,3 @@ class FallbackEffect extends Node2D:
 			card.position = (target - origin) * minf(age / 0.18, 1.0) * 0.8 + Vector2.UP * 14.0
 		elif kind == "heal":
 			card.position.y -= phase * 25.0
-		if style.has("shape"):
-			queue_redraw()
-
-	func _draw() -> void:
-		if not style.has("shape"):
-			return
-		var fade := Motion.fade(age, time, style.kind)
-		match int(style.shape):
-			0:
-				draw_circle(Vector2.ZERO, radius, Color(accent, fade * 0.12))
-				draw_arc(Vector2.ZERO, radius - 1.0, 0.0, TAU, 48, Color(accent, fade * 0.43), 2.0)
-			1:
-				draw_arc(Vector2.ZERO, Motion.ring_radius(state, info, age), 0.0, TAU, 48, Color(accent, fade * 0.86), 3.0)
-			2:
-				var phase := age / time
-				var angle := heading.angle()
-				draw_arc(Vector2.ZERO, radius * phase, angle - half_angle, angle + half_angle, 28, Color(accent, fade * 0.68), 5.0)

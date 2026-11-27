@@ -6,12 +6,12 @@
 
 | 组合 | 图集 | PixelFX 原始效果 | 改动与用途 |
 | --- | --- | --- | --- |
-| 熔火炉 | furnace | fire/fire-ring | 压低橙红火浪，亮芯贴着三档火面前沿推进。 |
-| 雷衣 | thunder_coat | lightning/zap-hit | 琥珀保护电火花和白金回击点，待机只显示肩侧电粒。 |
-| 回浪镜 | tide_mirror | impacts/ricochet | 压扁的青白拦截闪光，镜面与返弹轨迹由程序驱动。 |
-| 回流锚 | rewind_anchor | water/whirlpool | 内圈银蓝水纹缩作旧脚点，受影响目标拉出贴地回移残影。 |
-| 净路剂 | cleanser | nature/acid-splash | 浅青薄尘沿实际切口消散，安全带由边沿标出。 |
+| 熔火炉 | furnace | fire/fire-ring | 蓄热时火星散布在炉区，橙红火浪贴着三档火面前沿推进。 |
+| 雷衣 | thunder_coat | lightning/zap-hit | 金白环甲围绕角色，吸收时炸开环沿和电火花，回击以白金分岔闪电联到攻击者。 |
+| 回浪镜 | tide_mirror | impacts/ricochet | 青白闪光配合直立的水镜和带双鳍的浪脊返弹，实际拦截及命中处呈现扇状飞沫。 |
+| 回流锚 | rewind_anchor | water/whirlpool | 靛蓝刻度钟标明原站位，反向箭头沿回移路线连接，银蓝水纹定在真实落点。 |
+| 净路剂 | cleanser | nature/acid-splash | 浅青薄尘沿真实切口消散，孢子退开后显露安全带地面。 |
 | 晶门 | crystal_gate | ice/ice-shatter | 紫白窄晶屑，分别在出发点和落脚点闪动。 |
 | 寒晶墙 | crystal_wall | ice/ice-spikes | 蓝白晶块和碎光，竖起来的实际墙面为半透明程序几何。 |
-| 照影 | opening_counter | arcane/rune-circle | 细金符文改制为反击时的短闪，并与实际侧点相连。 |
+| 照影 | opening_counter | arcane/rune-circle | 金色火星在角色脚下聚拢，踩地时尘光向实际范围内散开，像素符文集中在踩踏落点。 |
 | 收露瓶 | dew_pickup | pickups/xp-orb | 浅金露滴随时间浮动，固定地印由程序显示。 |

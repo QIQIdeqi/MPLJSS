@@ -23,7 +23,7 @@ Each sheet uses eight columns and three rows. The preview backgrounds and actors
 | `crystal_shatter` | `ice/ice-shatter` | Crystal shards from the break onward |
 | `soulbound_flight` | `ice/ice-lance` | Amber needle with a bright core, aligned with actual flight |
 | `soulbound_impact` | `lightning/zap-hit` | Mint branching contact effect on the combo mark |
-| `brittle_mark_break` | `ice/ice-shatter` | Separate amber recolor of the transparent shatter export for brittle mark consumption |
+| `brittle_mark_break` | `ice/ice-shatter` | Amber recolor of the transparent shatter for the vulnerability flask landing, with diameter drawn at runtime from the hit radius |
 | `blast_mark_contact` | `impacts/ricochet` | Separate orange-gold recolor at each actual shard hit |
 
 The held amber crack and flying shard are original pixel silhouettes assembled in

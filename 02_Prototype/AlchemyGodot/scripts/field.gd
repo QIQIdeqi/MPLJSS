@@ -763,10 +763,7 @@ func advance_basic_projectiles(delta: float) -> void:
 				state.finished = true
 				play_skill_fx({"skill_id":"magic_bolt", "event":"impact", "from":state.pos,
 					"target":target.body.position, "color":Color(0.65, 0.30, 1.00), "state":state})
-				var damage := float(state.damage)
-				if alchemy_system and alchemy_system.skills:
-					damage += alchemy_system.skills.break_brittle_mark(target)
-				damage_enemy(target, damage)
+				damage_enemy(target, float(state.damage))
 		if state.finished:
 			basic_projectiles.remove_at(index)
 
@@ -1192,7 +1189,15 @@ func hurt(amount: float, knock_direction := Vector2.ZERO, source: Node2D = null)
 		return false
 	hurt_cooldown = 0.55
 	var coat := independent_guard.mitigate(amount, player.position) if independent_guard else {}
-	hp = maxf(0.0, hp - float(coat.get("amount", amount)))
+	var received := float(coat.get("amount", amount))
+	hp = maxf(0.0, hp - received)
+	if not coat.is_empty():
+		var text := "雷衣 减伤 %.1f" % (amount - received)
+		var gold := Color("#ffde87")
+		if is_instance_valid(hd_view) and is_instance_valid(hd_view.world_view):
+			hd_view.world_view.show_combat_text(player.position, text, gold)
+		else:
+			show_combat_text(player.position, text, gold)
 	if skill_mobility:
 		skill_mobility.interrupt_dew()
 	player.show_hurt()
@@ -1409,6 +1414,7 @@ func _damage_combo_enemy(_combo_id: StringName, entry: Dictionary, amount: float
 func damage_enemy(entry: Dictionary, damage: float) -> void:
 	if ended or boss_death or not enemies.has(entry) or damage <= 0.0 or float(entry.get("hp", 0.0)) <= 0.0:
 		return
+	damage = damage_with_vulnerability(entry, damage)
 	var body: Node2D = entry.body
 	var dealt := minf(damage, float(entry.hp))
 	entry.hp -= damage
@@ -1466,15 +1472,24 @@ func remove_defeated(body: Node2D) -> void:
 	defeated_art.erase(body)
 	body.queue_free()
 
+func damage_with_vulnerability(entry: Dictionary, damage: float) -> float:
+	if alchemy_system and alchemy_system.skills:
+		return damage * alchemy_system.skills.brittle_damage_multiplier(entry)
+	return damage
+
 func show_damage_number(at: Vector2, damage: float) -> void:
+	show_combat_text(at, "−%d" % ceili(damage), Color(0.91, 1.0, .77))
+
+func show_combat_text(at: Vector2, message: String, color: Color) -> void:
 	var label := Label.new()
-	label.text = "−%d" % ceili(damage)
+	label.text = message
 	label.add_theme_font_size_override("font_size", 18)
-	label.add_theme_color_override("font_color", Color(0.91, 1.0, .77))
+	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(.06, .09, .06, .85))
 	label.add_theme_constant_override("outline_size", 3)
-	label.position = at + Vector2(-12, -76)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	effects.add_child(label)
+	label.position = at - Vector2(label.get_combined_minimum_size().x * 0.5, 76.0)
 	var tween := label.create_tween().set_parallel(true)
 	tween.tween_property(label, "position:y", label.position.y - 22.0, .52).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "modulate:a", 0.0, .52)

@@ -7,6 +7,7 @@ const SKILLS := preload("res://data/skills/skill_data.gd")
 const ABILITIES := preload("res://data/alchemy_abilities/alchemy_ability_data.gd")
 const COMBO_RULES := preload("res://scripts/skills/skill_combo_rules.gd")
 const BLAST_FLASK := &"sk_blast_flask"
+const BRITTLE_FLASK := &"sk_brittle_mark"
 const SPLIT_LAUNCH_OFFSET := 16.0
 
 var field
@@ -76,7 +77,12 @@ func cast_equipped(delta: float, player_pos: Vector2, enemies: Array, apply_hit:
 			continue
 		if _cast_extension(runtime, player_pos, enemies, context):
 			continue
-		var target := densest_enemy(player_pos, runtime.range_px(), enemies) if runtime.behavior() == SKILLS.BEHAVIOR_BOTTLE else nearest_enemy(player_pos, runtime.range_px(), enemies)
+		var target: Dictionary
+		if runtime.behavior() == SKILLS.BEHAVIOR_BOTTLE or runtime.skill_id == BRITTLE_FLASK:
+			var cluster_radius := runtime.radius_px() if runtime.skill_id == BRITTLE_FLASK else 96.0
+			target = densest_enemy(player_pos, runtime.range_px(), enemies, cluster_radius)
+		else:
+			target = nearest_enemy(player_pos, runtime.range_px(), enemies)
 		if target.is_empty():
 			continue # 无有效目标不进入冷却
 		runtime.reset_cooldown()
@@ -276,11 +282,6 @@ func _cast_split(runtime: SkillRuntime, from: Vector2, target: Dictionary, enemi
 	if grouped:
 		other = target
 	_emit_fx(runtime, "split_cast", from, point)
-	if grouped and runtime.behavior() == SKILLS.BEHAVIOR_MARK:
-		_apply_brittle_mark(runtime, other, {
-			"ratio": 2.0 * ABILITIES.SPLIT_DAMAGE_RATIO, "split_merged": true,
-		})
-		return
 	for side: int in [-1, 1]:
 		var branch_target: Dictionary = target if side < 0 else other
 		var offset := lateral * SPLIT_LAUNCH_OFFSET * side
@@ -309,20 +310,18 @@ func _split_target(from: Vector2, point: Vector2, reach: float, first: Dictionar
 func _cast_branch(runtime: SkillRuntime, from: Vector2, target: Dictionary, branch: Dictionary = {}) -> void:
 	var point: Vector2 = target.body.position
 	var ratio := float(branch.get("ratio", 1.0))
-	if runtime.skill_id == BLAST_FLASK:
-		_launch_blast_flask(runtime, from, branch.get("landing", point), branch)
+	if runtime.skill_id in [BLAST_FLASK, BRITTLE_FLASK]:
+		_launch_ground_flask(runtime, from, branch.get("landing", point), branch)
 		return
 	var behavior := runtime.behavior()
 	match behavior:
-		SKILLS.BEHAVIOR_MARK:
-			_apply_brittle_mark(runtime, target, branch)
 		SKILLS.BEHAVIOR_CRYSTAL:
 			var direction := from.direction_to(point)
 			var radius := 42.0 * _branch_area_ratio(branch)
 			for index in int(runtime.value("count", 5)):
 				active.append({"kind":"delayed_hit", "runtime":runtime, "left":float(runtime.value("step_delay", .06)) * index,
 					"pos":from + direction * (58.0 + index * 46.0), "radius":radius, "ratio":ratio,
-					"direction":direction, "split_side":int(branch.get("split_side", 0)), "direct_hit":true})
+					"direction":direction, "split_side":int(branch.get("split_side", 0))})
 		SKILLS.BEHAVIOR_NEEDLE:
 			_spawn_needles(runtime, target, ratio, branch)
 		SKILLS.BEHAVIOR_POOL, SKILLS.BEHAVIOR_MIST:
@@ -345,13 +344,17 @@ func _apply_brittle_mark(runtime: SkillRuntime, target: Dictionary, branch: Dict
 	if not _living(target):
 		return
 	var body_id: int = target.body.get_instance_id()
-	_take_brittle_mark(body_id)
+	var duration := float(runtime.value("duration"))
+	var vulnerability := float(runtime.value("vulnerability"))
+	var existing: Dictionary = brittle_marks.get(body_id, {})
+	if not existing.is_empty():
+		existing.left = duration
+		existing.vulnerability = maxf(float(existing.vulnerability), vulnerability)
+		return
 	var point: Vector2 = target.body.position
 	var mark := {
 		"kind": "brittle_mark", "runtime": runtime, "target": target, "pos": point,
-		"left": float(runtime.value("duration", 2.5)), "ratio": float(branch.get("ratio", 1.0)),
-		"split_side": int(branch.get("split_side", 0)),
-		"split_merged": bool(branch.get("split_merged", false)),
+		"left": duration, "vulnerability": vulnerability, "split_side": int(branch.split_side),
 		"finished": false,
 	}
 	brittle_marks[body_id] = mark
@@ -363,40 +366,34 @@ func _update_brittle_marks(delta: float, enemies: Array) -> void:
 		var target: Dictionary = mark.target
 		mark.left = float(mark.left) - delta
 		if mark.left <= 0.0 or not _living(target) or not enemies.has(target):
-			_take_brittle_mark(body_id)
+			_discard_brittle_mark(body_id)
 		else:
 			mark.pos = target.body.position
 
-func _take_brittle_mark(body_id: int) -> Dictionary:
+func _discard_brittle_mark(body_id: int) -> void:
 	var mark: Dictionary = brittle_marks.get(body_id, {})
 	if not mark.is_empty():
 		brittle_marks.erase(body_id)
 		mark.finished = true
-	return mark
 
 func discard_brittle_mark(entry: Dictionary) -> void:
 	if is_instance_valid(entry.get("body")):
-		_take_brittle_mark(entry.body.get_instance_id())
+		_discard_brittle_mark(entry.body.get_instance_id())
 
-# 由直接命中在扣血前调用，使附伤与本次命中合并。
-func break_brittle_mark(entry: Dictionary) -> float:
+# 单一受伤入口读取倍率，命中和持续伤害都不会消耗脆弱。
+func brittle_damage_multiplier(entry: Dictionary) -> float:
 	if not _living(entry):
-		return 0.0
-	var mark := _take_brittle_mark(entry.body.get_instance_id())
-	if mark.is_empty():
-		return 0.0
-	var point: Vector2 = entry.body.position
-	mark.pos = point
-	_emit_state_fx(mark, "mark_break", point, point)
-	var runtime: SkillRuntime = mark.runtime
-	return runtime.damage() * float(mark.ratio)
+		return 1.0
+	var mark: Dictionary = brittle_marks.get(entry.body.get_instance_id(), {})
+	return 1.0 + float(mark.get("vulnerability", 0.0))
 
-func _launch_blast_flask(runtime: SkillRuntime, from: Vector2, landing: Vector2, branch: Dictionary = {}) -> void:
+func _launch_ground_flask(runtime: SkillRuntime, from: Vector2, landing: Vector2, branch: Dictionary) -> void:
 	# 只在范围内选中活目标时出手。药瓶瞄准地面，出手后不再依赖怪物节点。
 	var state := {
 		"kind": "blast_flask",
 		"runtime": runtime,
 		"pos": from,
+		"origin": from,
 		"landing": landing,
 		"direction": from.direction_to(landing),
 		"radius": runtime.radius_px() * _branch_area_ratio(branch),
@@ -406,7 +403,7 @@ func _launch_blast_flask(runtime: SkillRuntime, from: Vector2, landing: Vector2,
 		"finished": false,
 	}
 	active.append(state)
-	_emit_fx(runtime, "cast", from, landing, state)
+	_emit_fx(runtime, "cast" if runtime.skill_id == BLAST_FLASK else "flight", from, landing, state)
 
 func _spawn_projectile(runtime: SkillRuntime, from: Vector2, target: Dictionary, impact: String,
 		ratio := 1.0, branch: Dictionary = {}) -> void:
@@ -466,7 +463,7 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 				if state.left <= 0.0:
 					_emit_state_fx(state, "impact", state.pos, state.pos)
 					_hit_area(state.runtime, state.pos, float(state.radius), enemies, apply_hit,
-						float(state.ratio), 0.0, 0.0, bool(state.get("direct_hit", false)))
+						float(state.ratio))
 					finished = true
 			"blast_flask":
 				var landing: Vector2 = state.landing
@@ -474,10 +471,14 @@ func _update_active(delta: float, player_pos: Vector2, enemies: Array, apply_hit
 				if state.pos == landing:
 					var runtime: SkillRuntime = state.runtime
 					_emit_state_fx(state, "impact", landing, landing)
-					_hit_area(runtime, landing, float(state.radius), enemies, apply_hit,
-						float(state.ratio), 0.0, 0.0, true)
-					if int(state.split_side) == 0:
-						_apply_ability(runtime, landing, enemies, apply_hit)
+					if runtime.skill_id == BRITTLE_FLASK:
+						for entry: Dictionary in enemies:
+							if _living(entry) and landing.distance_to(entry.body.position) <= float(state.radius):
+								_apply_brittle_mark(runtime, entry, state)
+					else:
+						_hit_area(runtime, landing, float(state.radius), enemies, apply_hit, float(state.ratio))
+						if int(state.split_side) == 0:
+							_apply_ability(runtime, landing, enemies, apply_hit)
 					finished = true
 			"projectile":
 				state.left = float(state.left) - delta
@@ -553,7 +554,7 @@ func _advance_extension_toss(state: Dictionary, delta: float, enemies: Array, ap
 						"radius": 24.0, "duration": duration, "freeze_target": entry, "split_side": state.split_side,
 					})
 	else:
-		_hit(runtime, target, apply_hit, float(state.ratio), 0.0, 0.0, enemies)
+		_hit(runtime, target, apply_hit, float(state.ratio))
 	return true
 
 func _advance_oil_trail(state: Dictionary, delta: float, player_pos: Vector2, bounds: Rect2) -> bool:
@@ -630,7 +631,7 @@ func _advance_mercury_ring(state: Dictionary, delta: float, enemies: Array, appl
 		var id: int = entry.body.get_instance_id()
 		if not state.hit.has(id):
 			state.hit[id] = true
-			_hit(state.runtime, entry, apply_hit, float(state.ratio), 0.0, 0.0, enemies)
+			_hit(state.runtime, entry, apply_hit, float(state.ratio))
 			if state.finished:
 				return true
 	return current >= radius
@@ -656,11 +657,11 @@ func _resolve_projectile(state: Dictionary, point: Vector2, enemies: Array, appl
 	var side := int(state.get("split_side", 0))
 	_emit_state_fx(state, "impact", state.pos, point)
 	match String(state.impact):
-		"blast_on_hit": _hit_area(runtime, point, radius, enemies, apply_hit, ratio, 0.0, 0.0, true)
+		"blast_on_hit": _hit_area(runtime, point, radius, enemies, apply_hit, ratio)
 		"bounce_on_hit":
 			_hit_projectile_chain(state, enemies, apply_hit, float(runtime.value("bounce_units", 3.2)) * SKILLS.UNIT)
 		"pull_on_hit":
-			_hit_area(runtime, point, radius * .62, enemies, apply_hit, ratio, 0.0, 0.0, true)
+			_hit_area(runtime, point, radius * .62, enemies, apply_hit, ratio)
 			_add_effect_state({"kind":"pull", "runtime":runtime, "pos":point,
 				"left":float(runtime.value("duration", 2.4)), "radius":radius, "split_side":side}, "zone_start")
 		"zone_on_hit":
@@ -672,9 +673,9 @@ func _resolve_projectile(state: Dictionary, point: Vector2, enemies: Array, appl
 			_hit_projectile_chain(state, enemies, apply_hit, runtime.range_px())
 		"gel_on_hit":
 			_hit(runtime, state.target, apply_hit, ratio, float(runtime.value("slow", .3)),
-				float(runtime.value("slow_duration", 2.0)), enemies)
+				float(runtime.value("slow_duration", 2.0)))
 		"needle_on_hit":
-			_hit(runtime, state.target, apply_hit, ratio, 0.0, 0.0, enemies)
+			_hit(runtime, state.target, apply_hit, ratio)
 	if state.finished:
 		return
 	if side == 0:
@@ -692,24 +693,20 @@ func _hit_projectile_chain(state: Dictionary, enemies: Array, apply_hit: Callabl
 		used.append(current.body)
 		if turn > 0:
 			_emit_state_fx(state, "hop", previous, point)
-		_hit(runtime, current, apply_hit, float(state.get("ratio", 1.0)), 0.0, 0.0, enemies)
+		_hit(runtime, current, apply_hit, float(state.get("ratio", 1.0)))
 		previous = point
 		current = nearest_enemy(point, reach, enemies, used)
 
 func _hit(runtime: SkillRuntime, entry: Dictionary, apply_hit: Callable, ratio := 1.0, slow := 0.0,
-		slow_duration := 0.0, direct_targets: Array = []) -> void:
+		slow_duration := 0.0) -> void:
 	if not _living(entry): return
-	var damage := runtime.damage() * ratio
-	if damage > 0.0 and not direct_targets.is_empty():
-		damage += break_brittle_mark(entry)
-	apply_hit.call(entry, damage, slow_duration, maxf(0.0, 1.0 - slow), runtime.base.color)
+	apply_hit.call(entry, runtime.damage() * ratio, slow_duration, maxf(0.0, 1.0 - slow), runtime.base.color)
 
 func _hit_area(runtime: SkillRuntime, at: Vector2, radius: float, enemies: Array, apply_hit: Callable,
-		ratio := 1.0, slow := 0.0, slow_duration := 0.0, direct_hit := false) -> void:
-	var direct_targets: Array = enemies if direct_hit else []
+		ratio := 1.0, slow := 0.0, slow_duration := 0.0) -> void:
 	for entry in enemies.duplicate():
 		if _living(entry) and entry.body.position.distance_to(at) <= radius:
-			_hit(runtime, entry, apply_hit, ratio, slow, slow_duration, direct_targets)
+			_hit(runtime, entry, apply_hit, ratio, slow, slow_duration)
 
 func _apply_ability(runtime: SkillRuntime, at: Vector2, enemies: Array, apply_hit: Callable) -> void:
 	var ability := ABILITIES.by_id(ability_id)
@@ -753,14 +750,14 @@ func nearest_enemy(at: Vector2, reach: float, enemies: Array, excluded: Array = 
 			closest = entry
 	return closest
 
-func densest_enemy(at: Vector2, reach: float, enemies: Array) -> Dictionary:
+func densest_enemy(at: Vector2, reach: float, enemies: Array, cluster_radius := 96.0) -> Dictionary:
 	var best := {}
 	var best_score := -INF
 	for candidate in enemies:
 		if not _living(candidate) or candidate.body.position.distance_to(at) > reach: continue
 		var score := 0.0
 		for other in enemies:
-			if _living(other) and other.body.position.distance_to(candidate.body.position) <= 96.0:
+			if _living(other) and other.body.position.distance_to(candidate.body.position) <= cluster_radius:
 				score += 1.0
 		score -= candidate.body.position.distance_to(at) / maxf(reach, 1.0) * .15
 		if score > best_score:

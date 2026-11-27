@@ -45,16 +45,12 @@ static func blast(parent: Node2D, from: Vector2, to: Vector2, color: Color, radi
 		explosion(parent, to, color, radius_px))
 
 
-# ---- 爆炸（范围冲击波）----
+# ---- 爆炸（按范围散开的粒子）----
 static func explosion(parent: Node2D, at: Vector2, color: Color, radius_px: float) -> void:
-	FX.burst(parent, at, color)
-	var ring := _ring(color, radius_px)
-	_fx_root(parent).add_child(ring)
-	ring.global_position = at
-	var tw := ring.create_tween()
-	tw.tween_property(ring, "scale", Vector2.ONE * 1.4, 0.28)
-	tw.parallel().tween_property(ring, "modulate:a", 0.0, 0.28)
-	tw.tween_callback(ring.queue_free)
+	var particles := FX.burst(parent, at, color)
+	var spread := clampf(radius_px / 48.0, 0.40, 2.9)
+	particles.initial_velocity_min *= spread
+	particles.initial_velocity_max *= spread
 
 
 # ---- 直线（冰锥/风刃）：一道拖尾直线 ----
@@ -226,21 +222,6 @@ static func _radial_gradient(color: Color) -> Gradient:
 	g.colors = PackedColorArray([color, Color(color.r, color.g, color.b, 0.0)])
 	g.offsets = PackedFloat32Array([0.0, 1.0])
 	return g
-
-static func _ring(color: Color, radius: float) -> Node2D:
-	var n := Node2D.new()
-	var ring := Sprite2D.new()
-	var tex := GradientTexture2D.new()
-	tex.gradient = _radial_gradient(color)
-	tex.width = 64
-	tex.height = 64
-	tex.fill = GradientTexture2D.FILL_RADIAL
-	tex.fill_from = Vector2(0.5, 0.5)
-	tex.fill_to = Vector2(0.42, 0.5)
-	ring.texture = tex
-	ring.scale = Vector2.ONE * (radius * 2.0 / 64.0)
-	n.add_child(ring)
-	return n
 
 static func _line_node(from: Vector2, to: Vector2, color: Color, width: float) -> Node2D:
 	var n := Node2D.new()

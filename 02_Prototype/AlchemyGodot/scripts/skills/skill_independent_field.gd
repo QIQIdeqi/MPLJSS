@@ -9,7 +9,11 @@ const DEW := &"combo_dew_pickup"
 const FURNACE_RADIUS := 1.15 * U
 const FURNACE_RANGE := 3.3 * U
 const WALL_WIDTH := 0.26 * U
-const COUNTER_RADIUS := 0.38 * U
+const COUNTER_RADIUS := 1.35 * U
+const COUNTER_TELL := 0.26
+const REWIND_WARN := 0.68
+const REWIND_TRAVEL := 0.24
+const REWIND_MIN_DRIFT := 0.12 * U
 const DEW_RADIUS := 0.42 * U
 
 var _rules
@@ -22,6 +26,7 @@ var _approach: Dictionary = {}
 var _offered_windups: Dictionary = {}
 var _furnace_retry := 0.0
 var _counter_retry := 0.0
+var _counter_advanced_before_actors := false
 var _next_effect := 10000
 var _generation := 0
 
@@ -48,24 +53,28 @@ func clear() -> void:
 	_offered_windups.clear()
 	_furnace_retry = 0.0
 	_counter_retry = 0.0
+	_counter_advanced_before_actors = false
 
 
 func pre_actor_tick(at: Vector2, enemies: Array, context: Dictionary) -> void:
-	_try_counter(at, enemies, context)
+	_counter_advanced_before_actors = true
+	_advance_counter(float(context.get("frame_delta", 0.0)), at, enemies, context)
 
 
 func tick(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> void:
 	var generation := _generation
 	_furnace_retry = maxf(_furnace_retry - delta, 0.0)
-	_counter_retry = maxf(_counter_retry - delta, 0.0)
 	_tick_furnace(delta, at, enemies, context)
 	if generation != _generation:
 		return
 	_tick_rewind(delta, at, enemies, context)
 	_tick_wall(delta, at, enemies, context)
-	_tick_counter(delta, at, enemies, context)
+	if not _counter_advanced_before_actors:
+		_advance_counter(delta, at, enemies, context)
+	_counter_advanced_before_actors = false
 	if generation != _generation:
 		return
+	_offer_counter(at, enemies, context)
 	_tick_dew(delta, at, context)
 
 
@@ -199,10 +208,12 @@ func _tick_rewind(delta: float, at: Vector2, enemies: Array, context: Dictionary
 		_offer_rewind(delta, at, enemies)
 		return
 	_rewind.age = float(_rewind.age) + delta
-	var elapsed := clampf(float(_rewind.age) - 0.85, 0.0, 0.18)
-	var rewind_now := float(_rewind.age) >= 0.85
+	var elapsed := clampf(float(_rewind.age) - REWIND_WARN, 0.0, REWIND_TRAVEL)
+	var rewind_now := float(_rewind.age) >= REWIND_WARN
 	var points := PackedVector2Array()
 	var positions := PackedVector2Array()
+	var starting_origins := PackedVector2Array()
+	var starting_positions := PackedVector2Array()
 	var operating := false
 	for site: Dictionary in _rewind.sites:
 		var entry: Dictionary = site.entry
@@ -214,14 +225,16 @@ func _tick_rewind(delta: float, at: Vector2, enemies: Array, context: Dictionary
 		var target: Vector2 = site.point
 		if rewind_now:
 			if not site.has("start"):
-				if from.distance_squared_to(target) < (0.2 * U) ** 2:
+				if from.distance_squared_to(target) < REWIND_MIN_DRIFT ** 2:
 					site.done = true
 					continue
 				site.start = from
 				site.destination = from.move_toward(target, 1.7 * U)
+				starting_origins.append(target)
+				starting_positions.append(from)
 			entry.rewinding = true
 			var start: Vector2 = site.start
-			var desired := start.lerp(site.destination, elapsed / 0.18)
+			var desired := start.lerp(site.destination, elapsed / REWIND_TRAVEL)
 			var clipped: Vector2 = _rules.clip(context, from, desired)
 			clipped = stop_enemy_motion(entry, from, clipped)
 			var body: Node2D = entry.body
@@ -230,15 +243,21 @@ func _tick_rewind(delta: float, at: Vector2, enemies: Array, context: Dictionary
 			else:
 				body.position = clipped
 			from = body.position
-			if not from.is_equal_approx(desired) or elapsed >= 0.18:
+			if from.distance_squared_to(desired) > 0.25 or elapsed >= REWIND_TRAVEL:
 				entry.erase("rewinding")
 				site.done = true
+				if from.distance_squared_to(start) > 0.25:
+					_flash(REWIND, "combo_hit", {"target": from, "from": start})
 		operating = operating or not bool(site.get("done", false))
 		points.append(target)
 		positions.append(from)
+	if not starting_origins.is_empty():
+		_flash(REWIND, "combo_launch", {"target": at, "points": starting_origins, "positions": starting_positions})
 	if not points.is_empty():
+		var progress := elapsed / REWIND_TRAVEL if rewind_now else float(_rewind.age) / REWIND_WARN
 		_show(REWIND, _rewind, {"phase": "rewind" if rewind_now else "mark", "target": at,
-			"points": points, "positions": positions})
+			"points": points, "positions": positions, "progress": progress,
+			"duration": maxf(REWIND_TRAVEL - elapsed if rewind_now else REWIND_WARN - float(_rewind.age), 0.01)})
 	if not operating:
 		_end(REWIND, _rewind)
 		_rewind = {}
@@ -255,44 +274,38 @@ func _offer_rewind(delta: float, at: Vector2, enemies: Array) -> void:
 			continue
 		var point: Vector2 = entry.body.position
 		var distance := at.distance_squared_to(point)
-		if distance > (3.6 * U) ** 2:
+		if distance > (4.10 * U) ** 2:
 			continue
 		var id: int = entry.body.get_instance_id()
-		var previous: Dictionary = _approach.get(id, {"point": point, "duration": 0.0})
-		var motion := point - (previous.point as Vector2)
+		var previous: Dictionary = _approach.get(id, {"latest": point, "origin": point, "duration": 0.0})
+		var latest: Vector2 = previous.latest
+		var motion := point - latest
 		var toward := point.direction_to(at)
 		var duration := 0.0
-		if delta > 0.0 and motion.dot(toward) >= 0.5 * U * delta:
+		var origin := point
+		if delta > 0.0 and motion.dot(toward) >= 0.22 * U * delta:
 			duration = float(previous.duration) + delta
-		samples[id] = {"point": point, "duration": duration}
-		if duration + 0.000001 >= 0.20 and not toward.is_zero_approx():
-			candidates.append({"entry": entry, "point": point, "distance": sqrt(distance), "toward": toward, "id": id})
+			origin = previous.origin if float(previous.duration) > 0.0 else latest
+		samples[id] = {"latest": point, "origin": origin, "duration": duration}
+		if duration + 0.000001 >= 0.12 and not toward.is_zero_approx():
+			candidates.append({"entry": entry, "point": origin, "current": point, "distance": distance, "duration": duration, "id": id})
 	_approach = samples
 	candidates.sort_custom(_nearer)
-	var pair: Array[Dictionary] = []
-	var least := INF
-	for i in range(candidates.size() - 1):
-		for j in range(i + 1, candidates.size()):
-			var first: Dictionary = candidates[i]
-			var second: Dictionary = candidates[j]
-			var distance := float(first.distance) + float(second.distance)
-			if distance >= least:
-				break
-			if (first.toward as Vector2).dot(second.toward) <= cos(deg_to_rad(65.0)):
-				pair = [first, second]
-				least = distance
-	if pair.is_empty() or _rules.commit(REWIND) <= 0.0:
+	if candidates.is_empty():
 		return
-	for item: Dictionary in candidates:
-		if pair.size() >= 4:
-			break
-		if not pair.has(item):
-			pair.append(item)
+	if candidates.size() == 1 and (float(candidates[0].duration) + 0.000001 < 0.16 or float(candidates[0].distance) > (2.25 * U) ** 2):
+		return
+	if _rules.commit(REWIND) <= 0.0:
+		return
+	candidates.resize(mini(4, candidates.size()))
 	var points := PackedVector2Array()
-	for item: Dictionary in pair:
+	var positions := PackedVector2Array()
+	for item: Dictionary in candidates:
 		points.append(item.point)
-	_rewind = {"id": _allocate(), "age": 0.0, "sites": pair}
-	_show(REWIND, _rewind, {"phase": "mark", "target": at, "points": points, "positions": points})
+		positions.append(item.current)
+	_rewind = {"id": _allocate(), "age": 0.0, "sites": candidates}
+	_show(REWIND, _rewind, {"phase": "mark", "target": at, "points": points, "positions": positions,
+		"progress": 0.0, "duration": REWIND_WARN})
 
 
 func _nearer(first: Dictionary, second: Dictionary) -> bool:
@@ -474,18 +487,20 @@ func _wall_eligible(entry: Dictionary, include_practice: bool) -> bool:
 		and (not bool(entry.get("anchored", false)) or (include_practice and bool(entry.get("wall_practice", false))))
 
 
-func _tick_counter(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> void:
-	if not _counter.is_empty():
-		_counter.left = float(_counter.left) - delta
-		if not _counter_valid(enemies):
-			_end(COUNTER, _counter)
-			_counter = {}
-			_counter_retry = 0.45
-		else:
-			_show_counter()
-			_try_counter(at, enemies, context)
+func _advance_counter(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> void:
+	_counter_retry = maxf(_counter_retry - delta, 0.0)
+	if _counter.is_empty():
 		return
-	if _counter_retry > 0.0 or not _rules.ready(COUNTER):
+	var previous_left := float(_counter.left)
+	_counter.left = previous_left - delta
+	if float(_counter.left) > 0.000001:
+		_show_counter(at)
+	else:
+		_stomp(at, previous_left, enemies, context)
+
+
+func _offer_counter(at: Vector2, enemies: Array, context: Dictionary) -> void:
+	if not _counter.is_empty() or _counter_retry > 0.0 or not _rules.ready(COUNTER):
 		return
 	var best := {}
 	var nearest := INF
@@ -494,72 +509,75 @@ func _tick_counter(delta: float, at: Vector2, enemies: Array, context: Dictionar
 		if not _living(entry):
 			continue
 		var windup: Dictionary = entry.get("windup", {})
-		var left := minf(float(windup.get("remaining", 0.0)), 1.05)
-		if left < 0.15:
+		if float(windup.get("remaining", 0.0)) < 0.12:
 			continue
 		var enemy_at: Vector2 = entry.body.position
-		var aim: Vector2 = windup.get("aim", Vector2.ZERO)
 		var token := int(windup.get("token", -1))
 		var body_id: int = entry.body.get_instance_id()
 		if int(_offered_windups.get(body_id, -2)) == token:
 			retained[body_id] = token
 			continue
-		if token < 0 or aim.is_zero_approx() or at.distance_squared_to(enemy_at) > (2.8 * U) ** 2:
+		var distance := at.distance_squared_to(enemy_at)
+		if token < 0 or distance >= nearest or distance > (1.80 * U) ** 2 or not _rules.clear_path(context, at, enemy_at):
 			continue
-		var tangent := aim.normalized().orthogonal() * (0.72 * U)
-		for point: Vector2 in [enemy_at + tangent, enemy_at - tangent]:
-			var reach := maxf(0.0, at.distance_to(point) - COUNTER_RADIUS)
-			var time := reach / maxf(1.0, float(context.get("walk_speed", 200.0)))
-			if time > left or time >= nearest or not _point_clear(point, context) or not _walk_path(at, point, context):
-				continue
-			nearest = time
-			best = {"entry": entry, "body_id": body_id, "token": token, "point": point, "left": left, "total": left}
+		nearest = distance
+		best = {"entry": entry, "body_id": body_id, "token": token, "left": COUNTER_TELL}
 	_offered_windups = retained
 	if best.is_empty():
 		return
 	best.id = _allocate()
 	_offered_windups[best.body_id] = best.token
 	_counter = best
-	_show_counter()
+	_show_counter(at)
 
 
-func _counter_valid(enemies: Array) -> bool:
-	var entry: Dictionary = _counter.entry
-	var windup: Dictionary = entry.get("windup", {})
-	return float(_counter.left) > 0.0 and _living(entry) and enemies.has(entry) \
-		and int(windup.get("token", -1)) == int(_counter.token) and float(windup.get("remaining", 0.0)) > 0.0
+func _show_counter(at: Vector2) -> void:
+	var left := float(_counter.left)
+	_show(COUNTER, _counter, {"phase": "warn", "target": at, "radius": COUNTER_RADIUS,
+		"progress": 1.0 - left / COUNTER_TELL, "duration": left})
 
 
-func _show_counter() -> void:
-	var entry: Dictionary = _counter.entry
-	var left := minf(float(_counter.left), float(entry.windup.remaining))
-	_show(COUNTER, _counter, {"phase": "mark", "target": _counter.point, "from": entry.body.position,
-		"radius": COUNTER_RADIUS, "progress": left / float(_counter.total), "duration": left})
-
-
-func _try_counter(at: Vector2, enemies: Array, context: Dictionary) -> void:
-	if _counter.is_empty() or not _counter_valid(enemies) or not _touches(at, _counter.point, COUNTER_RADIUS, context):
-		return
-	var from: Vector2 = context.get("move_from", at)
-	var windup: Dictionary = _counter.entry.windup
-	var available := minf(float(_counter.left), float(windup.remaining))
-	var entered := _circle_entry_fraction(from - (_counter.point as Vector2), at - from, COUNTER_RADIUS)
-	if entered * float(context.get("frame_delta", 0.0)) >= available:
-		return
-	var scale: float = _rules.commit(COUNTER)
-	if scale <= 0.0:
-		return
+func _stomp(at: Vector2, until_impact: float, enemies: Array, context: Dictionary) -> void:
 	var state := _counter
-	var entry: Dictionary = state.entry
-	var callback: Callable = context.get("interrupt_attack", Callable())
 	_end(COUNTER, state)
 	_counter = {}
-	var interrupted := false
-	if callback.is_valid() and not bool(entry.get("boss", false)) and bool(entry.windup.get("interruptible", false)):
-		var result: Variant = callback.call(entry, state.token, 0.24)
-		interrupted = bool(result) if result != null else true
-	_flash(COUNTER, "combo_hit", {"target": entry.body.position, "from": state.point, "interrupted": interrupted})
-	_damage(COUNTER, entry, 28.0 * scale, context)
+	var targets: Array[Dictionary] = []
+	for entry: Dictionary in enemies:
+		if not _living(entry):
+			continue
+		var point: Vector2 = entry.body.position
+		if point.distance_squared_to(at) <= COUNTER_RADIUS ** 2 and _rules.clear_path(context, at, point):
+			targets.append(entry)
+	var scale := 0.0
+	if not targets.is_empty():
+		scale = float(_rules.commit(COUNTER))
+	_flash(COUNTER, "combo_launch", {"target": at, "radius": COUNTER_RADIUS, "did_hit": scale > 0.0})
+	if scale <= 0.0:
+		_counter_retry = 0.45
+		return
+	var generation := _generation
+	for entry in targets:
+		if not _living(entry) or not enemies.has(entry):
+			continue
+		var interrupted := _interrupt_counter_source(entry, state, until_impact, context)
+		_flash(COUNTER, "combo_hit", {"target": entry.body.position, "from": at, "interrupted": interrupted})
+		_damage(COUNTER, entry, 26.0 * scale, context)
+		if generation != _generation:
+			return
+
+
+func _interrupt_counter_source(entry: Dictionary, state: Dictionary, until_impact: float, context: Dictionary) -> bool:
+	if entry != state.entry or bool(entry.get("boss", false)) or bool(entry.get("elite", false)):
+		return false
+	var windup: Dictionary = entry.get("windup", {})
+	if not bool(windup.get("interruptible", false)) or int(windup.get("token", -1)) != int(state.token) \
+		or float(windup.get("remaining", 0.0)) <= until_impact:
+		return false
+	var callback: Callable = context.get("interrupt_attack", Callable())
+	if not callback.is_valid():
+		return false
+	var result: Variant = callback.call(entry, state.token, 0.24)
+	return bool(result) if result != null else true
 
 
 func notify_kill(at: Vector2, context: Dictionary) -> void:
@@ -624,29 +642,12 @@ func _touches(at: Vector2, point: Vector2, radius: float, context: Dictionary) -
 		and Geometry2D.get_closest_point_to_segment(point, from, at).distance_squared_to(point) <= radius * radius
 
 
-func _circle_entry_fraction(from: Vector2, offset: Vector2, radius: float) -> float:
-	var origin := from.length_squared() - radius * radius
-	if origin <= 0.0 or offset.is_zero_approx():
-		return 0.0
-	var magnitude := offset.length_squared()
-	var dot := from.dot(offset)
-	return clampf((-dot - sqrt(maxf(0.0, dot * dot - magnitude * origin))) / magnitude, 0.0, 1.0)
-
-
 func _point_clear(at: Vector2, context: Dictionary) -> bool:
 	var callback: Callable = context.get("valid_combo_ground", Callable())
 	if callback.is_valid():
 		return bool(callback.call(at))
 	var bounds: Rect2 = context.get("bounds", Rect2())
 	return (not bounds.has_area() or bounds.has_point(at)) and _rules.clear_path(context, at - Vector2.RIGHT, at + Vector2.RIGHT)
-
-
-func _walk_path(from: Vector2, to: Vector2, context: Dictionary) -> bool:
-	var method: Callable = context.get("clip_walk", Callable())
-	if method.is_valid():
-		var clipped: Vector2 = method.call(from, to)
-		return clipped.distance_squared_to(to) < 0.04
-	return _rules.clear_path(context, from, to)
 
 
 func _living(entry: Dictionary) -> bool:

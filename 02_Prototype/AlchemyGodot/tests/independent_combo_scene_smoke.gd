@@ -150,14 +150,30 @@ func _mirror(split: bool) -> void:
 	_equip(ID, split)
 	var source: Node2D = battle.enemies[0].body
 	battle.fire_web(battle.actors.to_global(origin + Vector2(154.0, 0.0)), Vector2.LEFT, 1, 1.0, source)
-	_advance(44)
+	for _frame in 35:
+		_advance(1)
+		if not _visual_states(ID, world.combo_effects._fx._live.values()).is_empty():
+			break
+	var active := _visual_states(ID, world.combo_effects._fx._live.values())
+	_expect(active.size() == 1 and active[0].phase == "mirror" and skills.combo_rules.ready(ID),
+		"Tide Mirror shows the fixed interception plane before spending cooldown")
+	await _capture("mirror_ready", split)
+	for _frame in 24:
+		_advance(1)
+		if not skills.combo_rules.ready(ID):
+			break
+	_advance(2)
+	active = _visual_states(ID, world.combo_effects._fx._live.values())
+	_expect(active.size() == 1 and active[0].phase == "return"
+		and is_equal_approx(float(active[0].width), 0.44 * SKILLS.UNIT), "Reflected wave uses the actual width")
+	await _capture("mirror", split)
+	_advance(13)
 	_expect(battle.web_shots.is_empty() and is_equal_approx(battle.hp, 90.0),
 		"Mirror intercepts the actual enemy bullet before hurt")
 	_expect(not skills.combo_rules.ready(ID), "Intercept, not creating the mirror, spends cooldown")
 	var clips := _visual_states(ID, world.combo_effects._fx._clips)
 	_expect(clips.filter(func(clip: Dictionary) -> bool: return clip.event == "combo_hit").size() == 1,
 		"Only the reflected projectile hits a dummy")
-	await _capture("mirror", split)
 
 
 func _wall(split: bool) -> void:
@@ -171,13 +187,14 @@ func _wall(split: bool) -> void:
 func _rewind(split: bool) -> void:
 	const ID := &"combo_rewind_anchor"
 	_equip(ID, split)
-	var first: Dictionary = battle.enemies[0]
-	var second: Dictionary = battle.enemies[1]
-	first.anchored = false
-	second.anchored = false
-	for index in 65:
-		first.body.position = origin + Vector2(205.0 - index * 1.5, -40.0)
-		second.body.position = origin + Vector2(-180.0 + index * 1.5, 34.0)
+	var dummy_pos: Vector2 = battle.enemies[0].body.position
+	battle.prepare_test_condition(ID)
+	_hold_parents()
+	_expect(battle._test_pursuers.size() == 2, "Test condition brings two temporary pursuers")
+	if battle._test_pursuers.is_empty():
+		return
+	var first: Dictionary = battle._test_pursuers[0]
+	for _frame in 65:
 		_advance(1)
 		var states := _visual_states(ID, world.combo_effects._fx._live.values())
 		if states.any(func(state: Dictionary) -> bool: return state.phase == "rewind"):
@@ -187,8 +204,9 @@ func _rewind(split: bool) -> void:
 	var before: Vector2 = first.body.position
 	await _capture("rewind", split)
 	_advance(17)
-	_expect(first.body.position.x > before.x + 25.0 and first.hp == 100.0,
-		"The first target returns toward its own old position without damage")
+	_expect(first.body.position.x > before.x + 25.0 and first.hp == 100.0
+		and battle.enemies[0].body.position == dummy_pos,
+		"The pursuer returns toward its old position and the wooden dummy stays put")
 
 
 func _cleanser(split: bool) -> void:
@@ -232,14 +250,25 @@ func _counter(split: bool) -> void:
 	_hold_parents()
 	_advance(1)
 	var active := _visual_states(ID, world.combo_effects._fx._live.values())
-	_expect(skills.combo_rules.ready(ID) and active.size() == 1, "A readable windup offers exactly one counter point")
+	_expect(skills.combo_rules.ready(ID) and active.size() == 1
+		and active[0].target == origin and is_equal_approx(float(active[0].radius), 1.35 * SKILLS.UNIT),
+		"A close enemy windup offers one stomp circle centered on the player")
 	if active.size() != 1:
 		return
-	await _capture("counter", split)
-	_set_motion(origin, active[0].target)
+	var at := origin + Vector2(42.0, 0.0)
+	battle.enemies[1].body.position = at + Vector2(52.0, 0.0)
+	_set_motion(origin, at)
 	_advance(1)
-	_expect(not skills.combo_rules.ready(ID), "The player touching the side point consumes the counter")
-	_expect(_visual_states(ID, world.combo_effects._fx._clips).size() == 1, "The counter plays one contact")
+	active = _visual_states(ID, world.combo_effects._fx._live.values())
+	_expect(active.size() == 1 and active[0].target == at, "The stomp preview follows the player")
+	await _capture("counter_ready", split)
+	_advance(16)
+	_expect(not skills.combo_rules.ready(ID), "The timed stomp spends cooldown if it hits")
+	var clips := _visual_states(ID, world.combo_effects._fx._clips)
+	_expect(clips.filter(func(clip: Dictionary) -> bool: return clip.event == "combo_launch").size() == 1
+		and clips.filter(func(clip: Dictionary) -> bool: return clip.event == "combo_hit").size() == 2,
+		"The stomp plays once and hits both targets inside the circle")
+	await _capture("counter", split)
 
 func _dew(split: bool) -> void:
 	const ID := &"combo_dew_pickup"

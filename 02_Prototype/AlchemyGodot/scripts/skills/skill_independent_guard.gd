@@ -9,6 +9,7 @@ const MIRROR_FX := 2
 const RETURN_FX := 3
 const MIRROR_WIDTH := 1.30 * U
 const MIRROR_WINDOW := 0.32
+const RETURN_RADIUS := 0.22 * U
 
 var _rules
 var _coat_visible := false
@@ -111,7 +112,8 @@ func intercept(delta: float, at: Vector2, projectiles: Array[Dictionary], contex
 			var direction: Vector2 = -(chosen.direction as Vector2)
 			_end_mirror()
 			_return = {"pos": contact, "direction": direction, "left": 7.0 * U, "damage": 24.0 * power}
-			_show(MIRROR, "combo_launch", RETURN_FX, {"from": center, "target": contact, "direction": direction})
+			_show(MIRROR, "combo_launch", RETURN_FX, {"from": center, "target": contact,
+				"direction": direction, "width": RETURN_RADIUS * 2.0})
 			_show_return(contact, contact)
 			return
 	_mirror.left = float(_mirror.left) - delta
@@ -138,9 +140,9 @@ func _offer_mirror(at: Vector2, projectiles: Array[Dictionary], context: Diction
 		var time := from.distance_to(closest) / speed
 		if time >= best_time:
 			continue
-		var distance := from.distance_to(at)
-		var offset := minf(0.55 * U, distance * 0.5)
-		var center := at + at.direction_to(from) * offset
+		var close_offset := maxf(approach * 0.78, minf(approach - 0.03, 16.0))
+		var offset := minf(0.55 * U, close_offset)
+		var center := at - direction * offset
 		if not _rules.clear_path(context, at, center):
 			continue
 		best_time = time
@@ -171,7 +173,6 @@ func _advance_return(delta: float, enemies: Array, context: Dictionary) -> void:
 	var closest := INF
 	var target := {}
 	var hit_at := end
-	const RADIUS := 0.16 * U
 	for entry: Dictionary in enemies:
 		if not _living(entry):
 			continue
@@ -179,9 +180,11 @@ func _advance_return(delta: float, enemies: Array, context: Dictionary) -> void:
 		var offset := point - at
 		var along := offset.dot(direction)
 		var side := absf(offset.cross(direction))
-		if side > RADIUS or along < -RADIUS:
+		if side > RETURN_RADIUS:
 			continue
-		var chord := sqrt(maxf(0.0, RADIUS * RADIUS - side * side))
+		var chord := sqrt(maxf(0.0, RETURN_RADIUS * RETURN_RADIUS - side * side))
+		if along + chord < 0.0:
+			continue
 		var progress := maxf(0.0, along - chord)
 		var impact := at + direction * progress
 		if progress > reached or progress >= closest or not _rules.clear_path(context, impact, point):
@@ -191,7 +194,8 @@ func _advance_return(delta: float, enemies: Array, context: Dictionary) -> void:
 		hit_at = impact
 	if not target.is_empty():
 		var amount := float(_return.damage)
-		_show(MIRROR, "combo_hit", RETURN_FX, {"target": target.body.position, "from": hit_at})
+		_show(MIRROR, "combo_hit", RETURN_FX, {"target": target.body.position, "from": hit_at,
+			"direction": direction, "width": RETURN_RADIUS * 2.0})
 		_end_return()
 		var hit: Callable = context.get("combo_damage", Callable())
 		if hit.is_valid():
@@ -207,7 +211,7 @@ func _advance_return(delta: float, enemies: Array, context: Dictionary) -> void:
 
 func _show_return(from: Vector2, to: Vector2) -> void:
 	_show(MIRROR, "combo_update", RETURN_FX, {"phase": "return", "from": from,
-		"target": to, "direction": _return.direction, "width": 0.32 * U})
+		"target": to, "direction": _return.direction, "width": RETURN_RADIUS * 2.0})
 
 
 func _end_coat() -> void:
