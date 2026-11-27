@@ -110,14 +110,20 @@ func run_checks() -> void:
 		quit(1)
 		return
 	check(menu.village_entries == 0 and menu.prologue.player.index == 0, "first launch shows the first illustration before entering village")
+	for path: String in ["Controls", "Caption", "CaptionBacking", "ControlBacking", "Controls/Hint", "Controls/Skip", "Controls/Next"]:
+		check(not menu.prologue.get_node(path).is_visible_in_tree(), "pure playback hides non-content UI: " + path)
+	check(not menu.prologue.get_node("Error").visible, "normal playback has no error or instruction overlay")
 	var data := read_save(pending_path)
 	check(int(data.get_value("village", "coins", -1)) == 0 and not bool(data.get_value("story", "prologue_completed", true)), "new real save records zero coins and an unfinished prologue")
 	menu.prologue.next_page()
 	check(menu.prologue.player.index == 0 and not menu.prologue.player.is_transitioning, "first next-page action completes the initial entry only")
 	menu.prologue.next_page()
-	check(menu.prologue.player.index == 1, "second next-page action advances the shared player")
+	check(menu.prologue.player.index == 0 and menu.prologue.player.phase == "exit", "second next action begins exit without consuming next entry")
+	menu.prologue.next_page()
+	check(menu.prologue.player.index == 1 and menu.prologue.player.phase == "enter", "third rapid action enters the next page without completing it")
 	menu.prologue.previous_page()
 	check(menu.prologue.player.index == 0, "previous-page action returns the shared player to the first illustration")
+	menu.prologue.next_page()
 	menu.prologue.next_page()
 	menu.prologue.next_page()
 	var overlay_id: int = menu.prologue.get_instance_id()
@@ -125,6 +131,11 @@ func run_checks() -> void:
 	menu.start_new()
 	check(has_overlay(menu) and menu.prologue.get_instance_id() == overlay_id and menu.prologue.player.index == 1, "duplicate new-game request cannot reset the running prologue")
 	check(FileAccess.get_sha256(pending_path) == pending_hash, "duplicate start does not rewrite or reset the pending save")
+	var escape := InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	menu.prologue._unhandled_key_input(escape)
+	check(has_overlay(menu) and menu.prologue.modal == "pause", "Escape pauses instead of abandoning the pending prologue")
 	menu.prologue.return_to_menu()
 	check(not has_overlay(menu) and menu.village_entries == 0, "return-to-menu closes prologue without entering village")
 	check(not bool(read_save(pending_path).get_value("story", "prologue_completed", true)), "cancelling keeps the on-disk prologue unfinished")
@@ -135,8 +146,10 @@ func run_checks() -> void:
 	check(has_overlay(menu) and menu.prologue.player.index == 0 and menu.village_entries == 0, "continue after restart replays the unfinished prologue from the first illustration")
 	if has_overlay(menu):
 		var player: Control = menu.prologue.player
-		for i in 8:
+		for i in 24:
 			player._process(100.0)
+		player.advance()
+		menu.prologue.finish_prologue()
 	check(menu.village_entries == 1, "natural final-page completion enters village once")
 	check(bool(read_save(pending_path).get_value("story", "prologue_completed", false)), "natural completion persists the finished flag before village entry")
 	await dispose(menu)
@@ -144,7 +157,13 @@ func run_checks() -> void:
 	menu = make_menu(skip_path)
 	menu.start_new()
 	if check(has_overlay(menu), "skip case starts a real prologue"):
+		menu.prologue.request_skip()
+		check(menu.village_entries == 0 and menu.prologue.modal == "confirm", "skip waits for explicit confirmation")
+		menu.prologue.confirm_skip()
+		check(menu.village_entries == 0 and not menu.prologue.player.input_enabled, "confirmed skip holds input barrier until UI exit completes")
+		menu.prologue._process(0.5)
 		menu.prologue.finish_prologue()
+		menu.prologue.next_page()
 	check(menu.village_entries == 1 and bool(read_save(skip_path).get_value("story", "prologue_completed", false)), "explicit skip uses the same successful saved completion path")
 	await dispose(menu)
 	var old_path := fixture_dir + "/old.cfg"
@@ -195,8 +214,19 @@ func run_checks() -> void:
 		menu.prologue.finish_prologue()
 	check(menu.village_entries == 0 and has_overlay(menu) and has_error(menu), "failed completion displays an error and keeps prologue available for retry")
 	check(FileAccess.get_sha256(failure_path) == before_failure and not bool(read_save(failure_path).get_value("story", "prologue_completed", true)), "failed completion preserves the exact unfinished disk save")
+	var retry := InputEventKey.new()
+	retry.keycode = KEY_SPACE
+	retry.pressed = true
+	menu.prologue._unhandled_key_input(retry)
+	check(menu.village_entries == 0 and has_error(menu), "space retry while storage is blocked keeps the recoverable error")
 	unblock_write(failure_path)
-	menu.complete_prologue()
+	retry.keycode = KEY_ENTER
+	retry.echo = true
+	menu.prologue._unhandled_key_input(retry)
+	check(menu.village_entries == 0, "held retry key does not retrigger completion")
+	retry.echo = false
+	menu.prologue._unhandled_key_input(retry)
+	menu.prologue.finish_prologue()
 	check(menu.village_entries == 1 and bool(read_save(failure_path).get_value("story", "prologue_completed", false)), "retry saves completion successfully before entering village")
 	await dispose(menu)
 	var bad_path := fixture_dir + "/bad_story_save.cfg"
@@ -273,7 +303,9 @@ func run_checks() -> void:
 		var player: Control = overlay.player
 		player.play(overlay.book, 7)
 		player.advance()
-		check(player.index == 7 and not player.is_transitioning, "last-page %s input starts from the fully visible final picture" % route)
+		check(player.index == 7 and player.phase == "hold", "last-page %s input starts from the fully visible final picture" % route)
+		player.advance()
+		check(player.index == 7 and player.phase == "exit", "last-page %s requires a distinct exit before completion" % route)
 		if route == "root_click":
 			var click := InputEventMouseButton.new()
 			click.pressed = true

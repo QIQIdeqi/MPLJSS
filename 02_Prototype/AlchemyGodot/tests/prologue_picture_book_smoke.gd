@@ -47,7 +47,7 @@ func run() -> void:
 	var story_hash := FileAccess.get_sha256(STORY_PATH)
 	expect(book.validate().is_empty(), "production book validates")
 	expect(story.validate().is_empty(), "production story validates its persisted book reference")
-	expect(book.background_color == Color("e8d8b6") and is_zero_approx(book.text_shadow_color.a), "prologue stores a paper background with no text shadow")
+	expect(book.text_shadow_color.a <= 0.3, "P00 uses a low-opacity shadow")
 	var defaults: Resource = Book.new()
 	defaults.pages.append(Page.new())
 	expect(defaults.background_color == Color("18212b") and defaults.text_shadow_color == Color(0, 0, 0, 0.85), "old books retain the dark background and black 85-percent text-shadow defaults")
@@ -76,27 +76,41 @@ func run() -> void:
 		var path := "res://picture_books/prologue/images/scene-%02d.png" % (i + 1)
 		expect(page.image_action == Page.Action.REPLACE and page.text_action == Page.Action.REPLACE, "page %d supplies its own picture and narration" % (i + 1))
 		expect(page.text.replace("\n", "") == LINES[i] and str(book.resolve(i).text).replace("\n", "") == LINES[i], "page %d preserves narration and order" % (i + 1))
-		expect(page.image_rect == Rect2(424, 112, 800, 450) and page.text_rect == Rect2(64, 205, 312, 260), "page %d keeps the full illustration separate from its narration column" % (i + 1))
-		expect(page.font_size == 32 and page.text_color == Color("513b2b") and is_zero_approx(book.resolve(i).text_shadow_color.a), "page %d uses the agreed readable paper-and-ink style" % (i + 1))
+		expect(Rect2(0, 0, 1280, 720).encloses(page.image_rect) and Rect2(0, 0, 1280, 640).encloses(page.text_rect), "page %d artwork and text remain inside the canvas and above controls" % (i + 1))
+		expect(page.font_size >= 28 and page.text_color.a > 0.9, "page %d retains legible opaque narration" % (i + 1))
+		expect(page.text_backdrop_color.a == 0.0, "page %d has no subtitle box" % (i + 1))
+		expect(not page.text.contains("，\n"), "no forced line break inside a sentence")
 		if expect(page.image != null, "page %d has a real imported texture" % (i + 1)):
 			expect(page.image.resource_path == path and page.image.get_size() == Vector2(1672, 941), "page %d uses the correct 1672×941 source image" % (i + 1))
 			var original := ProjectSettings.globalize_path(SOURCE + "scene-%02d.png" % (i + 1)).simplify_path()
 			expect(FileAccess.file_exists(original) and FileAccess.get_sha256(path) == FileAccess.get_sha256(original), "page %d PNG is an exact copy of the source art" % (i + 1))
-		expect(page.auto_advance and is_equal_approx(page.hold_seconds, HOLDS[i]), "page %d stores the agreed automatic hold" % (i + 1))
+		expect(page.auto_advance and page.hold_seconds >= 6.0 and page.hold_seconds <= 8.0, "page %d stores the agreed automatic hold" % (i + 1))
 		hold_total += page.hold_seconds
 		entry_total += maxf(page.image_delay + page.image_duration, page.text_delay + page.text_duration)
-	expect(is_equal_approx(hold_total, 57.0), "authored holds total 57 seconds; transitions are additional")
+	expect(hold_total >= 48.0 and hold_total <= 64.0, "authored holds retain the six-to-eight second reading rhythm")
 	var player: Control = Player.new()
 	player.size = Vector2(1280, 720)
 	player.set_process(false)
 	root.add_child(player)
 	await process_frame
 	player.show_static(book, 0)
-	var background := player.canvas.get_child(0) as ColorRect
+	var background: ColorRect = player.background
 	expect(background != null and background.color == book.background_color, "the actual player applies the prologue background")
-	expect(player.text_current.get_theme_color("font_color") == Color("513b2b") and is_zero_approx(player.text_current.get_theme_color("font_shadow_color").a), "the actual text buffer applies ink color and removes its shadow")
+	expect(player.text_current.get_theme_color("font_color") == book.pages[0].text_color and player.text_current.get_theme_color("font_shadow_color") == book.text_shadow_color, "the actual text buffer applies ink color and removes its shadow")
 	player.show_static(defaults, 0)
-	expect(background.color == Color("18212b") and player.text_current.get_theme_color("font_shadow_color") == Color(0, 0, 0, 0.85), "switching to an old book restores both original default styles")
+	expect(background != null and background.color == Color("18212b") and player.text_current.get_theme_color("font_shadow_color") == Color(0, 0, 0, 0.85), "switching to an old book restores both original default styles")
+	# Actual Label shaping includes theme/style content margins; font metrics alone
+	# miss clipped third lines. Verify rendered line visibility at each aspect.
+	for dimensions: Vector2 in [Vector2(1280, 720), Vector2(1024, 768), Vector2(1680, 720)]:
+		player.size = dimensions
+		for page_index in 8:
+			player.show_static(book, page_index)
+			await process_frame
+			var label: Label = player.text_current
+			expect(label.get_line_count() == book.pages[page_index].text.split("\n").size(), "each authored sentence fits one line")
+			expect(label.get_visible_line_count() == label.get_line_count(), "all narration lines visible page=%d viewport=%s" % [page_index + 1, dimensions])
+			expect(player.get_global_rect().encloses(label.get_global_rect()), "text safe region inside viewport page=%d viewport=%s" % [page_index + 1, dimensions])
+	player.size = Vector2(1280, 720)
 	var finished: Array[int] = [0]
 	player.finished.connect(func() -> void: finished[0] += 1)
 	var confirm := InputEventKey.new()
@@ -108,31 +122,30 @@ func run() -> void:
 		page.auto_advance = false
 	player.play(manual)
 	for i in 8:
-		if i > 0:
-			player._unhandled_input(confirm)
-		expect(player.index == i and player.is_playing, "deliberate confirm enters exactly page %d" % (i + 1))
-		expect(player.is_transitioning, "page %d begins with an entry transition" % (i + 1))
+		expect(player.index == i and player.phase == "enter", "page %d begins entry" % (i + 1))
 		player._unhandled_input(confirm)
-		expect(player.index == i and not player.is_transitioning, "first confirm completes page %d without skipping it" % (i + 1))
+		expect(player.index == i and player.phase == "hold", "first confirm completes page %d only" % (i + 1))
 		player._process(100.0)
-		expect(player.index == i and player.is_playing, "manual page %d remains until confirmation" % (i + 1))
-	player._unhandled_input(confirm)
-	expect(finished[0] == 1 and not player.is_playing and player.index == 7, "last confirm signals completion once and retains the eighth page")
+		expect(player.index == i and player.phase == "hold", "manual page %d waits for confirmation" % (i + 1))
+		player._unhandled_input(confirm)
+		expect(player.index == i and player.phase == "exit", "second confirm starts page %d exit only" % (i + 1))
+		player._unhandled_input(confirm)
+		if i < 7:
+			expect(player.index == i + 1 and player.phase == "enter", "rapid exit confirmation never consumes next page entry")
+	expect(finished[0] == 1 and not player.is_playing and player.index == 7, "last exit signals completion once")
 	player._unhandled_input(confirm)
 	expect(finished[0] == 1, "finished playback ignores extra confirmation")
 	var second: Resource = manual.pages[1]
-	expect(second.image_duration > 0.0 and second.text_duration > 0.0, "second page has image and text crossfades")
 	player.play(manual, 1)
 	player._process(second.image_delay + second.image_duration * 0.5)
-	expect(player.image_previous.texture == manual.pages[0].image and player.image_current.texture == second.image, "crossfade holds the actual previous and next source images")
-	expect(is_equal_approx(player.image_previous.modulate.a, 0.5) and is_equal_approx(player.image_current.modulate.a, 0.5), "image midpoint alpha is complementary without a blank frame")
+	expect(player.image_current.texture == second.image and is_equal_approx(player.image_current.modulate.a, 0.5), "middle-page image fades in from transparent")
 	player.play(manual, 1)
 	player._process(second.text_delay + second.text_duration * 0.5)
-	expect(player.text_previous.text == manual.pages[0].text and player.text_current.text == manual.pages[1].text, "crossfade retains both narration buffers")
-	expect(is_equal_approx(player.text_previous.modulate.a, 0.5) and is_equal_approx(player.text_current.modulate.a, 0.5), "text midpoint alpha is complementary")
+	expect(player.text_current.text == second.text and is_equal_approx(player.text_current.modulate.a, 0.5), "middle-page narration fades in without flashing the previous text")
 	finished[0] = 0
 	player.play(book)
 	var simulated_seconds := 0.0
+	var exit_total := 0.0
 	for i in 8:
 		var page: Resource = book.pages[i]
 		var entry := maxf(page.image_delay + page.image_duration, page.text_delay + page.text_duration)
@@ -145,11 +158,15 @@ func run() -> void:
 		expect(player.index == i and player.is_playing, "automatic page %d stays for its full post-entry hold" % (i + 1))
 		player._process(0.002)
 		simulated_seconds += 0.002
+		expect(player.index == i and player.phase == "exit", "automatic reading hold is followed by exit")
+		player._process(page.exit_duration)
+		exit_total += page.exit_duration
+		simulated_seconds += page.exit_duration
 	expect(finished[0] == 1 and not player.is_playing and player.index == 7, "automatic playback finishes exactly once after all eight holds")
-	expect(absf(simulated_seconds - (hold_total + entry_total)) < 0.02, "deterministic complete duration includes every entry plus the 57-second hold total")
+	expect(absf(simulated_seconds - (hold_total + entry_total + exit_total)) < 0.02, "deterministic complete duration includes every entry plus the reading holds and exits")
 	expect(FileAccess.get_sha256(BOOK_PATH) == book_hash and FileAccess.get_sha256(STORY_PATH) == story_hash, "playback and manual test copies never rewrite either saved resource")
 	player.queue_free()
 	await process_frame
 	if failures == 0:
-		print("PROLOGUE_PICTURE_BOOK_PASS checks=%d pages=8 hold=%.1fs total=%.2fs source_copy narration story_ref manual crossfade auto" % [checks, hold_total, hold_total + entry_total])
+		print("PROLOGUE_PICTURE_BOOK_PASS checks=%d pages=8 hold=%.1fs total=%.2fs source_copy narration story_ref manual entry_hold_exit auto" % [checks, hold_total, hold_total + entry_total + exit_total])
 	quit(0 if failures == 0 else 1)

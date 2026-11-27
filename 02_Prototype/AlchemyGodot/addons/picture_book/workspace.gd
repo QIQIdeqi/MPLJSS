@@ -7,9 +7,17 @@ const Book = preload("res://scripts/picture_book/book.gd")
 const Page = preload("res://scripts/picture_book/page.gd")
 const Player = preload("res://scripts/picture_book/player.gd")
 const Canvas = preload("res://addons/picture_book/canvas.gd")
+const Timeline = preload("res://addons/picture_book/timeline.gd")
 const Card = preload("res://addons/picture_book/page_card.gd")
 const SAMPLE := "res://picture_books/demo/sample.tres"
 
+var timeline: Control
+var timeline_time: SpinBox
+var timeline_playing := false
+var preview_scale_aspect: int = -1
+var timeline_scrubbing := false
+var backdrop_input: ColorPickerButton
+var fit_input: OptionButton
 var book: Resource
 var selected_index := 0
 var document_path := ""
@@ -243,13 +251,27 @@ func _build_ui() -> void:
 			_record()
 			_page().text_color = value
 			_render())
+	fit_input = _choice(inspector, "图片取景", ["等比铺满 / 裁切", "完整图片 / 留边"])
+	fit_input.item_selected.connect(func(value: int):
+		if not syncing:
+			_record()
+			_page().image_fit = value
+			_render())
+	_label(inspector, "文字柔和衬底（透明即关闭）")
+	backdrop_input = ColorPickerButton.new()
+	inspector.add_child(backdrop_input)
+	backdrop_input.color_changed.connect(func(value: Color):
+		if not syncing:
+			_record()
+			_page().text_backdrop_color = value
+			_render())
 	_heading(inspector, "入场 · 图片与文字独立")
 	preset = _choice(inspector, "快捷预设", ["一起淡变", "图先文后", "文先图后", "直接切换", "自定义"])
 	preset.item_selected.connect(apply_preset)
-	_spin(inspector, "图片延迟 / 秒", "image_delay", 0, 30, 0.1)
-	_spin(inspector, "图片时长 / 秒", "image_duration", 0, 30, 0.1)
-	_spin(inspector, "文字延迟 / 秒", "text_delay", 0, 30, 0.1)
-	_spin(inspector, "文字时长 / 秒", "text_duration", 0, 30, 0.1)
+	_spin(inspector, "图片延迟 / 秒", "image_delay", 0, 30, 0.01)
+	_spin(inspector, "图片时长 / 秒", "image_duration", 0, 30, 0.01)
+	_spin(inspector, "文字延迟 / 秒", "text_delay", 0, 30, 0.01)
+	_spin(inspector, "文字时长 / 秒", "text_duration", 0, 30, 0.01)
 	_heading(inspector, "翻页")
 	auto_input = CheckBox.new()
 	auto_input.text = "入场完成后自动翻页"
@@ -259,9 +281,11 @@ func _build_ui() -> void:
 			_record()
 			_page().auto_advance = value
 			_render())
-	_spin(inspector, "完成后停留 / 秒", "hold_seconds", 0.1, 120, 0.1)
-	var tip := _label(inspector, "默认手动翻页；入场中确认只补完。\n保留仅继承内容，版式属于本页。\n首张保留 = 空内容；预览按当前顺序解析。")
+	_spin(inspector, "阅读停留 / 秒", "hold_seconds", 0, 300, 0.05)
+	_spin(inspector, "整页淡出 / 秒", "exit_duration", 0, 30, 0.01)
+	var tip := _label(inspector, "入场点击补完；阅读点击淡出。\n淡出点击进入下页，不跳过下页入场。\n保留仅继承内容，版式属于本页。\n首张保留 = 空内容；预览按当前顺序解析。")
 	tip.add_theme_font_size_override("font_size", 12)
+	_build_timeline(column)
 	status = _label(column, "")
 	status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	file_dialog = FileDialog.new()
@@ -281,37 +305,129 @@ func _build_ui() -> void:
 	add_child(discard_dialog)
 	_build_preview()
 
+func _build_timeline(column: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	column.add_child(row)
+	_heading(row, "时间轴 · 秒")
+	_button(row, "▶ 本页", func():
+		timeline_scrubbing = true
+		timeline_playing = true
+		timeline_time.set_value_no_signal(0)
+		_seek_timeline(0), "PlayTimeline")
+	_button(row, "暂停", func(): timeline_playing = false, "PauseTimeline")
+	_button(row, "返回布局", _timeline_layout, "TimelineLayout")
+	_label(row, "时间指针")
+	timeline_time = SpinBox.new()
+	timeline_time.name = "TimelineTime"
+	timeline_time.max_value = 390
+	timeline_time.step = 0.01
+	timeline_time.custom_minimum_size.x = 100
+	row.add_child(timeline_time)
+	timeline_time.value_changed.connect(func(value: float):
+		timeline_playing = false
+		_seek_timeline(value))
+	timeline = Timeline.new()
+	timeline.name = "Timeline"
+	column.add_child(timeline)
+	timeline.edit_started.connect(func():
+		canvas.finish_text()
+		timeline_playing = false
+		_record())
+	timeline.timing_changed.connect(_timeline_change)
+	timeline.seek_requested.connect(func(value: float):
+		timeline_playing = false
+		_seek_timeline(value))
+
+func _timeline_change(channel: String, start: float, duration: float, final: bool) -> void:
+	_page().set(channel + "_delay", start)
+	_page().set(channel + "_duration", duration)
+	values[channel + "_delay"].set_value_no_signal(start)
+	values[channel + "_duration"].set_value_no_signal(duration)
+	preset.select(4)
+	_seek_timeline(timeline_time.value)
+	if final:
+		_render()
+
+func _seek_timeline(value: float) -> void:
+	canvas.finish_text()
+	timeline_scrubbing = true
+	timeline_time.set_value_no_signal(value)
+	canvas.previewing = true
+	canvas.view.seek(book, selected_index, value)
+	canvas.queue_redraw()
+	timeline.image_active = book.resolve(selected_index).image != null
+	timeline.text_active = not str(book.resolve(selected_index).text).is_empty()
+	timeline.display(_page(), value)
+
+func _timeline_layout() -> void:
+	timeline_playing = false
+	timeline_scrubbing = false
+	canvas.previewing = false
+	canvas.display(book, selected_index)
+	timeline_time.set_value_no_signal(0)
+	timeline.image_active = book.resolve(selected_index).image != null
+	timeline.text_active = not str(book.resolve(selected_index).text).is_empty()
+	timeline.display(_page(), 0)
+
+func _process(delta: float) -> void:
+	if not timeline_playing or not is_visible_in_tree():
+		return
+	var end: float = timeline.entrance_end() + _page().hold_seconds + _page().exit_duration
+	var next := minf(timeline_time.value + delta, end)
+	_seek_timeline(next)
+	if next >= end:
+		timeline_playing = false
+
 func _build_preview() -> void:
-	preview_panel = _panel(self, 18)
+	preview_panel = _panel(self, 0)
 	preview_panel.name = "Presentation"
 	preview_panel.focus_mode = Control.FOCUS_ALL
 	preview_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var column := VBoxContainer.new()
-	preview_panel.add_child(column)
-	var toolbar := HBoxContainer.new()
-	column.add_child(toolbar)
-	preview_caption = _label(toolbar, "放映")
-	preview_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_button(toolbar, "关闭预览 · Esc", stop_preview, "ClosePreview").focus_mode = Control.FOCUS_NONE
+	var stage := Control.new()
+	preview_panel.add_child(stage)
 	preview = Player.new()
 	preview.name = "RuntimePlayer"
-	preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(preview)
-	preview.page_changed.connect(func(i: int): preview_caption.text = "放映 · %d / %d  |  确认：入场中补完，完成后下一页" % [i + 1, book.pages.size()])
+	stage.add_child(preview)
+	preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var toolbar := HBoxContainer.new()
+	stage.add_child(toolbar)
+	toolbar.hide()
+	toolbar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	toolbar.offset_left = 16
+	toolbar.offset_top = 12
+	toolbar.offset_right = -16
+	preview_caption = _label(toolbar, "放映")
+	preview_caption.add_theme_color_override("font_shadow_color", Color.BLACK)
+	preview_caption.add_theme_constant_override("shadow_offset_y", 2)
+	preview_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_button(toolbar, "关闭预览 · Esc", stop_preview, "ClosePreview").focus_mode = Control.FOCUS_NONE
+	preview.page_changed.connect(func(_i: int): _preview_status())
+	preview.phase_changed.connect(func(_phase: String): _preview_status())
 	preview.finished.connect(func(): preview_caption.text = "放映结束 · 可关闭预览继续编辑")
 	var controls := HBoxContainer.new()
-	column.add_child(controls)
+	stage.add_child(controls)
+	controls.hide()
+	controls.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	controls.offset_left = 16
+	controls.offset_top = -46
 	previous_button = _button(controls, "上一页", func(): preview.play(book, maxi(0, preview.index - 1)), "Previous")
-	next_button = _button(controls, "确认 / 下一页", func(): preview.advance(), "Next")
+	next_button = _button(controls, "确认", func(): preview.advance(), "Next")
 	previous_button.focus_mode = Control.FOCUS_NONE
 	next_button.focus_mode = Control.FOCUS_NONE
 	preview.mouse_filter = Control.MOUSE_FILTER_STOP
 	preview.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			preview.advance()
 			preview.accept_event()
+			preview.advance()
 	)
 	preview_panel.hide()
+
+func _preview_status() -> void:
+	if book == null or not is_instance_valid(next_button):
+		return
+	var hint: String = {"enter": "入场 · 点击补完", "hold": "阅读 · 点击淡出", "exit": "淡出 · 点击进入下页", "done": "放映结束"}.get(preview.phase, "")
+	preview_caption.text = "%d / %d  ·  %s" % [preview.index + 1, book.pages.size(), hint]
+	next_button.text = {"enter": "补完本页", "hold": "淡出本页", "exit": "完成淡出", "done": "结束"}.get(preview.phase, "确认")
 
 func _page() -> Resource:
 	return book.pages[selected_index]
@@ -356,6 +472,8 @@ func _guard(action: Callable) -> void:
 
 func new_document() -> void:
 	stop_preview()
+	timeline_scrubbing = false
+	canvas.previewing = false
 	book = Book.new()
 	book.title = "未命名绘本"
 	book.pages.append(Page.new())
@@ -380,6 +498,8 @@ func open_document(path: String) -> bool:
 		status.text = "打开失败：" + "; ".join(issues)
 		return false
 	stop_preview()
+	timeline_scrubbing = false
+	canvas.previewing = false
 	book = loaded.duplicate(true)
 	document_path = path
 	selected_index = 0
@@ -434,6 +554,9 @@ func _file_selected(path: String) -> void:
 		open_document(path)
 
 func select_page(index: int) -> void:
+	timeline_playing = false
+	timeline_scrubbing = false
+	canvas.previewing = false
 	canvas.finish_text()
 	selected_index = clampi(index, 0, book.pages.size() - 1)
 	_refresh()
@@ -600,8 +723,10 @@ func _refresh() -> void:
 	text_input.text = effective.text
 	image_path.text = effective.image.resource_path.get_file() if effective.image != null else "（当前无图片）"
 	image_path.tooltip_text = effective.image.resource_path if effective.image != null else ""
-	for key: String in ["font_size", "image_delay", "image_duration", "text_delay", "text_duration", "hold_seconds"]:
+	for key: String in ["font_size", "image_delay", "image_duration", "text_delay", "text_duration", "hold_seconds", "exit_duration"]:
 		values[key].set_value_no_signal(page.get(key))
+	fit_input.select(page.image_fit)
+	backdrop_input.color = page.text_backdrop_color
 	color_input.color = page.text_color
 	auto_input.set_pressed_no_signal(page.auto_advance)
 	var preset_index := 4
@@ -630,14 +755,23 @@ func _render() -> void:
 		card.selected.connect(select_page)
 		card.moved.connect(move_page)
 	canvas.display(book, selected_index)
+	timeline.image_active = book.resolve(selected_index).image != null
+	timeline.text_active = not str(book.resolve(selected_index).text).is_empty()
+	timeline.display(_page(), timeline_time.value)
+	if timeline_scrubbing:
+		_seek_timeline(timeline_time.value)
 	caption.text = ("● 未保存  ·  " if dirty else "") + (document_path.get_file() if not document_path.is_empty() else "未命名绘本") + "  |  %d 页" % book.pages.size()
 
 func start_preview(replay_only: bool = false) -> void:
+	timeline_playing = false
 	canvas.finish_text()
 	var issues: PackedStringArray = book.validate()
 	if not issues.is_empty():
 		status.text = "无法预览：" + "; ".join(issues)
 		return
+	if preview_scale_aspect < 0:
+		preview_scale_aspect = get_window().content_scale_aspect
+	get_window().content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
 	preview_panel.show()
 	preview_panel.grab_focus()
 	if replay_only:
@@ -646,9 +780,13 @@ func start_preview(replay_only: bool = false) -> void:
 		preview.play(book, selected_index)
 	previous_button.disabled = replay_only
 	next_button.disabled = replay_only
-	preview_caption.text = ("重播入场" if replay_only else "放映") + " · %d / %d  |  Enter / 空格：先补完，再翻页" % [selected_index + 1, book.pages.size()]
+	_preview_status()
 
 func stop_preview() -> void:
+	if preview_scale_aspect >= 0:
+		get_window().content_scale_aspect = preview_scale_aspect
+		preview_scale_aspect = -1
+	timeline_playing = false
 	if is_instance_valid(preview):
 		preview.stop()
 	if is_instance_valid(preview_panel):
@@ -669,3 +807,7 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and not Engine.is_editor_hint() and get_parent() == get_tree().root:
 		canvas.finish_text()
 		_guard(func(): get_tree().quit())
+
+func _exit_tree() -> void:
+	if preview_scale_aspect >= 0:
+		get_window().content_scale_aspect = preview_scale_aspect
