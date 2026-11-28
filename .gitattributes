@@ -15,3 +15,4 @@
 03_Build/sprite-gen/**/*.webp filter=lfs diff=lfs merge=lfs -text
 00_Doc/协作策划/附件/*.png filter=lfs diff=lfs merge=lfs -text
 00_Doc/协作策划/附件/*.jpg filter=lfs diff=lfs merge=lfs -text
+/02_Prototype/AlchemyGodot/picture_books/prologue/prologue.tres text eol=lf

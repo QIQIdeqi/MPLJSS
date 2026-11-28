@@ -10,6 +10,7 @@ const BOOK_PATH := "res://picture_books/prologue/prologue.tres"
 const STORY_PATH := "res://stories/prologue.tres"
 const SOURCE := "res://../../00_Doc/美术/序章绘本/storyboard/"
 const HOLDS := [6.0, 7.0, 7.0, 8.0, 7.0, 7.0, 8.0, 7.0]
+const EXPECTED_LINE_COUNTS := [1, 2, 1, 2, 1, 2, 2, 1]
 const LINES := [
 	"我最先记住的，是她的笑。",
 	"家里常有人等着喝药。我等着吃饭。",
@@ -75,7 +76,7 @@ func run() -> void:
 		var page: Resource = book.pages[i]
 		var path := "res://picture_books/prologue/images/scene-%02d.png" % (i + 1)
 		expect(page.image_action == Page.Action.REPLACE and page.text_action == Page.Action.REPLACE, "page %d supplies its own picture and narration" % (i + 1))
-		expect(page.text.replace("\n", "") == LINES[i] and str(book.resolve(i).text).replace("\n", "") == LINES[i], "page %d preserves narration and order" % (i + 1))
+		expect(page.text.replace("\r", "").replace("\n", "") == LINES[i] and str(book.resolve(i).text).replace("\n", "") == LINES[i], "page %d preserves narration and order" % (i + 1))
 		expect(Rect2(0, 0, 1280, 720).encloses(page.image_rect) and Rect2(0, 0, 1280, 640).encloses(page.text_rect), "page %d artwork and text remain inside the canvas and above controls" % (i + 1))
 		expect(page.font_size >= 28 and page.text_color.a > 0.9, "page %d retains legible opaque narration" % (i + 1))
 		expect(page.text_backdrop_color.a == 0.0, "page %d has no subtitle box" % (i + 1))
@@ -107,8 +108,12 @@ func run() -> void:
 			player.show_static(book, page_index)
 			await process_frame
 			var label: Label = player.text_current
-			expect(label.get_line_count() == book.pages[page_index].text.split("\n").size(), "each authored sentence fits one line")
-			expect(label.get_visible_line_count() == label.get_line_count(), "all narration lines visible page=%d viewport=%s" % [page_index + 1, dimensions])
+			var expected_lines: int = EXPECTED_LINE_COUNTS[page_index]
+			var actual_lines := label.get_line_count()
+			var visible_lines := label.get_visible_line_count()
+			var line_details := "page=%d viewport=%s expected=%d actual=%d visible=%d" % [page_index + 1, dimensions, expected_lines, actual_lines, visible_lines]
+			expect(actual_lines == expected_lines, "each authored sentence fits one line " + line_details)
+			expect(visible_lines == actual_lines, "all narration lines visible " + line_details)
 			expect(player.get_global_rect().encloses(label.get_global_rect()), "text safe region inside viewport page=%d viewport=%s" % [page_index + 1, dimensions])
 	player.size = Vector2(1280, 720)
 	var finished: Array[int] = [0]
@@ -141,7 +146,7 @@ func run() -> void:
 	expect(player.image_current.texture == second.image and is_equal_approx(player.image_current.modulate.a, 0.5), "middle-page image fades in from transparent")
 	player.play(manual, 1)
 	player._process(second.text_delay + second.text_duration * 0.5)
-	expect(player.text_current.text == second.text and is_equal_approx(player.text_current.modulate.a, 0.5), "middle-page narration fades in without flashing the previous text")
+	expect(player.text_current.text == manual.resolve(1).text and is_equal_approx(player.text_current.modulate.a, 0.5), "middle-page narration fades in without flashing the previous text")
 	finished[0] = 0
 	player.play(book)
 	var simulated_seconds := 0.0

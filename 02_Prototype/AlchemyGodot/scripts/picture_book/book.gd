@@ -34,7 +34,7 @@ func resolve(page_index: int) -> Dictionary:
 				result.image = null
 		match page.text_action:
 			Page.Action.REPLACE:
-				result.text = page.text
+				result.text = page.text.replace("\r\n", "\n").replace("\r", "\n")
 			Page.Action.CLEAR:
 				result.text = ""
 	var current: Resource = pages[page_index]
