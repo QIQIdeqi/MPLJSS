@@ -48,6 +48,7 @@ func _run() -> void:
 	_enemy = Node2D.new()
 	_enemy.position = Vector2(150.0, 0.0)
 	root.add_child(_enemy)
+	_test_pool()
 	_test_cut()
 	_test_ineffective_cut()
 	_test_gate()
@@ -65,17 +66,46 @@ func _setup() -> void:
 	_exit_valid = true
 
 
+func _test_pool() -> void:
+	_setup()
+	var landing := Vector2(-80, 0)
+	var outside := landing + Vector2.UP * 93.0
+	var foes := [{"body": _enemy, "hp": 100.0}]
+	_movement.tick(0.0, Vector2.ZERO, foes, {})
+	_movement.begin_ordinary_dodge(Vector2.ZERO)
+	_movement.observe_dodge_motion(Vector2.ZERO, Vector2(-8, 0), false)
+	_movement.finish_ordinary_dodge(Vector2(-8, 0))
+	_check(_rules.ready(CLEANSER), "A blocked ordinary dodge with minimal travel does not spend the cooldown")
+	_movement.begin_ordinary_dodge(Vector2.ZERO)
+	_movement.observe_dodge_motion(Vector2.ZERO, landing, false)
+	_movement.finish_ordinary_dodge(landing)
+	_check(not _rules.ready(CLEANSER), "Dodging away from a nearby enemy activates with no hazard")
+	_check(is_equal_approx(_movement.enemy_walk_scale(landing), 0.62)
+		and is_equal_approx(_movement.enemy_walk_scale(outside), 1.0), "Slow is limited to the landing pool")
+	_check(is_equal_approx(_movement.player_walk_scale(), 1.30), "Dodge landing immediately grants walking speed")
+	_movement.tick(0.45, outside, foes, {})
+	_check(is_equal_approx(_movement.player_walk_scale(), 1.30), "Speed persists briefly beyond the pool")
+	_movement.tick(0.11, outside, foes, {})
+	_check(is_equal_approx(_movement.player_walk_scale(), 1.0), "Speed expires after leaving the pool")
+	_movement.tick(1.0, landing, foes, {})
+	_check(is_equal_approx(_movement.player_walk_scale(), 1.30), "Reentering an active pool restores the boost")
+	_movement.tick(1.25, outside, foes, {})
+	_check(is_equal_approx(_movement.enemy_walk_scale(landing), 1.0), "The pool expires independently of cooldown")
+	_movement.clear()
+	_check(is_equal_approx(_movement.player_walk_scale(), 1.0), "Room cleanup clears the speed boost")
+
+
 func _test_cut() -> void:
 	_setup()
 	var first := {"id": 7, "pos": Vector2(30, 0), "radius": 50.0, "remaining": 1.8}
 	var second := {"id": 3, "pos": Vector2(78, 0), "radius": 50.0, "remaining": 2.5}
 	var context := {"hazards": [second, first], "max_y": 28.0}
 	_movement.tick(0.0, Vector2(-40, 18), [], context)
-	_movement.begin_ordinary_dodge()
+	_movement.begin_ordinary_dodge(Vector2(-40, 18))
 	_movement.observe_dodge_motion(Vector2(-40, 18), Vector2(12, 18), false)
 	_movement.observe_dodge_motion(Vector2(12, 18), Vector2(95, 18), false)
 	_check(_rules.ready(CLEANSER), "movement has not spent cooldown mid-dodge")
-	_movement.finish_ordinary_dodge()
+	_movement.finish_ordinary_dodge(Vector2(95, 18))
 	_check(not _rules.ready(CLEANSER), "an actual crossing spends cooldown")
 	_check(_movement.hazard_safe(7, Vector2(45, 18)), "the first active hazard by contact owns the safe path")
 	_check(not _movement.hazard_safe(3, Vector2(45, 18)), "overlapping second zone stays harmful")
@@ -92,16 +122,22 @@ func _test_ineffective_cut() -> void:
 	_setup()
 	var active := {"id": 6, "pos": Vector2.ZERO, "radius": 48.0, "remaining": 2.8}
 	_movement.tick(0.0, Vector2(-55, 0), [], {"hazards": [active]})
-	_movement.begin_ordinary_dodge()
+	_movement.begin_ordinary_dodge(Vector2(-55, 0))
 	_movement.observe_dodge_motion(Vector2(-55, 0), Vector2(-43, 0), false)
 	_movement.observe_dodge_motion(Vector2(-43, 0), Vector2(8, 0), true)
-	_movement.finish_ordinary_dodge()
+	_movement.finish_ordinary_dodge(Vector2(8, 0))
 	_check(_rules.ready(CLEANSER), "only reachable unforced motion contributes to the minimum cut length")
-	_movement.begin_ordinary_dodge()
+	_movement.begin_ordinary_dodge(Vector2(-55, 0))
 	_movement.observe_dodge_motion(Vector2(-55, 0), Vector2(8, 0), false)
 	_movement.tick(0.1, Vector2(8, 0), [], {"hazards": []})
-	_movement.finish_ordinary_dodge()
+	_movement.finish_ordinary_dodge(Vector2(8, 0))
 	_check(_rules.ready(CLEANSER), "a zone must still be active when the ordinary dodge completes")
+	_movement.tick(0.0, Vector2.ZERO, [{"body": _enemy, "hp": 100.0}], {})
+	_movement.begin_ordinary_dodge(Vector2.ZERO)
+	_movement.observe_dodge_motion(Vector2.ZERO, Vector2(50, 0), false)
+	_movement.observe_dodge_motion(Vector2(50, 0), Vector2(80, 0), true)
+	_movement.finish_ordinary_dodge(Vector2(80, 0))
+	_check(_rules.ready(CLEANSER), "Knockback interrupts activation even with a nearby enemy")
 
 
 func _test_gate() -> void:

@@ -2,6 +2,7 @@ extends SceneTree
 
 const HD_BATTLE := preload("res://scripts/hd_battle_view.gd")
 const SKILLS := preload("res://data/skills/skill_data.gd")
+const FIELD_ENEMY := preload("res://scripts/field_enemy.gd")
 const STEP := 1.0 / 60.0
 const OUTPUT := "res://.godot/independent_combo_review"
 
@@ -212,20 +213,52 @@ func _rewind(split: bool) -> void:
 func _cleanser(split: bool) -> void:
 	const ID := &"combo_cleanser"
 	_equip(ID, split)
+	await physics_frame
+	Input.action_press(&"move_right")
+	Input.action_press(&"dodge")
+	await physics_frame
+	battle.player._physics_process(STEP)
+	Input.action_release(&"dodge")
+	Input.action_release(&"move_right")
+	for _frame in 11:
+		battle.player._physics_process(STEP)
+		_advance(1)
+	var landing: Vector2 = battle.player.position
+	var cooldown := float(skills.chain_cooldowns.get(ID, 0.0))
+	var states := _visual_states(ID, world.combo_effects._fx._live.values())
+	var pools := states.filter(func(state: Dictionary) -> bool: return state.phase == "pool")
+	_expect(cooldown > 9.8 and battle.spore_patches.is_empty() and landing.distance_to(origin) > 60.0,
+		"Native Space dodge in the training scene activates with ordinary enemies and no hazard")
+	_expect(pools.size() == 1 and pools[0].target.is_equal_approx(landing)
+		and is_equal_approx(pools[0].radius, 1.45 * SKILLS.UNIT),
+		"Only one pool is rendered at the real landing even with Split Alchemy")
+	_expect(is_equal_approx(battle.player.walk_speed_scale, 1.30),
+		"The production mobility controller grants 30 percent walking speed")
+	if capture:
+		await create_timer(0.15).timeout
+	await _capture("cleanser", split)
+	_advance(65)
+	_expect(is_equal_approx(battle.player.walk_speed_scale, 1.30), "Standing on the pool keeps the mobility bonus")
+	_set_motion(landing, landing + Vector2.DOWN * 110.0)
+	_advance(37)
+	_expect(is_equal_approx(battle.player.walk_speed_scale, 1.0), "Exiting the pool ends the speed bonus after its grace period")
+	battle.player.position = origin
+	battle.reset_test_cooldowns()
+	_hold_parents()
 	var center := origin + Vector2(104.0, 0.0)
 	battle.fire_web(battle.actors.to_global(center), Vector2.ZERO, 5)
 	_advance(22)
 	var movement = battle.skill_mobility.independent
 	var hazard := int(battle.spore_patches[0].id)
-	movement.begin_ordinary_dodge()
+	movement.begin_ordinary_dodge(center - Vector2(35.0, 0.0))
 	movement.observe_dodge_motion(center - Vector2(35.0, 0.0), center + Vector2(38.0, 0.0), false)
-	movement.finish_ordinary_dodge()
+	movement.finish_ordinary_dodge(center + Vector2(38.0, 0.0))
 	_expect(not skills.combo_rules.ready(ID) and movement.hazard_safe(hazard, center),
 		"Ordinary dodge carves an authoritative source-specific gap from the real spore zone")
 	_set_motion(center, center)
 	_advance(45)
 	_expect(is_equal_approx(battle.hp, 90.0), "Standing in that gap prevents the actual hazard hit")
-	await _capture("cleanser", split)
+	await _capture("cleanser_spores", split)
 
 func _gate(split: bool) -> void:
 	const ID := &"combo_crystal_gate"
@@ -317,8 +350,48 @@ func _actual_kill() -> void:
 		_expect(is_equal_approx(field.hp, 60.0), "Crossing that drop heals ten points through production heal_player")
 	else:
 		_expect(false, "Production battle provides a killable target")
+	_check_production_cleanser(field)
 	field.queue_free()
 	await process_frame
+
+
+func _check_production_cleanser(field) -> void:
+	const ID := &"combo_cleanser"
+	var manager: SkillManager = field.alchemy_system.skills
+	for parent: String in SKILLS.combo_by_id(ID).parents:
+		manager.add_skill(StringName(parent))
+	for runtime in manager.runtimes:
+		runtime.cooldown_left = 100.0
+	var previous_count: int = field.enemies.size()
+	field.spawn_enemy(FIELD_ENEMY.Kind.SLIME)
+	if field.enemies.size() <= previous_count:
+		_expect(false, "Production battle provides a chasing slime for the speed comparison")
+		return
+	var foe: Dictionary = field.enemies[-1]
+	var slime: FIELD_ENEMY = foe.body
+	var landing: Vector2 = field.player.position
+	var foe_at := landing + Vector2.RIGHT * 72.0
+	var start := landing - Vector2.RIGHT * 80.0
+	field.player.position = start - Vector2.RIGHT * 30.0
+	slime.position = foe_at
+	field._physics_process(STEP)
+	var normal_speed := slime.velocity.length()
+	slime.position = foe_at
+	var movement = field.skill_mobility.independent
+	movement.begin_ordinary_dodge(start)
+	movement.observe_dodge_motion(start, landing, false)
+	movement.finish_ordinary_dodge(landing)
+	field._physics_process(STEP)
+	var pool_speed := slime.velocity.length()
+	_expect(normal_speed > 1.0 and absf(pool_speed - normal_speed * 0.62) < 0.15,
+		"A production slime chases at 62 percent speed inside the pool (normal %.3f, pool %.3f)" % [normal_speed, pool_speed])
+	foe.slow_left = 1.0
+	foe.slow_factor = 0.45
+	slime.position = foe_at
+	field._physics_process(STEP)
+	var stacked_speed := slime.velocity.length()
+	_expect(normal_speed > 1.0 and absf(stacked_speed - normal_speed * 0.45) < 0.15,
+		"The pool respects stronger active slows in production (normal %.3f, stacked %.3f)" % [normal_speed, stacked_speed])
 
 
 func _capture(name: String, split: bool) -> void:

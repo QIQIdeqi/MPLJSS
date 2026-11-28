@@ -15,6 +15,7 @@ var independent: INDEPENDENT_MOVEMENT
 var walk_speed_scale := 1.0
 var _feather_charge := 0.0
 var _feather_left := 0.0
+var _feather_walk_scale := 1.0
 var _feather_pulse_duration := 0.0
 var _feather_side := 0
 var _return_left := 0.0
@@ -52,6 +53,9 @@ func tick(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> voi
 	_return_left = maxf(0.0, _return_left - delta)
 	var moving := bool(context.get("moving", false))
 	_tick_feather(delta, at, moving)
+	walk_speed_scale = _feather_walk_scale if feather_active() else 1.0
+	if independent != null:
+		walk_speed_scale = maxf(walk_speed_scale, independent.player_walk_scale())
 	_tick_dew(delta, at, enemies, moving, context)
 	_dew_interrupted = false
 
@@ -75,7 +79,7 @@ func choose_dodge(at: Vector2, heading: Vector2, ordinary_ready: bool, base_dist
 		return 0.0
 	_may_open_return = return_wind != null and return_wind.ready()
 	if independent != null:
-		independent.begin_ordinary_dodge()
+		independent.begin_ordinary_dodge(at)
 	var boots := _skills.runtime_for(WIND_BOOTS)
 	var boosted := boots != null and boots.ready()
 	if not boosted:
@@ -98,7 +102,7 @@ func on_dodge_finished(at: Vector2, heading: Vector2) -> void:
 			_emit(runtime, "ready", at, at + heading, 0, _return_left, true)
 	_may_open_return = false
 	if independent != null:
-		independent.finish_ordinary_dodge()
+		independent.finish_ordinary_dodge(at)
 
 func _on_dodge_motion(from: Vector2, at: Vector2, knocked_back: bool) -> void:
 	if independent != null:
@@ -117,14 +121,11 @@ func _tick_feather(delta: float, at: Vector2, moving: bool) -> void:
 	var runtime := _skills.runtime_for(FEATHER_DRAUGHT)
 	if _feather_left > 0.0:
 		_feather_left -= delta
-		if _feather_left <= 0.0:
-			if _feather_side == -1 and runtime != null:
-				_feather_side = 1
-				_feather_left += _feather_pulse_duration
-				if _feather_left > 0.0:
-					_emit(runtime, "buff_start", at, at, _feather_side, _feather_left, true)
-			if _feather_left <= 0.0:
-				walk_speed_scale = 1.0
+		if _feather_left <= 0.0 and _feather_side == -1 and runtime != null:
+			_feather_side = 1
+			_feather_left += _feather_pulse_duration
+			if _feather_left > 0.0:
+				_emit(runtime, "buff_start", at, at, _feather_side, _feather_left, true)
 		return
 	if runtime == null or not runtime.ready() or not moving:
 		_feather_charge = 0.0
@@ -140,7 +141,7 @@ func _tick_feather(delta: float, at: Vector2, moving: bool) -> void:
 		_feather_side = -1
 		_feather_pulse_duration *= ABILITIES.SPLIT_DAMAGE_RATIO
 	_feather_left = _feather_pulse_duration
-	walk_speed_scale = 1.0 + float(runtime.value("speed_bonus"))
+	_feather_walk_scale = 1.0 + float(runtime.value("speed_bonus"))
 	_emit(runtime, "buff_start", at, at, _feather_side, _feather_left, true)
 
 func _tick_dew(delta: float, at: Vector2, enemies: Array, moving: bool, context: Dictionary) -> void:

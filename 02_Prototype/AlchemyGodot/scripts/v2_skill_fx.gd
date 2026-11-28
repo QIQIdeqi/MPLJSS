@@ -3,6 +3,7 @@ extends Node3D
 const GROUND_SHADER := preload("res://shaders/v2_skill_ground.gdshader")
 const SKILL_LIGHT := preload("res://scripts/v2_skill_light.gd")
 const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
+const BOTTLE_FLIGHT := preload("res://scripts/blast_flask_flight.gd")
 const VIAL := preload("res://scenes/fx/brew_result_vial.png")
 const MIST := preload("res://art/vfx/v2/mist_flask_cloud_24f.png")
 const BRITTLE_SHATTER := preload("res://art/vfx/v2/pixelfx/brittle_mark_break.png")
@@ -106,7 +107,7 @@ func _add_split_accent(side: int) -> void:
 		"flight":
 			var accent := SPLIT_ALCHEMY_FX.new()
 			body.add_child(accent)
-			var trailing := skill_id not in ["sk_brittle_mark", "sk_corrosive_flask", "sk_mist_flask"]
+			var trailing := skill_id not in ["sk_corrosive_flask", "sk_mist_flask"]
 			accent.start_follow(side, false, trailing)
 		"impact", "zone_start":
 			var accent := SPLIT_ALCHEMY_FX.new()
@@ -154,10 +155,6 @@ func _make_flight() -> void:
 	body = Node3D.new()
 	add_child(body)
 	match skill_id:
-		"sk_brittle_mark":
-			body_card = _card(VIAL, body, 0.008, Color("#ffd28f"))
-			body_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-			SKILL_LIGHT.add(body, Vector3.ZERO, 0.40, Color(MARK_COLOR, 0.56))
 		"sk_mithril_drop":
 			library_card = _library_sprite(MITHRIL_FLIGHT, body, 0.023)
 		"sk_gravity_stone":
@@ -191,12 +188,7 @@ func _move_flight() -> void:
 	position = _world_at(at)
 	body.rotation.y = -heading.angle()
 	body.position.y = 0.31
-	if skill_id == "sk_brittle_mark":
-		var progress := _brittle_flight_progress(state)
-		body.position.y = _brittle_flight_height(progress) * WORLD_SCALE
-		body.rotation.y = 0.0
-		body_card.rotation.z = progress * TAU * (1.15 if heading.x < 0.0 else -1.15)
-	elif skill_id == "sk_corrosive_flask" or skill_id == "sk_mist_flask":
+	if skill_id == "sk_corrosive_flask" or skill_id == "sk_mist_flask":
 		var end: Vector2 = state.get("landing", state.get("destination", at))
 		var distance := launch_point.distance_to(end)
 		var progress := clampf(launch_point.distance_to(at) / maxf(distance, 0.01), 0.0, 1.0)
@@ -534,7 +526,7 @@ static func start_fallback(parent: Node2D, info: Dictionary) -> Node2D:
 		var flying := event == "flight"
 		sprite.texture = VIAL if flying else _brittle_texture(side)
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.scale = Vector2.ONE * (0.67 if flying else 1.6)
+		sprite.scale = Vector2.ONE * (BOTTLE_FLIGHT.BOTTLE_PIXEL_SIZE / WORLD_SCALE if flying else 1.6)
 		parent.add_child(sprite)
 		update_fallback(sprite, live_state)
 		return sprite
@@ -558,9 +550,8 @@ static func update_fallback(node: Node2D, live_state: Dictionary) -> void:
 	var at: Vector2 = live_state.get("pos", Vector2.ZERO)
 	if live_state.kind == "blast_flask":
 		var progress := _brittle_flight_progress(live_state)
-		var direction: Vector2 = live_state.direction
-		node.position = at + Vector2.UP * _brittle_flight_height(progress)
-		node.rotation = progress * TAU * (1.15 if direction.x < 0.0 else -1.15)
+		node.position = at + Vector2.UP * (BOTTLE_FLIGHT.flight_height(progress) / WORLD_SCALE)
+		node.rotation = -BOTTLE_FLIGHT.flight_roll(progress)
 		return
 	node.position = at + Vector2.UP * (_mark_height(live_state) / WORLD_SCALE)
 	node.modulate.a = minf(float(live_state.get("left", 1.0)) * 7.0, 1.0)
@@ -568,10 +559,6 @@ static func update_fallback(node: Node2D, live_state: Dictionary) -> void:
 static func _brittle_flight_progress(flight: Dictionary) -> float:
 	var origin: Vector2 = flight.origin
 	return clampf(origin.distance_to(flight.pos) / maxf(origin.distance_to(flight.landing), 0.01), 0.0, 1.0)
-
-static func _brittle_flight_height(progress: float) -> float:
-	return lerpf(29.0, 6.0, progress) + 4.0 * 48.0 * progress * (1.0 - progress)
-
 
 static func _fallback_frames(texture: Texture2D, duration: float) -> SpriteFrames:
 	if not fallback_animations.has(texture):

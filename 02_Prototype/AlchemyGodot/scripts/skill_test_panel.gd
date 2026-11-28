@@ -7,7 +7,7 @@ const COMBO_TIPS := {
 	&"combo_thunder_coat": "测试受击时，金色雷衣破开并显示减伤。附近有攻击者时会回击。",
 	&"combo_tide_mirror": "发射测试敌弹，观察青色水镜挡弹、反向推出水浪。",
 	&"combo_rewind_anchor": "召出一组测试追兵，观察脚点锚印和追兵退回原位。",
-	&"combo_cleanser": "先布置孢子区，待地面变亮后朝危险区闪避。",
+	&"combo_cleanser": "靠近木桩按空格闪避，落地后加速脱离。也可布置孢子区验证净化。",
 	&"combo_crystal_gate": "靠近木桩时朝同一方向跑一段。看到出口后，在入口按空格。",
 	&"combo_crystal_wall": "把三根木桩放到同一侧可检查墙体生成。绕墙需在实战验证。",
 	&"combo_opening_counter": "靠近木桩并显示前摇。脚下亮起金色火星，稍后在角色周围踩踏。",

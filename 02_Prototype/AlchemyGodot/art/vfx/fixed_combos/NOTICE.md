@@ -10,7 +10,7 @@
 | 雷衣 | thunder_coat | lightning/zap-hit | 金白环甲围绕角色，吸收时炸开环沿和电火花，回击以白金分岔闪电联到攻击者。 |
 | 回浪镜 | tide_mirror | impacts/ricochet | 青白闪光配合直立的水镜和带双鳍的浪脊返弹，实际拦截及命中处呈现扇状飞沫。 |
 | 回流锚 | rewind_anchor | water/whirlpool | 靛蓝刻度钟标明原站位，反向箭头沿回移路线连接，银蓝水纹定在真实落点。 |
-| 净路剂 | cleanser | nature/acid-splash | 浅青薄尘沿真实切口消散，孢子退开后显露安全带地面。 |
+| 净路剂 | cleanser | nature/acid-splash | 闪避落脚溅开青白液滴，零散泡沫贴地浮动并逐渐消散。提速时脚边浮出短促的泡沫，切入孢子区时沿实际净化路径显露地面。 |
 | 晶门 | crystal_gate | ice/ice-shatter | 紫白窄晶屑，分别在出发点和落脚点闪动。 |
 | 寒晶墙 | crystal_wall | ice/ice-spikes | 蓝白晶块和碎光，竖起来的实际墙面为半透明程序几何。 |
 | 照影 | opening_counter | arcane/rune-circle | 金色火星在角色脚下聚拢，踩地时尘光向实际范围内散开，像素符文集中在踩踏落点。 |
