@@ -48,8 +48,6 @@ func build_ui() -> void:
 	slot_label.text = "投入材料（%d / %d）" % [selected_materials.size(), tier]
 	var slot_row: HBoxContainer = $Panel/Margin/Scroll/VBox/Slots
 	_refresh_slots(slot_row)
-	var feedback: Label = $Panel/Margin/Scroll/VBox/Feedback
-	feedback.text = ""
 	_refresh_codex()
 
 func _refresh_materials(mat_row: VBoxContainer) -> void:

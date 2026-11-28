@@ -53,6 +53,7 @@ const MAX_HP := 120.0
 @onready var player = $Actors/Lilita
 @onready var status: Label = get_node_or_null("Interface/Status")
 @onready var hint: Label = $Interface/Hint
+@onready var boss_gate_hud: Control = get_node_or_null("Interface/BossGateHUD")
 @onready var music: AudioStreamPlayer = $Music
 
 var rng := RandomNumberGenerator.new()
@@ -107,6 +108,14 @@ var portal: Node2D
 var portal_position := PORTAL
 var portal_dialog: ConfirmationDialog
 var portal_ready := false
+var boss_gate_cut_seconds := 0.0
+var boss_gate_cut_limit := 0
+var boss_gate_cuts := 0
+var boss_gate_opened_at := 0.0
+var first_gate_prompt := false
+var first_gate_confirm := false
+var last_hp_loss_frame := -1
+var upgrades_chosen := 0
 var ended := false
 var first_brew := false
 var opening_supply_eligible := false
@@ -185,7 +194,7 @@ func store_chunk_drops(coord: Vector2i) -> void:
 	for i in range(pickups.size() - 1, -1, -1):
 		var drop := pickups[i]
 		if chunk_at(drop.sprite.position) == coord:
-			stored.append({"position": drop.sprite.position, "kind": drop.kind})
+			stored.append({"position": drop.sprite.position, "kind": drop.kind, "origin_xp": drop.origin_xp})
 			drop.sprite.queue_free()
 			pickups.remove_at(i)
 	for i in range(material_drops.size() - 1, -1, -1):
@@ -200,7 +209,7 @@ func store_chunk_drops(coord: Vector2i) -> void:
 func restore_chunk_drops(coord: Vector2i) -> void:
 	for drop in dormant_drops.get(coord, []):
 		if drop.has("kind"):
-			add_pickup(drop.position, drop.kind)
+			add_pickup(drop.position, drop.kind, drop.origin_xp)
 		else:
 			spawn_material_drop(drop.position, drop.material_id, drop.amount, false)
 	dormant_drops.erase(coord)
@@ -228,6 +237,15 @@ func _ready() -> void:
 		enemy_config = definition.enemy_config
 		spawn_position = definition.spawn_position
 		stage_is_boss = definition.kind == 2
+		if level_id == &"greyford_01":
+			if definition.boss_gate_base_seconds >= 0.0:
+				portal_open_seconds = definition.boss_gate_base_seconds
+			boss_gate_cut_seconds = definition.boss_gate_event_cut_seconds
+			boss_gate_cut_limit = definition.boss_gate_event_cut_limit
+			if OS.get_cmdline_user_args().has("--greyford-gate-a"):
+				portal_open_seconds = 135.0
+				boss_gate_cut_seconds = 0.0
+				boss_gate_cut_limit = 0
 	if has_node("EntrySpawn"):
 		$EntrySpawn.position = spawn_position
 	player.position = spawn_position
@@ -324,6 +342,10 @@ func _ready() -> void:
 	if is_infinite_field():
 		field_events = FIELD_EVENTS.new()
 		field_events.setup(self)
+	if boss_gate_hud and level_id == &"greyford_01":
+		boss_gate_hud.attach(self)
+		record_greyford("run_start", {"base": portal_open_seconds,
+			"cut_seconds": boss_gate_cut_seconds, "cut_limit": boss_gate_cut_limit})
 	startup_complete = startup_error.is_empty()
 
 func setup_combat_canvas() -> void:
@@ -517,6 +539,12 @@ func make_sprite(texture: Texture2D, at: Vector2, size: Vector2, foot_fraction :
 	sprite.position = at
 	return sprite
 
+func can_interact_with_boss_gate(confirming := false) -> bool:
+	return stage_active and combat and not stage_is_boss and not ended and portal_ready \
+		and not get_tree().paused and not brew.is_open() \
+		and (confirming or not portal_dialog.visible) \
+		and player.position.distance_to(portal_position) < 60.0
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		if not combat and player.position.distance_to(GATE) < 92:
@@ -525,11 +553,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		elif ended:
 			leave_run(false)
-		elif portal_ready and player.position.distance_to(portal_position) < 60 and not brew.is_open():
+		elif can_interact_with_boss_gate():
 			var definition = level_catalog.find_level(level_id)
 			var target = level_catalog.find_level(definition.boss_level_id) if definition else null
 			portal_dialog.dialog_text = "挑战%s？\n保留当前生命、已拾材料和能力；地面未拾物品离场清除。" % (target.boss_name if target else "Boss")
 			portal_dialog.popup_centered()
+			if not first_gate_confirm and level_id == &"greyford_01":
+				first_gate_confirm = true
+				record_greyford("gate_f", {"search_seconds": run_time - boss_gate_opened_at})
 			get_viewport().set_input_as_handled()
 	if event.is_action_pressed("alchemy"):
 		# 村庄：按 Q 呼出炼金工房（制作能力）
@@ -590,7 +621,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if is_infinite_field():
 		stream_field()
-		if field_events:
+		if field_events and not field_events.timed:
 			field_events.tick()
 		for i in range(enemies.size() - 1, -1, -1):
 			var entry := enemies[i]
@@ -621,12 +652,9 @@ func _physics_process(delta: float) -> void:
 			return
 	else:
 		run_time += delta
-		if not portal_ready and run_time >= portal_open_seconds:
-			portal_ready = true
-			if is_infinite_field():
-				portal_position = (Vector2(chunk_at(player.position)) + Vector2(0.5, 0.5)) * Vector2(layout_preset.chunk_size)
-			portal = FX.portal(effects, portal_position)
-		update_field_hint()
+		if level_id != &"greyford_01":
+			update_boss_gate()
+			update_field_hint()
 		if enemy_config:
 			var wave := enemy_config.wave_index(run_time)
 			if wave != spawn_wave:
@@ -665,6 +693,8 @@ func _physics_process(delta: float) -> void:
 	advance_combat_skills(delta)
 	if ended or boss_death:
 		return
+	if field_events and field_events.timed:
+		field_events.tick_charge(delta, last_hp_loss_frame == Engine.get_physics_frames())
 	for i in range(pickups.size() - 1, -1, -1):
 		var pickup := pickups[i]
 		var art: Sprite2D = pickup.sprite
@@ -676,10 +706,15 @@ func _physics_process(delta: float) -> void:
 				coins += 1
 			else:
 				xp += 1
+				if pickup.origin_xp:
+					field_events.origin_xp_pickups += 1
+					record_greyford("origin_xp_picked", {"count": field_events.origin_xp_pickups,
+						"xp": xp, "level": level})
 				if xp >= level * 6:
 					xp -= level * 6
 					level += 1
 					offer_upgrade()
+					record_greyford("level_up", {"level": level, "origin_xp": pickup.origin_xp})
 			art.queue_free()
 			pickups.remove_at(i)
 	# 素材掉落吸附拾取（V1.1 第3.2节）：玩家进入范围自动入账
@@ -697,6 +732,41 @@ func _physics_process(delta: float) -> void:
 				run_manager.collect_material(String(drop.material_id), int(drop.amount))
 			dsprite.queue_free()
 			material_drops.remove_at(i)
+
+	if level_id == &"greyford_01":
+		update_boss_gate()
+		update_field_hint()
+
+func boss_gate_threshold() -> float:
+	return portal_open_seconds - boss_gate_cut_seconds * boss_gate_cuts
+
+func apply_boss_gate_cut() -> bool:
+	if portal_ready or boss_gate_cuts >= boss_gate_cut_limit or boss_gate_cut_seconds <= 0.0:
+		return false
+	boss_gate_cuts += 1
+	return true
+
+func gate_cut_capped() -> bool:
+	return boss_gate_cut_limit > 0 and boss_gate_cuts >= boss_gate_cut_limit
+
+func update_boss_gate() -> void:
+	var threshold := boss_gate_threshold()
+	# Repeated physics deltas can land a few trillionths below 105 seconds.
+	var clock_epsilon := 0.000000001 if level_id == &"greyford_01" else 0.0
+	if portal_ready or run_time + clock_epsilon < threshold:
+		return
+	portal_ready = true
+	boss_gate_opened_at = run_time
+	if is_infinite_field():
+		portal_position = (Vector2(chunk_at(player.position)) + Vector2(0.5, 0.5)) * Vector2(layout_preset.chunk_size)
+	portal = FX.portal(effects, portal_position)
+	record_greyford("gate_open", {"position": portal_position, "level": level,
+		"upgrades_chosen": upgrades_chosen, "cuts": boss_gate_cuts})
+
+func record_greyford(event: String, data: Dictionary) -> void:
+	if level_id == &"greyford_01":
+		print("GREYFORD ", JSON.stringify({"event": event, "time": run_time,
+			"run_id": run_manager.ledger.run_id, "data": data}))
 
 func advance_combat_skills(delta: float, basic_attack_enabled := true) -> void:
 	if basic_attack_enabled:
@@ -732,7 +802,7 @@ func update_field_hint() -> void:
 	if pickup_notice_time > 0.0:
 		hint.text = pickup_notice if pickup_notice.begins_with("发现") else "获得  %s   ·   本局素材 %d" % [pickup_notice, _run_mat_total()]
 		return
-	if portal_ready:
+	if portal_ready and level_id != &"greyford_01":
 		var difference: Vector2 = portal_position - player.position
 		if difference.length() < 60:
 			hint.text = "F  进入 Boss 传送阵   ·   可继续探索"
@@ -806,7 +876,7 @@ func _exit_tree() -> void:
 	clear_combat_effects()
 
 func enter_boss() -> void:
-	if ended or boss or not portal_ready or player.position.distance_to(portal_position) >= 60 or brew.is_open():
+	if not can_interact_with_boss_gate(true):
 		return
 	var definition = level_catalog.find_level(level_id) if level_catalog else null
 	var target_id: StringName = definition.boss_level_id if definition else &""
@@ -822,6 +892,7 @@ func enter_boss() -> void:
 	if next == null:
 		hint.text = "Boss 场景或布局加载失败，可继续探索；本局状态未改变"
 		return
+	record_greyford("boss_enter", {"target": target_id})
 	RunConfig.set_handoff(state)
 	publish_stage(next)
 	RunConfig.take_handoff()
@@ -912,6 +983,7 @@ func offer_upgrade() -> void:
 func apply_upgrade(pick: Dictionary) -> void:
 	if alchemy_system:
 		alchemy_system.apply_upgrade(pick)
+		upgrades_chosen += 1
 
 func on_upgrade_offered(candidates: Array) -> void:
 	pass
@@ -1198,7 +1270,10 @@ func hurt(amount: float, knock_direction := Vector2.ZERO, source: Node2D = null)
 	hurt_cooldown = 0.55
 	var coat := independent_guard.mitigate(amount, player.position) if independent_guard else {}
 	var received := float(coat.get("amount", amount))
+	var previous_hp := hp
 	hp = maxf(0.0, hp - received)
+	if hp < previous_hp:
+		last_hp_loss_frame = Engine.get_physics_frames()
 	if not coat.is_empty():
 		var text := "雷衣 减伤 %.1f" % (amount - received)
 		var gold := Color("#ffde87")
@@ -1447,6 +1522,7 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 		boss_death.finished.connect(func() -> void:
 			remove_defeated(body)
 			boss_death = null
+			drop_materials(at, false, true)
 			finish(true), CONNECT_ONE_SHOT)
 		return
 	if independent_field:
@@ -1455,7 +1531,7 @@ func damage_enemy(entry: Dictionary, damage: float) -> void:
 	var death: Tween = body.play_death()
 	death.finished.connect(remove_defeated.bind(body), CONNECT_ONE_SHOT)
 	# 素材掉落（V1.1 第3章）：按掉落表生成，自动拾取写入本局账本
-	drop_materials(at, entry.get("elite", false), entry.boss)
+	drop_materials(at, entry.get("elite", false), false)
 	if kills == 8 and opening_supply_eligible:
 		for i in 3:
 			if inventory[i] == 0:
@@ -1503,7 +1579,7 @@ func show_combat_text(at: Vector2, message: String, color: Color) -> void:
 	tween.tween_property(label, "modulate:a", 0.0, .52)
 	tween.chain().tween_callback(label.queue_free)
 
-# 怪物死亡素材掉落（V1.1 第3.2节）：按掉落表生成掉落实体，玩家吸附后自动拾取入账本
+# 普通与精英掉落留在地面，Boss 掉落在胜利结算前直接入本局账本。
 func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
 	if not run_manager:
 		return
@@ -1515,7 +1591,10 @@ func drop_materials(at: Vector2, elite: bool, boss_entity: bool) -> void:
 		var amount := rng.randi_range(int(entry.min), int(entry.max))
 		if amount <= 0:
 			continue
-		spawn_material_drop(at, String(entry.material_id), amount)
+		if boss_entity:
+			run_manager.collect_material(String(entry.material_id), amount)
+		else:
+			spawn_material_drop(at, String(entry.material_id), amount)
 
 # 生成素材掉落实体（地面掉落物，等待玩家吸附拾取）
 func spawn_material_drop(at: Vector2, material_id: String, amount: int, scatter := true) -> void:
@@ -1577,14 +1656,14 @@ func leave_run(to_menu := false) -> void:
 	if not ended:
 		finish(false)
 	if not settle_run():
-		hint.text = "保存失败，仍保留本局，请重试返回。"
+		$Interface/RunSettlement/Panel/Summary/Status.text = "保存失败，本局收益已保留。"
 		return
 	RunConfig.reset()
 	var village = level_catalog.find_level(&"village_greyford") if level_catalog else null
 	var village_path: String = village.scene_path if village else "res://scenes/levels/village_greyford.tscn"
 	var packed := load("res://scenes/menu.tscn" if to_menu else village_path) as PackedScene
 	if packed == null:
-		hint.text = "返回场景加载失败，本局已保存，请检查关卡总表。"
+		$Interface/RunSettlement/Panel/Summary/Status.text = "返回场景加载失败，本局已保存。"
 		return
 	var next = packed.instantiate()
 	_replace_scene(next)
@@ -1598,12 +1677,12 @@ func _replace_scene(next: Node) -> void:
 	tree.current_scene = next
 	queue_free()
 
-func add_pickup(at: Vector2, kind: int) -> void:
+func add_pickup(at: Vector2, kind: int, origin_xp := false) -> void:
 	var sprite := make_sprite(DROPS[kind], at, Vector2(21, 21))
 	var motes: CPUParticles2D
 	if kind == 1 and pickups.filter(func(drop: Dictionary) -> bool: return drop.motes != null).size() < 24:
 		motes = FX.xp_motes(sprite)
-	pickups.append({"sprite": sprite, "kind": kind, "motes": motes})
+	pickups.append({"sprite": sprite, "kind": kind, "motes": motes, "origin_xp": origin_xp})
 	if kind == 0:
 		FX.coin_shine(sprite)
 
@@ -1622,6 +1701,8 @@ func finish(victory: bool) -> void:
 	if ended:
 		return
 	ended = true
+	if field_events and field_events.timed:
+		field_events.reset_charge("hp_loss" if hp <= 0.0 and last_hp_loss_frame == Engine.get_physics_frames() else "run_ended")
 	clear_combat_effects()
 	clear_webs()
 	player.locked = true
@@ -1637,5 +1718,14 @@ func finish(victory: bool) -> void:
 		if is_instance_valid(drop.sprite):
 			drop.sprite.queue_free()
 	material_drops.clear()
-	var mat_total: int = run_manager.ledger.total() if (run_manager and run_manager.ledger) else 0
-	hint.text = "%s   ·   %s   ·   素材 +%d   ·   F 返回村庄" % ["腐化之源已击败" if victory else "试炼结束", "已结算 %d 金币" % coins if saved else "保存失败", mat_total]
+	var ledger: RunMaterialLedger = run_manager.ledger
+	var lines := PackedStringArray(["素材 +%d" % ledger.total()])
+	for id in MATERIALS.ids():
+		var count := ledger.count(id)
+		if count > 0:
+			lines.append("%s ×%d" % [MATERIALS.name_of(id), count])
+	var summary := $Interface/RunSettlement/Panel/Summary
+	summary.get_node("Title").text = "%s已击败" % boss.display_name if victory else "试炼结束"
+	summary.get_node("Materials").text = "\n".join(lines)
+	summary.get_node("Status").text = "已结算 %d 金币" % coins if saved else "保存失败，本局收益已保留。"
+	$Interface/RunSettlement.show()

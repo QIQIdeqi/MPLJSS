@@ -13,6 +13,7 @@ const MAX_PLAYABLE_SIZE := Vector2i(1280, 720)
 @export_range(0.0, 1.0) var object_density := 0.24
 @export var object_spacing := 74.0
 @export var protected_half_width := 32.0
+@export_range(0.0, 1.0) var ground_noise_scale := 1.0
 @export var boss := false
 @export var palette: Array[Brush] = []
 @export_group("地图展开")

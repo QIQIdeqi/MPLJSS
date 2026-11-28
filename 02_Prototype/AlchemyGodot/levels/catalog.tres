@@ -41,13 +41,16 @@ display_name = "第1关 · 格雷弗德外围"
 kind = 1
 scene_path = "res://scenes/levels/greyford_01.tscn"
 sort_order = 10
-description = "草甸疏林中绕群，回到空地回收材料。无限随机区块，5分钟开放自愿Boss挑战；数值为测试默认。"
+description = "草甸疏林中绕群，回到空地回收材料。探索支路可提前打开挑战门。"
 layout = ExtResource("layout_greyford_01")
 enemy_config = ExtResource("waves_greyford_01")
 spawn_position = Vector2(640, 430)
 selectable = true
 boss_level_id = &"greyford_01_boss"
 preview = ExtResource("preview_greyford_01")
+boss_gate_base_seconds = 165.0
+boss_gate_event_cut_seconds = 30.0
+boss_gate_event_cut_limit = 2
 [sub_resource type="Resource" id="Boss0"]
 script = ExtResource("entry")
 level_id = &"greyford_01_boss"

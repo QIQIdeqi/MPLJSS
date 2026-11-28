@@ -98,6 +98,7 @@ size = Vector2(120, 120)
 collision = Vector2(20, 14)
 foot_fraction = 0.90625
 [resource]
+ground_noise_scale = 0.55
 resource_name = "格雷弗德外围 无限战场"
 script = ExtResource("1")
 palette = Array[ExtResource("2")]([SubResource("Brush_RegionGround"), SubResource("Brush_RegionA"), SubResource("Brush_RegionB"), SubResource("Brush_Grass"), SubResource("Brush_Dirt"), SubResource("Brush_Stone"), SubResource("Brush_Bush"), SubResource("Brush_Fence"), SubResource("Brush_Crates"), SubResource("Brush_Oak")])

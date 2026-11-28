@@ -63,9 +63,9 @@ func run_checks() -> void:
 		field.stream_field()
 		check(field.pickups.size() == 2 and field.material_drops.size() == 1, label + " does not duplicate loot on a second revisit")
 		field.field_events.points = {Vector2i.ZERO: at}
-		field.field_events.tick()
+		tick_branch(field.field_events)
 		var reward_count: int = field.pickups.size() + field.material_drops.size()
-		field.field_events.tick()
+		tick_branch(field.field_events)
 		check(field.field_events.completed.has(Vector2i.ZERO) and reward_count == field.pickups.size()+field.material_drops.size(), label + " optional encounter triggers only once per chunk")
 		field.player.position = Vector2(-2560, -1440)
 		check(field.stream_field() and field.chunk_at(field.player.position) == Vector2i(-2,-2), label + " supports negative world coordinates")
@@ -79,12 +79,13 @@ func run_checks() -> void:
 		field.enemies.clear()
 		field.until_spawn = 1.0
 		field.stage_active = true
-		field.run_time = 299.0
+		var gate_at: float = field.boss_gate_threshold()
+		field.run_time = gate_at - 1.0
 		field._physics_process(0.0)
-		check(not field.portal_ready, label + " keeps Boss closed before five minutes")
-		field.run_time = 300.0
+		check(not field.portal_ready, label + " keeps Boss closed before its configured threshold")
+		field.run_time = gate_at
 		field._physics_process(0.0)
-		check(field.portal_ready and is_instance_valid(field.portal), label + " opens voluntary Boss gate at five minutes")
+		check(field.portal_ready and is_instance_valid(field.portal), label + " opens voluntary Boss gate at its configured threshold")
 		var portal_at: Vector2 = field.portal_position
 		field.player.position += Vector2(2600, 0)
 		field.stream_field()
@@ -107,3 +108,9 @@ func run_checks() -> void:
 	report.close()
 	print("FIVE_REGION_FLOW_%s checks=%d failures=%d" % ["PASS" if failures == 0 else "FAIL", checks.size(), failures])
 	quit(0 if failures == 0 else 1)
+
+func tick_branch(runtime: RefCounted) -> void:
+	if runtime.timed:
+		runtime.tick_charge(runtime.CHARGE_SECONDS, false)
+	else:
+		runtime.tick()

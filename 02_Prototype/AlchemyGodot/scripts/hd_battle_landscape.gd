@@ -14,6 +14,7 @@ const BACKDROP_EXTENT := 33.0
 const BACKDROP_STEP := 0.8
 
 var generated: Node3D
+var ground_noise_scale := 1.0
 var snow_cover := 0.0
 var snow_materials: Array[ShaderMaterial] = []
 var foreground_cards: Dictionary[Sprite3D, Image] = {}
@@ -89,6 +90,7 @@ func set_snow_cover(amount: float) -> void:
 func _build_ground(tiles: Array, bounds: Rect2, streamed := false, parent: Node3D = null, neighbors: Array = []) -> void:
 	var material := ShaderMaterial.new()
 	material.shader = GROUND_SHADER
+	material.set_shader_parameter("ground_noise_scale", ground_noise_scale)
 	_set_ground_surface(material, tiles, bounds, neighbors, streamed)
 	_track_snow(material)
 	var field := Rect2(bounds.position / PIXELS_PER_UNIT, bounds.size / PIXELS_PER_UNIT)

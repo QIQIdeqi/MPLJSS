@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 [ext_resource type="Script" path="res://scripts/field.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/lilita.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/combat_hud.tscn" id="3"]
 [ext_resource type="Resource" path="res://levels/first_level_enemies.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/boss_gate_hud.gd" id="5"]
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
 combat = true
@@ -15,5 +16,43 @@ position = Vector2(640, 430)
 [node name="Hint" type="Label" parent="Interface"]
 visible = false
 [node name="CombatHUD" parent="Interface" instance=ExtResource("3")]
+[node name="BossGateHUD" type="Control" parent="Interface"]
+visible = false
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5")
+[node name="RunSettlement" type="CenterContainer" parent="Interface"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+[node name="Panel" type="PanelContainer" parent="Interface/RunSettlement"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+[node name="Summary" type="VBoxContainer" parent="Interface/RunSettlement/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+[node name="Title" type="Label" parent="Interface/RunSettlement/Panel/Summary"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+[node name="Materials" type="Label" parent="Interface/RunSettlement/Panel/Summary"]
+layout_mode = 2
+horizontal_alignment = 1
+[node name="Status" type="Label" parent="Interface/RunSettlement/Panel/Summary"]
+layout_mode = 2
+horizontal_alignment = 1
+[node name="Return" type="Label" parent="Interface/RunSettlement/Panel/Summary"]
+layout_mode = 2
+text = "F 返回村庄"
+horizontal_alignment = 1
 [node name="Music" type="AudioStreamPlayer" parent="."]
 volume_db = -15

@@ -5,6 +5,7 @@ uniform sampler2DArray terrain_layers : source_color, repeat_enable, filter_line
 uniform sampler2D tile_lookup : repeat_disable, filter_nearest;
 uniform vec2 map_origin;
 uniform vec2 cell_size = vec2(1.0);
+uniform float ground_noise_scale : hint_range(0.0, 1.0) = 1.0;
 uniform float snow_cover : hint_range(0.0, 1.0);
 varying vec2 world_ground;
 varying vec2 terrain_relief;
@@ -29,7 +30,7 @@ int terrain_at(ivec2 cell) {
 }
 
 vec4 surface_at(int layer, vec2 texcoords) {
-	return vec4(texture(terrain_layers, vec3(texcoords, float(layer))).rgb, layer == 0 ? 0.94 : 0.43);
+	return vec4(texture(terrain_layers, vec3(texcoords, float(layer)), (1.0 - ground_noise_scale) * 2.0).rgb, layer == 0 ? 0.94 : 0.43);
 }
 
 void vertex() {
@@ -63,13 +64,13 @@ void fragment() {
 	float grain = hash(floor(position * 74.0));
 	float patch = sin(position.x * 2.65 + position.y * 1.37)
 		* cos(position.y * 3.06 - position.x * 1.13);
-	vec3 ground = surface.rgb * (0.975 + patch * 0.055);
+	vec3 ground = surface.rgb * (0.975 + patch * 0.055 * ground_noise_scale);
 	float hillside = smoothstep(0.12, 1.45, terrain_relief.x);
 	float rock = hillside * smoothstep(0.025, 0.24, terrain_relief.y + (coarse.x - 0.5) * 0.16);
 	float stratum = noise(vec2(position.x * 3.4, terrain_relief.x * 10.0 + position.y * 1.3));
 	vec3 rock_color = mix(vec3(0.12, 0.15, 0.13), vec3(0.37, 0.34, 0.28), stratum * 0.78 + grain * 0.22);
 	ground = mix(ground * mix(1.0, 0.72, hillside), rock_color, rock * 0.82);
-	float spread = smoothstep(0.06, 0.62, snow_cover + grain * 0.26 + patch * 0.14 - 0.18);
+	float spread = smoothstep(0.06, 0.62, snow_cover + (grain * 0.26 + patch * 0.14) * ground_noise_scale - 0.18);
 	float coverage = min(snow_cover * 1.5, 1.0) * spread * surface.a;
 	vec3 frost = mix(vec3(0.69, 0.79, 0.87), vec3(0.91, 0.95, 0.98), grain);
 	ALBEDO = mix(ground, frost, coverage);

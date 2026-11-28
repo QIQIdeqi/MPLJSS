@@ -24,12 +24,16 @@ const COMBO_FX_DATA := preload("res://scripts/combo_fx_composition.gd")
 const COMBO_FX_WORLD := preload("res://scripts/combo_fx_world.gd")
 const SPLIT_ALCHEMY_FX := preload("res://scripts/split_alchemy_fx.gd")
 const UNITS_PER_PIXEL := 0.01
+const PLAYER_ART_LAYER := 2
 const SOURCE_HIDDEN_LAYER := 4
 const GENERATED_FRAME := 256
 const GENERATED_COLS := 6
 const GENERATED_COUNT := 24
 
 var field
+var greyford_visuals := false
+var player_lantern: OmniLight3D
+var portal_beam: Sprite3D
 var landscape: LANDSCAPE
 var actor_cards: Dictionary[int, Sprite3D] = {}
 var raised_hits: Array[Node2D] = []
@@ -50,11 +54,22 @@ static func world_at(point: Vector2) -> Vector3:
 
 func setup(source: Node2D, canvas_texture: Texture2D) -> void:
 	field = source
+	greyford_visuals = field.level_id in [&"greyford_01", &"greyford_01_boss"]
 	environment_setup("BattleWeather")
-	lens.dof_blur_amount = 0.115
+	lens.dof_blur_amount = 0.085 if greyford_visuals else 0.115
 	lens.dof_blur_near_transition = 1.1
-	lens.dof_blur_far_transition = 1.65
+	lens.dof_blur_far_transition = 2.2 if greyford_visuals else 1.65
 	landscape = LANDSCAPE.new()
+	landscape.ground_noise_scale = field.layout_preset.ground_noise_scale
+	if greyford_visuals:
+		player_lantern = OmniLight3D.new()
+		player_lantern.name = "PlayerLantern"
+		player_lantern.light_color = Color("#ffd097")
+		player_lantern.omni_range = 2.6
+		player_lantern.omni_attenuation = 1.8
+		player_lantern.light_cull_mask &= ~PLAYER_ART_LAYER
+		add_child(player_lantern)
+		local_lights.append(player_lantern)
 	add_child(landscape)
 	add_child(attack_effects)
 	add_child(combo_effects)
@@ -144,13 +159,19 @@ func rebuild() -> void:
 		update_boundary(field.player.movement_bounds)
 
 func screen_at(point: Vector2) -> Vector2:
-	return camera.unproject_position(world_at(point))
+	var target := world_at(point)
+	var projected := camera.unproject_position(target)
+	if camera.is_position_behind(target):
+		return get_viewport().get_visible_rect().size - projected
+	return projected
 
 func cycle_view_angle() -> void:
 	view_angle = ((int(view_angle) + 1) % ViewAngle.size()) as ViewAngle
 
 func update_view(delta: float) -> void:
 	var player_at := world_at(field.player.position)
+	if player_lantern:
+		player_lantern.position = player_at + Vector3(0.24, 0.69, 0.22)
 	if field.is_infinite_field() and ground_effect_overlay:
 		ground_effect_overlay.position = player_at + Vector3.UP * 0.035
 	var player_focus := player_at + Vector3.UP * 0.39
@@ -174,7 +195,7 @@ func update_view(delta: float) -> void:
 	var player_depth := -camera.to_local(player_focus).z
 	var boss_depth := -camera.to_local(boss_focus).z
 	lens.dof_blur_near_distance = maxf(camera.near, minf(player_depth, boss_depth) - 0.9)
-	lens.dof_blur_far_distance = maxf(player_depth, boss_depth) + 1.2
+	lens.dof_blur_far_distance = maxf(player_depth, boss_depth) + (2.0 if greyford_visuals else 1.2)
 	var advancing: bool = not field.ended and not field.world_controls_blocked()
 	if advancing:
 		weather.advance(delta, player_at)
@@ -191,7 +212,9 @@ func update_view(delta: float) -> void:
 
 func update_actor_cards() -> void:
 	var live: Dictionary[int, bool] = {}
-	update_card(field.player.art, field.player.position, live)
+	var player_card := update_card(field.player.art, field.player.position, live)
+	if player_lantern and player_card:
+		player_card.layers = PLAYER_ART_LAYER
 	for entry in field.enemies:
 		if not is_instance_valid(entry.body) or entry.body.is_queued_for_deletion():
 			continue
@@ -235,10 +258,29 @@ func update_actor_cards() -> void:
 		update_effect_cards(hit, live, 0.19)
 	if is_instance_valid(field.portal):
 		update_effect_cards(field.portal, live, 0.0)
+		if field.level_id == &"greyford_01":
+			if not portal_beam:
+				portal_beam = make_portal_beam()
+			portal_beam.position = world_at(field.portal.position) + Vector3.UP * 1.65
+	if portal_beam:
+		portal_beam.visible = is_instance_valid(field.portal)
 	for id in actor_cards.keys():
 		if not live.has(id):
 			actor_cards[id].queue_free()
 			actor_cards.erase(id)
+
+func make_portal_beam() -> Sprite3D:
+	var beam := Sprite3D.new()
+	beam.name = "PortalBeam"
+	beam.texture = GLOW
+	beam.pixel_size = UNITS_PER_PIXEL
+	beam.scale = Vector3(2.4, 17.5, 1.0)
+	beam.modulate = Color(0.72, 0.95, 1.0, 0.35)
+	beam.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	beam.shaded = false
+	beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(beam)
+	return beam
 
 func update_enemy_card(source: Sprite2D, at: Vector2, live: Dictionary[int, bool]) -> void:
 	var card := update_card(source, at, live)

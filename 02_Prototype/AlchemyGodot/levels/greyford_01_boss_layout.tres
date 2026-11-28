@@ -87,6 +87,7 @@ size = Vector2(120, 120)
 collision = Vector2(20, 14)
 foot_fraction = 0.90625
 [resource]
+ground_noise_scale = 0.35
 resource_name = "格雷弗德外围 Boss"
 script = ExtResource("1")
 grid = Vector2i(14, 12)

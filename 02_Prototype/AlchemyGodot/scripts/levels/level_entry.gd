@@ -18,6 +18,10 @@ enum Kind { VILLAGE, NORMAL, BOSS }
 @export var layout: Resource
 @export var enemy_config: Resource
 @export var spawn_position := Vector2(640, 430)
+@export_group("Boss 门")
+@export var boss_gate_base_seconds := -1.0
+@export var boss_gate_event_cut_seconds := 0.0
+@export var boss_gate_event_cut_limit := 0
 @export_group("Boss 玩法")
 @export_enum("冲锋与扇射", "织网与落网", "孢子分区", "俯冲与转向", "冲锋与分区落击") var boss_style := 0
 @export var boss_name := "腐化之源"
