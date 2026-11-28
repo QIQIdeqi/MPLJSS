@@ -69,6 +69,8 @@ func start(info: Dictionary) -> void:
 	_card.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_card.pixel_size = float(_style.get("size", 0.8)) / _width(texture, kind)
 	_card.position.y = float(_style.get("height", FLOOR))
+	var offset: Vector2 = _style.get("offset", Vector2.ZERO)
+	_card.offset = Vector2(offset.x, -offset.y)
 	_card.modulate = _card_tint
 	_card.visible = kind != "freeze"
 	if kind != "arc":
@@ -130,16 +132,7 @@ func _process(delta: float) -> void:
 
 
 func _add_readability_layers(skill_id: String, kind: String, side: int) -> void:
-	if skill_id == "sk_thunder_salt" and kind == "burst":
-		var white := _ink(Color("#fff0ff"))
-		var halo := _ink(Color("#b59bea") if side == 0 else _accent)
-		var zigzag := [Vector3(-0.14, 1.83, 0.02), Vector3(0.02, 1.38, 0.04),
-			Vector3(-0.13, 1.19, 0.01), Vector3(0.07, 0.92, 0.02),
-			Vector3(-0.06, 0.70, 0.00), Vector3(0.10, 0.48, -0.04), Vector3(0.0, 0.10, 0.0)]
-		for i in range(1, zigzag.size()):
-			_stroke(self, zigzag[i - 1], zigzag[i], 0.071, halo)
-			_stroke(self, zigzag[i - 1], zigzag[i], 0.033, white)
-	elif skill_id == "sk_frost_powder" and kind in ["burst", "freeze"]:
+	if skill_id == "sk_frost_powder" and kind in ["burst", "freeze"]:
 		var ice := _ink(Color("#a1e8ef") if side == 0 else _accent.lerp(Color.CYAN, 0.27))
 		var snow := _ink(Color("#e8fcfa"))
 		var count := 4 if kind == "freeze" else 6
@@ -237,7 +230,8 @@ static func _profile(info: Dictionary) -> Dictionary:
 			if event in ["cast", "flight"]:
 				return {"kind":"arc", "time":0.32, "size":0.30}
 			if event == "impact":
-				return {"kind":"burst", "time":0.43, "size":1.03, "height":0.49, "light":0.67}
+				return {"kind":"burst", "time":0.38, "size":1.44, "height":FLOOR,
+					"offset":Vector2(0, -96), "light":0.54}
 		"sk_fire_oil":
 			if event == "cast":
 				return {"kind":"burst", "time":0.24, "size":0.62, "height":0.16, "light":0.33}
@@ -345,6 +339,7 @@ static func start_fallback(parent: Node2D, info: Dictionary) -> void:
 	effect.card = Sprite2D.new()
 	effect.card.texture = texture
 	effect.card.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	effect.card.offset = style.get("offset", Vector2.ZERO)
 	if kind != "arc":
 		effect.card.hframes = COLUMNS
 		effect.card.vframes = ROWS

@@ -4,10 +4,15 @@ const SKILLS := preload("res://data/skills/skill_data.gd")
 const CLEANSER := &"combo_cleanser"
 const GATE := &"combo_crystal_gate"
 const U := SKILLS.UNIT
+const CLEANSER_RANGE := 3.0 * U
+const POOL_RADIUS := 1.45 * U
+const POOL_LIFE := 2.80
+const POOL_ENEMY_SPEED := 0.62
+const GRIP_SPEED := 1.30
+const GRIP_LIFE := 0.55
 const CUT_WIDTH := 0.72 * U
 const CUT_LENGTH := 1.50 * U
 const CUT_MINIMUM := 0.30 * U
-const CUT_LIFE := 2.80
 const GATE_RADIUS := 0.38 * U
 const GATE_LIFE := 2.20
 const EPSILON := 0.00001
@@ -15,10 +20,16 @@ const EPSILON := 0.00001
 var _rules
 var _context: Dictionary
 var _hazards: Array
+var _enemies: Array
 var _tracking := false
+var _dodge_start := Vector2.ZERO
+var _dodge_distance := 0.0
 var _chosen_hazard := -1
 var _traces: Array[PackedVector2Array] = []
 var _trace_length := 0.0
+var _pool_at := Vector2.ZERO
+var _pool_left := 0.0
+var _grip_left := 0.0
 var _cut: Dictionary
 var _gate: Dictionary
 var _gate_retry := 0.0
@@ -32,21 +43,34 @@ func setup(rules) -> void:
 
 
 func clear() -> void:
+	_end_pool()
+	_set_grip(Vector2.ZERO, 0.0)
 	_end_cut()
 	_end_gate()
 	_reset_run()
 	_gate_retry = 0.0
 	_tracking = false
+	_dodge_distance = 0.0
 	_chosen_hazard = -1
 	_traces.clear()
 	_trace_length = 0.0
 	_context = {}
 	_hazards = []
+	_enemies = []
 
 
 func tick(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> void:
 	_context = context
 	_hazards = context.get("hazards", [])
+	_enemies = enemies
+	if _pool_left > 0.0:
+		if _pool_left <= delta:
+			_end_pool()
+		else:
+			_pool_left -= delta
+			_emit_pool("combo_update")
+	var grip := GRIP_LIFE if _inside_pool(at) else maxf(0.0, _grip_left - delta)
+	_set_grip(at, grip)
 	if not _cut.is_empty():
 		_cut.left = float(_cut.left) - delta
 		var hazard := _hazard(int(_cut.id))
@@ -57,19 +81,27 @@ func tick(delta: float, at: Vector2, enemies: Array, context: Dictionary) -> voi
 	_tick_gate(delta, at, enemies)
 
 
-func begin_ordinary_dodge() -> void:
-	_tracking = _rules.ready(CLEANSER) and _cut.is_empty()
+func begin_ordinary_dodge(at: Vector2) -> void:
+	_tracking = _rules.ready(CLEANSER) and _pool_left <= 0.0
+	_dodge_start = at
+	_dodge_distance = 0.0
 	_chosen_hazard = -1
 	_traces.clear()
 	_trace_length = 0.0
 
 
 func observe_dodge_motion(from: Vector2, at: Vector2, knocked_back: bool) -> void:
-	if not _tracking or knocked_back or _trace_length >= CUT_LENGTH:
+	if not _tracking:
+		return
+	if knocked_back:
+		_tracking = false
 		return
 	var delta := at - from
 	var length := delta.length()
 	if length <= EPSILON:
+		return
+	_dodge_distance += length
+	if _trace_length >= CUT_LENGTH:
 		return
 	var interval := Vector2(-1.0, -1.0)
 	if _chosen_hazard < 0:
@@ -102,13 +134,41 @@ func observe_dodge_motion(from: Vector2, at: Vector2, knocked_back: bool) -> voi
 	_trace_length += added
 
 
-func finish_ordinary_dodge() -> void:
+func finish_ordinary_dodge(at: Vector2) -> void:
 	if not _tracking:
 		return
 	_tracking = false
-	var hazard := _hazard(_chosen_hazard)
-	if _trace_length < CUT_MINIMUM or hazard.is_empty() or not _rules.ready(CLEANSER):
+	if _dodge_distance < CUT_MINIMUM or not _rules.ready(CLEANSER):
 		return
+	var hazard := _hazard(_chosen_hazard)
+	var crossed_hazard := _trace_length >= CUT_MINIMUM and not hazard.is_empty()
+	if not crossed_hazard and not _enemy_near(_dodge_start, _enemies, CLEANSER_RANGE) \
+			and not _enemy_near(at, _enemies, CLEANSER_RANGE):
+		return
+	if _rules.commit(CLEANSER) <= 0.0:
+		return
+	_pool_at = at
+	_pool_left = POOL_LIFE
+	_emit_pool("combo_launch")
+	_emit_pool("combo_update")
+	_set_grip(at, GRIP_LIFE)
+	if crossed_hazard:
+		_create_cut(hazard)
+
+
+func player_walk_scale() -> float:
+	return GRIP_SPEED if _grip_left > 0.0 else 1.0
+
+
+func enemy_walk_scale(at: Vector2) -> float:
+	return POOL_ENEMY_SPEED if _inside_pool(at) else 1.0
+
+
+func _inside_pool(at: Vector2) -> bool:
+	return _pool_left > 0.0 and at.distance_squared_to(_pool_at) <= POOL_RADIUS ** 2
+
+
+func _create_cut(hazard: Dictionary) -> void:
 	var outline := _hazard_outline(hazard.pos, float(hazard.radius))
 	var footprints: Array[PackedVector2Array] = []
 	for trace: PackedVector2Array in _traces:
@@ -125,14 +185,14 @@ func finish_ordinary_dodge() -> void:
 			for polygon in Geometry2D.intersect_polygons(footprint, outline):
 				if polygon.size() >= 3:
 					footprints.append(polygon)
-	if footprints.is_empty() or _rules.commit(CLEANSER) <= 0.0:
+	if footprints.is_empty():
 		return
 	var fill: Array[PackedVector2Array] = [outline]
 	for footprint: PackedVector2Array in footprints:
 		fill = _subtract_footprint(fill, footprint)
-	_cut = {"id": _chosen_hazard, "left": CUT_LIFE, "path": _traces[0],
+	_cut = {"id": _chosen_hazard, "left": POOL_LIFE, "path": _traces[0],
 		"mask": _merge_footprints(footprints), "fill": fill}
-	var duration := minf(CUT_LIFE, float(hazard.remaining))
+	var duration := minf(POOL_LIFE, float(hazard.remaining))
 	_emit_cut("combo_launch", duration)
 	_emit_cut("combo_update", duration)
 
@@ -228,12 +288,12 @@ func _can_exit(entry: Vector2, destination: Vector2) -> bool:
 	return _rules.clear_path(_context, entry, destination)
 
 
-func _enemy_near(at: Vector2, enemies: Array) -> bool:
+func _enemy_near(at: Vector2, enemies: Array, radius: float = 3.6 * U) -> bool:
 	for enemy: Dictionary in enemies:
 		var body := enemy.get("body") as Node2D
 		if is_instance_valid(body) and not body.is_queued_for_deletion() \
 				and float(enemy.get("hp", 0.0)) > 0.0 \
-				and at.distance_squared_to(body.position) <= (3.6 * U) ** 2:
+				and at.distance_squared_to(body.position) <= radius ** 2:
 			return true
 	return false
 
@@ -254,6 +314,27 @@ func _end_cut() -> void:
 	if not _cut.is_empty():
 		_rules.emit(CLEANSER, {"event": "combo_end", "effect_id": 1})
 		_cut = {}
+
+
+func _end_pool() -> void:
+	if _pool_left > 0.0:
+		_rules.emit(CLEANSER, {"event": "combo_end", "effect_id": 2})
+		_pool_left = 0.0
+
+
+func _emit_pool(event: String) -> void:
+	_rules.emit(CLEANSER, {"event": event, "phase": "pool", "effect_id": 2,
+		"from": _pool_at, "target": _pool_at, "radius": POOL_RADIUS, "duration": _pool_left,
+		"progress": 1.0 - _pool_left / POOL_LIFE})
+
+
+func _set_grip(at: Vector2, seconds: float) -> void:
+	if seconds > 0.0:
+		_rules.emit(CLEANSER, {"event": "combo_update", "phase": "grip", "effect_id": 3,
+			"from": at, "target": at, "duration": seconds})
+	elif _grip_left > 0.0:
+		_rules.emit(CLEANSER, {"event": "combo_end", "effect_id": 3})
+	_grip_left = seconds
 
 
 func _emit_cut(event: String, duration: float) -> void:

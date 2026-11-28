@@ -358,18 +358,21 @@ func show_skill_fx(info: Dictionary) -> void:
 		_add_v2_effect(expansion_effect, skill_id, event_name)
 		expansion_effect.start(info)
 		return
+	var bottle_launch := (skill_id == "sk_blast_flask" and event_name == "cast") \
+		or (skill_id == "sk_brittle_mark" and event_name == "flight")
+	if bottle_launch:
+		if not state.is_empty():
+			var bottle := BLAST_FLASK_FLIGHT.new()
+			_add_v2_effect(bottle, skill_id, event_name)
+			bottle.start(state, from, target, Color("#ffd28f") if skill_id == "sk_brittle_mark" else Color.WHITE)
+			if split_side != 0:
+				var accent := SPLIT_ALCHEMY_FX.new()
+				bottle.set_meta("split_side", split_side)
+				bottle.add_child(accent)
+				accent.start_follow(split_side, false, false)
+		return
 	if skill_id == "sk_blast_flask":
-		if event_name == "cast":
-			if not state.is_empty():
-				var bottle := BLAST_FLASK_FLIGHT.new()
-				_add_v2_effect(bottle, skill_id, event_name)
-				bottle.start(state, from, target)
-				if split_side != 0:
-					var accent := SPLIT_ALCHEMY_FX.new()
-					bottle.set_meta("split_side", split_side)
-					bottle.add_child(accent)
-					accent.start_follow(split_side, false, false)
-		elif event_name == "impact":
+		if event_name == "impact":
 			var impact := BLAST_FLASK_IMPACT.new()
 			impact.position = world_at(target)
 			_add_v2_effect(impact, skill_id, event_name)

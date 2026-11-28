@@ -240,9 +240,12 @@ func _test_mark_fallback() -> void:
 	if check(battle.fallback_skill_visuals.size() == 1 and manager.brittle_marks.is_empty(), "the 2D fallback registers a vial before any mark"):
 		var vial: Node2D = battle.fallback_skill_visuals[0].node
 		var start := vial.position
+		var start_roll := vial.rotation
 		manager._update_active(.08, battle.player.position, battle.enemies, battle.damage_brew_enemy)
 		battle.advance_fallback_skill_visuals(.08)
-		check(vial.position.x > start.x and vial.position.y < start.y, "the 2D vial visibly advances and rises")
+		check(vial.position.x > start.x and vial.position.y < start.y
+			and not is_equal_approx(vial.rotation, start_roll) and vial.scale.is_equal_approx(Vector2.ONE * 0.45),
+			"the small 2D vial advances, rises and tumbles")
 	manager._update_active(.25, battle.player.position, battle.enemies, battle.damage_brew_enemy)
 	battle.advance_fallback_skill_visuals(.25)
 	if check(battle.fallback_skill_visuals.size() == 2, "the two enemies in the landing circle show persistent marks"):

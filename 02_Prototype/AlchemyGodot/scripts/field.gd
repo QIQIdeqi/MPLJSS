@@ -682,6 +682,8 @@ func _physics_process(delta: float) -> void:
 				entry.windup = {}
 				continue
 			var slow := float(entry.get("slow_factor", 1.0)) if slow_left > 0.0 else 1.0
+			if skill_mobility:
+				slow = minf(slow, skill_mobility.independent.enemy_walk_scale(body.position))
 			var goal: Vector2 = independent_field.enemy_steering(entry, player.position)
 			var motion_limit := func(from: Vector2, to: Vector2) -> Vector2:
 				return actors.to_global(independent_field.stop_enemy_motion(entry, actors.to_local(from), actors.to_local(to)))

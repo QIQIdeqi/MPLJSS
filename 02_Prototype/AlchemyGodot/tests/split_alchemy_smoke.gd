@@ -205,7 +205,10 @@ func _check_split_marks() -> void:
 	var runtime := manager.runtime_for(MARK)
 	manager.cast_equipped(0.0, Vector2.ZERO, enemies, _record_hit)
 	var flights := recorder.select(MARK, "flight")
-	_advance(manager, 18)
+	_advance(manager, 14)
+	_expect(recorder.select(MARK, "impact").is_empty() and manager.brittle_marks.is_empty(),
+		"the two bottles stay in flight before the visible throw reaches the targets")
+	_advance(manager, 10)
 	var impacts := recorder.select(MARK, "impact")
 	_expect(flights.size() == 2 and flights[0].from != flights[1].from and flights[0].target != flights[1].target,
 		"two split vials visibly take different trajectories")

@@ -28,6 +28,13 @@ const ROWS := 3
 const FRAMES := COLS * ROWS
 const GROUND := 5.9
 const FLASH_HEIGHT := 17.0
+const CLEANSER := "combo_cleanser"
+const CLEANSER_FOAM_OFFSETS := [
+	Vector2(-0.12, -0.08), Vector2(0.38, 0.17), Vector2(-0.49, 0.24),
+	Vector2(0.24, -0.42), Vector2(-0.34, -0.53), Vector2(0.71, -0.34),
+	Vector2(-0.75, -0.19), Vector2(-0.18, 0.70), Vector2(0.35, 0.64),
+	Vector2(0.05, -0.82),
+]
 
 var _live: Dictionary = {}
 var _clips: Array[Dictionary] = []
@@ -69,6 +76,8 @@ func show_effect(info: Dictionary) -> void:
 			var clip := info.duplicate()
 			clip.started = _time
 			clip.lifetime = 0.46 if clip.event == "combo_heal" else 0.32
+			if skill_id == CLEANSER and clip.get("phase") == "pool":
+				clip.lifetime = 0.42
 			_clips.append(clip)
 
 
@@ -133,12 +142,21 @@ func _draw_state(state: Dictionary) -> void:
 				_mirror(points[0], points[-1], color)
 		"combo_rewind_anchor":
 			_draw_anchors(points, state.get("positions", PackedVector2Array()), color, phase == "rewind", progress)
-		"combo_cleanser":
-			var closing := phase == "closing" or bool(state.get("closing", false))
-			var stride := maxi(1, ceili(float(points.size()) / 7.0))
-			for index in range(0, points.size(), stride):
-				var rise := 2.0 + fmod(_time * 13.0 + index * 2.5, 8.0)
-				_gem(points[index], 1.45, Color(color, (0.27 if closing else 0.49) * pulse), rise)
+		CLEANSER:
+			match phase:
+				"pool":
+					_cleanser_foam(at, radius, progress, _time - float(state.started))
+				"grip":
+					var fade := clampf((float(state.expires) - _time - 0.07) / 0.18, 0.0, 1.0)
+					var frame := 8 + posmod(floori(_time * 18.0), 10)
+					_card(CLEANSER, at + Vector2(-8.0, 3.0), 19.0, GROUND + 0.38, frame, 0.64 * pulse * fade, true)
+					_card(CLEANSER, at + Vector2(9.0, -4.0), 15.0, GROUND + 0.36, frame, 0.50 * pulse * fade, true)
+				_:
+					var closing := phase == "closing" or bool(state.get("closing", false))
+					var stride := maxi(1, ceili(float(points.size()) / 7.0))
+					for index in range(0, points.size(), stride):
+						var rise := 2.0 + fmod(_time * 13.0 + index * 2.5, 8.0)
+						_gem(points[index], 1.45, Color(color, (0.27 if closing else 0.49) * pulse), rise)
 		"combo_crystal_gate":
 			_gate(from, radius, color, false, pulse)
 			_gate(at, radius, color, true, pulse)
@@ -427,7 +445,10 @@ func _draw_clip(clip: Dictionary) -> void:
 			size = 47.0
 			flat = true
 			height = GROUND + 0.3
-		"combo_cleanser":
+		CLEANSER:
+			if phase == "pool":
+				_cleanser_splash(at, float(clip.get("radius", 24.0)), progress, fade, frame)
+				return
 			if phase == "cut":
 				var points: PackedVector2Array = clip.get("points", PackedVector2Array())
 				for index in range(0, points.size(), maxi(1, ceili(points.size() / 5.0))):
@@ -458,6 +479,30 @@ func _draw_clip(clip: Dictionary) -> void:
 			height = 20.0 + 16.0 * progress if event == "combo_heal" else 13.0
 	_card(skill_id, at, size, height, frame, opacity, flat)
 	_glint(at, height + 3.0, size * 0.72, color, 0.49 * fade)
+
+
+func _cleanser_foam(at: Vector2, radius: float, progress: float, age: float) -> void:
+	var spread := lerpf(0.42, 1.0, ease(clampf(age / 0.28, 0.0, 1.0), 0.50))
+	var life_fade := smoothstep(0.0, 0.15, age) * (1.0 - smoothstep(0.76, 1.0, progress))
+	for index in CLEANSER_FOAM_OFFSETS.size():
+		var offset: Vector2 = CLEANSER_FOAM_OFFSETS[index]
+		var ripple := 0.5 + 0.5 * sin(age * 5.5 + float(index) * 2.4)
+		var patch_size := radius * lerpf(1.06, 0.52, offset.length()) * (0.90 + 0.10 * ripple)
+		var frame := 8 + roundi(ripple * 10.0)
+		var opacity := lerpf(0.40, 0.73, ripple) * life_fade
+		_card(CLEANSER, at + offset * radius * spread, patch_size, GROUND + 0.26, frame, opacity, true)
+
+
+func _cleanser_splash(at: Vector2, radius: float, progress: float, fade: float, frame: int) -> void:
+	var spread := lerpf(0.20, 1.0, ease(progress, 0.38))
+	for index in range(1, CLEANSER_FOAM_OFFSETS.size(), 2):
+		var offset: Vector2 = CLEANSER_FOAM_OFFSETS[index]
+		var spray_at := at + offset * radius * spread
+		var rise := sin(progress * PI) * (8.0 + float(index) * 0.88)
+		_card(CLEANSER, spray_at, radius * (0.32 + float(index % 3) * 0.08), GROUND + rise,
+			mini(frame + index, FRAMES - 1), fade)
+	_card(CLEANSER, at, radius * 1.04, GROUND + 0.34, frame, 0.78 * fade, true)
+	_glint(at, GROUND + 7.0, radius * 0.72, Color("#c5f9ee"), 0.38 * fade)
 
 
 func _lightning(a: Vector2, b: Vector2, fade: float) -> void:
